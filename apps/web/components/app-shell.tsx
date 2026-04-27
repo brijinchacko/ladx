@@ -4,6 +4,8 @@ import { FileText, Folder, MessageSquare, Settings, Sparkles } from "lucide-reac
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
 const nav = [
   { href: "/projects", label: "Projects", icon: Folder },
   { href: "/chat", label: "Chat", icon: MessageSquare },
@@ -37,7 +39,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </nav>
         <div className="p-4 border-t border-ink-100">
-          <UserButton afterSignOutUrl="/" />
+          {clerkConfigured ? (
+            <UserButton afterSignOutUrl="/" />
+          ) : (
+            <p className="text-xs text-ink-400">
+              Clerk not configured. Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.
+            </p>
+          )}
         </div>
       </aside>
       <main className="flex-1 min-w-0">{children}</main>

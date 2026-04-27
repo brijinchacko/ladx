@@ -12,4 +12,10 @@ export {
   DialogDescription,
 } from "./components/ui/dialog";
 export { Logo, type LogoProps } from "./components/brand/logo";
+export { ChatMessage, type ChatMessageProps } from "./components/chat/message";
+export {
+  ChatWindow,
+  type ChatTurn,
+  type ChatWindowProps,
+} from "./components/chat/chat-window";
 export { cn } from "./lib/cn";
