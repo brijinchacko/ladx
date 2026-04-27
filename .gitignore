@@ -50,3 +50,6 @@ test-results/
 
 # Husky output
 .husky/_/
+
+# Local storage backend (uploaded project files)
+.ladx-storage/

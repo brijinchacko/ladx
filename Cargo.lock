@@ -2087,6 +2087,7 @@ dependencies = [
 name = "ladx-parsers"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "chrono",
  "ladx-types",
  "quick-xml 0.36.2",
