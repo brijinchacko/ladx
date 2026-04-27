@@ -24,6 +24,8 @@ export const env = {
   stripeSecretKey: optional("STRIPE_SECRET_KEY"),
   stripeWebhookSecret: optional("STRIPE_WEBHOOK_SECRET"),
   stripePublishableKey: optional("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"),
+  stripePriceProMonthly: optional("STRIPE_PRICE_PRO_MONTHLY"),
+  stripePriceStudioYearly: optional("STRIPE_PRICE_STUDIO_YEARLY"),
   r2: {
     accountId: optional("R2_ACCOUNT_ID"),
     accessKeyId: optional("R2_ACCESS_KEY_ID"),

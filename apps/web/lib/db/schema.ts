@@ -95,26 +95,21 @@ export const sessions = pgTable(
 
 // ----- subscriptions -----
 // One row per user. Stripe customer + subscription IDs link back.
-export const subscriptions = pgTable(
-  "subscriptions",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    stripeCustomerId: text("stripe_customer_id").unique(),
-    stripeSubscriptionId: text("stripe_subscription_id").unique(),
-    tier: subscriptionTierEnum("tier").notNull().default("free"),
-    status: subscriptionStatusEnum("status").notNull().default("active"),
-    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
-    promptsUsedThisPeriod: integer("prompts_used_this_period").notNull().default(0),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => ({
-    userIdx: index("subs_user_idx").on(t.userId),
-  }),
-);
+export const subscriptions = pgTable("subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  stripeCustomerId: text("stripe_customer_id").unique(),
+  stripeSubscriptionId: text("stripe_subscription_id").unique(),
+  tier: subscriptionTierEnum("tier").notNull().default("free"),
+  status: subscriptionStatusEnum("status").notNull().default("active"),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  promptsUsedThisPeriod: integer("prompts_used_this_period").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 // ----- projects -----
 // Project file content lives in R2; only metadata + parsed stats live here.

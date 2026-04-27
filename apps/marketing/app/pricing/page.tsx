@@ -33,7 +33,7 @@ const tiers: Tier[] = [
       "ST + ladder XML generation",
       "Document export (Phase 3+)",
     ],
-    cta: { label: "Upgrade now", href: `${APP_URL}/sign-up?plan=pro`, variant: "primary" },
+    cta: { label: "Upgrade now", href: `${APP_URL}/upgrade/pro`, variant: "primary" },
     highlight: true,
   },
   {
