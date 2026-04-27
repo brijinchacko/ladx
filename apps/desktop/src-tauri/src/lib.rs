@@ -1,9 +1,20 @@
 //! ladX.ai Studio — Tauri shell.
 //!
-//! CRITICAL — Network policy: this app makes EXACTLY ONE outbound HTTP call
-//! in its entire lifetime: a licence activation check against
-//! `https://auth.ladx.ai/activate`. No telemetry, no analytics, no model
-//! downloads. See `apps/desktop/CLAUDE.md`.
+//! CRITICAL — Network policy: this app makes EXACTLY ONE outbound HTTP
+//! call in its entire lifetime: a licence activation check against
+//! `https://auth.ladx.ai/activate` (override via LADX_ACTIVATION_URL).
+//! Every other network call is forbidden. See `apps/desktop/CLAUDE.md`.
+//!
+//! Talking to Ollama on `localhost:11434` is local-only and not subject
+//! to that policy.
+
+mod audit;
+mod commands;
+mod licence;
+mod ollama;
+mod state;
+
+use tauri::Manager;
 
 #[tauri::command]
 fn ping() -> &'static str {
@@ -16,7 +27,22 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![ping])
+        .setup(|app| {
+            let handle = app.handle();
+            let state = state::AppState::build(handle).map_err(|e| e.to_string())?;
+            // Stamp boot in the audit log so we can prove a session
+            // happened even if everything else later fails.
+            state.audit.log("system", "studio_boot", None).ok();
+            app.manage(state);
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            ping,
+            commands::ollama::ollama_status,
+            commands::ollama::ollama_models,
+            commands::licence::licence_status,
+            commands::licence::licence_activate,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
