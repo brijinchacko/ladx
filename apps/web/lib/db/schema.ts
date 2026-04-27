@@ -48,6 +48,12 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
 
 export const messageRoleEnum = pgEnum("message_role", ["system", "user", "assistant"]);
 
+export const authTokenKindEnum = pgEnum("auth_token_kind", [
+  "password_reset",
+  "magic_link",
+  "email_verify",
+]);
+
 // ----- users -----
 // Native auth. `password_hash` is bcrypt; `email` is unique and the
 // canonical login identifier. OAuth providers can be layered on later
@@ -227,6 +233,29 @@ export const auditLog = pgTable(
   }),
 );
 
+// ----- auth_tokens -----
+// Single-use tokens for password reset, magic-link sign-in, email
+// verification. We store a bcrypt hash of the token so a leaked DB
+// can't replay live tokens. The plaintext is in the email link only.
+export const authTokens = pgTable(
+  "auth_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: authTokenKindEnum("kind").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userKindIdx: index("auth_tokens_user_kind_idx").on(t.userId, t.kind),
+    expiresIdx: index("auth_tokens_expires_idx").on(t.expiresAt),
+  }),
+);
+
 // ----- exports -----
 // Aggregate type used by lib/db/client.ts.
 export const schema = {
@@ -238,12 +267,14 @@ export const schema = {
   messages,
   generatedCode,
   auditLog,
+  authTokens,
 };
 
 // Helpful inferred types.
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
+export type AuthToken = typeof authTokens.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
 export type Subscription = typeof subscriptions.$inferSelect;

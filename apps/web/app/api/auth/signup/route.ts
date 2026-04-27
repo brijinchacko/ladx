@@ -5,6 +5,9 @@ import { hashPassword } from "@/lib/auth/password";
 import { createSession, setSessionCookie } from "@/lib/auth/session";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
+import { sendEmail } from "@/lib/email/client";
+import { welcomeEmail } from "@/lib/email/templates";
+import { env } from "@/lib/env";
 import { z } from "zod";
 
 const schema = z.object({
@@ -35,6 +38,12 @@ export async function POST(req: Request) {
 
     const session = await createSession(user.id);
     await setSessionCookie(session.id);
+
+    // Fire-and-forget welcome email — failures don't block signup.
+    const tpl = welcomeEmail({ displayName: user.displayName, appUrl: env.appUrl });
+    sendEmail({ to: user.email, subject: tpl.subject, html: tpl.html, text: tpl.text }).catch(
+      (err) => console.error("[signup] welcome email failed:", err),
+    );
 
     return Response.json(user);
   } catch (err) {

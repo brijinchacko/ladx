@@ -31,11 +31,14 @@ export const env = {
     bucket: optional("R2_BUCKET"),
   },
   resendApiKey: optional("RESEND_API_KEY"),
+  fromEmail: optional("LADX_FROM_EMAIL") ?? "ladX.ai <onboarding@resend.dev>",
+  appUrl: optional("NEXT_PUBLIC_APP_URL") ?? "http://localhost:3000",
   posthogKey: optional("NEXT_PUBLIC_POSTHOG_KEY"),
 
   // Asserts; call from API routes that need a specific service.
   requireDatabaseUrl: () => required("DATABASE_URL"),
   requireOpenRouter: () => required("OPENROUTER_API_KEY"),
+  requireResend: () => required("RESEND_API_KEY"),
   requireStripe: () => ({
     secret: required("STRIPE_SECRET_KEY"),
     webhookSecret: required("STRIPE_WEBHOOK_SECRET"),
