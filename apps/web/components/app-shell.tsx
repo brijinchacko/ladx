@@ -1,10 +1,9 @@
-import { UserButton } from "@clerk/nextjs";
+import { getCurrentUser } from "@/lib/auth/server";
 import { Logo } from "@ladx/ui";
 import { FileText, Folder, MessageSquare, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-
-const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+import { UserMenu } from "./user-menu";
 
 const nav = [
   { href: "/projects", label: "Projects", icon: Folder },
@@ -14,7 +13,9 @@ const nav = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function AppShell({ children }: { children: ReactNode }) {
+export async function AppShell({ children }: { children: ReactNode }) {
+  const user = await getCurrentUser();
+
   return (
     <div className="min-h-screen flex bg-white text-ink-900">
       <aside className="w-60 border-r border-ink-100 flex flex-col">
@@ -38,14 +39,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-4 border-t border-ink-100">
-          {clerkConfigured ? (
-            <UserButton afterSignOutUrl="/" />
-          ) : (
-            <p className="text-xs text-ink-400">
-              Clerk not configured. Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.
-            </p>
-          )}
+        <div className="p-3 border-t border-ink-100">
+          <UserMenu email={user?.email ?? null} displayName={user?.displayName ?? null} />
         </div>
       </aside>
       <main className="flex-1 min-w-0">{children}</main>

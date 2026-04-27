@@ -2,20 +2,29 @@
 // POST /api/projects — create + upload (multipart, file goes to R2, parsed).
 // Phase 1 stub: returns empty list, accepts upload metadata.
 
-import { auth } from "@clerk/nextjs/server";
+import { getApiUser } from "@/lib/auth/server";
+import { db } from "@/lib/db/client";
+import { projects } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  const authResult = await getApiUser();
+  if ("error" in authResult) return authResult.error;
 
-  // TODO(phase-1): query db, return user's projects.
-  return Response.json({ projects: [] });
+  const rows = await db()
+    .select()
+    .from(projects)
+    .where(eq(projects.userId, authResult.user.id))
+    .orderBy(projects.createdAt);
+
+  return Response.json({ projects: rows });
 }
 
-export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+export async function POST(_req: Request) {
+  const authResult = await getApiUser();
+  if ("error" in authResult) return authResult.error;
 
-  // TODO(phase-1): parse multipart, push to R2, queue parse job, persist row.
+  // TODO(upload-pipeline): parse multipart, push to R2 / local store,
+  // run Rust parser via subprocess, persist projects row + audit log.
   return Response.json({ error: "upload pipeline not yet implemented" }, { status: 501 });
 }

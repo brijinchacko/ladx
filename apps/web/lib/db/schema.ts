@@ -49,19 +49,41 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
 export const messageRoleEnum = pgEnum("message_role", ["system", "user", "assistant"]);
 
 // ----- users -----
-// Mirrors the Clerk user. We don't store passwords; Clerk owns identity.
+// Native auth. `password_hash` is bcrypt; `email` is unique and the
+// canonical login identifier. OAuth providers can be layered on later
+// via a separate `user_oauth_accounts` join table.
 export const users = pgTable(
   "users",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    clerkId: text("clerk_id").notNull().unique(),
-    email: text("email").notNull(),
+    email: text("email").notNull().unique(),
+    passwordHash: text("password_hash").notNull(),
     displayName: text("display_name"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     emailIdx: index("users_email_idx").on(t.email),
+  }),
+);
+
+// ----- sessions -----
+// Server-side session store. Cookie holds the session id; the row holds
+// the user binding + expiry. Sessions are deleted on logout and pruned
+// on access when expired.
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("sessions_user_idx").on(t.userId),
+    expiresIdx: index("sessions_expires_idx").on(t.expiresAt),
   }),
 );
 
@@ -202,6 +224,7 @@ export const auditLog = pgTable(
 // Aggregate type used by lib/db/client.ts.
 export const schema = {
   users,
+  sessions,
   subscriptions,
   projects,
   conversations,
@@ -213,6 +236,7 @@ export const schema = {
 // Helpful inferred types.
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type Session = typeof sessions.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
 export type Subscription = typeof subscriptions.$inferSelect;

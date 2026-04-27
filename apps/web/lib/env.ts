@@ -24,8 +24,6 @@ export const env = {
   stripeSecretKey: optional("STRIPE_SECRET_KEY"),
   stripeWebhookSecret: optional("STRIPE_WEBHOOK_SECRET"),
   stripePublishableKey: optional("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"),
-  clerkPublishableKey: optional("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"),
-  clerkSecretKey: optional("CLERK_SECRET_KEY"),
   r2: {
     accountId: optional("R2_ACCOUNT_ID"),
     accessKeyId: optional("R2_ACCESS_KEY_ID"),

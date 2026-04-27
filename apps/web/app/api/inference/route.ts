@@ -1,8 +1,8 @@
 // POST /api/inference — non-streaming convenience wrapper used internally
 // (e.g. for project naming, conversation titles). For streaming, use /api/chat.
 
+import { getApiUser } from "@/lib/auth/server";
 import { streamChat } from "@/lib/inference/openrouter";
-import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 
 const requestSchema = z.object({
@@ -12,8 +12,8 @@ const requestSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  const authResult = await getApiUser();
+  if ("error" in authResult) return authResult.error;
 
   const parsed = requestSchema.safeParse(await req.json());
   if (!parsed.success) {

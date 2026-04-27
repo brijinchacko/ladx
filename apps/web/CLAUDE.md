@@ -5,7 +5,8 @@ Next.js 15 App Router. Hosted at ladx.ai. Inference via OpenRouter (default) or 
 ## Conventions
 
 - All API routes in `app/api/` use Next.js Route Handlers, not legacy pages/api.
-- Auth via Clerk middleware at root. Protected routes are under `(app)/`.
+- Native auth: email + bcrypt + Postgres-backed sessions. Cookie name `ladx_session`. Helpers in `lib/auth/`. Middleware does a cheap cookie-presence check; full session validation happens in route handlers via `getCurrentUser()` / `getApiUser()`.
+- Protected routes are under `(app)/`. The middleware bounces unauthenticated HTML requests to `/sign-in?next=...` and returns `401` for `/api/*`.
 - Database via Drizzle. Schema in `lib/db/schema.ts`. Run `pnpm db:generate` after schema changes.
 - Streaming responses use Server-Sent Events via `lib/inference/stream.ts`.
 

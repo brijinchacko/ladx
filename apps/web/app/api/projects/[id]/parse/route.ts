@@ -1,11 +1,11 @@
-// POST /api/projects/:id/parse — re-run the Rust parser on the stored R2
-// blob. Phase 1: stub returns 501 until R2 + spawn pipeline lands.
+// POST /api/projects/:id/parse — re-run the Rust parser on the stored
+// project blob. Stub returns 501 until the upload + parse pipeline lands.
 
-import { auth } from "@clerk/nextjs/server";
+import { getApiUser } from "@/lib/auth/server";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  const authResult = await getApiUser();
+  if ("error" in authResult) return authResult.error;
   const { id } = await params;
   return Response.json(
     { error: "parser pipeline not yet implemented", projectId: id },

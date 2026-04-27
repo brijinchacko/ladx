@@ -1,33 +1,38 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+// Auth middleware. Cheap cookie-presence check only — full session
+// validation happens in the route handler / server component, which has
+// DB access. Edge runtime can't easily talk to Postgres, so we don't try.
+
+import { SESSION_COOKIE } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-// Public surface = marketing-style pages, auth pages, Stripe webhook,
-// activation endpoint (desktop licence check), and the sign-up funnel.
-// Everything under (app) and most /api routes are private.
-const isPublic = createRouteMatcher([
-  "/",
-  "/pricing",
-  "/docs(.*)",
-  "/blog(.*)",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/api/stripe/webhook",
-  "/api/activation",
-]);
+function isPublic(pathname: string): boolean {
+  if (pathname === "/") return true;
+  if (pathname.startsWith("/sign-in")) return true;
+  if (pathname.startsWith("/sign-up")) return true;
+  if (pathname.startsWith("/api/auth/")) return true;
+  if (pathname === "/api/stripe/webhook") return true;
+  if (pathname === "/api/activation") return true;
+  return false;
+}
 
-const clerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  if (isPublic(pathname)) return NextResponse.next();
 
-export default clerkConfigured
-  ? clerkMiddleware(async (auth, req) => {
-      if (isPublic(req)) return;
-      await auth.protect();
-    })
-  : // Dev fallback: no auth checks. The (app)/* routes still render but
-    // anything that calls Clerk's `auth()` will throw — which is fine in
-    // dev because we want loud failures when keys are missing.
-    () => NextResponse.next();
+  const sessionId = req.cookies.get(SESSION_COOKIE)?.value;
+  if (sessionId) return NextResponse.next();
+
+  // No cookie → bounce to /sign-in for HTML routes, return 401 for API.
+  if (pathname.startsWith("/api/")) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+  const url = req.nextUrl.clone();
+  url.pathname = "/sign-in";
+  url.searchParams.set("next", pathname);
+  return NextResponse.redirect(url);
+}
 
 export const config = {
-  // Match every route except Next internals and static assets.
   matcher: ["/((?!_next/|.*\\.(?:ico|png|jpg|jpeg|svg|webp|css|js|map)$).*)"],
 };
