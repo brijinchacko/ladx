@@ -73,6 +73,18 @@ export function ProjectChat({
             },
           });
         }}
+        onAcceptCode={async ({ language, source, report }) => {
+          await fetch("/api/generated-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              projectId,
+              language,
+              source,
+              validatorReport: report,
+            }),
+          });
+        }}
       />
     </div>
   );

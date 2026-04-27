@@ -14,6 +14,7 @@ pub mod memory;
 pub mod plc;
 pub mod project;
 pub mod tag;
+pub mod validator;
 
 pub use audit::*;
 pub use document::*;
@@ -23,3 +24,4 @@ pub use memory::*;
 pub use plc::*;
 pub use project::*;
 pub use tag::*;
+pub use validator::*;

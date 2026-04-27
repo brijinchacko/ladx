@@ -11,7 +11,7 @@ import {
 } from "react";
 import { cn } from "../../lib/cn";
 import { Button } from "../ui/button";
-import { ChatMessage } from "./message";
+import { ChatMessage, type ChatMessageProps } from "./message";
 
 export interface ChatTurn {
   id: string;
@@ -27,6 +27,11 @@ export interface ChatWindowProps {
    * invoke). Surface-aware abstraction lives in `lib/api.ts`.
    */
   onSend: (messages: ChatTurn[], signal: AbortSignal) => Promise<AsyncIterable<string>>;
+  /**
+   * Forwarded to <ChatMessage/> — invoked when the user clicks "Accept"
+   * on a code block. The host persists.
+   */
+  onAcceptCode?: ChatMessageProps["onAcceptCode"];
   placeholder?: string;
   className?: string;
 }
@@ -34,6 +39,7 @@ export interface ChatWindowProps {
 export function ChatWindow({
   initialMessages = [],
   onSend,
+  onAcceptCode,
   placeholder = "Ask ladX to generate ladder, ST, or explain a routine…",
   className,
 }: ChatWindowProps) {
@@ -122,6 +128,7 @@ export function ChatWindow({
             role={m.role}
             content={m.content}
             pending={streaming && i === messages.length - 1 && m.role === "assistant"}
+            onAcceptCode={onAcceptCode}
           />
         ))}
         {error && (

@@ -18,4 +18,5 @@ export {
   type ChatTurn,
   type ChatWindowProps,
 } from "./components/chat/chat-window";
+export { CodeBlock, type CodeBlockProps } from "./components/code/code-block";
 export { cn } from "./lib/cn";

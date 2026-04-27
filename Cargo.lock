@@ -2150,8 +2150,10 @@ dependencies = [
 name = "ladx-validator"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "ladx-types",
  "serde",
+ "serde_json",
  "thiserror 1.0.69",
  "tracing",
 ]
