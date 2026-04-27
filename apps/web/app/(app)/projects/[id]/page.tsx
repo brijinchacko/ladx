@@ -61,13 +61,16 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
       <section className="border border-ink-100 rounded-lg p-6">
         <h2 className="text-lg font-semibold mb-2">Chat about this project</h2>
-        <p className="text-sm text-ink-500 mb-3">
-          Project-scoped chat (with routine retrieval) lands in the next Phase 1 sub-task. Use the{" "}
-          <a href="/chat" className="text-teal-500 hover:text-teal-600">
-            general Chat
-          </a>{" "}
-          page in the meantime.
+        <p className="text-sm text-ink-500 mb-4">
+          Project-scoped chat is grounded in the parsed routines, tags, UDTs and AOIs. Ask "explain
+          MainRoutine" or "generate ST for a motor start/stop using EStop and StartPB".
         </p>
+        <a
+          href={`/chat/${project.id}`}
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-teal text-white hover:bg-teal-500 h-10 px-4"
+        >
+          Open chat
+        </a>
       </section>
     </div>
   );

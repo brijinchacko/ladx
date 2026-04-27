@@ -1,22 +1,20 @@
-//! PLCopen TC6 XML reader. Counts top-level project entities so the project
-//! list shows accurate stats. Phase 1 minimum; deeper extraction (per-routine
-//! ladder, ST source) lands in Phase 2.
+//! PLCopen TC6 XML reader. Walks the document, collecting POU names,
+//! variable names, and DataType names. Phase 1 minimum; deeper extraction
+//! (per-routine ladder/ST source) lands in Phase 2.
 
-use ladx_types::{Project, VendorKind};
+use ladx_types::{ParseResult, ProjectManifest, RoutineRef, TagRef, VendorKind};
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 
-use crate::{ParseError, Result, empty_project};
+use crate::{ParseError, Result, finalize};
 
-pub fn parse(bytes: &[u8], filename: &str) -> Result<Project> {
+pub fn parse(bytes: &[u8], filename: &str) -> Result<ParseResult> {
     let mut reader = Reader::from_reader(bytes);
     reader.config_mut().trim_text(true);
 
     let mut buf = Vec::new();
     let mut project_name: Option<String> = None;
-    let mut tag_count: u32 = 0;
-    let mut routine_count: u32 = 0;
-    let mut udt_count: u32 = 0;
+    let mut manifest = ProjectManifest::default();
     let mut saw_project_root = false;
 
     loop {
@@ -24,9 +22,8 @@ pub fn parse(bytes: &[u8], filename: &str) -> Result<Project> {
             Err(e) => return Err(ParseError::Xml(e)),
             Ok(Event::Eof) => break,
             Ok(Event::Start(e)) | Ok(Event::Empty(e)) => {
-                let name = e.name();
-                let tag = std::str::from_utf8(name.as_ref())?;
-                match tag {
+                let tag = std::str::from_utf8(e.name().as_ref())?.to_string();
+                match tag.as_str() {
                     "project" | "Project" => {
                         saw_project_root = true;
                         for attr in e.attributes() {
@@ -40,9 +37,50 @@ pub fn parse(bytes: &[u8], filename: &str) -> Result<Project> {
                             }
                         }
                     }
-                    "pou" | "POU" => routine_count += 1,
-                    "dataType" | "DataType" => udt_count += 1,
-                    "variable" | "Variable" => tag_count += 1,
+                    "pou" | "POU" => {
+                        let mut name = String::new();
+                        let mut language = "Unknown".to_string();
+                        for attr in e.attributes() {
+                            let attr = attr?;
+                            let key = attr.key.as_ref();
+                            let value = std::str::from_utf8(&attr.value)?.to_string();
+                            if key == b"name" {
+                                name = value;
+                            } else if key == b"pouType" {
+                                language = value;
+                            }
+                        }
+                        if !name.is_empty() {
+                            manifest.routines.push(RoutineRef { name, language });
+                        }
+                    }
+                    "dataType" | "DataType" => {
+                        for attr in e.attributes() {
+                            let attr = attr?;
+                            if attr.key.as_ref() == b"name" {
+                                manifest.udts.push(
+                                    std::str::from_utf8(&attr.value)?.to_string(),
+                                );
+                            }
+                        }
+                    }
+                    "variable" | "Variable" => {
+                        let mut name = String::new();
+                        let mut data_type: Option<String> = None;
+                        for attr in e.attributes() {
+                            let attr = attr?;
+                            let key = attr.key.as_ref();
+                            let value = std::str::from_utf8(&attr.value)?.to_string();
+                            if key == b"name" {
+                                name = value;
+                            } else if key == b"type" || key == b"dataType" {
+                                data_type = Some(value);
+                            }
+                        }
+                        if !name.is_empty() {
+                            manifest.tags.push(TagRef { name, data_type });
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -66,11 +104,7 @@ pub fn parse(bytes: &[u8], filename: &str) -> Result<Project> {
         })
         .unwrap_or_else(|| "Untitled".into());
 
-    let mut project = empty_project(display_name, VendorKind::Codesys);
-    project.stats.tag_count = tag_count;
-    project.stats.routine_count = routine_count;
-    project.stats.udt_count = udt_count;
-    Ok(project)
+    Ok(finalize(display_name, VendorKind::Codesys, manifest))
 }
 
 #[cfg(test)]
@@ -90,19 +124,23 @@ mod tests {
     </pous>
   </types>
   <instances>
-    <variable name="Motor1" />
-    <variable name="Motor2" />
-    <variable name="EStop" />
+    <variable name="Motor1" type="BOOL" />
+    <variable name="Motor2" type="BOOL" />
+    <variable name="EStop" type="BOOL" />
   </instances>
 </project>"#;
 
     #[test]
     fn parses_plcopen_skeleton() {
-        let project = parse(SAMPLE.as_bytes(), "demo.xml").unwrap();
-        assert_eq!(project.name, "DemoConveyor");
-        assert_eq!(project.stats.routine_count, 2);
-        assert_eq!(project.stats.udt_count, 2);
-        assert_eq!(project.stats.tag_count, 3);
+        let result = parse(SAMPLE.as_bytes(), "demo.xml").unwrap();
+        assert_eq!(result.project.name, "DemoConveyor");
+        assert_eq!(result.project.stats.routine_count, 2);
+        assert_eq!(result.project.stats.udt_count, 2);
+        assert_eq!(result.project.stats.tag_count, 3);
+        assert_eq!(result.manifest.routines[0].name, "MainRoutine");
+        assert_eq!(result.manifest.routines[0].language, "program");
+        assert_eq!(result.manifest.tags[0].name, "Motor1");
+        assert_eq!(result.manifest.tags[0].data_type.as_deref(), Some("BOOL"));
     }
 
     #[test]

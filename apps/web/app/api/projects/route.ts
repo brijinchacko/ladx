@@ -83,16 +83,17 @@ export async function POST(req: Request) {
     .insert(projects)
     .values({
       userId: authResult.user.id,
-      name: parsed?.name ?? file.name.replace(/\.[^.]+$/, ""),
-      vendor: vendorFromParsed(parsed?.vendor),
+      name: parsed?.project.name ?? file.name.replace(/\.[^.]+$/, ""),
+      vendor: vendorFromParsed(parsed?.project.vendor),
       r2Key: stored.key,
       sizeBytes: stored.sizeBytes,
-      tagCount: parsed?.stats.tag_count ?? 0,
-      routineCount: parsed?.stats.routine_count ?? 0,
-      udtCount: parsed?.stats.udt_count ?? 0,
-      aoiCount: parsed?.stats.aoi_count ?? 0,
+      tagCount: parsed?.project.stats.tag_count ?? 0,
+      routineCount: parsed?.project.stats.routine_count ?? 0,
+      udtCount: parsed?.project.stats.udt_count ?? 0,
+      aoiCount: parsed?.project.stats.aoi_count ?? 0,
       parsedAt: parsed ? new Date() : null,
       parseError,
+      manifest: parsed?.manifest ?? null,
     })
     .returning();
 

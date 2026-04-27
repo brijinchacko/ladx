@@ -9,6 +9,7 @@
 pub mod audit;
 pub mod document;
 pub mod hmi;
+pub mod manifest;
 pub mod memory;
 pub mod plc;
 pub mod project;
@@ -17,6 +18,7 @@ pub mod tag;
 pub use audit::*;
 pub use document::*;
 pub use hmi::*;
+pub use manifest::*;
 pub use memory::*;
 pub use plc::*;
 pub use project::*;

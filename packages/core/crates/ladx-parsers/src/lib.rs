@@ -1,11 +1,12 @@
-//! Parsers for vendor PLC project formats. Phase 1 ships a minimal PLCopen
-//! TC6 XML reader and an L5X stub; Phase 2-3 add full Rockwell L5X, Siemens
-//! TIA XML, TwinCAT, and CODESYS.
+//! Parsers for vendor PLC project formats. Phase 1 ships PLCopen TC6
+//! and Rockwell L5X readers that emit a `ParseResult` (a `Project` plus
+//! a `ProjectManifest` with routine/tag/UDT/AOI names). Phase 2-3 add
+//! Siemens TIA XML, TwinCAT, and CODESYS.
 
 pub mod l5x;
 pub mod plcopen;
 
-use ladx_types::{Project, ProjectStats, VendorKind};
+use ladx_types::{ParseResult, Project, ProjectManifest, ProjectStats, VendorKind};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -27,7 +28,7 @@ pub enum ParseError {
 pub type Result<T> = std::result::Result<T, ParseError>;
 
 /// Parse a project file from disk. Format is detected by extension.
-pub fn parse_project_bytes(filename: &str, bytes: &[u8]) -> Result<Project> {
+pub fn parse_project_bytes(filename: &str, bytes: &[u8]) -> Result<ParseResult> {
     let ext = std::path::Path::new(filename)
         .extension()
         .and_then(|e| e.to_str())
@@ -41,15 +42,28 @@ pub fn parse_project_bytes(filename: &str, bytes: &[u8]) -> Result<Project> {
     }
 }
 
-/// Build an empty `Project` with default stats for a given vendor and name.
-pub(crate) fn empty_project(name: String, vendor: VendorKind) -> Project {
+/// Build a `Project` populated from a manifest. The stats are derived from
+/// the manifest counts so list and counts can never disagree.
+pub(crate) fn finalize(
+    name: String,
+    vendor: VendorKind,
+    manifest: ProjectManifest,
+) -> ParseResult {
     let now = chrono::Utc::now();
-    Project {
+    let stats = ProjectStats {
+        tag_count: manifest.tags.len() as u32,
+        routine_count: manifest.routines.len() as u32,
+        udt_count: manifest.udts.len() as u32,
+        aoi_count: manifest.aois.len() as u32,
+        hmi_screen_count: 0,
+    };
+    let project = Project {
         id: uuid::Uuid::new_v4().to_string(),
         name,
         vendor,
         created_at: now,
         updated_at: now,
-        stats: ProjectStats::default(),
-    }
+        stats,
+    };
+    ParseResult { project, manifest }
 }

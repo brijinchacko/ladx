@@ -1,6 +1,6 @@
 //! ladx-parser — CLI bridge between Node API routes and the Rust parser
-//! crate. Takes a file path as the only argument, reads it, dispatches by
-//! extension, and prints a JSON `Project` to stdout. On failure, exits
+//! crate. Takes a file path, dispatches by extension, and prints a JSON
+//! `ParseResult` (`{ project, manifest }`) to stdout. On failure, exits
 //! non-zero with the error on stderr.
 //!
 //! Usage:
@@ -31,7 +31,7 @@ fn main() -> ExitCode {
 fn run(path: &str) -> anyhow::Result<String> {
     let bytes =
         std::fs::read(path).with_context(|| format!("reading project file: {path}"))?;
-    let project = ladx_parsers::parse_project_bytes(path, &bytes)
+    let result = ladx_parsers::parse_project_bytes(path, &bytes)
         .with_context(|| format!("parsing project file: {path}"))?;
-    Ok(serde_json::to_string(&project)?)
+    Ok(serde_json::to_string(&result)?)
 }

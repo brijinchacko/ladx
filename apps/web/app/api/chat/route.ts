@@ -4,9 +4,13 @@
 // accumulating it, then writes the final assistant message at end-of-stream.
 
 import { getApiUser } from "@/lib/auth/server";
+import { db } from "@/lib/db/client";
 import { appendMessage, ensureConversation } from "@/lib/db/conversations";
-import { streamChat } from "@/lib/inference/openrouter";
+import { projects } from "@/lib/db/schema";
+import { type ChatMessage, streamChat } from "@/lib/inference/openrouter";
+import { buildProjectSystemPrompt } from "@/lib/inference/project-prompt";
 import { ssEncode } from "@/lib/inference/stream";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 const requestSchema = z.object({
@@ -49,6 +53,16 @@ export async function POST(req: Request) {
     return Response.json({ error: "the final message must be role='user'" }, { status: 400 });
   }
 
+  // Load the project (if scoped) so we can both verify ownership and
+  // build the grounding system prompt.
+  let project: Awaited<ReturnType<typeof loadProject>> = null;
+  if (parsed.projectId) {
+    project = await loadProject(user.id, parsed.projectId);
+    if (!project) {
+      return Response.json({ error: "project not found" }, { status: 404 });
+    }
+  }
+
   let conversationId: string | undefined;
   try {
     const convo = await ensureConversation({
@@ -84,9 +98,16 @@ export async function POST(req: Request) {
           );
         }
 
+        const messagesWithGrounding: ChatMessage[] = project
+          ? [
+              { role: "system", content: buildProjectSystemPrompt(project) },
+              ...parsed.messages.filter((m) => m.role !== "system"),
+            ]
+          : parsed.messages;
+
         for await (const delta of streamChat({
           model: parsed.model,
-          messages: parsed.messages,
+          messages: messagesWithGrounding,
           temperature: parsed.temperature,
           maxTokens: parsed.maxTokens,
           signal: req.signal,
@@ -119,4 +140,13 @@ export async function POST(req: Request) {
       Connection: "keep-alive",
     },
   });
+}
+
+async function loadProject(userId: string, projectId: string) {
+  const rows = await db()
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    .limit(1);
+  return rows[0] ?? null;
 }

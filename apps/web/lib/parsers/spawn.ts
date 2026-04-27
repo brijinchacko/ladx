@@ -7,7 +7,7 @@ import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { Project } from "@ladx/types";
+import type { ParseResult } from "@ladx/types";
 
 const exec = promisify(execFile);
 
@@ -40,12 +40,12 @@ export function ladxParserBinary(): string {
   );
 }
 
-export async function parseProjectFile(localPath: string): Promise<Project> {
+export async function parseProjectFile(localPath: string): Promise<ParseResult> {
   const bin = ladxParserBinary();
   // 30s timeout — even very large L5X files parse in <5s on release build.
   const { stdout } = await exec(bin, [localPath], {
     timeout: 30_000,
     maxBuffer: 32 * 1024 * 1024,
   });
-  return JSON.parse(stdout) as Project;
+  return JSON.parse(stdout) as ParseResult;
 }
