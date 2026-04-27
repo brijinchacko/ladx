@@ -1,0 +1,65 @@
+[workspace]
+resolver = "2"
+members = [
+    "packages/core/crates/ladx-types",
+    "packages/core/crates/ladx-parsers",
+    "packages/core/crates/ladx-vendor",
+    "packages/core/crates/ladx-agents",
+    "packages/core/crates/ladx-rag",
+    "packages/core/crates/ladx-validator",
+    "packages/core/crates/ladx-templates",
+    "packages/core/crates/ladx-inference",
+    "packages/core/crates/ladx-audit",
+    "packages/core/crates/ladx-hmi",
+    "packages/core/crates/ladx-vendor-siemens",
+    "packages/core/crates/ladx-vendor-rockwell",
+    "packages/core/crates/ladx-vendor-beckhoff",
+    "packages/core/crates/ladx-vendor-codesys",
+    "apps/desktop/src-tauri",
+]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.80"
+license = "Proprietary"
+authors = ["Wartens Ltd <hello@ladx.ai>"]
+version = "0.0.0"
+
+[workspace.dependencies]
+# Local crates
+ladx-types = { path = "packages/core/crates/ladx-types" }
+ladx-parsers = { path = "packages/core/crates/ladx-parsers" }
+ladx-vendor = { path = "packages/core/crates/ladx-vendor" }
+ladx-agents = { path = "packages/core/crates/ladx-agents" }
+ladx-rag = { path = "packages/core/crates/ladx-rag" }
+ladx-validator = { path = "packages/core/crates/ladx-validator" }
+ladx-templates = { path = "packages/core/crates/ladx-templates" }
+ladx-inference = { path = "packages/core/crates/ladx-inference" }
+ladx-audit = { path = "packages/core/crates/ladx-audit" }
+ladx-hmi = { path = "packages/core/crates/ladx-hmi" }
+
+# External
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+ts-rs = { version = "10.1", features = ["serde-compat", "chrono-impl", "uuid-impl"] }
+tokio = { version = "1.40", features = ["full"] }
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+reqwest = { version = "0.12", features = ["json", "stream"] }
+quick-xml = { version = "0.36", features = ["serialize"] }
+zip = "2.2"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.10", features = ["v4", "serde"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+debug = true

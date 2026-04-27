@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  ci:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Cargo test (regenerates TS bindings)
+        run: pnpm test:rust
+
+      - name: Verify TS bindings up to date
+        shell: bash
+        run: |
+          if ! git diff --exit-code packages/types/src/generated/; then
+            echo "::error::Generated TS bindings are out of date. Run 'pnpm test:rust' and commit."
+            exit 1
+          fi
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Tauri build (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: pnpm tauri:build

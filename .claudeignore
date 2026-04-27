@@ -1,0 +1,15 @@
+node_modules/
+.pnpm-store/
+.turbo/
+target/
+dist/
+out/
+.next/
+coverage/
+playwright-report/
+test-results/
+apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/target/
+*.log
+.env
+.env.local
