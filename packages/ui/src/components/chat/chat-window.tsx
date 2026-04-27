@@ -32,6 +32,8 @@ export interface ChatWindowProps {
    * on a code block. The host persists.
    */
   onAcceptCode?: ChatMessageProps["onAcceptCode"];
+  /** Optional project id forwarded to <CodeBlock/> for auto-fix grounding. */
+  projectId?: string;
   placeholder?: string;
   className?: string;
 }
@@ -40,6 +42,7 @@ export function ChatWindow({
   initialMessages = [],
   onSend,
   onAcceptCode,
+  projectId,
   placeholder = "Ask ladX to generate ladder, ST, or explain a routine…",
   className,
 }: ChatWindowProps) {
@@ -128,6 +131,7 @@ export function ChatWindow({
             role={m.role}
             content={m.content}
             pending={streaming && i === messages.length - 1 && m.role === "assistant"}
+            projectId={projectId}
             onAcceptCode={onAcceptCode}
           />
         ))}

@@ -60,6 +60,7 @@ export function ProjectChat({
       )}
       <ChatWindow
         className="flex-1 min-h-0"
+        projectId={projectId}
         initialMessages={initialMessages}
         onSend={async (turns: ChatTurn[], signal) => {
           return streamChatFromApi({

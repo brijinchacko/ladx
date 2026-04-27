@@ -9,6 +9,8 @@ export interface ChatMessageProps {
   role: "user" | "assistant" | "system";
   content: string;
   pending?: boolean;
+  /** Optional project id forwarded to <CodeBlock/> for auto-fix grounding. */
+  projectId?: string;
   /** When provided, accepted code blocks are sent here for persistence. */
   onAcceptCode?: (input: {
     language: string;
@@ -52,7 +54,7 @@ function parseBlocks(content: string): Block[] {
   return out;
 }
 
-export function ChatMessage({ role, content, pending, onAcceptCode }: ChatMessageProps) {
+export function ChatMessage({ role, content, pending, projectId, onAcceptCode }: ChatMessageProps) {
   if (role === "system") return null;
   const isUser = role === "user";
   const Icon = isUser ? User : Bot;
@@ -94,6 +96,7 @@ export function ChatMessage({ role, content, pending, onAcceptCode }: ChatMessag
               language={b.language ?? "text"}
               source={b.body}
               autoValidate={!pending}
+              projectId={projectId}
               onAccept={
                 onAcceptCode
                   ? (source, report) =>
