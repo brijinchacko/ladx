@@ -42,6 +42,9 @@ pub fn run() {
             commands::ollama::ollama_models,
             commands::licence::licence_status,
             commands::licence::licence_activate,
+            commands::chat::ollama_chat_stream,
+            commands::settings::settings_load,
+            commands::settings::settings_save,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

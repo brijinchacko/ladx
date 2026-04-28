@@ -7,6 +7,8 @@ import {
   licenceActivate,
   licenceStatus,
   ollamaModels,
+  settingsLoad,
+  settingsSave,
 } from "@/lib/invoke";
 import { Button, Input } from "@ladx/ui";
 import { type FormEvent, useEffect, useState } from "react";
@@ -20,20 +22,38 @@ export default function SettingsPage() {
   const [modelsResp, setModelsResp] = useState<OllamaModelsResponse | null>(null);
   const [modelsError, setModelsError] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>("");
+  const [savingModel, setSavingModel] = useState(false);
+  const [savedNote, setSavedNote] = useState<string | null>(null);
 
   useEffect(() => {
     licenceStatus()
       .then((r) => setLicence(r))
       .catch(() => {});
-    ollamaModels()
-      .then((r) => {
+
+    Promise.all([settingsLoad(), ollamaModels()])
+      .then(([s, r]) => {
         setModelsResp(r);
-        setSelectedModel(r.suggested ?? r.models[0]?.name ?? "");
+        setSelectedModel(s.defaultModel ?? r.suggested ?? r.models[0]?.name ?? "");
       })
       .catch((err) => {
         setModelsError(err instanceof Error ? err.message : "Ollama not reachable");
       });
   }, []);
+
+  async function persistModel(name: string) {
+    setSelectedModel(name);
+    setSavingModel(true);
+    setSavedNote(null);
+    try {
+      await settingsSave({ defaultModel: name });
+      setSavedNote("Saved.");
+      setTimeout(() => setSavedNote(null), 1500);
+    } catch (err) {
+      setSavedNote(`Save failed: ${err instanceof Error ? err.message : "unknown"}`);
+    } finally {
+      setSavingModel(false);
+    }
+  }
 
   async function activate(e: FormEvent) {
     e.preventDefault();
@@ -131,7 +151,8 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <select
                 value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
+                onChange={(e) => persistModel(e.target.value)}
+                disabled={savingModel}
                 className="w-full max-w-md rounded-md border border-ink-200 bg-white px-3 py-2 text-sm"
               >
                 {modelsResp.models.map((m) => (
@@ -145,6 +166,7 @@ export default function SettingsPage() {
                   Suggested default: <code>{modelsResp.suggested}</code>
                 </p>
               )}
+              {savedNote && <p className="text-xs text-teal-500">{savedNote}</p>}
             </div>
           ) : (
             <p className="text-sm text-ink-500">Checking…</p>

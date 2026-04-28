@@ -55,3 +55,15 @@ export async function licenceStatus(): Promise<ActivationRecord | null> {
 export async function licenceActivate(licenceKey: string): Promise<ActivationRecord> {
   return tauriInvoke<ActivationRecord>("licence_activate", { licenceKey });
 }
+
+export interface StudioSettings {
+  defaultModel?: string | null;
+}
+
+export async function settingsLoad(): Promise<StudioSettings> {
+  return tauriInvoke<StudioSettings>("settings_load");
+}
+
+export async function settingsSave(settings: StudioSettings): Promise<void> {
+  await tauriInvoke<void>("settings_save", { settings });
+}
