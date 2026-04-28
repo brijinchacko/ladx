@@ -13,6 +13,16 @@ export interface ChatMessageProps {
   projectId?: string;
   /** Optional validate transport — used on desktop to call a Tauri command. */
   validate?: (source: string) => Promise<ValidatorReport>;
+  /** Optional auto-fix transport — used on desktop to call a Tauri command. */
+  autoFix?: (input: {
+    source: string;
+    report: ValidatorReport;
+  }) => Promise<{
+    ok: boolean;
+    source: string;
+    report: ValidatorReport;
+    attempts: Array<{ source: string; report: ValidatorReport }>;
+  }>;
   /** When provided, accepted code blocks are sent here for persistence. */
   onAcceptCode?: (input: {
     language: string;
@@ -62,6 +72,7 @@ export function ChatMessage({
   pending,
   projectId,
   validate,
+  autoFix,
   onAcceptCode,
 }: ChatMessageProps) {
   if (role === "system") return null;
@@ -107,6 +118,7 @@ export function ChatMessage({
               autoValidate={!pending}
               projectId={projectId}
               validate={validate}
+              autoFix={autoFix}
               onAccept={
                 onAcceptCode
                   ? (source, report) =>

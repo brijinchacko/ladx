@@ -61,9 +61,18 @@ impl ProjectsDb {
             ON projects (parsed_at DESC);
             "#,
         )?;
+        // Conversations + messages live in the same DB.
+        super::conversations::apply_schema(&conn)?;
         Ok(Self {
             conn: Mutex::new(conn),
         })
+    }
+
+    /// Run a closure with the locked connection. Used by the chat-history
+    /// commands so they don't need their own DB handle.
+    pub fn with_conn<R>(&self, f: impl FnOnce(&Connection) -> Result<R>) -> Result<R> {
+        let conn = self.conn.lock().unwrap();
+        f(&conn)
     }
 
     pub fn insert(

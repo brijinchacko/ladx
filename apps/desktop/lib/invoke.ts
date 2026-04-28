@@ -137,3 +137,59 @@ export interface ValidatorReport {
 export async function validateSt(source: string): Promise<ValidatorReport> {
   return tauriInvoke<ValidatorReport>("validate_st", { source });
 }
+
+// ----- auto-fix -----
+
+export interface AutoFixAttempt {
+  source: string;
+  report: ValidatorReport;
+}
+
+export interface AutoFixResult {
+  ok: boolean;
+  source: string;
+  report: ValidatorReport;
+  attempts: AutoFixAttempt[];
+}
+
+export async function autoFixSt(opts: {
+  source: string;
+  initialReport: ValidatorReport;
+  projectId?: string;
+  model?: string;
+  maxAttempts?: number;
+}): Promise<AutoFixResult> {
+  return tauriInvoke<AutoFixResult>("auto_fix_st", {
+    source: opts.source,
+    initialReport: opts.initialReport,
+    projectId: opts.projectId,
+    model: opts.model,
+    maxAttempts: opts.maxAttempts,
+  });
+}
+
+// ----- conversations -----
+
+export interface ConversationRow {
+  id: string;
+  projectId: string | null;
+  title: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MessageRow {
+  id: string;
+  conversationId: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  createdAt: string;
+}
+
+export async function ensureConversation(projectId: string | null): Promise<ConversationRow> {
+  return tauriInvoke<ConversationRow>("ensure_conversation", { projectId });
+}
+
+export async function listMessages(conversationId: string): Promise<MessageRow[]> {
+  return tauriInvoke<MessageRow[]>("list_messages", { conversationId });
+}

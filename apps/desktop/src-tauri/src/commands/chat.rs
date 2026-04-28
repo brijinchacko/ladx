@@ -41,6 +41,7 @@ pub async fn ollama_chat_stream(
     temperature: Option<f32>,
     max_tokens: Option<u32>,
     project_id: Option<String>,
+    conversation_id: Option<String>,
 ) -> Result<(), String> {
     // Optional project grounding — load the manifest and prepend a
     // system message describing the project's routines/tags/UDTs.
@@ -53,6 +54,23 @@ pub async fn ollama_chat_stream(
             });
         }
     }
+
+    // Capture the user's last message for persistence — that's what the
+    // frontend just submitted. We persist before streaming so a crash
+    // mid-stream still leaves a clean record.
+    let last_user_content: Option<String> = messages
+        .iter()
+        .rev()
+        .find(|m| m.role == "user")
+        .map(|m| m.content.clone());
+
+    if let (Some(cid), Some(content)) = (&conversation_id, &last_user_content) {
+        let _ = state.projects.with_conn(|conn| {
+            crate::db::conversations::append_message(conn, cid, "user", content)?;
+            Ok(())
+        });
+    }
+
     grounded.extend(messages.into_iter().filter(|m| m.role != "system").map(|m| {
         InferenceChatMessage {
             role: role_from_str(&m.role),
@@ -99,6 +117,16 @@ pub async fn ollama_chat_stream(
     }
 
     let _ = app.emit::<()>(&format!("chat-stream-end:{channel_id}"), ());
+
+    // Persist the accumulated assistant response. Best-effort — if the
+    // DB write fails the chat still rendered fine.
+    if let (Some(cid), true) = (&conversation_id, !accumulated.is_empty()) {
+        let _ = state.projects.with_conn(|conn| {
+            crate::db::conversations::append_message(conn, cid, "assistant", &accumulated)?;
+            Ok(())
+        });
+    }
+
     state
         .audit
         .log(
@@ -109,6 +137,12 @@ pub async fn ollama_chat_stream(
         .ok();
 
     Ok(())
+}
+
+/// Public alias used by other commands (e.g. autofix) so they share the
+/// same grounding shape.
+pub fn project_system_prompt_for(project: &crate::db::ProjectRow) -> String {
+    build_project_system_prompt(project)
 }
 
 /// Builds a compact grounding system prompt from a project manifest.

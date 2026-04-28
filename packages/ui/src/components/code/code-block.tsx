@@ -21,8 +21,23 @@ export interface CodeBlockProps {
    * Endpoint that takes failed source + report and returns a corrected
    * version (the spec §8.1 retry-with-feedback loop). Defaults to
    * /api/code/auto-fix. Pass empty string to hide the Auto-fix button.
+   * Ignored when `autoFix` is provided.
    */
   autoFixEndpoint?: string;
+  /**
+   * Override transport for auto-fix. If provided, used instead of
+   * POSTing to `autoFixEndpoint`. Returns the same shape as the cloud
+   * endpoint: ok / source / report / attempts[].
+   */
+  autoFix?: (input: {
+    source: string;
+    report: ValidatorReport;
+  }) => Promise<{
+    ok: boolean;
+    source: string;
+    report: ValidatorReport;
+    attempts: Array<{ source: string; report: ValidatorReport }>;
+  }>;
   /**
    * When auto-fix is wired to a project, the host passes the project id
    * so the model gets the manifest as grounding.
@@ -59,6 +74,7 @@ export function CodeBlock({
   validateEndpoint = "/api/validate-code",
   validate,
   autoFixEndpoint = "/api/code/auto-fix",
+  autoFix: autoFixFn,
   projectId,
   onAccept,
   className,
@@ -120,26 +136,32 @@ export function CodeBlock({
   }
 
   async function autoFix() {
-    if (state.kind !== "fail" || !autoFixEndpoint) return;
+    if (state.kind !== "fail") return;
+    if (!autoFixFn && !autoFixEndpoint) return;
     setFixing(true);
     setFixNote(null);
     try {
-      const res = await fetch(autoFixEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          language: language.toLowerCase(),
-          source,
-          initialReport: state.report,
-          projectId,
-        }),
-      });
-      if (!res.ok) {
-        const detail = await res.text().catch(() => "");
-        setFixNote(`Auto-fix failed: ${res.status} ${detail.slice(0, 200)}`);
-        return;
+      let data: AutoFixResponse;
+      if (autoFixFn) {
+        data = await autoFixFn({ source, report: state.report });
+      } else {
+        const res = await fetch(autoFixEndpoint as string, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            language: language.toLowerCase(),
+            source,
+            initialReport: state.report,
+            projectId,
+          }),
+        });
+        if (!res.ok) {
+          const detail = await res.text().catch(() => "");
+          setFixNote(`Auto-fix failed: ${res.status} ${detail.slice(0, 200)}`);
+          return;
+        }
+        data = (await res.json()) as AutoFixResponse;
       }
-      const data = (await res.json()) as AutoFixResponse;
       setSource(data.source);
       setFixNote(
         data.ok
@@ -158,7 +180,7 @@ export function CodeBlock({
     return null;
   }
 
-  const showAutoFix = state.kind === "fail" && !!autoFixEndpoint;
+  const showAutoFix = state.kind === "fail" && (!!autoFixFn || !!autoFixEndpoint);
 
   return (
     <div className={cn("rounded-md border border-ink-100 overflow-hidden bg-ink-50", className)}>

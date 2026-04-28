@@ -6,7 +6,16 @@
 
 import { DesktopShell } from "@/components/desktop-shell";
 import { desktopChatStream } from "@/lib/desktop-chat-stream";
-import { type ProjectRow, getProject, ollamaModels, settingsLoad, validateSt } from "@/lib/invoke";
+import {
+  type ProjectRow,
+  autoFixSt,
+  ensureConversation,
+  getProject,
+  listMessages,
+  ollamaModels,
+  settingsLoad,
+  validateSt,
+} from "@/lib/invoke";
 import { type ChatTurn, ChatWindow } from "@ladx/ui";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -35,20 +44,36 @@ function ChatPageInner() {
   const [project, setProject] = useState<ProjectRow | null | undefined>(
     projectId ? undefined : null,
   );
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [initialMessages, setInitialMessages] = useState<ChatTurn[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
     (async () => {
       try {
-        const [s, m, p] = await Promise.all([
+        const [s, m, p, convo] = await Promise.all([
           settingsLoad(),
           ollamaModels(),
           projectId ? getProject(projectId) : Promise.resolve(null),
+          ensureConversation(projectId ?? null),
         ]);
         if (!live) return;
 
         if (projectId) setProject(p);
+        setConversationId(convo.id);
+
+        // Load any prior turns so the user picks up where they left off.
+        const msgs = await listMessages(convo.id);
+        if (!live) return;
+        setInitialMessages(
+          msgs.map((m) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+          })),
+        );
+
         const chosen = s.defaultModel ?? m.suggested ?? m.models[0]?.name ?? null;
         if (!chosen) {
           setError("No Ollama models installed. Run `ollama pull qwen2.5-coder:14b` then reload.");
@@ -128,8 +153,17 @@ function ChatPageInner() {
         {model && (
           <ChatWindow
             className="flex-1 min-h-0"
+            initialMessages={initialMessages}
             projectId={project?.id}
             validate={validateSt}
+            autoFix={async ({ source, report }) =>
+              autoFixSt({
+                source,
+                initialReport: report,
+                projectId: project?.id,
+                model,
+              })
+            }
             placeholder={
               project
                 ? "Ask about MainRoutine, generate ST, explain a tag…"
@@ -140,6 +174,7 @@ function ChatPageInner() {
                 messages: turns.map(({ role, content }) => ({ role, content })),
                 model,
                 projectId: project?.id,
+                conversationId: conversationId ?? undefined,
                 signal,
               })
             }

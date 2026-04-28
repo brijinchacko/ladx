@@ -21,6 +21,7 @@ export interface DesktopChatStreamOpts {
   messages: DesktopChatMessage[];
   model: string;
   projectId?: string;
+  conversationId?: string;
   temperature?: number;
   maxTokens?: number;
   signal?: AbortSignal;
@@ -88,6 +89,7 @@ export async function* desktopChatStream(opts: DesktopChatStreamOpts): AsyncIter
     temperature: opts.temperature,
     maxTokens: opts.maxTokens,
     projectId: opts.projectId,
+    conversationId: opts.conversationId,
   }).catch((err) => {
     // Surface the invocation error through the queue so the consumer
     // sees it instead of getting stuck on the first take().
