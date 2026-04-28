@@ -16,6 +16,7 @@ tauri-build = { version = "2.0", features = [] }
 [dependencies]
 tauri = { version = "2.0", features = [] }
 tauri-plugin-opener = "2.0"
+tauri-plugin-dialog = "2.0"
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
@@ -30,6 +31,8 @@ futures-util = "0.3"
 ladx-types = { workspace = true }
 ladx-inference = { workspace = true }
 ladx-audit = { workspace = true }
+ladx-parsers = { workspace = true }
+ladx-validator = { workspace = true }
 rusqlite = { version = "0.32", features = ["bundled"] }
 
 [features]

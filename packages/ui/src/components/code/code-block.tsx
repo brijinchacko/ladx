@@ -10,8 +10,13 @@ export interface CodeBlockProps {
   source: string;
   /** When true, the component runs the validator on mount + on source change. */
   autoValidate?: boolean;
-  /** Endpoint that runs validation; defaults to /api/validate-code. */
+  /** Endpoint that runs validation; defaults to /api/validate-code. Ignored when `validate` is provided. */
   validateEndpoint?: string;
+  /**
+   * Override transport — if provided, called instead of POSTing to
+   * `validateEndpoint`. Use this on desktop to invoke a Tauri command.
+   */
+  validate?: (source: string) => Promise<ValidatorReport>;
   /**
    * Endpoint that takes failed source + report and returns a corrected
    * version (the spec §8.1 retry-with-feedback loop). Defaults to
@@ -52,6 +57,7 @@ export function CodeBlock({
   source: initialSource,
   autoValidate = true,
   validateEndpoint = "/api/validate-code",
+  validate,
   autoFixEndpoint = "/api/code/auto-fix",
   projectId,
   onAccept,
@@ -75,26 +81,33 @@ export function CodeBlock({
 
     setState({ kind: "validating" });
     const ctrl = new AbortController();
-    fetch(validateEndpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ language: language.toLowerCase(), source }),
-      signal: ctrl.signal,
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`validator request failed (${res.status})`);
-        const data = (await res.json()) as { report: ValidatorReport };
-        setState({ kind: data.report.ok ? "ok" : "fail", report: data.report });
+
+    const promise = validate
+      ? validate(source).then((report) => ({ report }))
+      : fetch(validateEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ language: language.toLowerCase(), source }),
+          signal: ctrl.signal,
+        }).then(async (res) => {
+          if (!res.ok) throw new Error(`validator request failed (${res.status})`);
+          return (await res.json()) as { report: ValidatorReport };
+        });
+
+    promise
+      .then(({ report }) => {
+        if (ctrl.signal.aborted) return;
+        setState({ kind: report.ok ? "ok" : "fail", report });
       })
       .catch((err) => {
-        if (err?.name === "AbortError") return;
+        if (err?.name === "AbortError" || ctrl.signal.aborted) return;
         setState({
           kind: "error",
           message: err instanceof Error ? err.message : "validator failed",
         });
       });
     return () => ctrl.abort();
-  }, [source, language, autoValidate, validateEndpoint]);
+  }, [source, language, autoValidate, validateEndpoint, validate]);
 
   async function copy() {
     try {

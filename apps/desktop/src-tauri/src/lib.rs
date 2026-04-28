@@ -10,6 +10,7 @@
 
 mod audit;
 mod commands;
+mod db;
 mod licence;
 mod ollama;
 mod state;
@@ -27,6 +28,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let handle = app.handle();
             let state = state::AppState::build(handle).map_err(|e| e.to_string())?;
@@ -45,6 +47,11 @@ pub fn run() {
             commands::chat::ollama_chat_stream,
             commands::settings::settings_load,
             commands::settings::settings_save,
+            commands::projects::pick_and_parse_project,
+            commands::projects::list_projects,
+            commands::projects::get_project,
+            commands::projects::delete_project,
+            commands::validator::validate_st,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

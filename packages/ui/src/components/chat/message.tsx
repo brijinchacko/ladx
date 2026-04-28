@@ -11,6 +11,8 @@ export interface ChatMessageProps {
   pending?: boolean;
   /** Optional project id forwarded to <CodeBlock/> for auto-fix grounding. */
   projectId?: string;
+  /** Optional validate transport — used on desktop to call a Tauri command. */
+  validate?: (source: string) => Promise<ValidatorReport>;
   /** When provided, accepted code blocks are sent here for persistence. */
   onAcceptCode?: (input: {
     language: string;
@@ -54,7 +56,14 @@ function parseBlocks(content: string): Block[] {
   return out;
 }
 
-export function ChatMessage({ role, content, pending, projectId, onAcceptCode }: ChatMessageProps) {
+export function ChatMessage({
+  role,
+  content,
+  pending,
+  projectId,
+  validate,
+  onAcceptCode,
+}: ChatMessageProps) {
   if (role === "system") return null;
   const isUser = role === "user";
   const Icon = isUser ? User : Bot;
@@ -97,6 +106,7 @@ export function ChatMessage({ role, content, pending, projectId, onAcceptCode }:
               source={b.body}
               autoValidate={!pending}
               projectId={projectId}
+              validate={validate}
               onAccept={
                 onAcceptCode
                   ? (source, report) =>

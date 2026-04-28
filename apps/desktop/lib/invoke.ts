@@ -67,3 +67,73 @@ export async function settingsLoad(): Promise<StudioSettings> {
 export async function settingsSave(settings: StudioSettings): Promise<void> {
   await tauriInvoke<void>("settings_save", { settings });
 }
+
+// ----- projects -----
+
+export interface RoutineRef {
+  name: string;
+  language: string;
+}
+
+export interface TagRef {
+  name: string;
+  data_type?: string | null;
+}
+
+export interface ProjectManifest {
+  routines: RoutineRef[];
+  tags: TagRef[];
+  udts: string[];
+  aois: string[];
+}
+
+export interface ProjectRow {
+  id: string;
+  name: string;
+  vendor: string;
+  sourceFilename: string;
+  sizeBytes: number;
+  tagCount: number;
+  routineCount: number;
+  udtCount: number;
+  aoiCount: number;
+  parsedAt: string;
+  manifest: ProjectManifest;
+}
+
+export async function pickAndParseProject(): Promise<ProjectRow | null> {
+  return tauriInvoke<ProjectRow | null>("pick_and_parse_project");
+}
+
+export async function listProjects(): Promise<ProjectRow[]> {
+  return tauriInvoke<ProjectRow[]>("list_projects");
+}
+
+export async function getProject(id: string): Promise<ProjectRow | null> {
+  return tauriInvoke<ProjectRow | null>("get_project", { id });
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  await tauriInvoke<void>("delete_project", { id });
+}
+
+// ----- validator -----
+
+export interface ValidatorDiagnostic {
+  severity: "error" | "warning" | "info";
+  line: number;
+  column: number;
+  message: string;
+  source: string;
+}
+
+export interface ValidatorReport {
+  ok: boolean;
+  language: string;
+  backend: string;
+  diagnostics: ValidatorDiagnostic[];
+}
+
+export async function validateSt(source: string): Promise<ValidatorReport> {
+  return tauriInvoke<ValidatorReport>("validate_st", { source });
+}

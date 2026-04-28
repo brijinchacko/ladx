@@ -40,18 +40,29 @@ pub async fn ollama_chat_stream(
     model: String,
     temperature: Option<f32>,
     max_tokens: Option<u32>,
+    project_id: Option<String>,
 ) -> Result<(), String> {
-    let inference_messages: Vec<InferenceChatMessage> = messages
-        .into_iter()
-        .map(|m| InferenceChatMessage {
+    // Optional project grounding — load the manifest and prepend a
+    // system message describing the project's routines/tags/UDTs.
+    let mut grounded: Vec<InferenceChatMessage> = Vec::new();
+    if let Some(pid) = &project_id {
+        if let Ok(Some(project)) = state.projects.get(pid) {
+            grounded.push(InferenceChatMessage {
+                role: Role::System,
+                content: build_project_system_prompt(&project),
+            });
+        }
+    }
+    grounded.extend(messages.into_iter().filter(|m| m.role != "system").map(|m| {
+        InferenceChatMessage {
             role: role_from_str(&m.role),
             content: m.content,
-        })
-        .collect();
+        }
+    }));
 
     let req = ChatRequest {
         model: model.clone(),
-        messages: inference_messages,
+        messages: grounded,
         max_tokens,
         temperature,
     };
@@ -98,4 +109,57 @@ pub async fn ollama_chat_stream(
         .ok();
 
     Ok(())
+}
+
+/// Builds a compact grounding system prompt from a project manifest.
+/// Mirrors the cloud-side `buildProjectSystemPrompt` so the model gets
+/// the same shape of context whether it's running in OpenRouter or
+/// locally on Ollama.
+fn build_project_system_prompt(project: &crate::db::ProjectRow) -> String {
+    const MAX_ROUTINES: usize = 200;
+    const MAX_TAGS: usize = 500;
+    const MAX_UDTS: usize = 100;
+    const MAX_AOIS: usize = 100;
+
+    let m = &project.manifest;
+
+    let routines: String = m
+        .routines
+        .iter()
+        .take(MAX_ROUTINES)
+        .map(|r| format!("{} ({})", r.name, r.language))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let tags: String = m
+        .tags
+        .iter()
+        .take(MAX_TAGS)
+        .map(|t| match &t.data_type {
+            Some(dt) => format!("{}: {}", t.name, dt),
+            None => t.name.clone(),
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    let udts = m.udts.iter().take(MAX_UDTS).cloned().collect::<Vec<_>>().join(", ");
+    let aois = m.aois.iter().take(MAX_AOIS).cloned().collect::<Vec<_>>().join(", ");
+
+    format!(
+        "You are ladX Studio, an expert PLC engineering assistant running locally. \
+         The user is working on a project named \"{name}\" targeting {vendor}.\n\n\
+         Project manifest (names only — full source is not yet available; ask the user to paste a routine if you need its body):\n\
+         - Routines: {routines}\n\
+         - Tags: {tags}\n\
+         - UDTs: {udts}\n\
+         - AOIs: {aois}\n\n\
+         When the user asks about specific routines, tags, or UDTs, refer to them by exact name. \
+         If a name they mention isn't in the manifest, say so — do not hallucinate.\n\
+         When generating code, target IEC 61131-3 Structured Text by default; use ladder XML only if asked.\n\
+         Be terse and engineer-to-engineer. Skip apologies and disclaimers.",
+        name = project.name,
+        vendor = project.vendor,
+        routines = if routines.is_empty() { "(none)".into() } else { routines },
+        tags = if tags.is_empty() { "(none)".into() } else { tags },
+        udts = if udts.is_empty() { "(none)".into() } else { udts },
+        aois = if aois.is_empty() { "(none)".into() } else { aois },
+    )
 }

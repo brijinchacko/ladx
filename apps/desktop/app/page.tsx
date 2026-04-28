@@ -1,13 +1,14 @@
 "use client";
 
 import { DesktopShell } from "@/components/desktop-shell";
+import { ProjectsList } from "@/components/projects-list";
+import { UploadProjectButton } from "@/components/upload-project-button";
 import {
   type ActivationRecord,
   type OllamaStatus,
   licenceStatus,
   ollamaStatus,
 } from "@/lib/invoke";
-import { Button } from "@ladx/ui";
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -106,16 +107,17 @@ export default function HomePage() {
           }
         />
 
-        <section className="border border-ink-100 rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-2">Next steps</h2>
-          <p className="text-sm text-ink-500 mb-4">
-            Phase 2 is in motion. Project Reader (TIA Openness, Studio 5000, TwinCAT, CODESYS) and
-            the ladder generator land in subsequent commits. The validator pipeline is already
-            shared with cloud — see <code>ladx-validator</code> in <code>packages/core</code>.
-          </p>
-          <Link href="/chat">
-            <Button variant="primary">Open chat</Button>
-          </Link>
+        <section>
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <h2 className="text-lg font-semibold">Projects</h2>
+              <p className="text-xs text-ink-500">
+                L5X (Rockwell) and PLCopen TC6 .xml. Manifest stored locally; no cloud upload.
+              </p>
+            </div>
+            <UploadProjectButton />
+          </div>
+          <ProjectsList />
         </section>
       </div>
     </DesktopShell>
