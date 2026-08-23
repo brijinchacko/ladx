@@ -3,17 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "jsx": "react-jsx",
-
-    // DELIBERATE, TEMPORARY DEVIATION. See docs/adr/0001.
-    //
-    // ~14,900 lines migrated from the Edwartens India CRM, which is `strict` but
-    // does not set this flag. Enabling it yields 81 errors, measured to be all
-    // of the remaining ones, all the same shape (`arr[i]` used as `T`), all in
-    // code running in production today. A migration commit should change where
-    // code lives, not how it behaves. Delete this line when the count is zero;
-    // lib/tree.ts (29) and components/LadxStudio.tsx (20) are half the total.
-    "noUncheckedIndexedAccess": false
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*"]
 }

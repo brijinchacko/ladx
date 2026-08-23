@@ -98,7 +98,7 @@ export function LadxMark({ size = 28 }: { size?: number }) {
   // version read as a gate rather than a ladder.
   const RAIL_W = 88;
   const RAILS = [336, 600];
-  const INNER = [424, 600];
+  const [INNER_LEFT, INNER_RIGHT] = [424, 600];
   const RUNGS = [274, 464, 654];
   const RUNG_H = 96;
 
@@ -118,9 +118,9 @@ export function LadxMark({ size = 28 }: { size?: number }) {
       {RUNGS.map((y, i) => (
         <rect
           key={y}
-          x={INNER[0]}
+          x={INNER_LEFT}
           y={y}
-          width={INNER[1] - INNER[0]}
+          width={INNER_RIGHT - INNER_LEFT}
           height={RUNG_H}
           fill={i === 1 ? LADX_GREEN : "#F8FAFC"}
         />

@@ -58,6 +58,7 @@ export default function TagTable({
     const el = boxRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(([entry]) => {
+      if (!entry) return;
       const w = entry.contentRect.width;
       // Floored at 0.62: below that the type stops being readable and the
       // right answer is to pop the table out, which the button offers.

@@ -6,8 +6,9 @@ import { eq, lt } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { db } from "../db/client";
 import { type Session, type User, sessions, users } from "../db/schema";
+import { SESSION_COOKIE } from "./cookie";
 
-export const SESSION_COOKIE = "ladx_session";
+export { SESSION_COOKIE } from "./cookie";
 const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 export async function createSession(userId: string): Promise<Session> {

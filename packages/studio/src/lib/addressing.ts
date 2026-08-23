@@ -68,27 +68,30 @@ export function parseAddress(raw: string): ParsedAddress | null {
   const s = raw.trim().toUpperCase();
   if (!s) return null;
 
-  const bit = BIT_RE.exec(s);
-  if (bit) {
+  // None of the three groups is optional, so a match has all of them. The
+  // guards are what say that to the compiler; falling through to null keeps
+  // the promise the doc comment makes — unreadable in, null out.
+  const [, bitArea, bitByte, bitIndex] = BIT_RE.exec(s) ?? [];
+  if (bitArea !== undefined && bitByte !== undefined && bitIndex !== undefined) {
     return {
       kind: "bit",
-      area: bit[1].toUpperCase() as "I" | "Q" | "M",
-      byte: Number(bit[2]),
-      bit: Number(bit[3]),
+      area: bitArea.toUpperCase() as "I" | "Q" | "M",
+      byte: Number(bitByte),
+      bit: Number(bitIndex),
     };
   }
 
-  const word = WORD_RE.exec(s);
-  if (word) {
-    const n = Number(word[2]);
+  const [, wordArea, wordNumber] = WORD_RE.exec(s) ?? [];
+  if (wordArea !== undefined && wordNumber !== undefined) {
+    const n = Number(wordNumber);
     // A word starts on an even byte. MW1 would straddle MW0 and MW2.
     if (n % 2 !== 0) return null;
-    return { kind: "word", area: word[1].toUpperCase() as "IW" | "QW" | "MW", word: n };
+    return { kind: "word", area: wordArea.toUpperCase() as "IW" | "QW" | "MW", word: n };
   }
 
-  const idx = INDEX_RE.exec(s);
-  if (idx) {
-    return { kind: "index", area: idx[1].toUpperCase() as "T" | "C", index: Number(idx[2]) };
+  const [, idxArea, idxNumber] = INDEX_RE.exec(s) ?? [];
+  if (idxArea !== undefined && idxNumber !== undefined) {
+    return { kind: "index", area: idxArea.toUpperCase() as "T" | "C", index: Number(idxNumber) };
   }
 
   return null;

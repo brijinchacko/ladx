@@ -2,7 +2,7 @@
 // validation happens in the route handler / server component, which has
 // DB access. Edge runtime can't easily talk to Postgres, so we don't try.
 
-import { SESSION_COOKIE } from "@/lib/auth/session";
+import { SESSION_COOKIE } from "@/lib/auth/cookie";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 

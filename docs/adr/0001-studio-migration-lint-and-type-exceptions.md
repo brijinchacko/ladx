@@ -1,7 +1,7 @@
 # ADR 0001, Studio enters the monorepo under its original strictness contract
 
 **Date:** 2026-08-23
-**Status:** Accepted, time-limited
+**Status:** Accepted, time-limited — the type half is paid off (see Resolution)
 
 ## Context
 
@@ -45,7 +45,8 @@ Fixed during the migration, because these are mechanical and provably safe:
 
 Deferred, and recorded here:
 
-- `packages/studio/tsconfig.json` sets `noUncheckedIndexedAccess: false`
+- ~~`packages/studio/tsconfig.json` sets `noUncheckedIndexedAccess: false`~~
+  — **paid off**, see Resolution below
 - `biome.json` has one `overrides` entry for `packages/studio/**` disabling
   `useExhaustiveDependencies`, `noArrayIndexKey`, `noNonNullAssertion`,
   `useSingleVarDeclarator`, `noParameterAssign`, and three `a11y` rules
@@ -68,7 +69,7 @@ Every deferred rule requires changing behaviour, not formatting:
 - **`noNonNullAssertion`** needs real null handling designed into the editor
   paths, not `?.` sprinkled until the linter stops complaining.
 - **`noUncheckedIndexedAccess`** touches the hot paths of the scan engine and the
-  series/parallel normaliser.
+  series/parallel normaliser. *(Paid off — see Resolution.)*
 
 A migration commit should change where code lives, not how it behaves. Mixing a
 move with 300 behavioural edits to working, unbenchmarked, student-facing code
@@ -86,6 +87,51 @@ means that when something breaks, there is no way to tell which change did it.
   feeds it and holds the largest share of the errors.
 - Order of work: engine tests → `tree.ts` → `LadxStudio.tsx` → the rest → delete
   both exceptions and this ADR's "time-limited" status.
+
+## Resolution — `noUncheckedIndexedAccess`
+
+The tsconfig override is gone; the package now compiles under the root contract
+unchanged. The Biome overrides remain and are still debt.
+
+Done in the order this ADR set out. Tests first: 46 characterisation tests for
+`lib/tree.ts` and 17 more for `lib/engine.ts`, covering the shapes and the
+solved logic that the indexed accesses decide — series and parallel, the
+mid-rung branch, the empty leg, the seal-in, the branch edge moves, and the
+`moveNode` off-by-one. They were written against the unfixed code and pinned
+its behaviour before a line of it changed. Two of them pinned a shape different
+from the one the ADR author would have predicted, which is the argument for
+writing them first.
+
+All 81 errors were the shape this ADR describes. Almost all resolved to saying,
+once, in one place, the thing the code was already relying on:
+
+- Where a length test and a lookup said the same thing, they were collapsed —
+  `xs.length ? xs[xs.length - 1] : null` became `xs[xs.length - 1] ?? null`, and
+  `if (h.length === 0) return h; const prev = h[h.length - 1]` became a guard on
+  `prev` itself.
+- `parentSeriesOf` in `tree.ts` took its index first and returned null when
+  there is none, which is what its `path.length === 0` test already meant. That
+  one change cleared eleven of the twenty-nine errors in the file, because every
+  branch-edge move reads `index` from it.
+- `TOUR` and `HELP` are typed `[T, ...T[]]`. Both are non-empty by construction
+  and both readers already assumed it — a clamped index, and a `?? HELP[0]`.
+- Clamped array lookups that genuinely cannot miss (`ZOOMS[...]`) took a
+  fallback to the current value, with a comment saying the fallback is for the
+  compiler rather than for runtime.
+
+Three latent bugs were found on the way and fixed, all in code paths that would
+have produced `undefined` where a value was required:
+
+- `closeRoutineTab` set the active routine to `undefined` when asked to close a
+  tab that was not open (`next[-1]`). It now stays put.
+- The insert-before/after context menu passed `undefined` as the insert index
+  for an element at the root of a rung. It now inserts at 0.
+- `drawNode` in `lib/pdf.ts` threw on a branch with no legs, failing the whole
+  export. `normalise` collapses those, so it took the guard the empty-series
+  case beside it already had.
+
+None of the 67 tests changed behaviour, and the whole workspace still
+typechecks.
 
 ## Note
 

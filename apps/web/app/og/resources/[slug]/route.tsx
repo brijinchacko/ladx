@@ -2,8 +2,9 @@ import { getPost } from "@/content/posts";
 import { ImageResponse } from "next/og";
 
 export const runtime = "nodejs";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+// Not exported: a Route Handler may only export the fields Next.js defines.
+// ImageResponse takes this as an option and sets the content type itself.
+const size = { width: 1200, height: 630 };
 
 /**
  * Share cards, generated per article.

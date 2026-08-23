@@ -30,7 +30,7 @@ export type HelpBlock =
   | { kind: "note"; text: string }
   | { kind: "instructions"; group: string };
 
-export const HELP: HelpSection[] = [
+export const HELP: [HelpSection, ...HelpSection[]] = [
   /* ── Getting started ───────────────────────────────────────────── */
   {
     id: "start",

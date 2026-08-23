@@ -176,13 +176,13 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
    * adds and removes; a plain click starts again.
    */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const selectedId = selectedIds.length ? selectedIds[selectedIds.length - 1] : null;
+  const selectedId = selectedIds[selectedIds.length - 1] ?? null;
 
   /** Kept call-compatible with the single-selection setter it replaced. */
   const setSelectedId = useCallback(
     (next: string | null | ((cur: string | null) => string | null)) => {
       setSelectedIds((cur) => {
-        const one = cur.length ? cur[cur.length - 1] : null;
+        const one = cur[cur.length - 1] ?? null;
         const value = typeof next === "function" ? next(one) : next;
         return value === null ? [] : [value];
       });
@@ -365,7 +365,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
       setActiveRoutineId((active) => {
         if (active !== id) return active;
         const was = cur.indexOf(id);
-        return next[Math.min(was, next.length - 1)];
+        return next[Math.min(was, next.length - 1)] ?? active;
       });
       return next;
     });
@@ -509,7 +509,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   const zoomBy = useCallback((dir: 1 | -1) => {
     setZoom((z) => {
       const i = ZOOMS.indexOf(z);
-      return ZOOMS[Math.min(ZOOMS.length - 1, Math.max(0, (i < 0 ? 4 : i) + dir))];
+      return ZOOMS[Math.min(ZOOMS.length - 1, Math.max(0, (i < 0 ? 4 : i) + dir))] ?? z;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1001,7 +1001,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   const addressOf = useCallback(
     (tagName: string) => {
       if (!tagName) return undefined;
-      const base = tagName.includes(".") ? tagName.split(".")[0] : tagName;
+      const base = tagName.split(".")[0] ?? tagName;
       return tagsRef.current.find((t) => t.name === base)?.address;
       // Reads through a ref, so it does not need to be rebuilt when tags
       // change, the rung re-renders for its own reasons and picks up the
@@ -1012,7 +1012,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   );
 
   const driveTag = useCallback((tagName: string) => {
-    const base = tagName.includes(".") ? tagName.split(".")[0] : tagName;
+    const base = tagName.split(".")[0] ?? tagName;
     const t = tagsRef.current.find((x) => x.name === base);
     if (!t || !t.isInput) return undefined;
     const kind = t.device ?? defaultDevice(t);
@@ -1229,8 +1229,8 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
 
   function undo() {
     setPast((h) => {
-      if (h.length === 0) return h;
       const prev = h[h.length - 1];
+      if (!prev) return h;
       setProgram((cur) => {
         if (cur) setFuture((f) => [cur, ...f].slice(0, HISTORY_DEPTH));
         programRef.current = prev;
@@ -1244,8 +1244,8 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
 
   function redo() {
     setFuture((f) => {
-      if (f.length === 0) return f;
       const next = f[0];
+      if (!next) return f;
       setProgram((cur) => {
         if (cur) setPast((h) => [...h, cur].slice(-HISTORY_DEPTH));
         programRef.current = next;
@@ -1443,13 +1443,14 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
     mutateRungs(
       (rungs) => {
         const from = rungs.findIndex((r) => r.id === rungId);
-        if (from === -1) return rungs;
+        const moved = rungs[from];
+        if (from === -1 || !moved) return rungs;
         // The same arithmetic as moving a contact: removing shifts everything
         // after it down one, so a target captured beforehand is one too far.
         if (before === from || before === from + 1) return rungs;
         const without = rungs.filter((_, i) => i !== from);
         const at = from < before ? before - 1 : before;
-        return [...without.slice(0, at), rungs[from], ...without.slice(at)];
+        return [...without.slice(0, at), moved, ...without.slice(at)];
       },
       { rungId },
     );
@@ -1604,7 +1605,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
     const r = activeRungs.find((x: Rung) => x.id === rungId) as Rung | undefined;
     const at = r ? pathOfId(rungLogic(r), elementId) : null;
     const parent = at ? at.slice(0, -1) : [];
-    const i = at ? at[at.length - 1] : 0;
+    const i = at?.[at.length - 1] ?? 0;
 
     return [
       ...QUICK_INPUTS.map((t) => ({
@@ -2045,7 +2046,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
       );
       if (hit) return hit.id;
     }
-    return cursor?.rungId ?? activeRungs[activeRungs.length - 1].id;
+    return cursor?.rungId ?? activeRungs[activeRungs.length - 1]?.id ?? null;
   }
 
   /** Branch around whatever is selected, the toolbar route to a branch. */
@@ -2066,6 +2067,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
       if (!path || path.length === 0) continue;
       const parentPath = path.slice(0, -1);
       const index = path[path.length - 1];
+      if (index === undefined) continue;
       setLogic(r.id, (cur) => branchSpan(cur, parentPath, index, index) as never);
       // branchSpan puts the enclosed span in leg 0 and an empty leg 1.
       setSelectedId(null);
@@ -2140,8 +2142,9 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
       return;
     }
     const path = selectedId ? pathOfId(root, selectedId) : null;
-    if (path && path.length > 0) {
-      insertInstruction(rungId, path.slice(0, -1), path[path.length - 1] + 1, a.type);
+    const after = path?.[path.length - 1];
+    if (path && after !== undefined) {
+      insertInstruction(rungId, path.slice(0, -1), after + 1, a.type);
     } else {
       insertInstruction(rungId, [], root.children.length, a.type);
     }

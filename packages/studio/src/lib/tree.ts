@@ -95,8 +95,8 @@ export function nodeAt(root: LadderNode, path: Path): LadderNode | null {
 export function pathOfId(root: LadderNode, id: string, base: Path = []): Path | null {
   if (root.id === id) return base;
   if (!isBranch(root)) return null;
-  for (let i = 0; i < root.children.length; i++) {
-    const hit = pathOfId(root.children[i], id, [...base, i]);
+  for (const [i, child] of root.children.entries()) {
+    const hit = pathOfId(child, id, [...base, i]);
     if (hit) return hit;
   }
   return null;
@@ -121,9 +121,9 @@ function replaceChildren(node: LadderNode, children: LadderNode[]): LadderNode {
 }
 
 function mapAt(root: LadderNode, path: Path, fn: (n: LadderNode) => LadderNode): LadderNode {
-  if (path.length === 0) return fn(root);
-  if (!isBranch(root)) return root;
   const [head, ...rest] = path;
+  if (head === undefined) return fn(root);
+  if (!isBranch(root)) return root;
   const child = root.children[head];
   if (!child) return root;
   const next = [...root.children];
@@ -207,7 +207,8 @@ export function branchSpan(
       // The existing span becomes the first leg; the second leg starts empty
       // and shows as a drop target, which is how a student sees where the
       // parallel path goes before they have put anything in it.
-      const legA = span.length === 1 && span[0].kind !== "el" ? span[0] : series(span);
+      const [only] = span;
+      const legA = span.length === 1 && only && only.kind !== "el" ? only : series(span);
       const branch = parallel([legA, series([])]);
 
       children.splice(lo, hi - lo + 1, branch);
@@ -248,13 +249,12 @@ export function normalise(node: LadderNode): LadderNode {
     // Flatten nested series: (a (b c) d) -> (a b c d)
     children = children.flatMap((c) => (c.kind === "series" ? c.children : [c]));
     // A parallel with a single leg is not a parallel.
-    children = children.flatMap((c) =>
-      c.kind === "parallel" && c.children.length === 1
-        ? c.children[0].kind === "series"
-          ? c.children[0].children
-          : [c.children[0]]
-        : [c],
-    );
+    children = children.flatMap((c) => {
+      if (c.kind !== "parallel" || c.children.length !== 1) return [c];
+      const leg = c.children[0];
+      if (!leg) return [c];
+      return leg.kind === "series" ? leg.children : [leg];
+    });
     return replaceChildren(node, children);
   }
 
@@ -265,10 +265,10 @@ export function normalise(node: LadderNode): LadderNode {
   // Every leg emptied: the branch has no meaning left.
   if (nonEmpty.length === 0) return series([]);
   // One real leg and nothing else: unwrap.
-  if (children.length === 1) {
-    return children[0].kind === "series" && children[0].children.length === 1
-      ? children[0].children[0]
-      : children[0];
+  const [onlyLeg] = children;
+  if (children.length === 1 && onlyLeg) {
+    if (onlyLeg.kind !== "series" || onlyLeg.children.length !== 1) return onlyLeg;
+    return onlyLeg.children[0] ?? onlyLeg;
   }
   return replaceChildren(node, children);
 }
@@ -294,8 +294,9 @@ export function fromBranches(branches: Element[][] | undefined): SeriesNode {
     ...(e.dest !== undefined ? { dest: e.dest } : {}),
   });
 
-  if (legs.length === 0) return series([]);
-  if (legs.length === 1) return series(legs[0].map(toEl));
+  const [firstLeg] = legs;
+  if (!firstLeg) return series([]);
+  if (legs.length === 1) return series(firstLeg.map(toEl));
   return series([parallel(legs.map((leg) => series(leg.map(toEl))))]);
 }
 
@@ -374,11 +375,13 @@ export function updateElementById(
 
 /** The parent series of a node, and the node's index within it. */
 function parentSeriesOf(root: LadderNode, path: Path) {
-  if (path.length === 0) return null;
+  // No last index means the path IS the root, which has no parent series.
+  const index = path[path.length - 1];
+  if (index === undefined) return null;
   const parentPath = path.slice(0, -1);
   const parent = nodeAt(root, parentPath);
   if (!parent || parent.kind !== "series") return null;
-  return { parentPath, parent, index: path[path.length - 1] };
+  return { parentPath, parent, index };
 }
 
 /** Take the sibling on one side of the branch and put it inside the first leg. */
@@ -398,6 +401,7 @@ export function extendBranch(
 
   const legs = [...par.children];
   const firstLeg = legs[0];
+  if (!firstLeg) return root;
   const legChildren = firstLeg.kind === "series" ? [...firstLeg.children] : [firstLeg];
   const nextLeg = series(
     side === "left" ? [neighbour, ...legChildren] : [...legChildren, neighbour],
@@ -426,10 +430,10 @@ export function shrinkBranch(
 
   const legs = [...par.children];
   const firstLeg = legs[0];
+  if (!firstLeg) return root;
   const legChildren = firstLeg.kind === "series" ? [...firstLeg.children] : [firstLeg];
-  if (legChildren.length === 0) return root;
-
-  const moved = side === "left" ? legChildren.shift()! : legChildren.pop()!;
+  const moved = side === "left" ? legChildren.shift() : legChildren.pop();
+  if (!moved) return root;
   legs[0] = series(legChildren);
 
   const children = [...parent.children];
@@ -494,6 +498,7 @@ export function moveNode(
 
   const fromParent = fromPath.slice(0, -1);
   const fromIndex = fromPath[fromPath.length - 1];
+  if (fromIndex === undefined) return root;
 
   // Same container, same slot, or the slot immediately after itself, both
   // mean "leave it where it is", and doing the remove/insert anyway would
