@@ -63,3 +63,17 @@ export { default as LadderPreview } from "./components/LadderPreview";
 /* ── Teaching surfaces (optional) ───────────────────────────────────── */
 export { default as LadxExercises } from "./components/LadxExercises";
 export { default as LadxMarking } from "./components/LadxMarking";
+
+/* ── Conversion ─────────────────────────────────────────────────────── */
+//
+// Taking a program out to another platform. Every target reports what did not
+// survive the trip, because ladder carries geometry that text cannot.
+export {
+  TARGETS,
+  convert,
+  summarise,
+  toNeutralText,
+  toPlcopenXml,
+  toStructuredText,
+} from "./lib/convert";
+export type { ConversionNote, ConversionResult, Severity, Target } from "./lib/convert";

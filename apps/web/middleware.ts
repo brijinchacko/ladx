@@ -18,7 +18,7 @@ import type { NextRequest } from "next/server";
  *
  * Adding a page should not require editing auth. Adding a *private* page should.
  */
-const PROTECTED_PREFIXES = ["/chat", "/projects", "/memory", "/settings"];
+const PROTECTED_PREFIXES = ["/chat", "/projects", "/memory", "/settings", "/knowledge"];
 
 /**
  * API routes the session check does not apply to.

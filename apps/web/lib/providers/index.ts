@@ -1,4 +1,10 @@
-import { classifyHttp, listModelsCompat, splitSystem, streamCompat } from "./openai-compatible";
+import {
+  classifyHttp,
+  embedCompat,
+  listModelsCompat,
+  splitSystem,
+  streamCompat,
+} from "./openai-compatible";
 import {
   type Credentials,
   type ModelInfo,
@@ -55,6 +61,14 @@ const openrouter: Provider = {
       baseUrl: "https://openrouter.ai/api/v1",
       headers: attribution,
     }),
+  // OpenRouter proxies embeddings to whichever upstream owns the model, so the
+  // same key that streams chat also builds an index.
+  defaultEmbedModel: "openai/text-embedding-3-small",
+  embed: (creds, opts) =>
+    embedCompat(creds, opts, {
+      baseUrl: "https://openrouter.ai/api/v1",
+      headers: attribution,
+    }),
 };
 
 const openai: Provider = {
@@ -71,6 +85,8 @@ const openai: Provider = {
   listModels: (creds) => listModelsCompat(creds, { baseUrl: "https://api.openai.com/v1" }),
   verify: (creds) => verifyByListing(openai, creds),
   stream: (creds, opts) => streamCompat(creds, opts, { baseUrl: "https://api.openai.com/v1" }),
+  defaultEmbedModel: "text-embedding-3-small",
+  embed: (creds, opts) => embedCompat(creds, opts, { baseUrl: "https://api.openai.com/v1" }),
 };
 
 /** Attribution headers OpenRouter uses for its app leaderboard. */
@@ -210,6 +226,14 @@ const custom: Provider = {
   stream(creds, opts) {
     if (!creds.baseUrl) throw new ProviderError("bad_request", "a base URL is required");
     return streamCompat(creds, opts, { baseUrl: creds.baseUrl });
+  },
+  // Most OpenAI-compatible servers implement /embeddings. The ones that do not
+  // will return a 404, which surfaces as a clear provider error rather than a
+  // silent empty index.
+  defaultEmbedModel: "text-embedding-3-small",
+  embed(creds, opts) {
+    if (!creds.baseUrl) throw new ProviderError("bad_request", "a base URL is required");
+    return embedCompat(creds, opts, { baseUrl: creds.baseUrl });
   },
 };
 

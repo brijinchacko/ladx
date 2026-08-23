@@ -97,6 +97,13 @@ export class ProviderError extends Error {
   }
 }
 
+export interface EmbedOptions {
+  model: string;
+  /** Batched, because embedding a manual one chunk at a time is all latency. */
+  input: string[];
+  signal?: AbortSignal;
+}
+
 export interface Provider {
   readonly kind: ProviderKind;
   readonly label: string;
@@ -110,4 +117,17 @@ export interface Provider {
   verify(creds: Credentials): Promise<void>;
   /** Token deltas. Throws `ProviderError`. */
   stream(creds: Credentials, opts: StreamOptions): AsyncIterable<string>;
+
+  /**
+   * Vectors for a batch of text. Absent when the provider has no embeddings API.
+   *
+   * Anthropic is the notable absence: it has no embeddings endpoint at all, and
+   * recommends a third party. Rather than silently failing later, the capability
+   * is optional here so the Knowledge product can say up front that this key
+   * cannot build an index.
+   */
+  embed?(creds: Credentials, opts: EmbedOptions): Promise<number[][]>;
+
+  /** A sensible embedding model, when the provider has one. */
+  readonly defaultEmbedModel?: string;
 }

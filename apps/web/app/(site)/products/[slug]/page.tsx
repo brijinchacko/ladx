@@ -56,12 +56,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </div>
           <p className="text-[18px] font-medium leading-snug text-ink-800">{product.tagline}</p>
           <p className="mt-4 text-[16px] leading-relaxed text-ink-600">{product.summary}</p>
-          {product.state === "live" && (
+          {product.open && (
             <Link
-              href="/studio"
+              href={product.open.href}
               className="mt-7 inline-block rounded-sm bg-ink-900 px-5 py-2.5 text-[14.5px] font-semibold text-white hover:opacity-90"
             >
-              Open it now
+              {product.open.label}
             </Link>
           )}
         </div>

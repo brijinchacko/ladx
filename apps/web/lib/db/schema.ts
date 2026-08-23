@@ -15,6 +15,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  real,
   text,
   timestamp,
   uniqueIndex,
@@ -401,3 +402,63 @@ export type ForumThread = typeof forumThreads.$inferSelect;
 export type NewForumThread = typeof forumThreads.$inferInsert;
 export type ForumPost = typeof forumPosts.$inferSelect;
 export type NewForumPost = typeof forumPosts.$inferInsert;
+
+// ----- knowledge -----
+//
+// Documents a user has indexed, and the chunks they were split into.
+//
+// Embeddings are stored as `real[]` rather than a pgvector column. That is a
+// deliberate trade: this database is shared with fifteen unrelated applications,
+// and installing an extension into it to serve one feature is a change to
+// everyone else's server. Similarity is computed in the application over the
+// user's own chunks, which is fine at the scale a single engineer's manual
+// library reaches and is documented in lib/knowledge/search.ts along with the
+// point at which it stops being fine.
+
+export const knowledgeDocs = pgTable(
+  "knowledge_docs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    filename: text("filename"),
+    byteSize: integer("byte_size").notNull().default(0),
+    chunkCount: integer("chunk_count").notNull().default(0),
+    /** Recorded because vectors from different models cannot be compared. */
+    embedModel: text("embed_model").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("knowledge_doc_user_idx").on(t.userId),
+    projectIdx: index("knowledge_doc_project_idx").on(t.projectId),
+  }),
+);
+
+export const knowledgeChunks = pgTable(
+  "knowledge_chunks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    docId: uuid("doc_id")
+      .notNull()
+      .references(() => knowledgeDocs.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** Position in the document, so a citation can say where it came from. */
+    ordinal: integer("ordinal").notNull(),
+    text: text("text").notNull(),
+    /** Unit length, so cosine similarity is a plain dot product. */
+    embedding: real("embedding").array().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    docIdx: index("knowledge_chunk_doc_idx").on(t.docId),
+    userIdx: index("knowledge_chunk_user_idx").on(t.userId),
+  }),
+);
+
+export type KnowledgeDoc = typeof knowledgeDocs.$inferSelect;
+export type KnowledgeChunk = typeof knowledgeChunks.$inferSelect;

@@ -14,6 +14,13 @@ export type Product = {
   /** Honest limits. Every product has them; hiding them costs more than it saves. */
   limits: string[];
   figure: "sealIn" | "irHub" | "validation" | "scan";
+  /**
+   * Where "open it" goes, for anything a person can actually use today.
+   *
+   * Absent on a product that is still planned, which is what keeps the page
+   * from offering a button that leads nowhere.
+   */
+  open?: { href: string; label: string };
 };
 
 export const PRODUCTS: Product[] = [
@@ -22,6 +29,7 @@ export const PRODUCTS: Product[] = [
     name: "Studio",
     tagline: "Draw a rung. Press run. Watch it conduct.",
     state: "live",
+    open: { href: "/studio", label: "Open Studio" },
     summary:
       "A ladder editor with a scan-accurate simulator behind it. It is the canvas the AI writes onto, and it works entirely on its own with no account and no backend.",
     problem:
@@ -55,7 +63,8 @@ export const PRODUCTS: Product[] = [
     slug: "chat",
     name: "Chat",
     tagline: "Ask for logic. Get logic that compiles.",
-    state: "building",
+    state: "live",
+    open: { href: "/chat", label: "Open Chat" },
     summary:
       "Describe what the machine should do and watch the rungs appear on the canvas. Every answer passes a real compiler before it reaches you, and failures go back to the model rather than to you.",
     problem:
@@ -89,7 +98,8 @@ export const PRODUCTS: Product[] = [
     slug: "convert",
     name: "Convert",
     tagline: "Between platforms, and between languages.",
-    state: "building",
+    state: "live",
+    open: { href: "/convert", label: "Open Convert" },
     summary:
       "Read an L5X and write SCL. Turn ladder into structured text or back. Every conversion comes with a report of what moved cleanly and what did not.",
     problem:
@@ -123,7 +133,8 @@ export const PRODUCTS: Product[] = [
     slug: "docs",
     name: "Documents",
     tagline: "The paperwork, from the code you already wrote.",
-    state: "planned",
+    state: "live",
+    open: { href: "/documents", label: "Browse the templates" },
     summary:
       "Functional design specs, I/O schedules, control narratives and test protocols, generated from the project rather than typed a second time.",
     problem:
@@ -151,7 +162,8 @@ export const PRODUCTS: Product[] = [
     slug: "knowledge",
     name: "Knowledge",
     tagline: "Your manuals, answering questions.",
-    state: "planned",
+    state: "live",
+    open: { href: "/knowledge", label: "Open Knowledge" },
     summary:
       "Drop in the drive manual, the machine spec, the site standard. Ask questions against them and get answers with the page they came from.",
     problem:

@@ -1,6 +1,7 @@
 import {
   type ChatMessage,
   type Credentials,
+  type EmbedOptions,
   type ModelInfo,
   ProviderError,
   type StreamOptions,
@@ -210,4 +211,58 @@ export function splitSystem(messages: ChatMessage[]): {
     system: systems.length ? systems.join("\n\n") : undefined,
     rest: messages.filter((m) => m.role !== "system"),
   };
+}
+
+/**
+ * Embeddings, for any endpoint that speaks the OpenAI shape.
+ *
+ * Batched in one request. The response order is not guaranteed to match the
+ * input order, which is a detail easy to miss and impossible to notice later:
+ * the index would simply return the wrong passage for every query, quietly and
+ * plausibly. The `index` field on each item is what says where it belongs, so
+ * the result is placed rather than pushed.
+ */
+export async function embedCompat(
+  creds: Credentials,
+  opts: EmbedOptions,
+  cfg: { baseUrl: string; headers?: Record<string, string> },
+): Promise<number[][]> {
+  const res = await fetch(`${cfg.baseUrl}/embeddings`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${creds.apiKey}`,
+      ...cfg.headers,
+    },
+    body: JSON.stringify({ model: opts.model, input: opts.input }),
+    signal: opts.signal,
+  }).catch(() => null);
+
+  if (!res) throw new ProviderError("network", "could not reach the provider");
+  if (!res.ok) throw classifyHttp(res.status, await res.text().catch(() => ""));
+
+  const json = (await res.json()) as {
+    data?: { embedding?: number[]; index?: number }[];
+  };
+  const data = json.data ?? [];
+  if (data.length !== opts.input.length) {
+    throw new ProviderError(
+      "bad_request",
+      `asked for ${opts.input.length} embeddings and got ${data.length}`,
+    );
+  }
+
+  const out: number[][] = new Array(opts.input.length);
+  data.forEach((item, i) => {
+    const at = typeof item.index === "number" ? item.index : i;
+    if (!item.embedding?.length) {
+      throw new ProviderError("bad_request", "provider returned an empty embedding");
+    }
+    out[at] = item.embedding;
+  });
+
+  for (let i = 0; i < out.length; i++) {
+    if (!out[i]) throw new ProviderError("bad_request", `no embedding returned for input ${i}`);
+  }
+  return out;
 }

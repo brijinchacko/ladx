@@ -7,6 +7,8 @@ dist/
 build/
 out/
 .next/
+# Production builds go here so they cannot clobber the dev server's .next
+.next-build/
 .turbo/
 *.tsbuildinfo
 
