@@ -116,7 +116,7 @@ export default function Panel({
  * The draggable edge between a panel and the canvas.
  *
  * Uses pointer capture, so a fast drag that leaves the handle keeps resizing
- * instead of sticking — the single most common flaw in hand-built splitters.
+ * instead of sticking, the single most common flaw in hand-built splitters.
  * The keyboard works too: a splitter you can only reach with a mouse is one
  * more thing that quietly excludes somebody.
  */
@@ -201,7 +201,7 @@ export function Resizer({
         touchAction: "none",
       }}
     >
-      {/* A thin grip that darkens on hover — the handle is 7px for an easy
+      {/* A thin grip that darkens on hover, the handle is 7px for an easy
           target, the visible line is 3px so it reads as a seam. */}
       <div
         className={css.seamGrip}

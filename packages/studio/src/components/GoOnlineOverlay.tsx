@@ -10,7 +10,7 @@ import { CPU } from "../lib/addressing";
  * Pressing Simulate used to flip a flag: the rungs turned green between one
  * frame and the next, and students read that as the button having done
  * nothing in particular. On real hardware going online is a sequence you
- * watch — the editor finds the controller, checks that what is in it matches
+ * watch, the editor finds the controller, checks that what is in it matches
  * what is on screen, and only then does the processor go to RUN.
  *
  * That sequence is the thing worth teaching, so it is shown, it takes long
@@ -19,7 +19,7 @@ import { CPU } from "../lib/addressing";
  * that lied about what it was doing would teach the wrong thing twice over.
  *
  * Every line is also sent to the message log, so when the overlay closes the
- * record is still there — the panel at the bottom is where a student is
+ * record is still there, the panel at the bottom is where a student is
  * taught to look, and a dialog that takes its content away with it teaches
  * them to read fast instead of to read the log.
  */

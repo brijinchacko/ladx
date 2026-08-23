@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Chivo, JetBrains_Mono, Public_Sans } from "next/font/google";
+import { JetBrains_Mono, Public_Sans, Saira } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
 
@@ -10,7 +10,7 @@ import "./globals.css";
  * makes it plain and extremely legible at the small sizes a page full of tag
  * names needs. Chivo for headings: a grotesque with squared terminals that
  * reads as industrial signage. JetBrains Mono for anything that lines up in a
- * column — addresses, mnemonics, scan times.
+ * column: addresses, mnemonics, scan times.
  *
  * Self-hosted by next/font, so there is no render-blocking request to Google
  * and no layout shift when the face arrives.
@@ -21,9 +21,9 @@ const sans = Public_Sans({
   variable: "--font-sans",
 });
 
-const display = Chivo({
+const display = Saira({
   subsets: ["latin"],
-  weight: ["700", "800"],
+  weight: ["600", "700", "800"],
   display: "swap",
   variable: "--font-display",
 });
@@ -39,7 +39,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://ladx.ai";
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: "LADX — the AI workbench for automation engineers",
+    default: "LADX, the AI workbench for automation engineers",
     // Pages set their own title; this keeps the brand on the end of it.
     template: "%s · LADX",
   },
@@ -59,9 +59,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "LADX",
-    title: "LADX — the AI workbench for automation engineers",
+    title: "LADX, the AI workbench for automation engineers",
     description:
-      "Ladder logic you can draw, run and convert — with every generated line validated first.",
+      "Ladder logic you can draw, run and convert, with every generated line validated first.",
     url: APP_URL,
     // The wordmark doubles as the share card. A dedicated 1200×630 image is
     // better and comes with the marketing site; this stops the card from
@@ -70,9 +70,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "LADX — the AI workbench for automation engineers",
+    title: "LADX, the AI workbench for automation engineers",
     description:
-      "Ladder logic you can draw, run and convert — with every generated line validated first.",
+      "Ladder logic you can draw, run and convert, with every generated line validated first.",
     images: ["/brand/wordmark.png"],
   },
 };

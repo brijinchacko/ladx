@@ -1,4 +1,4 @@
-// POST /api/validate-code — runs the Rust ladx-validate CLI against the
+// POST /api/validate-code, runs the Rust ladx-validate CLI against the
 // supplied source. Currently ST only; ladder-XML validation lands when
 // the generator emits real PLCopen.
 

@@ -6,7 +6,7 @@ import type { Element, LadxProgram } from "../lib/types";
  * A submitted program, drawn read-only for marking.
  *
  * Text would be quicker to build and useless to mark: a trainer needs to see
- * the rung, because the mistakes in ladder are structural — a contact in the
+ * the rung, because the mistakes in ladder are structural: a contact in the
  * wrong branch, a missing seal-in, a coil on the wrong tag. Those are visible
  * in a diagram and invisible in a list.
  */
@@ -37,7 +37,7 @@ function Box({ el }: { el: Element }) {
   return (
     <span className="flex flex-col items-center shrink-0">
       <span className="text-[9.5px] font-mono text-text-muted mb-0.5 max-w-[7rem] truncate">
-        {el.tag || "—"}
+        {el.tag || "-"}
       </span>
       <span
         className={`flex flex-col items-center justify-center rounded border-2 ${

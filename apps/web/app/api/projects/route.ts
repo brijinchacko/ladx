@@ -1,5 +1,5 @@
-// GET /api/projects — list current user's projects.
-// POST /api/projects — multipart upload: store the file, run the Rust
+// GET /api/projects, list current user's projects.
+// POST /api/projects, multipart upload: store the file, run the Rust
 // parser, persist a row keyed to the user.
 
 import { getApiUser } from "@/lib/auth/server";
@@ -10,7 +10,7 @@ import { getStorage } from "@/lib/storage";
 import { eq } from "drizzle-orm";
 
 const ACCEPTED_EXT = new Set(["xml", "l5x"]);
-const MAX_BYTES = 50 * 1024 * 1024; // 50 MB — bigger projects are rare.
+const MAX_BYTES = 50 * 1024 * 1024; // 50 MB, bigger projects are rare.
 const VENDOR_VALUES = ["siemens", "rockwell", "beckhoff", "codesys", "mitsubishi"] as const;
 type Vendor = (typeof VENDOR_VALUES)[number];
 
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!ACCEPTED_EXT.has(ext)) {
     return Response.json(
-      { error: `unsupported format .${ext} — accepted: .l5x, .xml (PLCopen TC6)` },
+      { error: `unsupported format .${ext}: accepted: .l5x, .xml (PLCopen TC6)` },
       { status: 415 },
     );
   }
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   const storage = await getStorage();
   const stored = await storage.put(file.name, bytes);
 
-  // Parse via the Rust CLI. Persistence row is created either way — if the
+  // Parse via the Rust CLI. Persistence row is created either way, if the
   // parse fails, the row records the error and the user can retry.
   const localPath = await storage.resolveLocalPath(stored.key);
 

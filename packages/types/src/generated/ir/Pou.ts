@@ -5,6 +5,6 @@ import type { Tag } from "./Tag";
 
 export type Pou = { name: string, kind: PouKind, body: PouBody, 
 /**
- * POU-scope tags — locals, and for a function block its interface.
+ * POU-scope tags, locals, and for a function block its interface.
  */
 local_tags: Array<Tag>, comment: string | null, };

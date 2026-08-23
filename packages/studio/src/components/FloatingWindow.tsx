@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * to their second monitor's edge should not have to do it again tomorrow.
  *
  * Dragging and resizing are done with pointer events on a ref rather than React
- * state per mousemove — re-rendering sixty times a second while someone drags
+ * state per mousemove, re-rendering sixty times a second while someone drags
  * makes the whole page stutter, including the video.
  */
 
@@ -26,7 +26,7 @@ type Props = {
   onClose: () => void;
   /**
    * Put the window back where it came from, if it has somewhere to go.
-   * Given, a "dock" control appears beside maximise — a window you can pop
+   * Given, a "dock" control appears beside maximise: a window you can pop
    * out but not put back is a one-way door, and people stop using the
    * pop-out at all rather than risk it.
    */
@@ -71,7 +71,7 @@ export default function FloatingWindow({
    * The height to come back to.
    *
    * Minimising used to hide the children and leave the inline height alone, so
-   * the window stayed its full size with nothing in it — a large empty panel
+   * the window stayed its full size with nothing in it: a large empty panel
    * sitting over the ladder, which is what the black rectangle was.
    */
   const restoreH = useRef<number | null>(null);
@@ -118,7 +118,7 @@ export default function FloatingWindow({
   }, [geo]);
 
   // Collapse to the title bar when minimised, and go back to the height the
-  // window had before — not the default, which would undo a deliberate resize.
+  // window had before, not the default, which would undo a deliberate resize.
   useEffect(() => {
     const el = ref.current;
     if (!el || maximised) return;
@@ -131,7 +131,7 @@ export default function FloatingWindow({
     }
   }, [minimised, maximised]);
 
-  /** Drag by the title bar, or resize by the corner — same mechanics. */
+  /** Drag by the title bar, or resize by the corner, same mechanics. */
   function startPointer(e: React.PointerEvent, mode: "move" | "resize" | "resize-x" | "resize-y") {
     if (maximised && mode === "resize") return;
     if (mode === "move" && maximised) return;
@@ -176,7 +176,7 @@ export default function FloatingWindow({
     window.addEventListener("pointerup", onUp);
   }
 
-  // Escape closes — but only from the window, never swallowing the page's keys.
+  // Escape closes, but only from the window, never swallowing the page's keys.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape" && ref.current?.contains(document.activeElement)) {
@@ -190,7 +190,7 @@ export default function FloatingWindow({
   return (
     <div
       ref={ref}
-      // Fixed, above the page, but with no backdrop — the lesson keeps running.
+      // Fixed, above the page, but with no backdrop, the lesson keeps running.
       className={`fixed z-40 flex flex-col rounded-xl border border-border-hover bg-dark-secondary shadow-2xl overflow-hidden ${
         maximised ? "!inset-4 !w-auto !h-auto" : ""
       }`}

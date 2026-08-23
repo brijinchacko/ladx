@@ -1,4 +1,4 @@
-// POST /api/auth/signup — creates a new user, sets a session cookie.
+// POST /api/auth/signup, creates a new user, sets a session cookie.
 // Returns { id, email, displayName }.
 
 import { hashPassword } from "@/lib/auth/password";
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     const session = await createSession(user.id);
     await setSessionCookie(session.id);
 
-    // Fire-and-forget welcome email — failures don't block signup.
+    // Fire-and-forget welcome email, failures don't block signup.
     const tpl = welcomeEmail({ displayName: user.displayName, appUrl: env.appUrl });
     sendEmail({ to: user.email, subject: tpl.subject, html: tpl.html, text: tpl.text }).catch(
       (err) => console.error("[signup] welcome email failed:", err),

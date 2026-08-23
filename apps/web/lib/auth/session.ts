@@ -1,6 +1,6 @@
 // Session management. The cookie holds the random session id; the row
 // holds the user binding + expiry. Validation prunes expired rows on
-// access. No JWTs, no per-request bcrypt — just a uuid lookup.
+// access. No JWTs, no per-request bcrypt, just a uuid lookup.
 
 import { eq, lt } from "drizzle-orm";
 import { cookies } from "next/headers";

@@ -1,7 +1,7 @@
 import type { Element, ElementType, Rung } from "./types";
 
 /**
- * LADX Mini — the rung as a tree.
+ * LADX Mini, the rung as a tree.
  *
  * The old model stored a rung's condition side as `Element[][]`: a list of
  * parallel branches, each a series chain. That is an OR of ANDs, and it can
@@ -10,7 +10,7 @@ import type { Element, ElementType, Rung } from "./types";
  *     ──[A]──┬──[B]──┬──[C]──( )
  *            └──[D]──┘
  *
- * which is a branch around the middle of a chain — and that is the shape a
+ * which is a branch around the middle of a chain: and that is the shape a
  * student needs the moment they want a branch between two contacts, or want to
  * close a branch before the end of the rung.
  *
@@ -25,7 +25,7 @@ import type { Element, ElementType, Rung } from "./types";
  * special case. Evaluation falls out of the shape: fold for series, some() for
  * parallel.
  *
- * Every edit is expressed as a PATH — the child indices from the root down to a
+ * Every edit is expressed as a PATH, the child indices from the root down to a
  * node. Paths make insert, delete and wrap one small function each, and they
  * survive being handed to a React key or a drag payload.
  */
@@ -49,7 +49,7 @@ export type Path = number[];
 
 let seq = 0;
 /**
- * Ids are generated, never random — Math.random() during render is banned by
+ * Ids are generated, never random, Math.random() during render is banned by
  * the lint rules here and would break any snapshot comparison.
  */
 export function nid(prefix = "n"): string {
@@ -229,7 +229,7 @@ export function addLeg(root: LadderNode, parallelPath: Path): LadderNode {
 /**
  * Tidy the tree after an edit.
  *
- * Editing naturally produces degenerate shapes — a parallel with one leg left
+ * Editing naturally produces degenerate shapes: a parallel with one leg left
  * after a delete, a series nested directly inside a series, an empty leg
  * hanging off a branch that has been emptied. Left alone they accumulate and
  * the rendering slowly drifts away from the logic. Normalising after every
@@ -279,8 +279,8 @@ export function normalise(node: LadderNode): LadderNode {
  * Read the old `Element[][]` shape into a tree.
  *
  * Saved projects, the starter programs and every exercise answer already in the
- * database use the flat form. They are all valid trees — a list of parallel
- * series — so the conversion is exact and nothing needs re-authoring.
+ * database use the flat form. They are all valid trees: a list of parallel
+ * series, so the conversion is exact and nothing needs re-authoring.
  */
 export function fromBranches(branches: Element[][] | undefined): SeriesNode {
   const legs = (branches ?? []).filter((b) => b.length > 0);
@@ -312,7 +312,7 @@ export function toBranches(root: LadderNode): Element[][] {
 
   // Only exact for trees that ARE an OR of ANDs. Anything with a mid-rung
   // branch cannot be represented, so we flatten to the elements in order and
-  // accept that the old format loses the shape — which is precisely why the
+  // accept that the old format loses the shape, which is precisely why the
   // tree is now the stored form and this is only a compatibility shim.
   if (root.kind === "el") return [[asElement(root)]];
   if (root.kind === "parallel") {
@@ -342,7 +342,7 @@ export function rungLogic(rung: Rung): SeriesNode {
 /**
  * Edit one element in place, keeping its position in the rung.
  *
- * Retyping or retagging must not move an instruction — a student who changes a
+ * Retyping or retagging must not move an instruction: a student who changes a
  * contact from NO to NC expects it to stay exactly where it was, not jump to
  * the end of the rung.
  */
@@ -360,8 +360,7 @@ export function updateElementById(
 
 // ── Moving a branch's edges ───────────────────────────────────────────────
 //
-// A branch is created around a span, but the span is rarely right first time —
-// you draw the branch, then realise the contact just outside it should have
+// A branch is created around a span, but the span is rarely right first time, // you draw the branch, then realise the contact just outside it should have
 // been inside. Real editors let you drag the branch edge over its neighbours,
 // and these are the four moves that make that possible.
 //
@@ -471,7 +470,7 @@ export function isAncestorPath(ancestor: Path, path: Path): boolean {
  *
  * The whole difficulty is one line of arithmetic. Removing a node shifts every
  * later sibling down by one, so an index captured before the removal points at
- * the wrong slot afterwards — drag a contact two places to the right and it
+ * the wrong slot afterwards, drag a contact two places to the right and it
  * lands one place short, every time, which reads as the drag being sloppy
  * rather than as an off-by-one.
  *
@@ -496,7 +495,7 @@ export function moveNode(
   const fromParent = fromPath.slice(0, -1);
   const fromIndex = fromPath[fromPath.length - 1];
 
-  // Same container, same slot, or the slot immediately after itself — both
+  // Same container, same slot, or the slot immediately after itself, both
   // mean "leave it where it is", and doing the remove/insert anyway would
   // renumber siblings for no reason.
   const sameParent =
@@ -527,7 +526,7 @@ export function moveNode(
  * "Delete the branch" means two different things and only one of them is
  * usually wanted. Removing the parallel node takes every contact in every leg
  * with it, which is right when the branch was a mistake and wrong when the
- * branch was drawn around the correct contacts in the wrong place — and that
+ * branch was drawn around the correct contacts in the wrong place: and that
  * second case is the common one, because a branch is normally the last thing
  * added.
  *

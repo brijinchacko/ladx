@@ -1,8 +1,8 @@
-# apps/desktop — ladX.ai Studio (Tauri)
+# apps/desktop, ladX.ai Studio (Tauri)
 
 Windows-first desktop app. **Air-gapped capable.** Ollama for inference.
 
-## CRITICAL — Network policy
+## CRITICAL, Network policy
 
 The desktop app makes EXACTLY ONE outbound HTTP call in its entire lifetime: a licence activation check against `https://auth.ladx.ai/activate`. No telemetry, no analytics, no model downloads, no anything else.
 
@@ -23,12 +23,12 @@ const result = await invoke("parse_project", { path: "/path/to/file" });
 - Project Memory: `%APPDATA%\ladX\rag\` (LanceDB)
 - Audit log: `%APPDATA%\ladX\audit.db` (SQLite)
 - Settings: `%APPDATA%\ladX\settings.json`
-- Cached models reference: `%APPDATA%\ladX\models.json` (NOT the model weights — Ollama owns those)
+- Cached models reference: `%APPDATA%\ladX\models.json` (NOT the model weights, Ollama owns those)
 
 ## Ollama lifecycle (Phase 2+)
 
 - Detect Ollama on startup (`http://localhost:11434/api/tags`)
-- If not running, prompt user to install/start (don't try to start it ourselves — permission issues)
+- If not running, prompt user to install/start (don't try to start it ourselves, permission issues)
 - Cache available models in `models.json`
 - Default model selection logic in `src-tauri/src/ollama/models.rs`
 
@@ -38,10 +38,10 @@ const result = await invoke("parse_project", { path: "/path/to/file" });
 - TIA Openness detection: check for `Siemens.Engineering.dll` in known paths.
 - Studio 5000 detection: check Windows Registry for installed Logix Designer.
 - TwinCAT detection: check for `TwinCAT XAE Shell` registration.
-- A connector being unavailable is fine — disable the related UI rather than erroring.
+- A connector being unavailable is fine, disable the related UI rather than erroring.
 
 ## Things to never do
 - Don't cache PLC project parses to disk in cleartext. Encrypt with a per-install key.
 - Don't add localStorage / sessionStorage / IndexedDB. Use Tauri filesystem APIs.
 - Don't write to `%APPDATA%\ladX\` from the frontend directly. Always go through Tauri commands.
-- Don't bundle Ollama. The model weights alone are 5–20GB. User installs Ollama separately.
+- Don't bundle Ollama. The model weights alone are 5-20GB. User installs Ollama separately.

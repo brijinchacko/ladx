@@ -8,7 +8,7 @@ import { DEVICE_LABEL, INPUT_DEVICES, OUTPUT_DEVICES, type Tag, defaultDevice } 
 import css from "./ladx.module.css";
 
 /**
- * The tag table — a real table.
+ * The tag table: a real table.
  *
  * It was a stack of cards, which is fine for five tags and unreadable for
  * thirty: nothing lines up, so you cannot scan a column to find the free
@@ -19,7 +19,7 @@ import css from "./ladx.module.css";
  * The address column is the point of it. A name says what a signal means; an
  * address says which screw on the controller it lands on. Students who only
  * ever see names cannot read a wiring drawing, and the panel does not know
- * your tag is called Start_PB — it knows I0.0.
+ * your tag is called Start_PB, it knows I0.0.
  */
 export default function TagTable({
   tags,
@@ -40,14 +40,14 @@ export default function TagTable({
    * Scale the table down when the column it is in is too narrow for it.
    *
    * Six columns need about 430px to be readable. In the 200px project column
-   * they do not fit, and the table overflowed sideways — which showed up as a
+   * they do not fit, and the table overflowed sideways, which showed up as a
    * black bar across the bottom of the panel, because that is what a
    * horizontal scrollbar looks like on macOS when scrollbars are set to
    * always show. Shrinking the type is the honest answer: the whole table
    * stays visible and legible-if-small rather than half of it hiding behind a
    * scrollbar nobody expected.
    *
-   * It never scales UP — a wide window gets a normal-sized table, not a
+   * It never scales UP: a wide window gets a normal-sized table, not a
    * stretched one.
    */
   const boxRef = useRef<HTMLDivElement | null>(null);
@@ -214,7 +214,7 @@ export default function TagTable({
         timer · <b style={{ color: ink.muted }}>C</b> counter
         <br />
         In <b style={{ color: ink.muted }}>I0.3</b> the 0 is the byte and the 3 is the bit. Bits run
-        0–7, so I0.7 is followed by I1.0.
+        0-7, so I0.7 is followed by I1.0.
       </div>
     </div>
   );
@@ -277,9 +277,9 @@ function Row({
               }
             }}
             disabled={disabled}
-            placeholder={nextFreeAddress(tag, all) || "—"}
+            placeholder={nextFreeAddress(tag, all) || "-"}
             title={
-              physical ? "Wired to a terminal on the controller" : "Lives in memory — no terminal"
+              physical ? "Wired to a terminal on the controller" : "Lives in memory, no terminal"
             }
             className={css.cellInput}
             data-invalid={problem ? "true" : "false"}
@@ -348,7 +348,7 @@ function Row({
               ))}
             </select>
           ) : (
-            <span style={{ fontSize: 10, color: ink.faint, paddingLeft: 4 }}>—</span>
+            <span style={{ fontSize: 10, color: ink.faint, paddingLeft: 4 }}>-</span>
           )}
         </td>
 

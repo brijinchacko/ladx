@@ -1,4 +1,4 @@
-//! ladx-templates — skeleton crate. See MASTER_BUILD_SPEC.md for scope. Phase 0
+//! ladx-templates, skeleton crate. See MASTER_BUILD_SPEC.md for scope. Phase 0
 //! ships an empty crate so the workspace builds; later phases fill it in.
 
 pub fn ladx_templates_version() -> &'static str {

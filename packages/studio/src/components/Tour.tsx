@@ -26,7 +26,7 @@ function findAnchor(step: TourStep): Box | null {
  *
  *   Skip is visible on every step, not buried at the end.
  *   A step whose target is missing is skipped rather than shown pointing at
- *   nothing — panels here can be closed, so this genuinely happens.
+ *   nothing, panels here can be closed, so this genuinely happens.
  *   The highlight is a cut-out, so the thing being described stays readable
  *   instead of being dimmed along with everything else.
  */
@@ -54,7 +54,7 @@ export default function Tour({
   }, [onClose]);
 
   // Reopening starts at the beginning, adjusted during render rather than in
-  // an effect so the first paint is already step one — an effect would flash
+  // an effect so the first paint is already step one: an effect would flash
   // the step the tour was closed on.
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {

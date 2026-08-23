@@ -27,7 +27,7 @@ export default function MessageLog({
 }: {
   log: LogMessage[];
   onClear: () => void;
-  /** Jump to whatever a message refers to — a network, a tag. */
+  /** Jump to whatever a message refers to: a network, a tag. */
   onPick?: (m: LogMessage) => void;
 }) {
   const [filter, setFilter] = useState<MessageLevel | "all">("all");
@@ -40,7 +40,7 @@ export default function MessageLog({
   );
 
   // Newest sits at the top, so the panel can be two rows tall and still show
-  // what just happened. Follow it there — but stop the moment somebody
+  // what just happened. Follow it there, but stop the moment somebody
   // scrolls down to read something older, or the log yanks itself away
   // mid-sentence.
   useEffect(() => {

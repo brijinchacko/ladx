@@ -5,7 +5,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Resources",
   description:
-    "Articles on PLC programming, ladder logic and where AI genuinely helps in industrial automation — written for people who program machines.",
+    "Articles on PLC programming, ladder logic and where AI genuinely helps in industrial automation, written for people who program machines.",
 };
 
 export default function ResourcesPage() {
@@ -22,7 +22,7 @@ export default function ResourcesPage() {
           Writing for people who program machines
         </h1>
         <p className="mt-5 text-[16px] leading-relaxed text-ink-600">
-          Half of this is the fundamentals — scan cycles, timers, analog scaling — because those are
+          Half of this is the fundamentals, scan cycles, timers, analog scaling, because those are
           the questions that actually get asked, every week, forever. The other half is what AI is
           and isn't doing in this industry, written by people who have to make it work rather than
           sell it.

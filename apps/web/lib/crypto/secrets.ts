@@ -10,13 +10,13 @@ import { env } from "../env";
 /**
  * Sealing a user's provider key.
  *
- * These are the user's own credentials for OpenAI, Anthropic, OpenRouter — real
+ * These are the user's own credentials for OpenAI, Anthropic, OpenRouter, real
  * money attached to real accounts. They are stored so that "connect once" works
  * across sessions, and that means storing them properly rather than storing
  * them at all costs.
  *
  * AES-256-GCM: authenticated, in Node core, and the same primitive every cloud
- * KMS speaks. Random 12-byte IV per record — never a counter, never reused,
+ * KMS speaks. Random 12-byte IV per record, never a counter, never reused,
  * because IV reuse under GCM is catastrophic rather than merely weak.
  *
  * The envelope carries a key id in its first byte. That is the whole rotation
@@ -62,7 +62,7 @@ export class SecretsError extends Error {
  * Seal `plaintext` for `userId`.
  *
  * Layout: `[key id (1)] [iv (12)] [tag (16)] [ciphertext]`, base64. The IV and
- * tag are not secret — they are inputs to the open, and are meant to travel
+ * tag are not secret, they are inputs to the open, and are meant to travel
  * beside the ciphertext.
  */
 export function seal(plaintext: string, userId: string): string {
@@ -103,7 +103,7 @@ export function open(sealed: string, userId: string): string {
   } catch {
     // Deliberately vague: the caller cannot act differently on "wrong key"
     // versus "tampered", and saying which is a small oracle.
-    throw new SecretsError("could not decrypt — wrong key, or the value was altered");
+    throw new SecretsError("could not decrypt: wrong key, or the value was altered");
   }
 }
 

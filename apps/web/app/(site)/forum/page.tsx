@@ -4,14 +4,14 @@ import Link from "next/link";
 export const metadata = {
   title: "Forum",
   description:
-    "A technical forum for automation engineers — ladder logic, platform differences, migrations, and where AI actually helps.",
+    "A technical forum for automation engineers, ladder logic, platform differences, migrations, and where AI actually helps.",
 };
 
 /**
  * The forum, before it has people in it.
  *
- * Seeded with the questions this audience genuinely asks — taken from what gets
- * asked repeatedly on the existing automation forums — rather than with invented
+ * Seeded with the questions this audience genuinely asks, taken from what gets
+ * asked repeatedly on the existing automation forums, rather than with invented
  * threads and fake reply counts. A forum that opens with "247 replies" from
  * usernames nobody has met reads as a lie, and this audience notices.
  *
@@ -26,7 +26,7 @@ const CATEGORIES = [
     blurb: "Rungs, timers, counters, seal-ins, and the scan-order problems that look like magic.",
     seeds: [
       "Why does my coil only work on the second scan?",
-      "TON vs RTO for a machine-hours meter — which and why?",
+      "TON vs RTO for a machine-hours meter, which and why?",
       "Seal-in versus a latch instruction: is there a real difference?",
       "How do I one-shot a signal that is already only one scan long?",
     ],
@@ -35,7 +35,7 @@ const CATEGORIES = [
     slug: "platforms",
     name: "Platforms & migration",
     blurb:
-      "Siemens, Rockwell, Beckhoff, CODESYS — differences, conversions, and the parts that don't map.",
+      "Siemens, Rockwell, Beckhoff, CODESYS, differences, conversions, and the parts that don't map.",
     seeds: [
       "PLC-5 to ControlLogix: how are people handling indexed addressing?",
       "Siemens IEC timers vs Rockwell timer structures when converting",
@@ -48,9 +48,9 @@ const CATEGORIES = [
     name: "Analog & I/O",
     blurb: "Scaling, raw counts, wiring, and diagnosing the readings that look almost right.",
     seeds: [
-      "4–20 mA scaling: what raw range does your card actually use?",
+      "4-20 mA scaling: what raw range does your card actually use?",
       "Should underrange fault or clamp to zero?",
-      "Shielding and grounding for a long analog run — practical rules?",
+      "Shielding and grounding for a long analog run, practical rules?",
     ],
   },
   {
@@ -62,7 +62,7 @@ const CATEGORIES = [
       "Has anyone got a local model working usefully for ST generation?",
       "Where do you draw the line on AI-written code in a safety function?",
       "Vendor copilots: is anyone seeing the productivity numbers they claim?",
-      "Air-gapped networks — what are people actually running on site?",
+      "Air-gapped networks, what are people actually running on site?",
     ],
   },
   {
@@ -88,7 +88,7 @@ export default function ForumPage() {
           Ask the awkward questions
         </h1>
         <p className="mt-5 text-[16px] leading-relaxed text-ink-600">
-          A place for the problems that do not fit in a manual — why the rung works on the bench and
+          A place for the problems that do not fit in a manual, why the rung works on the bench and
           not on the line, what breaks in a migration, whether anyone has got a local model to write
           usable structured text.
         </p>
@@ -98,7 +98,7 @@ export default function ForumPage() {
         <h2 className="mb-1.5 text-[15px] font-semibold text-ink-900">This forum is new</h2>
         <p className="max-w-3xl text-[14.5px] leading-relaxed text-ink-600">
           Rather than fill it with invented threads and reply counts nobody earned, the categories
-          below are seeded with questions this industry genuinely asks — the ones that come up over
+          below are seeded with questions this industry genuinely asks, the ones that come up over
           and over on the existing forums. Posting opens with accounts shortly. Until then,{" "}
           <Link href="/help" className="border-b border-ink-300 text-ink-800 hover:border-ink-900">
             send the question directly

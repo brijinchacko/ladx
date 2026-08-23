@@ -6,7 +6,7 @@ import type { Rung } from "./Rung";
  *
  * Ladder and Structured Text are represented structurally. The rest are
  * carried as source text so that importing a project containing them is
- * lossless even before LADX can transform them — a file you cannot convert is
+ * lossless even before LADX can transform them: a file you cannot convert is
  * still a file you should not corrupt.
  */
 export type PouBody = { "language": "ladder", rungs: Array<Rung>, } | { "language": "structuredText", source: string, } | { "language": "functionBlockDiagram", source: string, } | { "language": "sequentialFunctionChart", source: string, } | { "language": "instructionList", source: string, };

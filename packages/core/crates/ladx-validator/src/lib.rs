@@ -1,6 +1,6 @@
 //! Validators for generated PLC code. Two backends are wired today:
 //!
-//! - **Light** (`light.rs`): pure-Rust IEC 61131-3 sanity checks — balanced
+//! - **Light** (`light.rs`): pure-Rust IEC 61131-3 sanity checks, balanced
 //!   `IF/END_IF`, `FOR/END_FOR`, `CASE/END_CASE`, `WHILE/END_WHILE`,
 //!   `FUNCTION_BLOCK/END_FUNCTION_BLOCK`, etc.; bracket parity; statement
 //!   terminators. Catches obvious problems without external deps.
@@ -8,7 +8,7 @@
 //! - **matiec** (`matiec.rs`): subprocess wrapper around the matiec
 //!   compiler. Production-grade. Requires the `matiec` binary on PATH or
 //!   at `$LADX_MATIEC_BIN`. Returns a "matiec not configured" report when
-//!   missing — caller decides whether to fall back to Light.
+//!   missing, caller decides whether to fall back to Light.
 //!
 //! Phase 1 surfaces validator output to the UI. Auto-retry-with-feedback
 //! (per spec §8.1) is an upcoming sub-phase that wraps an `LlmClient` and

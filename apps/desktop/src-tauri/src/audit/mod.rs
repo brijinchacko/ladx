@@ -43,13 +43,13 @@ impl AuditDb {
             CREATE TRIGGER IF NOT EXISTS audit_entries_no_update
             BEFORE UPDATE ON audit_entries
             BEGIN
-                SELECT RAISE(ABORT, 'audit_entries is append-only — no UPDATE');
+                SELECT RAISE(ABORT, 'audit_entries is append-only, no UPDATE');
             END;
 
             CREATE TRIGGER IF NOT EXISTS audit_entries_no_delete
             BEFORE DELETE ON audit_entries
             BEGIN
-                SELECT RAISE(ABORT, 'audit_entries is append-only — no DELETE');
+                SELECT RAISE(ABORT, 'audit_entries is append-only, no DELETE');
             END;
             "#,
         )?;

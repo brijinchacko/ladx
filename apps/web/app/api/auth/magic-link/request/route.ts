@@ -1,4 +1,4 @@
-// POST /api/auth/magic-link/request — emails a one-click sign-in link.
+// POST /api/auth/magic-link/request, emails a one-click sign-in link.
 // Always returns 200 (avoid user enumeration). The link points at
 // /api/auth/magic-link/consume which validates and creates a session.
 

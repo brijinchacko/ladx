@@ -4,7 +4,7 @@ import type { ElementType } from "./types";
  * How the instruction palette is grouped.
  *
  * Data, not UI, and in its own module so a test can read it without importing
- * a React component — the component imports a CSS module, which Node cannot
+ * a React component, the component imports a CSS module, which Node cannot
  * parse, so the test that guards palette coverage could not load it.
  *
  * Grouped the way PicoSoft groups it, because that is the mental filing
@@ -21,7 +21,7 @@ export type GroupKey =
 
 /**
  * Compare and maths used to share one tab, which made it nine buttons wide and
- * pushed MUL and DIV off the end — they were unreachable from the palette
+ * pushed MUL and DIV off the end, they were unreachable from the palette
  * entirely. They are different jobs anyway: one asks a question about a value,
  * the other changes one.
  */

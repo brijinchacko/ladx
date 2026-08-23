@@ -1,5 +1,5 @@
 // Drizzle client. Lazily instantiated so the module can be imported without
-// DATABASE_URL set (typecheck, build) — actual DB calls throw with a clear
+// DATABASE_URL set (typecheck, build): actual DB calls throw with a clear
 // message instead.
 
 import { drizzle } from "drizzle-orm/postgres-js";

@@ -1,4 +1,4 @@
-// POST /api/projects/:id/parse — re-run the Rust parser on the stored
+// POST /api/projects/:id/parse, re-run the Rust parser on the stored
 // project blob. Stub returns 501 until the upload + parse pipeline lands.
 
 import { getApiUser } from "@/lib/auth/server";

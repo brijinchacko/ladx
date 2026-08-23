@@ -14,8 +14,8 @@ import {
 /**
  * A LADX project as a document somebody can hand in.
  *
- * Students are asked for their work on paper — for an assessment, a portfolio,
- * an interview — and a screenshot of a browser tab is not that. This is the
+ * Students are asked for their work on paper, for an assessment, a portfolio,
+ * an interview: and a screenshot of a browser tab is not that. This is the
  * program as a drawing office would issue it: a cover sheet that says whose
  * work it is, the I/O schedule, then the ladder network by network.
  *
@@ -141,7 +141,7 @@ export function buildProjectPdf(input: ProjectPdfInput): Buffer {
   y = pageHeader(doc, W, M, "I/O schedule", input.projectName);
 
   const tags = [...input.program.tags].sort((a, b) => {
-    // Inputs, then outputs, then the rest — the order an I/O list is read in.
+    // Inputs, then outputs, then the rest, the order an I/O list is read in.
     const rank = (t: typeof a) => (t.isInput ? 0 : t.isOutput ? 1 : 2);
     return rank(a) - rank(b) || a.name.localeCompare(b.name);
   });
@@ -164,9 +164,9 @@ export function buildProjectPdf(input: ProjectPdfInput): Buffer {
     doc.setFont("helvetica", "normal").setTextColor(MUTED);
     doc.text(t.type, cols[1], y);
     doc.text(t.isInput ? "Input" : t.isOutput ? "Output" : "Internal", cols[2], y);
-    doc.text(t.device ? String(t.device).replace(/_/g, " ").toLowerCase() : "—", cols[3], y);
+    doc.text(t.device ? String(t.device).replace(/_/g, " ").toLowerCase() : "-", cols[3], y);
     const comment = doc.splitTextToSize(t.comment ?? "", W - M - cols[4]);
-    doc.text(comment.length ? comment[0] : "—", cols[4], y);
+    doc.text(comment.length ? comment[0] : "-", cols[4], y);
     y += 6.5;
   }
 
@@ -324,8 +324,8 @@ function drawNode(doc: jsPDF, node: LadderNode, x: number, y: number, cell: numb
    * A branch: each leg draws itself, then two verticals close it.
    *
    * The stub runs from where a leg's own drawing ended to the right vertical,
-   * and only that far. Drawing a full-width line at each leg's height — which
-   * is the obvious thing — paints straight through the gap between that leg's
+   * and only that far. Drawing a full-width line at each leg's height, which
+   * is the obvious thing, paints straight through the gap between that leg's
    * own contact bars and fills in every contact on it.
    */
   let widest = x + cell;
@@ -371,7 +371,7 @@ function drawContact(
   doc.line(barX1, y - 3, barX1, y + 3);
   doc.line(barX2, y - 3, barX2, y + 3);
 
-  // The NC slash, crossing both bars — the same drawing as on screen.
+  // The NC slash, crossing both bars, the same drawing as on screen.
   if (node.type === "XIO") doc.line(barX1 - 1.5, y + 3.5, barX2 + 1.5, y - 3.5);
 
   if (meta && meta.side === "input" && node.type !== "XIC" && node.type !== "XIO") {
@@ -380,7 +380,7 @@ function drawContact(
   }
 
   doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(INK);
-  doc.text(node.tag || "—", x + w / 2, y - 5, { align: "center" });
+  doc.text(node.tag || "-", x + w / 2, y - 5, { align: "center" });
   doc.setFontSize(6).setTextColor(MUTED);
   doc.text(node.type, x + w / 2, y + 7, { align: "center" });
 }
@@ -390,12 +390,12 @@ function drawCoil(doc: jsPDF, el: Element, x: number, y: number) {
   doc.setDrawColor(INK).setLineWidth(0.4);
 
   if (meta && meta.group !== "Bit") {
-    // A boxed instruction — timer, counter, maths.
+    // A boxed instruction, timer, counter, maths.
     doc.rect(x, y - 5, 12, 10);
     doc.setFont("helvetica", "bold").setFontSize(6.5).setTextColor(INK);
     doc.text(el.type, x + 6, y + 1, { align: "center" });
     doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(INK);
-    doc.text(el.tag || "—", x + 6, y - 7, { align: "center" });
+    doc.text(el.tag || "-", x + 6, y - 7, { align: "center" });
     if (el.preset !== undefined) {
       doc.setFontSize(6).setTextColor(MUTED);
       doc.text(`PRE ${el.preset}`, x + 6, y + 8, { align: "center" });
@@ -404,7 +404,7 @@ function drawCoil(doc: jsPDF, el: Element, x: number, y: number) {
   }
 
   /*
-   * A coil is two arcs facing each other — the ( ) every ladder drawing uses.
+   * A coil is two arcs facing each other, the ( ) every ladder drawing uses.
    *
    * These were straight segments, which drew two chevrons pointing at each
    * other and read as nothing in particular. Cubic beziers, bulging outward,
@@ -418,7 +418,7 @@ function drawCoil(doc: jsPDF, el: Element, x: number, y: number) {
   // Right arc: mirrored.
   doc.lines([[2.6, 1.4, 2.6, 4.6, 0, 6]], x + 8, y - 3, [1, 1], "S");
   doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(INK);
-  doc.text(el.tag || "—", x + 6, y - 6, { align: "center" });
+  doc.text(el.tag || "-", x + 6, y - 6, { align: "center" });
   doc.setFontSize(6).setTextColor(MUTED);
   doc.text(el.type, x + 6, y + 8, { align: "center" });
 }

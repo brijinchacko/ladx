@@ -10,7 +10,7 @@ import type { LadxProgram } from "./types";
  * comes in as a parameter.
  *
  * Three implementations matter:
- *   - [`localStorage`] — the default. No server, no account, works offline, and
+ *   - [`localStorage`], the default. No server, no account, works offline, and
  *     is what makes the studio demo-able on a landing page.
  *   - an HTTP one the LADX web app supplies, backed by Postgres.
  *   - a Tauri one the desktop app supplies, backed by the local filesystem,
@@ -24,7 +24,7 @@ export type StudioProject = {
 };
 
 export type StudioStorage = {
-  /** `null` means "no such project" — the caller decides whether that's an error. */
+  /** `null` means "no such project", the caller decides whether that's an error. */
   load(projectId: string): Promise<StudioProject | null>;
   save(projectId: string, project: StudioProject): Promise<void>;
   /**
@@ -32,8 +32,7 @@ export type StudioStorage = {
    *
    * Retention is a property of where the project went, so the store is the only
    * thing that can say it truthfully. The CRM's three-month policy was baked
-   * into the save message; on browser storage that sentence is simply false —
-   * nothing expires, but clearing site data destroys everything. Telling
+   * into the save message; on browser storage that sentence is simply false, * nothing expires, but clearing site data destroys everything. Telling
    * somebody the wrong thing about whether their work is safe is worse than
    * telling them nothing, so each store speaks for itself.
    */
@@ -56,7 +55,7 @@ const KEY_PREFIX = "ladx.project.";
 export function localStorageStorage(): StudioStorage {
   return {
     retentionNote:
-      "Saved in this browser only — clearing site data will remove it. " +
+      "Saved in this browser only, clearing site data will remove it. " +
       "Use File → Export project to keep a copy.",
 
     async load(projectId) {
@@ -95,7 +94,7 @@ export function localStorageStorage(): StudioStorage {
  *
  * `base` is the collection URL; the project id is appended. GET returns
  * `{ name, program }`, PATCH accepts the same. This is what the CRM was doing
- * all along — now it is a choice the host makes rather than a fact of the
+ * all along, now it is a choice the host makes rather than a fact of the
  * component.
  */
 export function httpStorage(base: string, retentionNote?: string): StudioStorage {

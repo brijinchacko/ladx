@@ -103,7 +103,7 @@ import TransferOverlay, { type TransferKind } from "./TransferOverlay";
 import css from "./ladx.module.css";
 
 /**
- * LADX Mini — the studio.
+ * LADX Mini, the studio.
  *
  * Editing and running are the same screen on purpose. In real PLC work you
  * change a rung, go online and watch it; splitting that into two modes is what
@@ -111,7 +111,7 @@ import css from "./ladx.module.css";
  *
  * The scan loop runs on an interval and measures the real elapsed time between
  * ticks, so a 10-second timer takes 10 seconds even when the browser throttles
- * a background tab. State lives in a ref during the loop — putting every scan
+ * a background tab. State lives in a ref during the loop, putting every scan
  * through React state at 10 Hz would re-render the whole ladder continuously.
  */
 
@@ -135,7 +135,7 @@ type Props = {
    * one and the desktop app a filesystem-backed one. See lib/storage.ts.
    */
   storage?: StudioStorage;
-  /** Leaving the studio. Optional — a standalone canvas has nowhere to go. */
+  /** Leaving the studio. Optional: a standalone canvas has nowhere to go. */
   onBack?: () => void;
 };
 
@@ -170,9 +170,9 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   /*
    * The selection is a list, and `selectedId` is the last thing added to it.
    *
-   * Deriving the single value keeps every existing read working — the editor,
+   * Deriving the single value keeps every existing read working, the editor,
    * the branch tools, the toolbar all want "the one thing you are working on"
-   * — while delete, copy and cut can act on the whole set. Ctrl or Cmd-click
+   *, while delete, copy and cut can act on the whole set. Ctrl or Cmd-click
    * adds and removes; a plain click starts again.
    */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -218,7 +218,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   }, [notice]);
   const [compile, setCompile] = useState<{ at: number; problems: string[] } | null>(null);
   // The simulator lives in its own window so the ladder stays fully visible
-  // while the panel is driven — watching the rung light up IS the lesson.
+  // while the panel is driven, watching the rung light up IS the lesson.
   /**
    * The simulator is a dockable panel like everything else now, so it closes
    * to the dock and comes back from the View menu the same way the others do.
@@ -239,7 +239,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
    * Confirmations and prompts, in-app.
    *
    * window.confirm, window.prompt and window.alert all DROP THE PAGE OUT OF
-   * FULLSCREEN in Chrome — the browser will not paint its own dialog over a
+   * FULLSCREEN in Chrome, the browser will not paint its own dialog over a
    * fullscreen element, so it leaves fullscreen to show it. That is why
    * deleting a network kicked the editor back to a small window. Every one of
    * them is now a dialog we render ourselves.
@@ -258,7 +258,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
    * A short-lived status line under the toolbar.
    *
    * Compile results used to appear only in the panel at the foot of the page,
-   * which in fullscreen is below the fold — so a student pressed Compile and
+   * which in fullscreen is below the fold, so a student pressed Compile and
    * saw nothing at all. Download said nothing either. Feedback now appears
    * where the button that caused it is.
    */
@@ -273,7 +273,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   /**
    * The insertion point: the gap a clicked instruction lands in. Clicking the
    * wire between two contacts sets it, which is what "select the rung in
-   * between the contacts" asks for — without it the only place a click could
+   * between the contacts" asks for, without it the only place a click could
    * add an instruction was the end of the chain.
    */
   const [caret, setCaret] = useState<{
@@ -294,7 +294,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
    * The routines that are open, as tabs.
    *
    * A program of any size is several routines, and following a JSR meant
-   * losing the page you came from — click Conveyor in the tree, read it,
+   * losing the page you came from, click Conveyor in the tree, read it,
    * click Main again, and hunt for where you were. Tabs keep both open, which
    * is how anybody reads code that calls out to somewhere else.
    *
@@ -307,7 +307,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
    * Routines in their own window.
    *
    * A popped-out routine leaves the tab strip, the same way the simulator
-   * leaves the panel column — one routine in one place, so there is never a
+   * leaves the panel column, one routine in one place, so there is never a
    * question about which copy an edit went to. Two views of the same rungs is
    * how you end up typing into the wrong one.
    *
@@ -330,7 +330,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
      *
      * Popping a routine out only removes it from the tab strip; the canvas
      * draws whatever is ACTIVE, so without this the routine appeared in its
-     * new window and stayed in the canvas behind it — two views of one set of
+     * new window and stayed in the canvas behind it, two views of one set of
      * rungs, which is exactly the thing this is meant to avoid.
      */
     setActiveRoutineId((active) => {
@@ -360,7 +360,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   const closeRoutineTab = useCallback((id: string) => {
     setOpenRoutineIds((cur) => {
       const next = cur.filter((x) => x !== id);
-      // Never leave nothing open — fall back to whatever is beside it.
+      // Never leave nothing open, fall back to whatever is beside it.
       if (next.length === 0) return cur;
       setActiveRoutineId((active) => {
         if (active !== id) return active;
@@ -385,7 +385,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   /**
    * Persist where the change is made, not in an effect watching the layout.
    *
-   * An effect keyed on `layout` also fires on mount — with the defaults still
+   * An effect keyed on `layout` also fires on mount, with the defaults still
    * in state, because the stored layout is read back in a different effect.
    * That writes the defaults over whatever the person had arranged, so every
    * refresh silently reopened every panel they had closed. Saving at the point
@@ -445,8 +445,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   const [helpTopic, setHelpTopic] = useState<string | null>(null);
   const openHelp = useCallback((topic: string) => setHelpTopic(topic), []);
   const [tourOpen, setTourOpen] = useState(false);
-  /** Never taken the tour? The button gets a dot. It does not start itself —
-      an editor that hijacks your first click is an editor you resent. */
+  /** Never taken the tour? The button gets a dot. It does not start itself: an editor that hijacks your first click is an editor you resent. */
   /**
    * Ladder zoom.
    *
@@ -486,7 +485,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
      *
      * The studio renders a loading state until the project arrives, so on
      * mount the ref is null, measure() returns having done nothing, and the
-     * effect never runs again — the workspace kept the 80vh fallback and the
+     * effect never runs again, the workspace kept the 80vh fallback and the
      * dock stayed 90px short of the bottom. Re-running once the program is
      * in place is when the element actually exists.
      */
@@ -523,7 +522,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   /**
    * The tour points at panels, and panels can be closed. Reopen whatever the
    * next step needs, so a step never highlights a gap where a panel used to
-   * be. The layout the person had is restored when the tour ends — a tour
+   * be. The layout the person had is restored when the tour ends: a tour
    * that quietly rearranges the workspace is a tour with a side effect.
    */
   const layoutBeforeTour = useRef<Layout | null>(null);
@@ -565,7 +564,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
     index: number;
   } | null>(null);
 
-  // The loop reads and writes these directly — React state at 10 Hz would
+  // The loop reads and writes these directly, React state at 10 Hz would
   // re-render the entire ladder on every scan.
   const tagsRef = useRef<Tag[]>([]);
   const edgesRef = useRef<Record<string, boolean>>({});
@@ -601,7 +600,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
          *
          * Projects made before addressing existed have none, and a tag table
          * with a blank address column teaches nothing. Assigned once here,
-         * stored on the next save, and editable afterwards — the student can
+         * stored on the next save, and editable afterwards, the student can
          * always move a signal to a different terminal.
          */
         const raw: LadxProgram = stored.program;
@@ -610,7 +609,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
         setName(stored.name);
         programRef.current = p;
         // Seed timer/counter presets from the instructions before the first
-        // scan — after this the tag owns the preset, so a MOV into .PRE sticks.
+        // scan: after this the tag owns the preset, so a MOV into .PRE sticks.
         const fresh = seedPresets(p, resetTags(p.tags ?? []));
         setTags(fresh);
         tagsRef.current = fresh;
@@ -666,7 +665,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
     setError(null);
     try {
       // Save the program with cold tag values, not whatever the sim left behind
-      // — reopening a project should not restore a half-run machine.
+      //, reopening a project should not restore a half-run machine.
       const toStore: LadxProgram = { ...program, name, tags: resetTags(program.tags) };
       try {
         await storageRef.current.save(projectId, { name, program: toStore });
@@ -684,7 +683,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
 
   /* ── Export and import ─────────────────────────────────────────────
      The way out of the three-month retention. An exported file belongs to
-     the student, does not expire, and opens on any account — which is the
+     the student, does not expire, and opens on any account, which is the
      only honest thing to offer alongside a policy that deletes work. */
 
   const exportProject = useCallback(() => {
@@ -704,7 +703,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
     a.click();
     URL.revokeObjectURL(url);
     say("success", "export", `Exported “${name}”. This file does not expire.`);
-    setFlash({ tone: "ok", text: `Exported “${name}”. Keep the file — it does not expire.` });
+    setFlash({ tone: "ok", text: `Exported “${name}”. Keep the file, it does not expire.` });
   }, [program, name, say]);
 
   const importProject = useCallback(() => {
@@ -749,7 +748,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
    * The home screen has always told students "your projects save
    * automatically to your account". Nothing ever called save() except Ctrl+S
    * and the File menu, so a refresh threw away everything since the last time
-   * somebody thought to press it — and nobody presses save in an editor that
+   * somebody thought to press it: and nobody presses save in an editor that
    * has promised not to need it.
    *
    * Debounced rather than saved on every keystroke: a rung is edited in
@@ -797,7 +796,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
    * A last attempt on the way out, for the case the debounce has not fired.
    *
    * sendBeacon rather than fetch: the tab is closing, and a normal request is
-   * cancelled with it. This is best-effort by nature — the debounce above is
+   * cancelled with it. This is best-effort by nature, the debounce above is
    * what actually keeps the work.
    */
   useEffect(() => {
@@ -825,7 +824,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
     setSubmitting(true);
     setError(null);
     try {
-      // Submit the program as authored, with cold tag values — a snapshot of
+      // Submit the program as authored, with cold tag values: a snapshot of
       // the logic, not of a machine mid-run.
       const res = await fetch(`/api/student/ladx-exercises/${ex.id}`, {
         method: "POST",
@@ -861,7 +860,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   const reportCompile = useCallback(
     (problems: string[]) => {
       if (problems.length === 0) {
-        say("success", "compile", "Compiled — no problems found.");
+        say("success", "compile", "Compiled, no problems found.");
         return;
       }
       for (const w of problems) say("warning", "compile", w);
@@ -896,9 +895,9 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
       problems.length
         ? {
             tone: "warn",
-            text: `Compiled with ${problems.length} warning${problems.length === 1 ? "" : "s"} — see Messages.`,
+            text: `Compiled with ${problems.length} warning${problems.length === 1 ? "" : "s"}, see Messages.`,
           }
-        : { tone: "ok", text: "Compiled — no problems found." },
+        : { tone: "ok", text: "Compiled, no problems found." },
     );
     return problems.length === 0;
   }
@@ -921,7 +920,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
      * is what takes the time.
      */
     setTransfer("download");
-    // Warnings do not block a transfer — a half-built program should still be
+    // Warnings do not block a transfer: a half-built program should still be
     // downloadable so a student can watch what the missing piece does.
     setPlcProgram(programRef.current);
     plcRef.current = programRef.current;
@@ -954,7 +953,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
    * Press Simulate and the handshake runs first; the scan starts when it ends.
    *
    * Splitting it this way means the overlay is not decoration over something
-   * that has already happened — the controller genuinely is not scanning
+   * that has already happened, the controller genuinely is not scanning
    * until the sequence finishes, so cancelling it leaves the program offline.
    */
   function startSimulation() {
@@ -991,13 +990,12 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
    * teach that a PLC output is something you set by hand.
    *
    * A pushbutton is momentary and a selector latches, exactly as on the panel
-   * — the rung and the panel must never disagree about what a device does.
+   *, the rung and the panel must never disagree about what a device does.
    */
   /**
    * The terminal for a tag name, for printing under a contact or coil.
    *
-   * Handles a dotted member — RunTimer.DN is addressed by its timer, T0 —
-   * because the contact on the rung says RunTimer.DN and the address list
+   * Handles a dotted member, RunTimer.DN is addressed by its timer, T0, * because the contact on the rung says RunTimer.DN and the address list
    * says T0, and the student needs to see that those are the same thing.
    */
   const addressOf = useCallback(
@@ -1006,7 +1004,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
       const base = tagName.includes(".") ? tagName.split(".")[0] : tagName;
       return tagsRef.current.find((t) => t.name === base)?.address;
       // Reads through a ref, so it does not need to be rebuilt when tags
-      // change — the rung re-renders for its own reasons and picks up the
+      // change, the rung re-renders for its own reasons and picks up the
       // current value then.
       // eslint-disable-next-line react-hooks/exhaustive-deps
     },
@@ -1039,7 +1037,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   /**
    * A momentary device, held down.
    *
-   * An NC pushbutton sits at 1 and goes to 0 while pressed — pressing STOP
+   * An NC pushbutton sits at 1 and goes to 0 while pressed, pressing STOP
    * BREAKS the rung, which is the whole point of fail-safe wiring and the
    * thing a latching toggle can never teach.
    */
@@ -1075,8 +1073,8 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   /**
    * Undo history.
    *
-   * Every edit already returns a whole new program — the rung tree is
-   * immutable — so history is a stack of past states rather than a diff
+   * Every edit already returns a whole new program, the rung tree is
+   * immutable, so history is a stack of past states rather than a diff
    * engine. Cheap, and it cannot drift out of step with the document the way a
    * hand-written inverse-operation list does.
    *
@@ -1105,7 +1103,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   // ── The active routine ────────────────────────────────────────────────
   // Every edit below works on ONE page of the program. Reading and writing go
   // through here so that adding pages did not mean auditing nineteen separate
-  // uses of program.rungs — and so a single-page program, which has no
+  // uses of program.rungs: and so a single-page program, which has no
   // routines array at all, still behaves exactly as before.
   const routines = program ? programRoutines(program) : [];
   /** For callbacks that must not be rebuilt whenever the program changes. */
@@ -1167,7 +1165,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
 
       const next = rs.map((r, i) => (i === idx ? { ...r, rungs: fn(r.rungs) } : r));
       // `rungs` is kept as a mirror of Main so anything still reading the old
-      // field — saved payloads, the exercise preview — stays correct.
+      // field, saved payloads, the exercise preview, stays correct.
       return { ...p, routines: next, rungs: next[0]?.rungs ?? [] };
     });
   }
@@ -1348,7 +1346,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
     parentPath: Path,
     index: number,
   ) {
-    // A coil belongs on the right-hand rail wherever it is let go — the same
+    // A coil belongs on the right-hand rail wherever it is let go, the same
     // rule the palette already follows, so the gesture means one thing.
     if (drag.isOutput) {
       moveOutputToRung(drag, targetRungId);
@@ -1422,8 +1420,8 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   /**
    * Something dropped on a network's output rail.
    *
-   * A contact cannot become a coil — XIC on the right-hand rail is not a thing
-   * a controller has — so this refuses and says why rather than silently
+   * A contact cannot become a coil, XIC on the right-hand rail is not a thing
+   * a controller has, so this refuses and says why rather than silently
    * ignoring the gesture.
    */
   function dropOnOutputRail(drag: DragPayload, targetRungId: string) {
@@ -1505,7 +1503,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   /**
    * Paste after a network, or at the end.
    *
-   * Everything is cloned with fresh ids on the way in — see lib/ladx/drag. Two
+   * Everything is cloned with fresh ids on the way in, see lib/ladx/drag. Two
    * nodes sharing an id is not a visible fault at the moment it happens; it
    * surfaces later as one-shots sharing a memory and the selection picking two
    * things at once.
@@ -1700,8 +1698,8 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
    *
    * Removing the parallel takes every contact in every leg with it, which is
    * right when the branch itself was the mistake. Far more often the contacts
-   * are the ones wanted and the branch was drawn around the wrong span — a
-   * branch is normally the last thing added — so keeping them is offered
+   * are the ones wanted and the branch was drawn around the wrong span: a
+   * branch is normally the last thing added, so keeping them is offered
    * first and named for what it does.
    */
   function branchMenuItems(rungId: string, branchId: string, path: Path): MenuItem[] {
@@ -1784,7 +1782,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
     return [
       {
         kind: "heading",
-        label: `Network ${i + 1}${r.comment ? ` — ${r.comment}` : ""}`,
+        label: `Network ${i + 1}${r.comment ? `, ${r.comment}` : ""}`,
         detail: `${contacts} instruction${contacts === 1 ? "" : "s"} · ${r.outputs.length} coil${r.outputs.length === 1 ? "" : "s"}`,
       },
       { kind: "separator" },
@@ -1974,7 +1972,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
   }
 
   /**
-   * Delete, on a selected branch, means take the branch away — not take away
+   * Delete, on a selected branch, means take the branch away, not take away
    * everything that was inside it.
    *
    * It used to mean the second thing. Selecting a branch put its node id into
@@ -2050,7 +2048,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
     return cursor?.rungId ?? activeRungs[activeRungs.length - 1].id;
   }
 
-  /** Branch around whatever is selected — the toolbar route to a branch. */
+  /** Branch around whatever is selected, the toolbar route to a branch. */
   function branchAroundSelection() {
     if (!program || !selectedId) return;
     // An output lives beside the rung, not in its condition tree, so there is
@@ -2096,7 +2094,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
     }
 
     if (a.kind === "branch") {
-      // Around the selected element if there is one — that is the fast path
+      // Around the selected element if there is one, that is the fast path
       // for "branch this contact". Otherwise arm the two-click mode, seeded
       // from the insertion point when the student has already placed it.
       setBranchHint(null);
@@ -2113,7 +2111,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
         setBranchHint("Now click the wire at the other end of the branch.");
       } else {
         setBranchHint(
-          "Select a contact and press Branch to branch around it — or click the wire where the branch should start, press Branch, then click where it should end.",
+          "Select a contact and press Branch to branch around it, or click the wire where the branch should start, press Branch, then click where it should end.",
         );
       }
       return;
@@ -2266,7 +2264,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
        *
        * This test used to sit below the Ctrl+Z branch, so pressing undo while
        * renaming a tag undid the whole program instead of the two characters
-       * just typed — the field kept the text and the ladder jumped backwards,
+       * just typed, the field kept the text and the ladder jumped backwards,
        * which is a genuinely alarming thing to watch.
        */
       const el = document.activeElement as HTMLElement | null;
@@ -2305,7 +2303,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
          * with no shortcut on it at all.
          *
          * An instruction wins over a network when both are selected, because
-         * selecting an instruction is the more deliberate act — you clicked
+         * selecting an instruction is the more deliberate act, you clicked
          * the thing itself rather than its header.
          */
         const rungId = selectedRungId ?? activeRungId();
@@ -2364,7 +2362,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
           e.preventDefault();
           // Every selected instruction, in one edit, so undo takes them all
           // back together rather than one keystroke at a time. A selected
-          // branch is unwrapped rather than emptied — see deleteSelection.
+          // branch is unwrapped rather than emptied, see deleteSelection.
           deleteSelection(selectedIds);
           return;
         }
@@ -2374,8 +2372,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
         }
         return;
       }
-      // Escape clears everything transient, the insertion caret included —
-      // it is the key people reach for when the rung looks cluttered.
+      // Escape clears everything transient, the insertion caret included, // it is the key people reach for when the rung looks cluttered.
       if (e.key === "Escape") {
         setSelectedId(null);
         setSelectedRungId(null);
@@ -2474,7 +2471,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
           label: "View",
           items: [
             // Every panel, listed with a tick, so this menu is the complete
-            // answer to "where did that go?" — including a panel closed so
+            // answer to "where did that go?", including a panel closed so
             // long ago that the person has forgotten it existed.
             ...PANELS.map((def) => ({
               label: `${layout[def.id].open ? "✓ " : "   "}${def.title}`,
@@ -2544,7 +2541,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
             // making them find the contents first.
             { label: "Getting started", separator: true, onSelect: () => openHelp("start") },
             { label: "Instruction reference", onSelect: () => openHelp("instructions") },
-            { label: "Addresses — I0.0, Q0.1, T0", onSelect: () => openHelp("addressing") },
+            { label: "Addresses, I0.0, Q0.1, T0", onSelect: () => openHelp("addressing") },
             { label: "Timer and counter members", onSelect: () => openHelp("members") },
             { label: "Branches", onSelect: () => openHelp("branches") },
             { label: "Keyboard shortcuts", onSelect: () => openHelp("editing") },
@@ -2564,7 +2561,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
    * One routine's networks.
    *
    * A function rather than a component so it keeps closing over the editing
-   * handlers it already had — extracting it into a component would mean
+   * handlers it already had, extracting it into a component would mean
    * threading two dozen callbacks through props for no gain. It takes the
    * rungs it is drawing, so the same code renders the docked canvas and a
    * routine popped out into its own window.
@@ -2593,7 +2590,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
               {/*
                   A strip between networks that only exists while a network is
                   being carried. Without a target between the cards there is
-                  nowhere to say "here" — the drop would have to land on a card
+                  nowhere to say "here", the drop would have to land on a card
                   and guess above or below from the pointer, which is the kind
                   of guess that puts a network in the wrong place.
                 */}
@@ -2731,7 +2728,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
                   }
                   // Clicking the gap the caret is already on puts it away.
                   // Without this the blue insertion line, once placed, stayed
-                  // on the rung for ever with no way to dismiss it — including
+                  // on the rung for ever with no way to dismiss it, including
                   // the one dropped into a new branch leg, which looked like
                   // leftover branch-drawing rather than an insertion point.
                   const sameGap =
@@ -2791,7 +2788,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
           One row, and no button explains itself in print.
 
           It used to be two rows of bordered boxes, each with a caption set
-          underneath — "check for problems", "editor → PLC" — which is a
+          underneath, "check for problems", "editor → PLC", which is a
           manual page pretending to be a toolbar. Twenty-odd bordered
           rectangles all competing at the same weight is why it read as busy
           however carefully the colours were chosen.
@@ -2820,7 +2817,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
                       ? // The reader's own clock, not the author's: this used to be
                         // pinned to Asia/Kolkata, which told a German engineer the
                         // wrong time. And retention is whatever the store says it
-                        // is — see lib/storage.ts.
+                        // is, see lib/storage.ts.
                         `Last saved ${new Date(savedAt).toLocaleTimeString()}.${
                           storageRef.current.retentionNote
                             ? ` ${storageRef.current.retentionNote}`
@@ -2882,7 +2879,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
 
             <Tip
               label="Download"
-              text="Send this program into the controller. Editor → PLC — this is the direction that catches everybody out."
+              text="Send this program into the controller. Editor → PLC, this is the direction that catches everybody out."
               topic="transfer"
               onOpenHelp={openHelp}
             >
@@ -2916,7 +2913,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
               </button>
             </Tip>
 
-            {/* The controller's own state, as a lamp. No wording — the tooltip
+            {/* The controller's own state, as a lamp. No wording, the tooltip
               carries it, and "PLC LOADED" in a coloured box was one more
               rectangle shouting at the same volume as the buttons. */}
             <Tip
@@ -3034,7 +3031,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
             </select>
           )}
 
-          {/* Reached for when you are stuck, not when you are working — so they
+          {/* Reached for when you are stuck, not when you are working, so they
             sit apart, icon-only, and stay out of the way. */}
           <Tip
             label="Take the tour"
@@ -3121,7 +3118,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
           Panels around a canvas. Each one closes to the dock along the
           bottom rather than vanishing, resizes by the seam beside it, and
           comes back from the dock or the View menu. The canvas holds the
-          middle and is never closable — there would be nothing left. */}
+          middle and is never closable, there would be nothing left. */}
       <div
         ref={workspaceRef}
         className="flex flex-col gap-1 rounded-lg bg-[#E9EDF2] p-2"
@@ -3166,8 +3163,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
 
         {/* The three columns.
             Scrolls sideways rather than crushing the canvas. With every panel
-            open on a 1024px screen the ladder was being squeezed to 185px —
-            narrower than a single rung — because flex happily shrinks the one
+            open on a 1024px screen the ladder was being squeezed to 185px, narrower than a single rung, because flex happily shrinks the one
             child that has no minimum. The canvas now has a floor and this row
             scrolls past it, which is honest: the work area stays usable and
             closing a panel (or dragging a seam in) makes the scroll go away. */}
@@ -3236,7 +3232,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
                         onClick={() => setTagsFloating(true)}
                         className="flex items-center gap-1 px-2 shrink-0 self-end"
                         style={{ height: 20, fontSize: 9.5, color: ink.faint }}
-                        title="Open the tag table in its own window — it is wider than this column"
+                        title="Open the tag table in its own window, it is wider than this column"
                       >
                         <ExternalLink size={10} /> Pop out
                       </button>
@@ -3275,8 +3271,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
                 it acts on this view, not on the program. */}
             {/* ── Routine tabs ───────────────────────────────────
                 Several routines open at once, so following a JSR does not
-                cost you the page you came from. Main cannot be closed —
-                it is the one the controller runs. */}
+                cost you the page you came from. Main cannot be closed, it is the one the controller runs. */}
             {openRoutines.length > 1 && (
               <div className={css.tabStrip}>
                 {openRoutines.map((r, i) => (
@@ -3302,7 +3297,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
                       }}
                       className={css.tabClose}
                       aria-label={`Pop out ${r.name}`}
-                      title={`Open ${r.name} in its own window — drag it beside the routine that calls it`}
+                      title={`Open ${r.name} in its own window, drag it beside the routine that calls it`}
                     >
                       <ExternalLink size={9} />
                     </button>
@@ -3315,7 +3310,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
                         }}
                         className={css.tabClose}
                         aria-label={`Close ${r.name}`}
-                        title={`Close ${r.name} — the routine stays in the project`}
+                        title={`Close ${r.name}, the routine stays in the project`}
                       >
                         <X size={9} />
                       </button>
@@ -3333,7 +3328,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
                 background: running ? state.liveWash : surface.subtle,
               }}
             >
-              {/* Online, and saying so where the rungs are — not only on a
+              {/* Online, and saying so where the rungs are, not only on a
                   toolbar the eye has left behind. */}
               {running && (
                 <span className={css.onlineBadge}>
@@ -3407,7 +3402,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
               }}
               style={{
                 // Scaled rather than re-laid-out, so a zoomed rung is the same
-                // rung — nothing reflows, nothing moves under the pointer.
+                // rung, nothing reflows, nothing moves under the pointer.
                 zoom,
               }}
             >
@@ -3472,7 +3467,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
                               onClick={() => toggleInput(t.name)}
                               className="w-full flex items-center gap-2 px-2 h-9 rounded border bg-white hover:bg-[#F4F6F9] transition-colors"
                               style={{ borderColor: t.value ? "#16A34A" : "#C9D2DC" }}
-                              title={`${t.name} — click to toggle`}
+                              title={`${t.name}, click to toggle`}
                             >
                               {/* A switch that looks like a switch: track and knob. */}
                               <span
@@ -3686,7 +3681,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
                   actions={
                     <Tip
                       label="Pop out"
-                      text="Move the simulator into its own window — drag it anywhere, or onto a second screen."
+                      text="Move the simulator into its own window, drag it anywhere, or onto a second screen."
                       topic="simulator"
                       onOpenHelp={openHelp}
                       place="bottom"
@@ -3786,7 +3781,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
         <FloatingWindow
           key={r.id}
           storageKey={`ladx-routine-${r.id}`}
-          title={`LADX Mini — ${r.name}`}
+          title={`LADX Mini, ${r.name}`}
           onClose={() => dockRoutine(r.id)}
           onDock={() => dockRoutine(r.id)}
           defaultWidth={640}
@@ -3804,13 +3799,13 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
         </FloatingWindow>
       ))}
 
-      {/* The simulator in its own window. Same component, same state — only
+      {/* The simulator in its own window. Same component, same state, only
           the frame around it differs, so popping in and out never loses what
           the controller is doing. */}
       {layout.sim.open && simFloating && (
         <FloatingWindow
           storageKey="ladx-sim"
-          title="LADX Mini — Simulator"
+          title="LADX Mini, Simulator"
           onClose={() => {
             setSimFloating(false);
             setPanelOpen("sim", false);
@@ -3842,7 +3837,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
       {tagsFloating && (
         <FloatingWindow
           storageKey="ladx-tags"
-          title="LADX Mini — Tag table"
+          title="LADX Mini, Tag table"
           onClose={() => setTagsFloating(false)}
           onDock={() => setTagsFloating(false)}
           defaultWidth={620}
@@ -3915,7 +3910,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
             {submitTo.brief}
           </p>
           <p className="text-[12px] text-text-muted mb-4">
-            Your program is sent as it stands — {totalRungs} network
+            Your program is sent as it stands, {totalRungs} network
             {totalRungs === 1 ? "" : "s"}, worth {submitTo.marks} marks, pass {submitTo.passPercent}
             %. You can keep editing afterwards; it will not change what was submitted.
           </p>
@@ -4011,7 +4006,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
       {editing && (
         <Modal
           onClose={() => setEditing(null)}
-          title={`${editing.type} — ${INSTRUCTION_BY_TYPE.get(editing.type)?.label ?? ""}`}
+          title={`${editing.type}, ${INSTRUCTION_BY_TYPE.get(editing.type)?.label ?? ""}`}
         >
           <p className="text-[12px] text-text-muted mb-3">
             {INSTRUCTION_BY_TYPE.get(editing.type)?.help}
@@ -4175,8 +4170,8 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
             One list for every field in this dialog.
             
             It used to live inside the tag field's block and offered only .DN
-            and .ACC, so the destination box — which is where a timer preset is
-            actually needed — suggested nothing and .PRE appeared nowhere in
+            and .ACC, so the destination box, which is where a timer preset is
+            actually needed, suggested nothing and .PRE appeared nowhere in
             the product. "There is no preset variable available at the
             destination address" was exactly right.
           */}
@@ -4268,7 +4263,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
         }}
         onCancel={() => {
           setGoingOnline(false);
-          say("info", "online", "Cancelled — the controller is still offline.");
+          say("info", "online", "Cancelled, the controller is still offline.");
         }}
       />
 
@@ -4380,8 +4375,8 @@ function RungDropStrip({
 /**
  * A toolbar action with its meaning under it.
  *
- * "Download" is the most misread word in a PLC editor — a good half of
- * students expect it to fetch a program rather than send one — so the
+ * "Download" is the most misread word in a PLC editor: a good half of
+ * students expect it to fetch a program rather than send one, so the
  * direction is written on the control rather than left to a tooltip nobody
  * hovers.
  */

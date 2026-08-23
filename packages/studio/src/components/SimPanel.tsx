@@ -16,14 +16,14 @@ import css from "./ladx.module.css";
  *   it. That is the whole reason a seal-in exists, and a student who has only
  *   ever used latching toggles never feels why.
  *
- *   An NC pushbutton reads 1 at rest and 0 while pressed — a healthy stop
+ *   An NC pushbutton reads 1 at rest and 0 while pressed: a healthy stop
  *   circuit. Pressing it BREAKS the rung, which is what a real STOP does and
  *   what makes fail-safe wiring click.
  *
  *   A SELECTOR stays where it is put.
  *
  *   A SENSOR toggles like a selector but is drawn as a process device, because
- *   nobody presses a proximity switch — the part arrives.
+ *   nobody presses a proximity switch, the part arrives.
  *
  * Outputs are lamps: read-only, lit when the coil is energised.
  */
@@ -33,7 +33,7 @@ const OFF = "#94a3b8";
 const NC_REST = "#0ea5e9";
 
 export type PlcState = {
-  /** Powered on — the simulator window is open and the rack is live. */
+  /** Powered on, the simulator window is open and the rack is live. */
   powered: boolean;
   /** A program has been transferred into the controller. */
   downloaded: boolean;
@@ -92,7 +92,7 @@ function Led({ on, label, colour }: { on: boolean; label: string; colour: string
 /**
  * The controller, drawn as hardware.
  *
- * Modelled on the compact CPUs these students will actually meet — a DIN-rail
+ * Modelled on the compact CPUs these students will actually meet: a DIN-rail
  * brick with a terminal strip along the top for supply and inputs, one along
  * the bottom for outputs and analogue, status lamps and a mode switch behind
  * the door, and a PROFINET socket in the bottom corner.
@@ -264,7 +264,7 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
 
       {/* ── Ports ────────────────────────────────────────────────── */}
       <div className="flex items-center gap-1.5 px-1.5 pb-1">
-        {/* RJ45, drawn as one — the notch is what makes it read as Ethernet */}
+        {/* RJ45, drawn as one, the notch is what makes it read as Ethernet */}
         <span className="flex items-center gap-1 shrink-0">
           <span
             className="relative rounded-sm"
@@ -357,7 +357,7 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
 
 /**
  * Output devices are drawn as the schematic symbols they are: a lamp is a
- * circle with a cross, a motor a circle with an M — the symbols on the drawing
+ * circle with a cross, a motor a circle with an M, the symbols on the drawing
  * a student will be handed on site.
  */
 function LampSymbol({ on }: { on: boolean }) {
@@ -511,7 +511,7 @@ function InputControl({ tag, on, h }: { tag: Tag; on: boolean; h: SimHandlers })
           onKeyUp={(e) => {
             if (e.key === " " || e.key === "Enter") h.hold(tag.name, false);
           }}
-          title={`${sub} — press and hold`}
+          title={`${sub}, press and hold`}
           className="rounded-full shrink-0 transition-transform active:scale-95"
           style={{
             width: 26,
@@ -525,7 +525,7 @@ function InputControl({ tag, on, h }: { tag: Tag; on: boolean; h: SimHandlers })
         <button
           type="button"
           onClick={() => h.toggle(tag.name)}
-          title={`${sub} — click to change position`}
+          title={`${sub}, click to change position`}
           className="shrink-0 rounded"
           style={{
             width: 34,
@@ -592,8 +592,8 @@ export default function SimPanel({
    * quiet, no animation, the way somebody who already knows the plant wants to
    * see it.
    *
-   * WIRING is the teaching view: the loop drawn out — supply, device, terminal,
-   * controller — with current animated in the wires. It answers the questions a
+   * WIRING is the teaching view: the loop drawn out, supply, device, terminal,
+   * controller, with current animated in the wires. It answers the questions a
    * first-week student actually has, which the panel view assumes you already
    * know: where the 24V comes from, what the common is for, and why a stop
    * button reads 1 when nobody is pressing it.
@@ -603,8 +603,8 @@ export default function SimPanel({
   /**
    * Zoom.
    *
-   * The controller graphic is dense — eight terminals, a nameplate, four
-   * status lamps — and in a 272px panel the terminal numbers are at the edge
+   * The controller graphic is dense, eight terminals, a nameplate, four
+   * status lamps: and in a 272px panel the terminal numbers are at the edge
    * of legible. Rather than make the drawing coarser for everybody, it can be
    * scaled. Steps rather than a slider: there are only about four sizes
    * anybody wants, and a slider is another thing to fiddle with.
@@ -699,7 +699,7 @@ export default function SimPanel({
 
       {/* Controller status strip.
           Wraps, because it did not: in a narrow panel the Reset button ran
-          off the right edge and was simply unreachable — the panel can be
+          off the right edge and was simply unreachable, the panel can be
           dragged down to 240px and the strip has to survive that. */}
       <div className="flex items-center flex-wrap gap-x-2 gap-y-1.5 px-3 py-2 border-b border-[#C9D2DC] bg-white">
         <span
@@ -771,7 +771,7 @@ export default function SimPanel({
             tags={tags}
             powered={plc.powered}
             // Held and released, so a pushbutton on the diagram behaves the
-            // same as the one on the panel — the two views must never
+            // same as the one on the panel, the two views must never
             // disagree about what a device does.
             onHold={handlers.hold}
             onToggle={handlers.toggle}

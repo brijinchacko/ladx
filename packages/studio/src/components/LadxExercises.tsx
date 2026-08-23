@@ -126,7 +126,7 @@ export default function LadxExercises({
         setError(j.error ?? "Could not save.");
         return;
       }
-      setMsg(publish ? "Published — students can see it now." : "Saved.");
+      setMsg(publish ? "Published, students can see it now." : "Saved.");
       setDraft(null);
       await load();
     } finally {
@@ -216,7 +216,7 @@ export default function LadxExercises({
         <div className="rounded-xl border border-white/[0.08] bg-surface px-5 py-8 text-center">
           <p className="text-[13px] text-text-secondary">No exercises yet.</p>
           <p className="text-[11.5px] text-text-muted mt-1">
-            Write one and publish it — students see it in LADX Mini.
+            Write one and publish it, students see it in LADX Mini.
           </p>
         </div>
       ) : (
@@ -352,7 +352,7 @@ export default function LadxExercises({
 
               <label className="block">
                 <span className="block text-[11px] font-semibold text-text-muted mb-1">
-                  The brief — what the student has to build
+                  The brief, what the student has to build
                 </span>
                 <textarea
                   value={draft.brief}
@@ -365,17 +365,17 @@ export default function LadxExercises({
 
               <label className="block">
                 <span className="block text-[11px] font-semibold mb-1" style={{ color: LIVE }}>
-                  Marking guidance — what a correct answer contains
+                  Marking guidance, what a correct answer contains
                 </span>
                 <textarea
                   value={draft.guidance}
                   onChange={(e) => setDraft({ ...draft, guidance: e.target.value })}
                   rows={4}
-                  placeholder="Expect one rung: Start OR Motor (the seal-in branch), then Stop AND EStop in series, driving an OTE on Motor. Full marks need the seal-in as a parallel branch, not a second rung. Half marks if the stops are examined with XIO — that would mean the motor runs when the wire breaks."
+                  placeholder="Expect one rung: Start OR Motor (the seal-in branch), then Stop AND EStop in series, driving an OTE on Motor. Full marks need the seal-in as a parallel branch, not a second rung. Half marks if the stops are examined with XIO, that would mean the motor runs when the wire breaks."
                   className="w-full px-3 py-2 rounded-lg bg-dark-primary border border-white/10 text-[13px] text-text-primary placeholder:text-text-muted resize-y"
                 />
                 <span className="block text-[10.5px] text-text-muted mt-1">
-                  Only the marker sees this — never the student.
+                  Only the marker sees this, never the student.
                 </span>
               </label>
             </div>

@@ -135,7 +135,7 @@ export const projects = pgTable(
     aoiCount: integer("aoi_count").notNull().default(0),
     parsedAt: timestamp("parsed_at", { withTimezone: true }),
     parseError: text("parse_error"),
-    /** ProjectManifest from the Rust parser — routine/tag/UDT/AOI names. */
+    /** ProjectManifest from the Rust parser, routine/tag/UDT/AOI names. */
     manifest: jsonb("manifest").$type<{
       routines: Array<{ name: string; language: string }>;
       tags: Array<{ name: string; data_type?: string | null }>;

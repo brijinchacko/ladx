@@ -1,6 +1,6 @@
 # Deploying ladX.ai Cloud to a Hostinger VPS
 
-This is the deployment sketch — actual rollout happens later when you're
+This is the deployment sketch: actual rollout happens later when you're
 ready. We're explicitly **not** using Vercel.
 
 ## Topology
@@ -15,7 +15,7 @@ Three subdomains, all served from the one VPS via Caddy:
 
 Postgres runs locally on the same VPS for low-latency, with a daily
 `pg_dump` to a private S3-compatible bucket for backup. R2 (Cloudflare)
-stays as the project-file blob store — no reason to host that on the VPS.
+stays as the project-file blob store, no reason to host that on the VPS.
 
 ## Server prep
 
@@ -24,7 +24,7 @@ stays as the project-file blob store — no reason to host that on the VPS.
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y build-essential curl git ufw fail2ban postgresql postgresql-contrib
 
-# Lock down — only SSH + HTTPS open
+# Lock down, only SSH + HTTPS open
 sudo ufw allow OpenSSH
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
@@ -41,7 +41,7 @@ corepack prepare pnpm@9.12.0 --activate
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 source ~/.cargo/env
 
-# Caddy 2 — auto-TLS via Let's Encrypt
+# Caddy 2: auto-TLS via Let's Encrypt
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
@@ -69,7 +69,7 @@ pnpm install --frozen-lockfile
 cargo build --release --bin ladx-parser --bin ladx-validate
 pnpm --filter=@ladx/web build
 pnpm --filter=@ladx/marketing build
-# Web: outputs .next/standalone — that's what we run.
+# Web: outputs .next/standalone, that's what we run.
 ```
 
 ## systemd units
@@ -158,7 +158,7 @@ A records for `@`, `www`, `auth` all pointing at the VPS IP.
 
 Update the Stripe dashboard webhook endpoint to
 `https://ladx.ai/api/webhooks/stripe` (already correct in the user's
-config — they set this up when wiring Phase 1I).
+config, they set this up when wiring Phase 1I).
 
 ## Deploy script
 
@@ -180,13 +180,13 @@ GitHub Action later for true CD.
 
 ## What still needs deciding before going live
 
-- **Domain DNS** — point `ladx.ai`, `www.ladx.ai`, `auth.ladx.ai` at the
+- **Domain DNS**, point `ladx.ai`, `www.ladx.ai`, `auth.ladx.ai` at the
   VPS A record.
-- **Resend domain verification** — once `ladx.ai` is verified at
+- **Resend domain verification**, once `ladx.ai` is verified at
   resend.com/domains, set `LADX_FROM_EMAIL="ladX.ai <noreply@ladx.ai>"`
   in `.env.production.local` so we can email any user (currently locked
   to the Resend account-owner address).
-- **Backups** — daily `pg_dump`, weekly `.ladx-storage/` snapshot
+- **Backups**, daily `pg_dump`, weekly `.ladx-storage/` snapshot
   (uploads/files), both pushed to off-VPS storage.
-- **Monitoring** — at minimum, a uptime ping on `ladx.ai/` and a Stripe
+- **Monitoring**: at minimum, a uptime ping on `ladx.ai/` and a Stripe
   webhook delivery dashboard alert.

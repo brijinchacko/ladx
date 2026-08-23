@@ -4,7 +4,7 @@
  * Every PLC IDE has one, and it is the first place an engineer looks when
  * something is not behaving. LADX Mini had compile results in a panel that was
  * replaced by the next compile, transient flashes that vanished after three
- * seconds, and runtime errors nowhere at all — so "it said something and then
+ * seconds, and runtime errors nowhere at all, so "it said something and then
  * it went" was an accurate description of the diagnostics.
  *
  * A log rather than a status line: what happened two minutes ago is usually

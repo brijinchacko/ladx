@@ -5,7 +5,7 @@
  *
  * Deliberately neutral names rather than one vendor's mnemonics. `Contact`
  * beats `XIC` because a Siemens exporter should not have to un-learn Rockwell
- * spelling to write a normally-open contact — and a Rockwell exporter writes
+ * spelling to write a normally-open contact: and a Rockwell exporter writes
  * `XIC` from it just as easily.
  *
  * Anything outside this set imports as [`OpCode::Unsupported`] with the

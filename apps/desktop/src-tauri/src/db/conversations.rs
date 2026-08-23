@@ -1,9 +1,9 @@
 //! Local chat history. Lives in the same `projects.db` as the projects
-//! table — they're tightly bound (every conversation links to a
+//! table, they're tightly bound (every conversation links to a
 //! project, except free-form ones with NULL project_id).
 //!
 //! There's no FK enforcement on project_id (NULL is valid) and we do
-//! cascade delete in code — keeps the schema simple.
+//! cascade delete in code, keeps the schema simple.
 
 use anyhow::Result;
 use chrono::Utc;

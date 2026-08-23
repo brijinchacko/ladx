@@ -7,7 +7,7 @@ import type { LadxProgram, Rung, Tag } from "./types";
  * limit, not a technical one: a student's account fills with experiments, most
  * of which are one afternoon's work, and keeping every one of them forever
  * means the six that matter are buried among a hundred that do not. Anything
- * worth keeping past that is exported — which is also how it survives leaving
+ * worth keeping past that is exported, which is also how it survives leaving
  * the course.
  *
  * The file is versioned and labelled. A bare dump of the program is fine until
@@ -20,7 +20,7 @@ import type { LadxProgram, Rung, Tag } from "./types";
 /** How long the portal keeps a project after it was last touched. */
 export const RETENTION_MONTHS = 3;
 
-export const RETENTION_NOTE = `Projects stay in the portal for ${RETENTION_MONTHS} months after you last open them. Export anything you want to keep for longer — File → Export project.`;
+export const RETENTION_NOTE = `Projects stay in the portal for ${RETENTION_MONTHS} months after you last open them. Export anything you want to keep for longer, File → Export project.`;
 
 export const FORMAT = "ladx-project";
 export const FORMAT_VERSION = 1;
@@ -43,7 +43,7 @@ export function expiresAt(lastTouched: Date): Date {
   return d;
 }
 
-/** "3 months" / "18 days" / "today" — how long a project has left. */
+/** "3 months" / "18 days" / "today", how long a project has left. */
 export function retentionLeft(lastTouched: Date, now: Date = new Date()): string {
   const end = expiresAt(lastTouched);
   const days = Math.ceil((end.getTime() - now.getTime()) / 86_400_000);
@@ -80,7 +80,7 @@ export type ImportResult =
  *
  * Every rejection names the actual problem. "Invalid file" tells somebody
  * nothing about whether they picked the wrong file, exported from a different
- * tool, or hit a genuine bug — and they will send all three to the trainer as
+ * tool, or hit a genuine bug: and they will send all three to the trainer as
  * the same complaint.
  */
 export function parseImport(raw: string): ImportResult {
@@ -90,8 +90,7 @@ export function parseImport(raw: string): ImportResult {
   } catch {
     return {
       ok: false,
-      error:
-        "That file is not JSON. A LADX export ends in .json — check you picked the right file.",
+      error: "That file is not JSON. A LADX export ends in .json, check you picked the right file.",
     };
   }
 

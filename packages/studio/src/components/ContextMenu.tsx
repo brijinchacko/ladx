@@ -10,7 +10,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
  * menu that opens with "XIC · Start_PB · rung 2" does not.
  *
  * It also flips itself when it would run off the edge, because a menu whose
- * last three items are off-screen is worse than no menu — the items you cannot
+ * last three items are off-screen is worse than no menu, the items you cannot
  * see are usually the destructive ones.
  */
 
@@ -57,8 +57,8 @@ export default function ContextMenu({
      *
      * This kept the menu off the right and bottom edges with a bare Math.min
      * and never stopped it going the other way. When the menu was wider than
-     * the space available — or innerWidth read 0 for a frame, which happens in
-     * a background tab and during layout — the sum went negative and the menu
+     * the space available, or innerWidth read 0 for a frame, which happens in
+     * a background tab and during layout, the sum went negative and the menu
      * opened at left -224, top -194. It was there the whole time, entirely off
      * screen, which is indistinguishable from right-click doing nothing at all.
      */
@@ -75,7 +75,7 @@ export default function ContextMenu({
     if (!menu) return;
 
     /*
-     * Close on a click OUTSIDE the menu — and only outside.
+     * Close on a click OUTSIDE the menu: and only outside.
      *
      * This listened on window in the CAPTURE phase, which runs on the way
      * down, before the event reaches anything. The menu's own
@@ -86,8 +86,8 @@ export default function ContextMenu({
      *
      * The result was a menu that opened, looked right, listed the correct
      * actions, and did nothing whatever you picked. Capture is still the
-     * right phase — it is what stops the click doing something else
-     * underneath — so the fix is to ask where the pointer actually is.
+     * right phase, it is what stops the click doing something else
+     * underneath, so the fix is to ask where the pointer actually is.
      */
     const close = (e: Event) => {
       const target = e.target as Node | null;

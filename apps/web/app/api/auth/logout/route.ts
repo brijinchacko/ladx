@@ -1,5 +1,5 @@
-// POST /api/auth/logout — invalidates the current session and clears the
-// cookie. Always returns 200 even if no session — logout is idempotent.
+// POST /api/auth/logout, invalidates the current session and clears the
+// cookie. Always returns 200 even if no session, logout is idempotent.
 
 import { clearSessionCookie, invalidateSession, readSessionCookie } from "@/lib/auth/session";
 

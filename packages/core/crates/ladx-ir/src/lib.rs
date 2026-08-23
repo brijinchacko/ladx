@@ -2,7 +2,7 @@
 //!
 //! Every PLC file LADX reads is parsed *into* this; every file it writes is
 //! generated *out of* it; language transforms operate *on* it; the simulator
-//! runs it; the AI edits it. That is the whole point — with N importers and M
+//! runs it; the AI edits it. That is the whole point, with N importers and M
 //! exporters you get N×M conversion paths for N+M of work, and no brand ever
 //! needs to know about another brand.
 //!
@@ -93,7 +93,7 @@ pub struct Pou {
     pub name: String,
     pub kind: PouKind,
     pub body: PouBody,
-    /// POU-scope tags — locals, and for a function block its interface.
+    /// POU-scope tags, locals, and for a function block its interface.
     pub local_tags: Vec<Tag>,
     pub comment: Option<String>,
 }
@@ -110,7 +110,7 @@ pub enum PouKind {
 ///
 /// Ladder and Structured Text are represented structurally. The rest are
 /// carried as source text so that importing a project containing them is
-/// lossless even before LADX can transform them — a file you cannot convert is
+/// lossless even before LADX can transform them: a file you cannot convert is
 /// still a file you should not corrupt.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../../types/src/generated/ir/")]
@@ -149,7 +149,7 @@ pub struct Rung {
     pub id: String,
     pub comment: Option<String>,
     /// The condition side. [`Logic::Series`] with no children is an empty rung,
-    /// which conducts — the same as a real rung with nothing in it.
+    /// which conducts, the same as a real rung with nothing in it.
     pub logic: Logic,
     /// Coils and output instructions, evaluated left to right.
     pub outputs: Vec<Instruction>,
@@ -209,7 +209,7 @@ pub struct Instruction {
     /// means is defined per [`OpCode`]; see [`OpCode::operand_names`].
     pub operands: Vec<Operand>,
     /// Anything the importer understood but the IR has no first-class place
-    /// for — the vendor mnemonic it came from, extra parameters, flags. Kept so
+    /// for, the vendor mnemonic it came from, extra parameters, flags. Kept so
     /// a conversion can report what it could not express instead of pretending
     /// it did not exist.
     pub vendor: Option<VendorDetail>,
@@ -238,7 +238,7 @@ pub enum Operand {
 ///
 /// Deliberately neutral names rather than one vendor's mnemonics. `Contact`
 /// beats `XIC` because a Siemens exporter should not have to un-learn Rockwell
-/// spelling to write a normally-open contact — and a Rockwell exporter writes
+/// spelling to write a normally-open contact: and a Rockwell exporter writes
 /// `XIC` from it just as easily.
 ///
 /// Anything outside this set imports as [`OpCode::Unsupported`] with the
@@ -248,7 +248,7 @@ pub enum Operand {
 #[ts(export, export_to = "../../../../types/src/generated/ir/")]
 #[serde(rename_all = "camelCase")]
 pub enum OpCode {
-    // Bit logic — condition side
+    // Bit logic, condition side
     /// Normally open. Rockwell XIC, Siemens `-| |-`.
     Contact,
     /// Normally closed. Rockwell XIO, Siemens `-|/|-`.
@@ -258,7 +258,7 @@ pub enum OpCode {
     /// Falling edge, one scan.
     FallingEdge,
 
-    // Bit logic — output side
+    // Bit logic, output side
     /// Non-retentive coil. Rockwell OTE.
     Coil,
     /// Negated coil.
@@ -412,7 +412,7 @@ pub enum IrError {
 
 /// Bring a document up to [`IR_VERSION`].
 ///
-/// A no-op at v1 — it exists now so that the first real migration is an edit to
+/// A no-op at v1, it exists now so that the first real migration is an edit to
 /// a function that already has callers and tests, rather than a new concept
 /// introduced under pressure.
 pub fn migrate(mut project: IrProject) -> Result<IrProject, IrError> {

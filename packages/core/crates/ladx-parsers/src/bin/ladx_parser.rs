@@ -1,4 +1,4 @@
-//! ladx-parser — CLI bridge between Node API routes and the Rust parser
+//! ladx-parser, CLI bridge between Node API routes and the Rust parser
 //! crate. Takes a file path, dispatches by extension, and prints a JSON
 //! `ParseResult` (`{ project, manifest }`) to stdout. On failure, exits
 //! non-zero with the error on stderr.

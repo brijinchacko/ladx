@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "ladX.ai Studio — local-first PLC AI agent for Windows"
+description = "LADX Studio: local-first PLC AI agent for Windows"
 
 [lib]
 name = "ladx_studio_lib"

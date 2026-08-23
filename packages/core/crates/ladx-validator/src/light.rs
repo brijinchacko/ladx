@@ -1,7 +1,7 @@
-//! Light validator — pure-Rust IEC 61131-3 ST sanity checks.
+//! Light validator, pure-Rust IEC 61131-3 ST sanity checks.
 //!
 //! NOT a full IEC 61131-3 compiler. Catches the common problems an LLM
-//! produces — unbalanced END_*, mismatched brackets, lower-case keywords
+//! produces, unbalanced END_*, mismatched brackets, lower-case keywords
 //! that should be upper, missing `;` at obvious statement boundaries.
 //! Production validation should run matiec.
 //!
@@ -55,7 +55,7 @@ fn check_st(source: &str) -> Vec<ValidatorDiagnostic> {
     let mut paren_depth: i32 = 0;
     let mut paren_line: u32 = 0;
 
-    // Stack of (open-keyword, line) — whatever opens last must close first.
+    // Stack of (open-keyword, line), whatever opens last must close first.
     let mut stack: Vec<(&'static str, u32)> = Vec::new();
 
     for (line_idx, raw_line) in source.lines().enumerate() {
@@ -63,7 +63,7 @@ fn check_st(source: &str) -> Vec<ValidatorDiagnostic> {
         let line = strip_comments(raw_line);
         let upper = line.to_uppercase();
 
-        // Bracket parity (parens only — IEC 61131-3 ST primarily uses parens).
+        // Bracket parity (parens only, IEC 61131-3 ST primarily uses parens).
         for ch in line.chars() {
             match ch {
                 '(' => {
@@ -78,7 +78,7 @@ fn check_st(source: &str) -> Vec<ValidatorDiagnostic> {
                         out.push(diag_error(
                             line_no,
                             0,
-                            "unbalanced ')' — no matching '('".into(),
+                            "unbalanced ')', no matching '('".into(),
                             "light:paren",
                         ));
                         paren_depth = 0;
@@ -115,7 +115,7 @@ fn check_st(source: &str) -> Vec<ValidatorDiagnostic> {
                                 line_no,
                                 0,
                                 format!(
-                                    "'{close}' closes the wrong block — '{open}' on line {open_line} expects '{expected}'"
+                                    "'{close}' closes the wrong block, '{open}' on line {open_line} expects '{expected}'"
                                 ),
                                 "light:end-keyword",
                             ));
@@ -131,7 +131,7 @@ fn check_st(source: &str) -> Vec<ValidatorDiagnostic> {
         out.push(diag_error(
             paren_line,
             0,
-            format!("unbalanced parentheses — {paren_depth} unclosed"),
+            format!("unbalanced parentheses, {paren_depth} unclosed"),
             "light:paren",
         ));
     }
@@ -182,8 +182,7 @@ fn diag_error(line: u32, column: u32, message: String, source: &str) -> Validato
 
 fn strip_comments(line: &str) -> String {
     // ST single-line comment is `//`; block `(* ... *)` we treat conservatively
-    // (block comments spanning multiple lines confuse this lightweight pass —
-    // we live with that for Phase 1 and let matiec catch the edge cases).
+    // (block comments spanning multiple lines confuse this lightweight pass, // we live with that for Phase 1 and let matiec catch the edge cases).
     if let Some(idx) = line.find("//") {
         line[..idx].to_string()
     } else {

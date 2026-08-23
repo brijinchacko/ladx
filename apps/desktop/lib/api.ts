@@ -1,4 +1,4 @@
-// Surface-aware API client — desktop edition. Same exports as the web
+// Surface-aware API client, desktop edition. Same exports as the web
 // version, but calls Tauri commands instead of HTTP. Forbidden to use
 // `fetch()` here per ADR-005.
 

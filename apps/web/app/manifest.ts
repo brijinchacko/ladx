@@ -9,7 +9,7 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "LADX — AI workbench for automation engineers",
+    name: "LADX: AI workbench for automation engineers",
     short_name: "LADX",
     description:
       "Draw ladder logic and watch it run, generate validated PLC code, and convert between platforms.",

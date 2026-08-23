@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from "react";
  * thing that has to work. It is built around one assumption: the person in
  * front of it has never used OpenRouter and does not want to read about it.
  * So the free path is the default, the instruction is one sentence, and the
- * key is verified live before it is stored — nobody should discover that they
+ * key is verified live before it is stored. Nobody should discover that they
  * pasted the wrong thing three screens later when a message fails.
  */
 
@@ -35,7 +35,7 @@ const PROVIDERS: { kind: Kind; label: string; hint: string; free?: boolean }[] =
   {
     kind: "openrouter",
     label: "OpenRouter",
-    hint: "Sign up at openrouter.ai/keys with an email — no card. Its free models cost nothing to run.",
+    hint: "Sign up at openrouter.ai/keys with an email. No card. Its free models cost nothing to run.",
     free: true,
   },
   { kind: "anthropic", label: "Anthropic", hint: "A key from console.anthropic.com." },
@@ -43,7 +43,7 @@ const PROVIDERS: { kind: Kind; label: string; hint: string; free?: boolean }[] =
   {
     kind: "custom",
     label: "Custom",
-    hint: "Anything speaking the OpenAI API — Groq, Together, a gateway, or a local Ollama at http://localhost:11434/v1.",
+    hint: "Anything speaking the OpenAI API: Groq, Together, a gateway, or a local Ollama at http://localhost:11434/v1.",
   },
 ];
 

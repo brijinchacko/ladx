@@ -1,5 +1,4 @@
-// Typed wrappers around Tauri commands. Frontend code calls these —
-// never `fetch()` to public domains (per ADR-005 / network policy).
+// Typed wrappers around Tauri commands. Frontend code calls these, // never `fetch()` to public domains (per ADR-005 / network policy).
 // Talking to Ollama on localhost is the Rust side's responsibility.
 
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";

@@ -1,4 +1,4 @@
-// POST /api/auth/login — verifies email+password, sets a session cookie.
+// POST /api/auth/login, verifies email+password, sets a session cookie.
 
 import { verifyPassword } from "@/lib/auth/password";
 import { createSession, setSessionCookie } from "@/lib/auth/session";

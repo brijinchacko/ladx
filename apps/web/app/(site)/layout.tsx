@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
  * The public site.
  *
  * Grouped as `(site)` so the marketing pages get header and footer chrome while
- * `/studio` and the signed-in app stay full-bleed — a ladder editor wrapped in
+ * `/studio` and the signed-in app stay full-bleed: a ladder editor wrapped in
  * a marketing nav is a ladder editor with less room for ladder.
  */
 export default function SiteLayout({ children }: { children: ReactNode }) {

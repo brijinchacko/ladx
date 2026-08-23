@@ -3,7 +3,7 @@ import { ScanCycle } from "./schematics";
 /**
  * Article artwork.
  *
- * One drawing per article, each of the thing the article is actually about — a
+ * One drawing per article, each of the thing the article is actually about: a
  * timing diagram for the timers piece, a scaling line for the analog piece.
  * Nothing decorative, and nothing generic: a picture that could sit on any
  * article is a picture that belongs on none of them.
@@ -12,7 +12,7 @@ import { ScanCycle } from "./schematics";
 const INK = "currentColor";
 const TEAL = "rgb(var(--ladx-teal, 53 182 186))";
 
-/** Two rungs, one reading a bit the other writes later — the one-scan lag. */
+/** Two rungs, one reading a bit the other writes later, the one-scan lag. */
 export function OutputImageFigure({ className }: { className?: string }) {
   return (
     <svg
@@ -116,16 +116,15 @@ export function OutputImageFigure({ className }: { className?: string }) {
   );
 }
 
-/** TON / TOF / RTO against the same input — the differences are all on the falling edge. */
+/** TON / TOF / RTO against the same input, the differences are all on the falling edge. */
 export function TimersFigure({ className }: { className?: string }) {
-  // Preset is two divisions. Read the falling edges — that is where the three
+  // Preset is two divisions. Read the falling edges, that is where the three
   // differ, and the article says so.
   //
   //   TON  done two divisions after the rung goes true; resets the moment it
   //        goes false. The second pulse is too short to ever finish, which is
   //        worth showing rather than hiding.
-  //   TOF  done while true, and stays done for two divisions AFTER false —
-  //        then drops. An off-delay that never dropped would not be a timer.
+  //   TOF  done while true, and stays done for two divisions AFTER false, //        then drops. An off-delay that never dropped would not be a timer.
   //   RTO  accumulates, reaches preset, and keeps it. Nothing here resets it,
   //        which is exactly the trap the article warns about.
   const rows = [
@@ -197,7 +196,7 @@ export function TimersFigure({ className }: { className?: string }) {
   );
 }
 
-/** The 4–20 mA scaling line, with the underrange region called out. */
+/** The 4-20 mA scaling line, with the underrange region called out. */
 export function AnalogFigure({ className }: { className?: string }) {
   return (
     <svg
@@ -206,7 +205,7 @@ export function AnalogFigure({ className }: { className?: string }) {
       role="img"
       aria-label="A straight line mapping 4 to 20 milliamps onto zero to ten bar, with the region below 4 milliamps marked as a broken loop"
     >
-      <title>4–20 mA scaled to engineering units</title>
+      <title>4-20 mA scaled to engineering units</title>
       {/* Axes */}
       <line x1="70" y1="170" x2="440" y2="170" stroke={INK} strokeWidth="1.2" opacity="0.45" />
       <line x1="70" y1="30" x2="70" y2="170" stroke={INK} strokeWidth="1.2" opacity="0.45" />

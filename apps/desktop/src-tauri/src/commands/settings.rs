@@ -1,6 +1,6 @@
 //! Per-install settings (currently just the chosen Ollama model). We
 //! write to %APPDATA%\ladX\settings.json on Windows, the equivalent on
-//! macOS / Linux. Frontend never touches the disk directly — it always
+//! macOS / Linux. Frontend never touches the disk directly, it always
 //! goes through these commands.
 
 use serde::{Deserialize, Serialize};

@@ -99,7 +99,7 @@ pub fn parse(bytes: &[u8], filename: &str) -> Result<ParseResult> {
 
     if !saw_l5x_root {
         return Err(ParseError::Schema(
-            "no <RSLogix5000Content> root — not an L5X file".into(),
+            "no <RSLogix5000Content> root, not an L5X file".into(),
         ));
     }
 

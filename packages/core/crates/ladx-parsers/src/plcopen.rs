@@ -91,7 +91,7 @@ pub fn parse(bytes: &[u8], filename: &str) -> Result<ParseResult> {
 
     if !saw_project_root {
         return Err(ParseError::Schema(
-            "no <project> root element — not a PLCopen TC6 file".into(),
+            "no <project> root element, not a PLCopen TC6 file".into(),
         ));
     }
 

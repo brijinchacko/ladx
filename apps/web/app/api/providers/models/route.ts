@@ -1,4 +1,4 @@
-// GET /api/providers/models?kind=… — models this user's key can reach.
+// GET /api/providers/models?kind=…, models this user's key can reach.
 //
 // Live from the provider rather than a hardcoded list, because free model
 // line-ups rotate without notice and a stale list offers people models that

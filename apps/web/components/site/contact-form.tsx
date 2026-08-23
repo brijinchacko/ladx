@@ -46,7 +46,7 @@ function Form() {
   if (state === "sent") {
     return (
       <div className="rounded-sm border border-teal-300 bg-teal-50 p-6">
-        <h3 className="mb-1.5 text-[15.5px] font-semibold text-ink-900">Sent — thank you.</h3>
+        <h3 className="mb-1.5 text-[15.5px] font-semibold text-ink-900">Sent, thank you.</h3>
         <p className="text-[14.5px] leading-relaxed text-ink-600">
           You'll get a reply from someone who works on this, usually within a working day. If it was
           a bug report, it may arrive as a question asking for the file that broke it.
@@ -130,7 +130,7 @@ function Form() {
 
 export function ContactForm() {
   // useSearchParams needs a Suspense boundary to keep the rest of the page
-  // static — without it this one form would opt the whole route into dynamic
+  // static, without it this one form would opt the whole route into dynamic
   // rendering.
   return (
     <Suspense fallback={<div className="h-96 rounded-sm border border-ink-100 bg-ink-50/40" />}>

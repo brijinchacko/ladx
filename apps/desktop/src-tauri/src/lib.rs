@@ -1,6 +1,6 @@
-//! ladX.ai Studio — Tauri shell.
+//! ladX.ai Studio, Tauri shell.
 //!
-//! CRITICAL — Network policy: this app makes EXACTLY ONE outbound HTTP
+//! CRITICAL, Network policy: this app makes EXACTLY ONE outbound HTTP
 //! call in its entire lifetime: a licence activation check against
 //! `https://auth.ladx.ai/activate` (override via LADX_ACTIVATION_URL).
 //! Every other network call is forbidden. See `apps/desktop/CLAUDE.md`.

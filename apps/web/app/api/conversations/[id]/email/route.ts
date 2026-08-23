@@ -1,4 +1,4 @@
-// POST /api/conversations/:id/email — emails the current user a copy of
+// POST /api/conversations/:id/email, emails the current user a copy of
 // the conversation. Project name is included if scoped.
 
 import { getApiUser } from "@/lib/auth/server";

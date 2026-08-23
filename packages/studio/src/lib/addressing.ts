@@ -4,7 +4,7 @@ import type { Tag } from "./types";
  * PLC addressing.
  *
  * A tag name says what a signal means. An address says where it physically
- * is — which terminal on the controller, which bit in which byte of memory.
+ * is, which terminal on the controller, which bit in which byte of memory.
  * Students who only ever see names never learn to read a wiring drawing or a
  * fault on a real panel, because the panel does not know your tag is called
  * "Start_PB"; it knows terminal I0.0.
@@ -15,9 +15,9 @@ import type { Tag } from "./types";
  * Siemens S7-1200 family that the course teaches on. So the addressing is
  * S7's, and it is the same on the screen as it is on the terminal strip:
  *
- *   I0.0 … I0.7      digital inputs   — byte 0, bits 0-7
+ *   I0.0 … I0.7      digital inputs, byte 0, bits 0-7
  *   I1.0 …           the next byte, once byte 0 is full
- *   Q0.0 … Q0.5      digital outputs  — the 1212C has six
+ *   Q0.0 … Q0.5      digital outputs, the 1212C has six
  *   M0.0 …           memory bits: internal flags, wired to nothing
  *   IW64, IW66       analog inputs, addressed by word
  *   QW80             analog output
@@ -28,7 +28,7 @@ import type { Tag } from "./types";
  * The dot in I0.0 is not decoration and it is not a version number: the part
  * before it is the byte, the part after is the bit within that byte. Bits run
  * 0-7 and then the byte increments, which is why I0.7 is followed by I1.0 and
- * never by I0.8 — the single most common thing to get wrong when writing
+ * never by I0.8, the single most common thing to get wrong when writing
  * addresses by hand.
  *
  * Words step by two because a word is two bytes: MW0 occupies bytes 0 and 1,
@@ -45,8 +45,8 @@ export type ParsedAddress =
 /** How many terminals the simulated CPU actually has. */
 export const CPU = {
   model: "VCX CPU 1212C",
-  digitalInputs: 8, // I0.0 – I0.7
-  digitalOutputs: 6, // Q0.0 – Q0.5
+  digitalInputs: 8, // I0.0 - I0.7
+  digitalOutputs: 6, // Q0.0 - Q0.5
   analogInputs: 2, // IW64, IW66
   analogOutputs: 1, // QW80
   analogInBase: 64,
@@ -107,12 +107,12 @@ export function formatAddress(a: ParsedAddress): string {
  */
 export function addressProblem(raw: string, tag: Tag, others: Tag[]): string | null {
   const s = raw.trim();
-  if (!s) return null; // Blank is allowed — an internal tag needs no terminal.
+  if (!s) return null; // Blank is allowed: an internal tag needs no terminal.
 
   const a = parseAddress(s);
   if (!a) {
     if (/^[IQM]\d+\.\d+$/i.test(s)) {
-      return "Bits run 0 to 7. After I0.7 comes I1.0, not I0.8 — the number after the dot is the bit inside the byte.";
+      return "Bits run 0 to 7. After I0.7 comes I1.0, not I0.8, the number after the dot is the bit inside the byte.";
     }
     if (/^(IW|QW|MW)\d+$/i.test(s)) {
       return "A word is two bytes, so word addresses step by two: MW0, MW2, MW4. MW1 would overlap MW0.";
@@ -173,7 +173,7 @@ function describeExpectation(tag: Tag): string {
   if (tag.type === "INT") {
     if (tag.isInput) return "An analog input is addressed by word: IW64 or IW66.";
     if (tag.isOutput) return "The analog output is QW80.";
-    return "An internal number is addressed MW0, MW2, MW4 — words step by two.";
+    return "An internal number is addressed MW0, MW2, MW4, words step by two.";
   }
   if (tag.isInput) return "An input is addressed I0.0 upwards, or M0.0 if it is internal.";
   if (tag.isOutput) return "An output is addressed Q0.0 upwards, or M0.0 if it is internal.";
@@ -285,7 +285,7 @@ export function terminalFor(
   return null; // M, MW, T, C live in memory. There is no screw to point at.
 }
 
-/** True for an address that has a terminal — i.e. something you can wire to. */
+/** True for an address that has a terminal, i.e. something you can wire to. */
 export function isPhysical(address: string | undefined): boolean {
   return terminalFor(address) !== null;
 }

@@ -1,4 +1,4 @@
-// POST /api/generated-code — record accepted generated code as a
+// POST /api/generated-code, record accepted generated code as a
 // positive training pair (per spec workflow §8.1: "On user 'Accept':
 // import via vendor connector, log to audit, store as accepted pair").
 // Phase 1: persistence only; the vendor-connector import lands with

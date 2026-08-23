@@ -17,7 +17,7 @@ import {
 
 export interface CompatOptions {
   baseUrl: string;
-  /** Extra headers — OpenRouter wants attribution, others want nothing. */
+  /** Extra headers, OpenRouter wants attribution, others want nothing. */
   headers?: Record<string, string>;
 }
 
@@ -140,7 +140,7 @@ export async function* streamCompat(
       buffer += decoder.decode(value, { stream: true });
 
       // SSE frames are separated by a blank line. Keeping the trailing partial
-      // in `buffer` is the whole trick — a chunk boundary lands mid-frame far
+      // in `buffer` is the whole trick: a chunk boundary lands mid-frame far
       // more often than it looks like it should.
       const frames = buffer.split("\n\n");
       buffer = frames.pop() ?? "";

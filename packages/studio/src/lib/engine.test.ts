@@ -10,8 +10,8 @@ import type { Element, LadxProgram, Rung, Tag } from "./types";
  * be paid down later without silently changing what the simulator does.
  *
  * These are not exhaustive. They cover the three things the engine's own header
- * calls out as the fidelity that matters — the things students actually get
- * wrong — because those are what a careless refactor would break first.
+ * calls out as the fidelity that matters, the things students actually get
+ * wrong, because those are what a careless refactor would break first.
  */
 
 const tag = (name: string, type: Tag["type"] = "BOOL", value = 0): Tag =>

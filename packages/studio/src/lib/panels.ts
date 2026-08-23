@@ -56,7 +56,7 @@ export const PANELS: PanelDef[] = [
     size: 108,
     min: 78,
     max: 260,
-    blurb: "Contacts, coils, timers, compare and maths — drag one onto a rung.",
+    blurb: "Contacts, coils, timers, compare and maths, drag one onto a rung.",
     helpTopic: "instructions",
   },
   {
@@ -109,7 +109,7 @@ const KEY = "ladx-layout-v1";
  * Read the saved layout, repairing anything that does not make sense.
  *
  * A stored layout outlives the code that wrote it. A panel that no longer
- * exists, a width from a wider monitor, a value somebody edited by hand — each
+ * exists, a width from a wider monitor, a value somebody edited by hand, each
  * is a way to end up with a pane one pixel wide and no way to grab it. Every
  * field is checked against the definition rather than trusted.
  */

@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ladX Studio",
-  description: "Local-first PLC AI agent — air-gapped Windows desktop.",
+  description: "Local-first PLC AI agent: air-gapped Windows desktop.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

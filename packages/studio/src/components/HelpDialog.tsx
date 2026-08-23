@@ -103,7 +103,7 @@ export default function HelpDialog({
           <span
             style={{ fontSize: 12.5, fontWeight: 700, color: ink.strong, letterSpacing: "0.01em" }}
           >
-            LADX Mini — Help
+            LADX Mini, Help
           </span>
           <span className="flex-1" />
           <div className="relative">
@@ -174,7 +174,7 @@ export default function HelpDialog({
             ))}
             {results?.length === 0 && (
               <p className="px-3 py-3 text-[11px] text-[#64748B]">
-                Nothing matched “{query}”. Try a word from the thing you are stuck on — “timer”,
+                Nothing matched “{query}”. Try a word from the thing you are stuck on, “timer”,
                 “branch”, “download”.
               </p>
             )}
@@ -291,7 +291,7 @@ function Block({ b }: { b: HelpBlock }) {
 /**
  * One instruction, in full.
  *
- * Laid out as symbol, then behaviour, then the words — which is the order
+ * Laid out as symbol, then behaviour, then the words, which is the order
  * somebody actually needs them in. The drawing answers "what is this" faster
  * than any sentence, and by the time they reach the prose they already have
  * something to hang it on.
@@ -366,7 +366,7 @@ function InstructionCard({
       </header>
 
       <div style={{ padding: "12px 14px", display: "grid", gap: 12 }}>
-        {/* The diagram — the part that does the explaining. */}
+        {/* The diagram, the part that does the explaining. */}
         <div
           style={{
             background: surface.subtle,

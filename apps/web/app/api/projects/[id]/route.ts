@@ -1,5 +1,5 @@
-// GET    /api/projects/:id — fetch a single project (must belong to user).
-// DELETE /api/projects/:id — delete the row and the stored blob.
+// GET    /api/projects/:id, fetch a single project (must belong to user).
+// DELETE /api/projects/:id, delete the row and the stored blob.
 
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";

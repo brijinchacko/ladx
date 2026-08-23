@@ -1,5 +1,5 @@
 // Spawn helper for the Rust `ladx-validate` CLI. Same lookup pattern as
-// the parser binary — release first, debug fallback, clear error if
+// the parser binary, release first, debug fallback, clear error if
 // missing. Source is piped over stdin so we don't need a tmp file on the
 // Node side.
 

@@ -1,4 +1,4 @@
-// Auth middleware. Cheap cookie-presence check only — full session
+// Auth middleware. Cheap cookie-presence check only, full session
 // validation happens in the route handler / server component, which has
 // DB access. Edge runtime can't easily talk to Postgres, so we don't try.
 
@@ -10,7 +10,7 @@ import type { NextRequest } from "next/server";
  * The routes that need an account.
  *
  * This list is deliberately the *protected* one rather than the public one.
- * It used to be inverted — everything was private unless named — which meant
+ * It used to be inverted, everything was private unless named, which meant
  * every new marketing page silently redirected to /sign-in until somebody
  * remembered to come here. The failure was invisible in development, where you
  * are always signed in, and obvious to a first-time visitor, which is the worst
@@ -50,7 +50,7 @@ export function middleware(req: NextRequest) {
 export const config = {
   // Skip anything that is an asset rather than a page. `webmanifest`, `txt` and
   // `xml` are here because the manifest, robots.txt and sitemap are generated
-  // routes, not files in public/ — without them the auth check catches the
+  // routes, not files in public/, without them the auth check catches the
   // manifest and redirects it to /sign-in, which browsers read as a broken
   // install target rather than as a login prompt.
   matcher: [

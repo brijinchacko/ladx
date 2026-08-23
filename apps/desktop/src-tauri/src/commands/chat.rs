@@ -16,7 +16,7 @@ use tauri::{AppHandle, Emitter};
 use crate::state::AppState;
 
 /// Wire-shape of a chat message from the frontend. Mirrors the web
-/// streaming protocol — role is lowercase string so JS can send it as-is.
+/// streaming protocol, role is lowercase string so JS can send it as-is.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatMessage {
     pub role: String,
@@ -43,7 +43,7 @@ pub async fn ollama_chat_stream(
     project_id: Option<String>,
     conversation_id: Option<String>,
 ) -> Result<(), String> {
-    // Optional project grounding — load the manifest and prepend a
+    // Optional project grounding, load the manifest and prepend a
     // system message describing the project's routines/tags/UDTs.
     let mut grounded: Vec<InferenceChatMessage> = Vec::new();
     if let Some(pid) = &project_id {
@@ -55,7 +55,7 @@ pub async fn ollama_chat_stream(
         }
     }
 
-    // Capture the user's last message for persistence — that's what the
+    // Capture the user's last message for persistence, that's what the
     // frontend just submitted. We persist before streaming so a crash
     // mid-stream still leaves a clean record.
     let last_user_content: Option<String> = messages
@@ -118,7 +118,7 @@ pub async fn ollama_chat_stream(
 
     let _ = app.emit::<()>(&format!("chat-stream-end:{channel_id}"), ());
 
-    // Persist the accumulated assistant response. Best-effort — if the
+    // Persist the accumulated assistant response. Best-effort, if the
     // DB write fails the chat still rendered fine.
     if let (Some(cid), true) = (&conversation_id, !accumulated.is_empty()) {
         let _ = state.projects.with_conn(|conn| {
@@ -180,13 +180,13 @@ fn build_project_system_prompt(project: &crate::db::ProjectRow) -> String {
     format!(
         "You are ladX Studio, an expert PLC engineering assistant running locally. \
          The user is working on a project named \"{name}\" targeting {vendor}.\n\n\
-         Project manifest (names only — full source is not yet available; ask the user to paste a routine if you need its body):\n\
+         Project manifest (names only, full source is not yet available; ask the user to paste a routine if you need its body):\n\
          - Routines: {routines}\n\
          - Tags: {tags}\n\
          - UDTs: {udts}\n\
          - AOIs: {aois}\n\n\
          When the user asks about specific routines, tags, or UDTs, refer to them by exact name. \
-         If a name they mention isn't in the manifest, say so — do not hallucinate.\n\
+         If a name they mention isn't in the manifest, say so, do not hallucinate.\n\
          When generating code, target IEC 61131-3 Structured Text by default; use ladder XML only if asked.\n\
          Be terse and engineer-to-engineer. Skip apologies and disclaimers.",
         name = project.name,

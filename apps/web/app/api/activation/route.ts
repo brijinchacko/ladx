@@ -1,4 +1,4 @@
-// POST /api/activation — desktop licence activation check.
+// POST /api/activation, desktop licence activation check.
 //
 // This is the ONLY outbound HTTP call ladX Studio is allowed to make
 // (per ADR-005 / desktop CLAUDE.md). The desktop sends its licence key

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
  *
  * There is no billing here and there will not be: inference runs on the user's
  * own provider key, so there is nothing for us to meter or charge for. What
- * that makes important instead is the providers panel — until a key is
+ * that makes important instead is the providers panel, until a key is
  * connected, the AI half of LADX cannot do anything at all.
  */
 export default async function SettingsPage() {
@@ -25,7 +25,7 @@ export default async function SettingsPage() {
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-ink-900">AI providers</h2>
           <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-500">
-            LADX has no AI key of its own — everything runs on yours, so nothing you send is metered
+            LADX has no AI key of its own, everything runs on yours, so nothing you send is metered
             or billed by us. If you have none, OpenRouter takes an email and no card, and its free
             models cost nothing to run.
           </p>

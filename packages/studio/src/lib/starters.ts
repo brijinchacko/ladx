@@ -20,7 +20,7 @@ export const STARTER_PROGRAMS: {
     key: "motor-seal-in",
     name: "Motor start/stop with seal-in",
     description:
-      "The first rung every automation engineer learns. Start latches the motor, Stop and E-Stop break it. Notice both stop buttons are wired normally closed — press Run and try turning E-Stop off.",
+      "The first rung every automation engineer learns. Start latches the motor, Stop and E-Stop break it. Notice both stop buttons are wired normally closed, press Run and try turning E-Stop off.",
     program: {
       name: "Motor start/stop with seal-in",
       scanMs: 100,
@@ -38,7 +38,7 @@ export const STARTER_PROGRAMS: {
           value: 1,
           isInput: true,
           device: "PUSHBUTTON_NC",
-          comment: "NC — 1 means healthy",
+          comment: "NC, 1 means healthy",
         },
         {
           name: "EStop_OK",
@@ -46,7 +46,7 @@ export const STARTER_PROGRAMS: {
           value: 1,
           isInput: true,
           device: "PUSHBUTTON_NC",
-          comment: "NC — 1 means healthy",
+          comment: "NC, 1 means healthy",
         },
         {
           name: "Motor",
@@ -132,7 +132,7 @@ export const STARTER_PROGRAMS: {
     key: "bottle-counter",
     name: "Count 12 bottles, then flag the batch",
     description:
-      "A photocell counts parts. Toggle the sensor on and off — notice that holding it on counts once, not continuously, because a CTU counts on the rising edge.",
+      "A photocell counts parts. Toggle the sensor on and off, notice that holding it on counts once, not continuously, because a CTU counts on the rising edge.",
     program: {
       name: "Count 12 bottles, then flag the batch",
       scanMs: 100,
@@ -194,7 +194,7 @@ export const STARTER_PROGRAMS: {
         },
         {
           id: "r2",
-          comment: "It only clears below 75% — that gap is the hysteresis that stops chatter.",
+          comment: "It only clears below 75%, that gap is the hysteresis that stops chatter.",
           branches: [[{ id: "c", type: "LES", tag: "Level", operand: "75" }]],
           outputs: [{ id: "d", type: "OTU", tag: "High_Alarm" }],
         },

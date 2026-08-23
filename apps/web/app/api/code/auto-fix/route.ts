@@ -1,4 +1,4 @@
-// POST /api/code/auto-fix — closes spec §8.1's "validate → feedback →
+// POST /api/code/auto-fix, closes spec §8.1's "validate → feedback →
 // retry up to 3 times" loop. Caller hands us source + the failing report
 // + optional projectId; we re-prompt the model with the diagnostics,
 // validate, retry up to MAX_ATTEMPTS, and return the final attempt
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // Optional grounding — when projectId is given, build the manifest
+  // Optional grounding, when projectId is given, build the manifest
   // system prompt so the model fixes against real tag/routine names.
   let systemPrompt: string | undefined;
   if (parsed.data.projectId) {

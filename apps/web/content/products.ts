@@ -37,7 +37,7 @@ export const PRODUCTS: Product[] = [
       },
       {
         h: "Tags with addresses",
-        p: "Every tag gets a plausible address — I0.0, Q0.1 — and a device type, so the tag table looks like a tag table and the simulator can show you a panel with switches and lamps on it.",
+        p: "Every tag gets a plausible address, I0.0, Q0.1: and a device type, so the tag table looks like a tag table and the simulator can show you a panel with switches and lamps on it.",
       },
       {
         h: "It runs in the browser",
@@ -46,7 +46,7 @@ export const PRODUCTS: Product[] = [
     ],
     limits: [
       "It is a teaching and verification simulator, not a certification tool. It does not replace commissioning.",
-      "It never connects to a physical controller — by design, and that will not change.",
+      "It never connects to a physical controller, by design, and that will not change.",
       "Ladder only for now. Structured Text is read and written by the rest of the platform but not drawn here.",
     ],
     figure: "sealIn",
@@ -63,7 +63,7 @@ export const PRODUCTS: Product[] = [
     does: [
       {
         h: "It writes onto the canvas, not into a chat bubble",
-        p: "Answers arrive as rungs in Studio — editable, runnable, and yours. You can select a rung and ask what it does, or ask for a permissive to be added to it.",
+        p: "Answers arrive as rungs in Studio, editable, runnable, and yours. You can select a rung and ask what it does, or ask for a permissive to be added to it.",
       },
       {
         h: "Validated before display",
@@ -71,7 +71,7 @@ export const PRODUCTS: Product[] = [
       },
       {
         h: "Any model, your key",
-        p: "OpenRouter by default — including its free models — plus Anthropic, OpenAI, or any OpenAI-compatible endpoint including a local Ollama. LADX holds no shared key and meters nothing.",
+        p: "OpenRouter by default, including its free models, plus Anthropic, OpenAI, or any OpenAI-compatible endpoint including a local Ollama. LADX holds no shared key and meters nothing.",
       },
       {
         h: "It knows your project",
@@ -81,7 +81,7 @@ export const PRODUCTS: Product[] = [
     limits: [
       "It drafts. Whether the interlock is sufficient for the hazard is an engineering judgement and stays with you.",
       "A compiler proves code is valid, not that it is correct. Simulation helps; it is not a safety case.",
-      "Free models are rate-limited by the provider, not by us — the queue you occasionally hit is theirs.",
+      "Free models are rate-limited by the provider, not by us, the queue you occasionally hit is theirs.",
     ],
     figure: "validation",
   },
@@ -113,7 +113,7 @@ export const PRODUCTS: Product[] = [
       },
     ],
     limits: [
-      "Bridged rungs — where a wire crosses between parallel branches — have no series/parallel form. They are refused and preserved rather than approximated.",
+      "Bridged rungs, where a wire crosses between parallel branches, have no series/parallel form. They are refused and preserved rather than approximated.",
       "Anything unmapped stays as an annotated placeholder. It is never dropped, and never silently reinterpreted.",
       "Whole-project formats like .ACD and .ap1x need the desktop bridge and your own licensed IDE.",
     ],
@@ -125,7 +125,7 @@ export const PRODUCTS: Product[] = [
     tagline: "The paperwork, from the code you already wrote.",
     state: "planned",
     summary:
-      "Functional design specs, I/O schedules, control narratives and test protocols — generated from the project rather than typed a second time.",
+      "Functional design specs, I/O schedules, control narratives and test protocols, generated from the project rather than typed a second time.",
     problem:
       "Documentation is the most disliked and most billable part of an integration project, it is written last, and it is out of date the moment somebody edits a rung.",
     does: [
@@ -139,7 +139,7 @@ export const PRODUCTS: Product[] = [
       },
       {
         h: "Templates you control",
-        p: "House standards, customer-specific sections, and your own letterhead — not ours.",
+        p: "House standards, customer-specific sections, and your own letterhead, not ours.",
       },
     ],
     limits: [
@@ -171,7 +171,7 @@ export const PRODUCTS: Product[] = [
       },
     ],
     limits: [
-      "It retrieves and quotes. It does not verify that the manual is the current revision — that is still on you.",
+      "It retrieves and quotes. It does not verify that the manual is the current revision, that is still on you.",
     ],
     figure: "scan",
   },

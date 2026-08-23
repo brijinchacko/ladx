@@ -11,7 +11,7 @@ export type Instruction = { id: string, op: OpCode,
 operands: Array<Operand>, 
 /**
  * Anything the importer understood but the IR has no first-class place
- * for — the vendor mnemonic it came from, extra parameters, flags. Kept so
+ * for, the vendor mnemonic it came from, extra parameters, flags. Kept so
  * a conversion can report what it could not express instead of pretending
  * it did not exist.
  */

@@ -5,8 +5,7 @@ import { useEffect, useRef, useState } from "react";
 /**
  * The menu bar.
  *
- * Every PLC IDE has one, in the same order, with roughly the same contents —
- * and that matters more than it looks. A student who learns that saving is
+ * Every PLC IDE has one, in the same order, with roughly the same contents, * and that matters more than it looks. A student who learns that saving is
  * under File and undo is under Edit carries that to TIA and Studio 5000
  * unchanged. Inventing a nicer arrangement here would teach a habit that works
  * in exactly one piece of software.

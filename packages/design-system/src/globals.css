@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LADX baseline — light theme is the default surface; dark is opt-in via .dark on root. */
+/* LADX baseline, light theme is the default surface; dark is opt-in via .dark on root. */
 @layer base {
   :root {
     --ladx-ink: 15 26 36;

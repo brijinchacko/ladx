@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 /**
  * The transfer between the editor and the controller, shown as it happens.
  *
- * Downloading used to be instantaneous — a state assignment and a toast — and
+ * Downloading used to be instantaneous: a state assignment and a toast: and
  * students read that as nothing having happened. On real hardware a download
  * is a sequence you watch: the processor is put in program mode, the project
  * is compiled and sent, the memory is verified, and only then does it run
@@ -25,13 +25,13 @@ export type TransferKind = "download" | "upload" | null;
  * The two ends of the cable, drawn.
  *
  * A generic processor glyph did not say which way anything was going, and
- * "download" is the single most misread word in a PLC editor — half of
+ * "download" is the single most misread word in a PLC editor, half of
  * students expect it to fetch. A picture of a computer, a cable and the
  * controller settles it before the words are read: the packets move from the
  * machine you are sitting at towards the box on the wall, or back.
  *
- * The controller is drawn the same way as the one in the simulator — same
- * case, same nameplate, same terminal strips — because a transfer dialog
+ * The controller is drawn the same way as the one in the simulator, same
+ * case, same nameplate, same terminal strips, because a transfer dialog
  * showing a different-looking box is a dialog about a different controller.
  */
 function TransferScene({

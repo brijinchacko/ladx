@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * The LADX wordmark.
  *
  * "LAD" in the ink colour, "X" in the ladx.ai green, set in a squared techno
- * face with wide tracking — the shape of Pirulen.
+ * face with wide tracking, the shape of Pirulen.
  *
  * Pirulen itself is a licensed font and is not redistributable, so it is named
  * FIRST in the stack and everything after it is a fallback: if the family is
@@ -33,7 +33,7 @@ export default function LadxLogo({
   size?: number;
   /** "dark" puts LAD in near-black for light backgrounds; "light" in white. */
   tone?: "dark" | "light";
-  /** "Mini", or a version — set smaller and lighter beside the mark. */
+  /** "Mini", or a version, set smaller and lighter beside the mark. */
   suffix?: string;
   className?: string;
 }) {
@@ -75,7 +75,7 @@ export default function LadxLogo({
 /**
  * The app icon: a minimal ladder on a dark tile.
  *
- * Two power rails with three rungs — what the software draws, reduced until it
+ * Two power rails with three rungs, what the software draws, reduced until it
  * survives at 16px. Every decision here came from testing at that size and
  * nowhere else:
  *
@@ -85,7 +85,7 @@ export default function LadxLogo({
  *   Even air above, between and below, so the rails clearly run past the outer
  *   rungs. Crowded to the ends, the shape closes into a box.
  *
- *   Two colours on the tile — white rails, one green rung — which is the limit
+ *   Two colours on the tile, white rails, one green rung, which is the limit
  *   at 16px and the same pattern as the wordmark: the body in ink or white,
  *   one element in the ladx.ai green.
  *
@@ -133,7 +133,7 @@ export function LadxMark({ size = 28 }: { size?: number }) {
  * The application surface.
  *
  * LADX Mini is a piece of software sitting inside the portal, not another
- * portal page — so it gets a white canvas in a bordered frame with its own
+ * portal page, so it gets a white canvas in a bordered frame with its own
  * title bar, and the home screen and the editor share it. Two screens of the
  * same program should not look like two different products.
  *
@@ -144,7 +144,7 @@ export function LadxFrame({
   right,
   children,
 }: {
-  /** Title-bar controls — Save, project name, and so on. */
+  /** Title-bar controls, Save, project name, and so on. */
   right?: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -157,7 +157,7 @@ export function LadxFrame({
    * A ladder is a wide drawing and the portal chrome costs a third of the
    * screen, so the editor needs the whole window. The real Fullscreen API is
    * tried first because it also hides the browser's own furniture; if it is
-   * refused — an iframe without the permission, or an older browser — the
+   * refused: an iframe without the permission, or an older browser, the
    * frame falls back to covering the viewport, which is nearly as good and
    * never fails.
    */
@@ -228,7 +228,7 @@ export function LadxFrame({
             type="button"
             onClick={toggle}
             title={
-              full ? "Leave fullscreen  ·  Esc" : "Fullscreen — the ladder gets the whole window"
+              full ? "Leave fullscreen  ·  Esc" : "Fullscreen, the ladder gets the whole window"
             }
             aria-label={full ? "Leave fullscreen" : "Fullscreen"}
             className="grid place-items-center w-6 h-6 rounded hover:bg-white/10"

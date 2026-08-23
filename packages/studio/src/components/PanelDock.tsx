@@ -27,8 +27,7 @@ export default function PanelDock({
   onHelp: (topic: string) => void;
 }) {
   const closed = PANELS.filter((p) => !layout[p.id].open);
-  // Only offer the reset once the layout actually differs from the default —
-  // the simulator starts closed, so "some panel is closed" would show it from
+  // Only offer the reset once the layout actually differs from the default, // the simulator starts closed, so "some panel is closed" would show it from
   // the first render and teach people to ignore it.
   const anyMoved = PANELS.some(
     (p) =>
@@ -65,7 +64,7 @@ export default function PanelDock({
 
       {closed.length === 0 ? (
         <span style={{ fontSize: 10, color: ink.faint, fontStyle: "italic" }}>
-          Closed panels appear here — click one to bring it back.
+          Closed panels appear here, click one to bring it back.
         </span>
       ) : (
         <div className="flex items-center gap-1 overflow-x-auto">

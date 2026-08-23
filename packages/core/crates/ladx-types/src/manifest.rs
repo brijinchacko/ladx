@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-/// Lightweight manifest of a parsed project — names only, no source code.
+/// Lightweight manifest of a parsed project, names only, no source code.
 /// Goal: small enough to inject into a chat system prompt for every turn.
 /// For very large projects the consumer is expected to truncate.
 

@@ -1,6 +1,6 @@
-//! ladx-validate — CLI bridge for Node API routes. Reads source from stdin
+//! ladx-validate, CLI bridge for Node API routes. Reads source from stdin
 //! (or a file path arg), runs the configured validator backend, prints a
-//! `ValidatorReport` JSON to stdout. Always exits 0 — failure is in the
+//! `ValidatorReport` JSON to stdout. Always exits 0, failure is in the
 //! report, not the exit code, so the caller can distinguish "validation
 //! failed" from "validator crashed".
 //!

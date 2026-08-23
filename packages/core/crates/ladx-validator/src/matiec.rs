@@ -18,7 +18,7 @@ pub struct MatiecValidator {
 
 impl MatiecValidator {
     /// Pick the binary from `LADX_MATIEC_BIN` if set, else assume `matiec`
-    /// is on PATH. We don't probe the filesystem here — the subprocess
+    /// is on PATH. We don't probe the filesystem here, the subprocess
     /// invocation will tell us soon enough.
     pub fn from_env() -> Self {
         let binary =
@@ -34,7 +34,7 @@ impl Validator for MatiecValidator {
 
     fn validate_st(&self, source: &str) -> Result<ValidatorReport> {
         // matiec wants a real file. Write to a temp path; we let the OS
-        // garbage-collect it (we delete on success, leak on panic — fine
+        // garbage-collect it (we delete on success, leak on panic, fine
         // because tmp dirs get cleaned up).
         let tmpdir = std::env::temp_dir();
         let tmpfile = tmpdir.join(format!("ladx-{}.st", uuid_like()));

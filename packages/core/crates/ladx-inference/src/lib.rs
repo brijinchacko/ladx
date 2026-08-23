@@ -1,6 +1,6 @@
 //! Inference abstraction. The `LlmClient` trait hides whether we're talking
 //! to OpenRouter (cloud) or Ollama (local desktop). ADR-005 forbids any
-//! desktop fallback to cloud — it is the caller's responsibility to pick
+//! desktop fallback to cloud, it is the caller's responsibility to pick
 //! the right backend per surface.
 
 pub mod ollama;

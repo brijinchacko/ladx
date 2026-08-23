@@ -66,7 +66,7 @@ export async function* streamChatFromApi(opts: SendOpts): AsyncIterable<string> 
       buffer = buffer.slice(nl + 1);
 
       if (line === "") {
-        // end of event — for `event: conversation` we dispatch via control
+        // end of event, for `event: conversation` we dispatch via control
         // frame; for plain `data:` we already yielded each line as a delta.
         dispatch();
         continue;
@@ -86,7 +86,7 @@ export async function* streamChatFromApi(opts: SendOpts): AsyncIterable<string> 
           dataLines.push(data);
           continue;
         }
-        // Plain delta — yield immediately.
+        // Plain delta, yield immediately.
         yield data;
       }
     }

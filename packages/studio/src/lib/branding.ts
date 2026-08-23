@@ -3,7 +3,7 @@
  *
  * LADX Mini grew up inside the Edwartens India CRM, where the PDF header was
  * hardwired to that company's details. Studio is a product now, and the same
- * export has to be able to say "LADX" — or, for a training institute running a
+ * export has to be able to say "LADX", or, for a training institute running a
  * white-labelled lab, say their name instead. So branding is a parameter with a
  * LADX default rather than a compile-time import.
  *

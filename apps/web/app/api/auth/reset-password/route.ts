@@ -1,4 +1,4 @@
-// POST /api/auth/reset-password — consumes a password-reset token,
+// POST /api/auth/reset-password, consumes a password-reset token,
 // updates the user's password_hash, creates a fresh session.
 
 import { hashPassword } from "@/lib/auth/password";

@@ -14,7 +14,7 @@ const FAQ = [
   },
   {
     q: "Which AI provider does it use?",
-    a: "Whichever you connect. OpenRouter is the default because its free models cost nothing and need only an email to sign up for, and Anthropic, OpenAI or any OpenAI-compatible endpoint — including a local Ollama — work the same way. LADX holds no shared key, so nothing you send is metered or billed by us.",
+    a: "Whichever you connect. OpenRouter is the default because its free models cost nothing and need only an email to sign up for, and Anthropic, OpenAI or any OpenAI-compatible endpoint, including a local Ollama, work the same way. LADX holds no shared key, so nothing you send is metered or billed by us.",
   },
   {
     q: "Is my PLC code used to train anything?",
@@ -26,11 +26,11 @@ const FAQ = [
   },
   {
     q: "Which file formats can it read?",
-    a: "Today: Rockwell L5X, PLCopen XML (which covers the CODESYS family — ABB, WAGO, Festo, Lenze and others), Beckhoff TcPOU, and Structured Text sources. Next: Rockwell ACD directly, Siemens SimaticML, Schneider XEF, Mitsubishi and Omron exports.",
+    a: "Today: Rockwell L5X, PLCopen XML (which covers the CODESYS family: ABB, WAGO, Festo, Lenze and others), Beckhoff TcPOU, and Structured Text sources. Next: Rockwell ACD directly, Siemens SimaticML, Schneider XEF, Mitsubishi and Omron exports.",
   },
   {
     q: "We run an air-gapped OT network. Does that work?",
-    a: "That is the case the desktop application exists for: a local model, no outbound connections at all, and an audit trail of every prompt and every accepted output. If you are looking at this for a regulated site, get in touch — it is the deployment we most want to get right.",
+    a: "That is the case the desktop application exists for: a local model, no outbound connections at all, and an audit trail of every prompt and every accepted output. If you are looking at this for a regulated site, get in touch, it is the deployment we most want to get right.",
   },
   {
     q: "Is the simulator accurate enough to trust?",

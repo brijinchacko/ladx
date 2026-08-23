@@ -11,14 +11,14 @@ import { INSTRUCTION_BY_TYPE } from "../lib/types";
  * One network, drawn from the rung tree.
  *
  * ALIGNMENT IS STRUCTURAL, NOT ARITHMETIC. Every cell is a column of one CSS
- * grid with three fixed rows — tag label, symbol, mnemonic — so a wire and a
+ * grid with three fixed rows, tag label, symbol, mnemonic, so a wire and a
  * symbol share a centreline by construction rather than by a computed offset
  * that drifts the moment a label grows.
  *
  * That gives one invariant the branches depend on: the electrical centreline is
  * ALWAYS 29px from the top of any node (13px label + half the 32px symbol). So
- * a parallel can draw its two rails without measuring the DOM — from 29px down
- * to the last leg's offset plus 29 — and they meet every leg's wire exactly.
+ * a parallel can draw its two rails without measuring the DOM, from 29px down
+ * to the last leg's offset plus 29: and they meet every leg's wire exactly.
  *
  * Heights are computed, not measured: a series is as tall as its tallest child,
  * a parallel is the sum of its legs. Nesting therefore needs no layout pass and
@@ -36,12 +36,11 @@ import { INSTRUCTION_BY_TYPE } from "../lib/types";
  * the branch rails are positioned by arithmetic on them rather than by
  * measuring the DOM. Adding the address line lengthened every cell by 10px
  * and these were not updated, so a branch rail stopped 9px short of the
- * second leg's wire — the "broken branch": a leg drawn hanging off the end
+ * second leg's wire, the "broken branch": a leg drawn hanging off the end
  * of a rail that no longer reached it.
  *
  * If a band is added or resized, change all three. ROW_H is the sum, and
- * CENTRE is the distance from the top of a row to the middle of its wire —
- * the name band plus half the symbol band.
+ * CENTRE is the distance from the top of a row to the middle of its wire, * the name band plus half the symbol band.
  */
 export const ROW_BANDS = [13, 32, 11, 10] as const; // name, symbol, mnemonic, address
 export const ROW_H = ROW_BANDS.reduce((a, b) => a + b, 0);
@@ -78,7 +77,7 @@ function Glyph({ type, live }: { type: ElementType; live: boolean }) {
         {/*
           The slash on a normally-closed contact, crossing the gap.
 
-          It used to sit at left:26 — the gap between the two bars runs from
+          It used to sit at left:26, the gap between the two bars runs from
           23.5 to 50.5 on a 74px cell, so its centre is 37, and the slash was
           leaning against the left bar about ten pixels off. It also spanned
           only half the gap, so it read as a mark beside the contact rather
@@ -142,7 +141,7 @@ function Glyph({ type, live }: { type: ElementType; live: boolean }) {
    *
    * It was two spans with half a border-radius each. That geometry is fixed
    * in the source and yet the coil visibly changed shape once the simulator
-   * opened — because opening a panel narrows the canvas, the cell lands on a
+   * opened, because opening a panel narrows the canvas, the cell lands on a
    * fractional pixel, and the browser rounds each arc's box independently.
    * Two arcs rounded in opposite directions stop being a matched pair, and a
    * clean ( ) closes up into an ellipse.
@@ -172,7 +171,7 @@ function Glyph({ type, live }: { type: ElementType; live: boolean }) {
         strokeWidth={2}
         shapeRendering="crispEdges"
       />
-      {/* The two arcs — true semicircles, so the pair always matches. */}
+      {/* The two arcs, true semicircles, so the pair always matches. */}
       <path
         d="M 30 3 A 13 13 0 0 0 30 29"
         fill="none"
@@ -246,7 +245,7 @@ function ElementCell({
   type: ElementType;
   tag: string;
   /** The terminal this tag is on, printed under the instruction as it is on
-      a real drawing — I0.0 beside Start_PB, so the two are learned together. */
+      a real drawing, I0.0 beside Start_PB, so the two are learned together. */
   address?: string;
   detail: string;
   live: boolean;
@@ -255,7 +254,7 @@ function ElementCell({
   /** `additive` is true for a Ctrl or Cmd-click, which extends the selection. */
   onSelect: (additive: boolean) => void;
   onOpen: () => void;
-  /** Dropping on a contact inserts beside it — left half before, right after. */
+  /** Dropping on a contact inserts beside it, left half before, right after. */
   onDropSide?: (t: ElementType, after: boolean) => void;
   /** Picking this instruction up to move it somewhere else. */
   onDragStart?: () => void;
@@ -280,7 +279,7 @@ function ElementCell({
       /*
        * Every instruction on a rung can be picked up and put somewhere else.
        * Selecting still works because a click and a drag are different
-       * gestures — the browser only starts a drag once the pointer moves.
+       * gestures, the browser only starts a drag once the pointer moves.
        */
       draggable={!!onDragStart}
       onDragStart={(e) => {
@@ -315,9 +314,9 @@ function ElementCell({
               /*
                * A contact is wider than the gaps either side of it, so most drops
                * land here rather than on a gap. This used to swallow every one:
-               * it cleared the payload and stopped propagation, so a MOVE — which
+               * it cleared the payload and stopped propagation, so a MOVE, which
                * only the card can carry out, because only the card knows which
-               * network it is — reached nothing and did nothing. Moving a contact
+               * network it is, reached nothing and did nothing. Moving a contact
                * looked broken while dropping a new one from the palette worked.
                *
                * A move is therefore left alone, uncleared and still bubbling, for
@@ -427,7 +426,7 @@ function Gap({
   live: boolean;
   isAnchor: boolean;
   inSpan: boolean;
-  /** The current insertion point — where a clicked instruction will land. */
+  /** The current insertion point, where a clicked instruction will land. */
   isCaret: boolean;
   /** The parent says this is where the current drag would land. */
   hinted: boolean;
@@ -459,7 +458,7 @@ function Gap({
          * thing that can see both the source and the destination. This used to
          * take the payload, clear it and stop the event regardless of what it
          * was, so a contact dragged onto a gap reached nothing and did
-         * nothing — and a gap is precisely where somebody aims when moving one.
+         * nothing: and a gap is precisely where somebody aims when moving one.
          */
         const d = takeDrag();
         if (!d || d.kind !== "new") return;
@@ -597,7 +596,7 @@ type Ctx = {
    * Right-click on a branch.
    *
    * Selecting a branch by clicking used to mean hitting one of its 3px rails,
-   * because every contact inside it stops the click — which is why "I cannot
+   * because every contact inside it stops the click, which is why "I cannot
    * delete the branch" was a fair description of a feature that existed.
    */
   onBranchMenu: (e: React.MouseEvent, id: string, path: Path) => void;
@@ -609,7 +608,7 @@ const lit = (ctx: Ctx, id: string) => ctx.running && !!ctx.power[id];
  * Can this instruction's tag be operated by hand right now?
  *
  * Only while running, only for a tag the I/O panel would give a switch to,
- * and only on the condition side — clicking a coil would be asking the
+ * and only on the condition side, clicking a coil would be asking the
  * controller to lie about its own output.
  */
 function driverFor(ctx: Ctx, tag: string, isOutputSide: boolean) {
@@ -729,7 +728,7 @@ function ParallelView({ node, path, ctx }: { node: ParallelNode; path: Path; ctx
    */
   /*
    * 2px, matching the wires. It was 3px, and a 3px vertical cannot centre on
-   * a 2px horizontal — one of them always overhangs by half a pixel, which
+   * a 2px horizontal, one of them always overhangs by half a pixel, which
    * the browser resolves by smearing the join. That is the "corner is not
    * proper" you can see at any zoom: the rung looks hand-drawn where it
    * should look ruled.
@@ -750,7 +749,7 @@ function ParallelView({ node, path, ctx }: { node: ParallelNode; path: Path; ctx
         ctx.onSelect(node.id);
       }}
       onContextMenu={(e) => ctx.onBranchMenu(e, node.id, path)}
-      title="Branch — right-click for options"
+      title="Branch, right-click for options"
       style={{
         position: "relative",
         display: "flex",
@@ -765,7 +764,7 @@ function ParallelView({ node, path, ctx }: { node: ParallelNode; path: Path; ctx
       <span style={{ ...railStyle, left: 0 }} />
       <span style={{ ...railStyle, right: 0 }} />
 
-      {/* Edge handles. A branch is rarely the right width first time — you
+      {/* Edge handles. A branch is rarely the right width first time, you
           draw it, then see that the contact just outside should have been
           inside. These move the edge one element at a time: the outward arrow
           pulls the neighbour in, the inward arrow pushes the outermost element
@@ -777,12 +776,12 @@ function ParallelView({ node, path, ctx }: { node: ParallelNode; path: Path; ctx
           >
             <EdgeBtn
               label="◄"
-              title="Move the left edge out — take in the contact before"
+              title="Move the left edge out, take in the contact before"
               onClick={() => ctx.onEdge(path, "left", true)}
             />
             <EdgeBtn
               label="►"
-              title="Move the left edge in — release the first contact"
+              title="Move the left edge in, release the first contact"
               onClick={() => ctx.onEdge(path, "left", false)}
             />
           </span>
@@ -791,12 +790,12 @@ function ParallelView({ node, path, ctx }: { node: ParallelNode; path: Path; ctx
           >
             <EdgeBtn
               label="◄"
-              title="Move the right edge in — release the last contact"
+              title="Move the right edge in, release the last contact"
               onClick={() => ctx.onEdge(path, "right", false)}
             />
             <EdgeBtn
               label="►"
-              title="Move the right edge out — take in the contact after"
+              title="Move the right edge out, take in the contact after"
               onClick={() => ctx.onEdge(path, "right", true)}
             />
           </span>
@@ -976,8 +975,8 @@ export default function RungView({
         setHover(null);
       }}
       /*
-       * Drop handling lives on the whole network card — header, padding and
-       * all — rather than on the inner strip of rungs. Dropping on a network's
+       * Drop handling lives on the whole network card, header, padding and
+       * all, rather than on the inner strip of rungs. Dropping on a network's
        * title bar or in the space beside the last contact used to do nothing
        * at all, which reads as the drop being broken rather than as having
        * missed a target by four pixels.
@@ -986,7 +985,7 @@ export default function RungView({
         const d = takeDrag();
         if (!d) return;
         // A network being reordered is handled by the strips between cards,
-        // not by the card itself — dropping a network inside a network has no
+        // not by the card itself, dropping a network inside a network has no
         // meaning and lighting a gap for it would promise one.
         if (d.kind === "rung") return;
         e.preventDefault();
@@ -1016,15 +1015,14 @@ export default function RungView({
         if (collapsed) onToggleCollapse();
 
         /*
-         * Something already on a rung is a MOVE, and the studio owns it —
-         * it is the only thing that can see both networks at once. The card
+         * Something already on a rung is a MOVE, and the studio owns it, * it is the only thing that can see both networks at once. The card
          * only has to say where it landed.
          */
         if (d.kind === "element") {
           /*
            * Deliberately not cleared here. The studio reads the payload again
-           * when it handles the move — it is the only thing that can see both
-           * networks — and clearing it first left it reading null and quietly
+           * when it handles the move, it is the only thing that can see both
+           * networks: and clearing it first left it reading null and quietly
            * doing nothing, which is the exact failure this whole feature was
            * meant to remove.
            */
@@ -1254,7 +1252,7 @@ export default function RungView({
                 />
               </span>
             ))}
-            {/* Stacked outputs ARE parallel coils — the branch on the output
+            {/* Stacked outputs ARE parallel coils, the branch on the output
               side. The rails join them, so the drawing says what the logic
               does: one rung driving several coils at once. */}
             {rung.outputs.length > 1 && (
@@ -1274,7 +1272,7 @@ export default function RungView({
 
                 Parallel coils sit between two nodes: the rung's output on the
                 left, and the right rail on the right. The rail IS the common
-                connection — drawing a second vertical beside it says there is
+                connection, drawing a second vertical beside it says there is
                 a junction there that does not exist, and on a real drawing
                 that reads as an extra wire. Only the left side needs a join.
               */}
@@ -1290,7 +1288,7 @@ export default function RungView({
               title={
                 rung.outputs.length === 0
                   ? "Add an output to this rung"
-                  : "Add another coil in parallel — this rung will drive both"
+                  : "Add another coil in parallel, this rung will drive both"
               }
               className="text-[10px] text-[#94A3B8] hover:text-[#2891FF] px-3 whitespace-nowrap text-left"
               style={{ height: rung.outputs.length === 0 ? ROW_H : 18 }}

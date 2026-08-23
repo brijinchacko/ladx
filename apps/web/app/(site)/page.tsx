@@ -18,7 +18,7 @@ const PRODUCTS = [
     slug: "studio",
     name: "Studio",
     line: "Draw a rung. Press run. Watch it conduct.",
-    body: "A ladder editor with a scan-accurate simulator behind it — real output image, per-instruction edge memory, timers that count milliseconds rather than scans. It is the canvas the AI writes onto, and it works on its own with no account at all.",
+    body: "A ladder editor with a scan-accurate simulator behind it: real output image, per-instruction edge memory, timers that count milliseconds rather than scans. It is the canvas the AI writes onto, and it works on its own with no account at all.",
     state: "live" as const,
   },
   {
@@ -32,7 +32,7 @@ const PRODUCTS = [
     slug: "convert",
     name: "Convert",
     line: "Between platforms, and between languages.",
-    body: "Read an L5X, write SCL. Turn ladder into structured text, or back. Every conversion comes with a per-element report saying what moved cleanly, what changed meaning, and what needs a human — and both versions can be run side by side to prove they agree.",
+    body: "Read an L5X, write SCL. Turn ladder into structured text, or back. Every conversion comes with a per-element report saying what moved cleanly, what changed meaning, and what needs a human: and both versions can be run side by side to prove they agree.",
     state: "building" as const,
   },
   {
@@ -103,9 +103,9 @@ export default function HomePage() {
             </div>
             <figcaption className="mt-3 text-[12.5px] leading-relaxed text-ink-400">
               The seal-in: <span className="font-mono text-ink-500">Start</span> latches through the
-              motor's own contact, <span className="font-mono text-ink-500">Stop</span> and the
-              guard break it. The first rung anyone learns — and the one that proves an editor is
-              real, because it needs a parallel branch to exist at all.
+              motor's own contact, and <span className="font-mono text-ink-500">Stop</span> or the
+              guard breaks it. The first rung anyone learns, and the one that proves an editor is
+              real, because it cannot be drawn without a parallel branch.
             </figcaption>
           </figure>
         </div>
@@ -125,7 +125,7 @@ export default function HomePage() {
             <div className="space-y-4 text-[15.5px] leading-relaxed text-ink-600">
               <p>
                 Siemens will help you write Siemens. Rockwell will help you write Rockwell. Beckhoff
-                will help you write Beckhoff. That is not a criticism — their assistants exist to
+                will help you write Beckhoff. That is not a criticism. Their assistants exist to
                 sell their hardware, and they do it well.
               </p>
               <p>
@@ -153,7 +153,7 @@ export default function HomePage() {
           </h2>
           <p className="mt-4 text-[15.5px] leading-relaxed text-ink-600">
             A language model that has read the internet can write something that looks like ladder
-            logic. Looking right is not the bar in a job where wrong code stops a line — or hurts
+            logic. Looking right is not the bar in a job where wrong code stops a line, or hurts
             somebody. So LADX does not show you an answer it has not checked.
           </p>
         </header>
@@ -259,8 +259,7 @@ export default function HomePage() {
                 </p>
                 <p>
                   Four importers and four exporters give sixteen conversion paths for eight pieces
-                  of work — and adding a ninth vendor gives everyone else a new destination for
-                  free.
+                  of work: and adding a ninth vendor gives everyone else a new destination for free.
                 </p>
               </div>
             </div>

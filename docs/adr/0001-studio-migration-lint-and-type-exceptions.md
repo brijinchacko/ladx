@@ -1,4 +1,4 @@
-# ADR 0001 — Studio enters the monorepo under its original strictness contract
+# ADR 0001, Studio enters the monorepo under its original strictness contract
 
 **Date:** 2026-08-23
 **Status:** Accepted, time-limited
@@ -22,8 +22,7 @@ Compiled and linted unchanged under this repo's settings, the migrated code
 produced **81 type errors** and **217 lint diagnostics**.
 
 The type errors were measured, not estimated: turning `noUncheckedIndexedAccess`
-off dropped the count from 81 to 0, so every single one is the same shape —
-`arr[i]` used as `T` where the flag types it `T | undefined`. They cluster in
+off dropped the count from 81 to 0, so every single one is the same shape, `arr[i]` used as `T` where the flag types it `T | undefined`. They cluster in
 `lib/tree.ts` (29) and `components/LadxStudio.tsx` (20).
 
 ## Decision
@@ -36,7 +35,7 @@ Fixed during the migration, because these are mechanical and provably safe:
 - formatting and import order (Biome's safe fixes)
 - `node:` protocol on Node builtins in `lib/pdf.ts`
 - `valueOf` → `operandValue` in `lib/engine.ts` (module-local, unexported, 16 call sites)
-- `type="button"` on all 102 buttons — verified safe: the package contains no
+- `type="button"` on all 102 buttons, verified safe: the package contains no
   `<form>`, so no button was relying on implicit submit
 - four string/optional-chain style fixes in `HelpDialog`, `tree.ts`, `portable.ts`
 - ambient CSS-module types, so bundler-resolved `.module.css` imports typecheck
@@ -61,7 +60,7 @@ Every deferred rule requires changing behaviour, not formatting:
 
 - **`useExhaustiveDependencies`** is the dangerous one. It governs when effects
   re-run, and in this package effects drive the simulator's timers. "Just add the
-  missing dependency" can change scan timing — the one thing this code exists to
+  missing dependency" can change scan timing, the one thing this code exists to
   get right.
 - **`noArrayIndexKey`** changes how React reconciles rung and branch lists.
   Different keys, different component identity, different state retention while
@@ -78,12 +77,11 @@ means that when something breaks, there is no way to tell which change did it.
 ## Consequences
 
 - Studio compiles and lints today; CI stays green; the rest of the repo keeps the
-  strict settings unchanged. New code in the package is held to the root config —
-  only the listed rules are off, and only for this path.
+  strict settings unchanged. New code in the package is held to the root config, only the listed rules are off, and only for this path.
 - We carry real debt. It is bounded (one package, one enumerated list) and
   visible (this ADR, plus comments at both config sites).
-- **Paying it down needs tests first.** `lib/engine.ts` is pure — state in, state
-  out, no React, no DOM, no clock of its own — so it can be covered cheaply and
+- **Paying it down needs tests first.** `lib/engine.ts` is pure, state in, state
+  out, no React, no DOM, no clock of its own, so it can be covered cheaply and
   thoroughly. That suite is the precondition for touching `lib/tree.ts`, which
   feeds it and holds the largest share of the errors.
 - Order of work: engine tests → `tree.ts` → `LadxStudio.tsx` → the rest → delete

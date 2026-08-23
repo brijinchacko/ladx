@@ -15,7 +15,7 @@ import css from "./ladx.module.css";
  * page in the manual that covers it properly.
  *
  * Rendered through a portal so a tooltip on a control inside a scrolling panel
- * is not clipped by that panel — the failure that makes most hand-rolled
+ * is not clipped by that panel, the failure that makes most hand-rolled
  * tooltips useless exactly where they are most needed.
  */
 export default function Tip({
@@ -35,7 +35,7 @@ export default function Tip({
   place?: "top" | "bottom" | "left" | "right";
   children: React.ReactNode;
   className?: string;
-  /** Render no wrapper element — use when the child is already a block. */
+  /** Render no wrapper element, use when the child is already a block. */
   asChild?: boolean;
 }) {
   const hostRef = useRef<HTMLSpanElement | null>(null);
@@ -50,7 +50,7 @@ export default function Tip({
       const el = hostRef.current;
       if (!el) return;
       // With asChild the wrapper is display:contents, which has no box of its
-      // own — measure the child that actually occupies space, or the card
+      // own, measure the child that actually occupies space, or the card
       // lands in the top-left corner.
       const measured = el.getBoundingClientRect();
       const r =
@@ -139,7 +139,7 @@ function Bubble({
   const ref = useRef<HTMLDivElement | null>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
-  // Measure, then place — so the bubble can be kept inside the window whatever
+  // Measure, then place, so the bubble can be kept inside the window whatever
   // its size turns out to be. Placed off-screen for the first paint rather
   // than hidden, so it never flashes in the wrong corner.
   useEffect(() => {

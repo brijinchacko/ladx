@@ -175,7 +175,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </h2>
           <p className="mb-4 text-[15px] leading-relaxed text-ink-600">
             The Studio simulator keeps the output image, remembers edges per instruction and counts
-            timers in milliseconds — so the behaviour described above is the behaviour you get. It
+            timers in milliseconds, so the behaviour described above is the behaviour you get. It
             runs in the browser with no account.
           </p>
           <Link

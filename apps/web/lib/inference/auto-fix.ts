@@ -10,7 +10,7 @@ export const MAX_ATTEMPTS = 3;
 
 /**
  * Build the retry prompt. Tightly worded to keep the model from drifting
- * into commentary — "return ONLY the corrected ST in a fenced block".
+ * into commentary, "return ONLY the corrected ST in a fenced block".
  */
 function feedbackPrompt(report: ValidatorReport): string {
   const lines = report.diagnostics
@@ -32,7 +32,7 @@ function feedbackPrompt(report: ValidatorReport): string {
     lines + more,
     "",
     "Fix every diagnostic above and return the corrected routine.",
-    "Reply with ONLY one ```st code block — no commentary, no markdown around it.",
+    "Reply with ONLY one ```st code block, no commentary, no markdown around it.",
   ].join("\n");
 }
 
@@ -76,7 +76,7 @@ export interface AutoFixResult {
 export interface AutoFixOpts {
   source: string;
   initialReport: ValidatorReport;
-  /** Optional system grounding — usually the project manifest prompt. */
+  /** Optional system grounding, usually the project manifest prompt. */
   systemPrompt?: string;
   /** Validator callback. Wired to the Rust CLI in production. */
   validate: (source: string) => Promise<ValidatorReport>;

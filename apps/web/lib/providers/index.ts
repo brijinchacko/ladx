@@ -20,7 +20,7 @@ const openrouter: Provider = {
   kind: "openrouter",
   label: "OpenRouter",
   keyHint:
-    "Free to create at openrouter.ai/keys — email or GitHub, no card. Its free models cost nothing to run.",
+    "Free to create at openrouter.ai/keys, email or GitHub, no card. Its free models cost nothing to run.",
   validateKeyFormat(key) {
     const k = key.trim();
     if (!k.startsWith("sk-or-")) return "OpenRouter keys start with sk-or-.";
@@ -32,7 +32,7 @@ const openrouter: Provider = {
     listModelsCompat(creds, { baseUrl: "https://openrouter.ai/api/v1", headers: attribution }),
 
   /**
-   * OpenRouter's /models is PUBLIC — it answers without a key at all.
+   * OpenRouter's /models is PUBLIC, it answers without a key at all.
    *
    * Verifying by listing therefore accepted anything shaped like a key,
    * including a string of zeros, and the person only found out when their
@@ -196,7 +196,7 @@ const custom: Provider = {
   kind: "custom",
   label: "Custom (OpenAI-compatible)",
   keyHint:
-    "Any endpoint speaking the OpenAI chat-completions API — Groq, Together, a corporate gateway, or a local Ollama at http://localhost:11434/v1.",
+    "Any endpoint speaking the OpenAI chat-completions API, Groq, Together, a corporate gateway, or a local Ollama at http://localhost:11434/v1.",
   validateKeyFormat(key) {
     // Local servers frequently take any string, or none. Refusing an empty key
     // here would block the one setup that needs no key at all.
@@ -216,7 +216,7 @@ const custom: Provider = {
 /**
  * Verify by listing.
  *
- * Correct only where /models actually requires the key — true for OpenAI and
+ * Correct only where /models actually requires the key, true for OpenAI and
  * Anthropic, and for most OpenAI-compatible servers. It is NOT true for
  * OpenRouter, which serves its catalogue publicly and therefore has its own
  * verify above. Check before reusing this for a new provider: a verification

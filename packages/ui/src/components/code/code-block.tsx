@@ -13,7 +13,7 @@ export interface CodeBlockProps {
   /** Endpoint that runs validation; defaults to /api/validate-code. Ignored when `validate` is provided. */
   validateEndpoint?: string;
   /**
-   * Override transport — if provided, called instead of POSTing to
+   * Override transport, if provided, called instead of POSTing to
    * `validateEndpoint`. Use this on desktop to invoke a Tauri command.
    */
   validate?: (source: string) => Promise<ValidatorReport>;
@@ -166,7 +166,7 @@ export function CodeBlock({
       setFixNote(
         data.ok
           ? `Fixed in ${data.attempts.length - 1} ${data.attempts.length === 2 ? "retry" : "retries"}.`
-          : `${data.attempts.length - 1} retries didn't pass — best attempt shown.`,
+          : `${data.attempts.length - 1} retries didn't pass, best attempt shown.`,
       );
     } catch (err) {
       setFixNote(`Auto-fix failed: ${err instanceof Error ? err.message : "network"}`);
@@ -304,7 +304,7 @@ function DiagnosticsList({
 function DiagItem({ d }: { d: ValidatorDiagnostic }) {
   return (
     <li className="px-3 py-2 flex items-start gap-2">
-      <span className="text-danger font-mono shrink-0">{d.line > 0 ? `L${d.line}` : "—"}</span>
+      <span className="text-danger font-mono shrink-0">{d.line > 0 ? `L${d.line}` : "-"}</span>
       <span className="text-ink-900 flex-1">{d.message}</span>
       <span className="text-ink-400 font-mono shrink-0">{d.source}</span>
     </li>

@@ -1,7 +1,7 @@
 import type { SeriesNode } from "./tree";
 
 /**
- * LADX Mini — the program model.
+ * LADX Mini, the program model.
  *
  * A ladder program is a list of rungs. Each rung has a condition side and an
  * output side, and the condition side is a set of PARALLEL branches, each of
@@ -17,12 +17,12 @@ import type { SeriesNode } from "./tree";
 
 export type ElementType =
   // Bit logic
-  | "XIC" // examine if closed  — normally open contact
-  | "XIO" // examine if open    — normally closed contact
-  | "OTE" // output energise    — coil
-  | "OTL" // output latch       — set
-  | "OTU" // output unlatch     — reset
-  | "ONS" // one shot           — rising edge
+  | "XIC" // examine if closed, normally open contact
+  | "XIO" // examine if open, normally closed contact
+  | "OTE" // output energise, coil
+  | "OTL" // output latch, set
+  | "OTU" // output unlatch, reset
+  | "ONS" // one shot, rising edge
   // Timers and counters
   | "TON"
   | "TOF"
@@ -42,7 +42,7 @@ export type ElementType =
   | "MUL"
   | "DIV"
   // Program control
-  | "JSR"; // jump to subroutine — runs another routine, then returns
+  | "JSR"; // jump to subroutine, runs another routine, then returns
 
 export type Element = {
   id: string;
@@ -60,8 +60,7 @@ export type Element = {
 export type Rung = {
   id: string;
   /**
-   * The condition side as a series/parallel tree. This is the real model —
-   * it is the only one that can express a branch which opens and closes
+   * The condition side as a series/parallel tree. This is the real model, * it is the only one that can express a branch which opens and closes
    * between two contacts. See lib/ladx/tree.ts.
    */
   logic?: SeriesNode;
@@ -82,16 +81,16 @@ export type TagType = "BOOL" | "INT" | "TIMER" | "COUNTER";
  * What the tag is wired to in the real world.
  *
  * A simulator that shows every input as the same toggle teaches the wrong
- * reflex. On a panel a START button is momentary — it springs back the instant
- * you let go, which is the entire reason a seal-in exists — while a selector
+ * reflex. On a panel a START button is momentary, it springs back the instant
+ * you let go, which is the entire reason a seal-in exists, while a selector
  * switch stays where you put it and a sensor follows the process. Making the
  * student choose forces the question "what kind of device is this?", and then
  * the control behaves like that device.
  */
 export type DeviceKind =
-  | "PUSHBUTTON_NO" // momentary, normally open   — START
-  | "PUSHBUTTON_NC" // momentary, normally closed — STOP, E-STOP
-  | "SELECTOR" // maintained switch, latches — AUTO/MANUAL
+  | "PUSHBUTTON_NO" // momentary, normally open, START
+  | "PUSHBUTTON_NC" // momentary, normally closed, STOP, E-STOP
+  | "SELECTOR" // maintained switch, latches: AUTO/MANUAL
   | "SENSOR" // proximity, photocell, float
   | "LAMP" // indicator output
   | "MOTOR" // contactor / motor output
@@ -137,7 +136,7 @@ export type Tag = {
    * Where this signal physically is: I0.0, Q0.0, M0.0, IW64, T0, C0.
    *
    * The name says what a signal means; the address says which terminal it is
-   * on. A panel does not know your tag is called "Start_PB" — it knows I0.0.
+   * on. A panel does not know your tag is called "Start_PB", it knows I0.0.
    * See lib/ladx/addressing.ts.
    */
   address?: string;
@@ -163,8 +162,8 @@ export type Tag = {
 /**
  * One page of the program.
  *
- * Real controllers organise logic into routines — Studio 5000 calls them
- * routines, TIA calls them blocks, IEC 61131-3 calls them POUs — with one
+ * Real controllers organise logic into routines, Studio 5000 calls them
+ * routines, TIA calls them blocks, IEC 61131-3 calls them POUs, with one
  * entry point that calls the rest. A single flat list of rungs is fine for a
  * three-rung exercise and unreadable by the twentieth, which is the point at
  * which a student needs to learn to split a program up.
@@ -185,7 +184,7 @@ export type LadxProgram = {
   /** The original single page. Read through programRoutines(), never directly. */
   rungs: Rung[];
   tags: Tag[];
-  /** Milliseconds per scan. Real PLCs are 1–20 ms; slower is easier to watch. */
+  /** Milliseconds per scan. Real PLCs are 1-20 ms; slower is easier to watch. */
   scanMs: number;
 };
 

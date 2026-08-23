@@ -33,7 +33,7 @@ export function ProjectChat({
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         setEmailNote(`Failed: ${data.error ?? res.status}`);
       } else {
-        setEmailNote("Sent — check your inbox.");
+        setEmailNote("Sent, check your inbox.");
       }
     } catch (err) {
       setEmailNote(`Failed: ${err instanceof Error ? err.message : "network error"}`);

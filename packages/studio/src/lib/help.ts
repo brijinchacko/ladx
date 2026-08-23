@@ -9,7 +9,7 @@ import { type ElementType, INSTRUCTIONS } from "./types";
  * thing they are confused about is a help system nobody reads.
  *
  * The instruction reference is generated from INSTRUCTIONS, so an instruction
- * added to the simulator cannot be missing from the manual — the one part of a
+ * added to the simulator cannot be missing from the manual, the one part of a
  * document like this that always rots first.
  */
 
@@ -47,7 +47,7 @@ export const HELP: HelpSection[] = [
         items: [
           "Open a worked example, or press New program for an empty one.",
           "Drag an instruction from the Instructions bar onto a rung, or click a gap in the rung first and then click an instruction.",
-          "Double-click the instruction and give it a tag name — the name of the signal it reads or drives.",
+          "Double-click the instruction and give it a tag name, the name of the signal it reads or drives.",
           "In I/O and tags, tick input or output on that tag so it appears as a switch or a lamp.",
           "Press Compile. Anything wrong is listed in Messages.",
           "Press Download. The program is transferred into the controller.",
@@ -56,7 +56,7 @@ export const HELP: HelpSection[] = [
       },
       {
         kind: "note",
-        text: "Nothing you do to a worked example affects the original — opening one gives you your own copy.",
+        text: "Nothing you do to a worked example affects the original, opening one gives you your own copy.",
       },
     ],
   },
@@ -75,12 +75,12 @@ export const HELP: HelpSection[] = [
       {
         kind: "list",
         items: [
-          "Project — routines, the tag table and the simulator, as a tree.",
-          "Instructions — contacts, coils, timers, compare and maths.",
-          "Ladder canvas — the networks themselves. This one is always present.",
-          "I/O and tags — switches for inputs, lamps for outputs, and the tag table.",
-          "Messages — compile results, warnings, errors and runtime faults.",
-          "Simulator — the controller, its terminals, and how the field devices are wired to it.",
+          "Project, routines, the tag table and the simulator, as a tree.",
+          "Instructions, contacts, coils, timers, compare and maths.",
+          "Ladder canvas, the networks themselves. This one is always present.",
+          "I/O and tags, switches for inputs, lamps for outputs, and the tag table.",
+          "Messages, compile results, warnings, errors and runtime faults.",
+          "Simulator, the controller, its terminals, and how the field devices are wired to it.",
         ],
       },
       {
@@ -106,7 +106,7 @@ export const HELP: HelpSection[] = [
     body: [
       {
         kind: "p",
-        text: "A program is made of routines — pages of logic. Main is the entry point: it is the one the controller executes, and it cannot be deleted.",
+        text: "A program is made of routines, pages of logic. Main is the entry point: it is the one the controller executes, and it cannot be deleted.",
       },
       {
         kind: "p",
@@ -142,7 +142,7 @@ export const HELP: HelpSection[] = [
         items: [
           "Drag a network by its title bar to reorder it.",
           "Right-click a network to cut, copy, paste, duplicate, add instructions or delete it.",
-          "Click the pencil on a network to give it a comment. Comment your rungs — the person reading them in six months is you.",
+          "Click the pencil on a network to give it a comment. Comment your rungs, the person reading them in six months is you.",
         ],
       },
     ],
@@ -150,7 +150,7 @@ export const HELP: HelpSection[] = [
   {
     id: "branches",
     title: "Branches",
-    summary: "Parallel paths — the OR in ladder logic.",
+    summary: "Parallel paths, the OR in ladder logic.",
     keywords: ["branch", "parallel", "or", "seal", "latch"],
     body: [
       {
@@ -172,7 +172,7 @@ export const HELP: HelpSection[] = [
       },
       {
         kind: "note",
-        text: "Removing a branch and keeping the contacts is usually what you want — a branch is normally drawn around the wrong span first.",
+        text: "Removing a branch and keeping the contacts is usually what you want: a branch is normally drawn around the wrong span first.",
       },
     ],
   },
@@ -223,10 +223,10 @@ export const HELP: HelpSection[] = [
       {
         kind: "list",
         items: [
-          "BOOL — on or off. Contacts and coils use these.",
-          "INT — a whole number. Compare and maths instructions use these.",
-          "TIMER — has a preset, an accumulated value, and a done bit.",
-          "COUNTER — the same, counting events rather than milliseconds.",
+          "BOOL, on or off. Contacts and coils use these.",
+          "INT: a whole number. Compare and maths instructions use these.",
+          "TIMER, has a preset, an accumulated value, and a done bit.",
+          "COUNTER, the same, counting events rather than milliseconds.",
         ],
       },
       {
@@ -242,7 +242,7 @@ export const HELP: HelpSection[] = [
   {
     id: "addressing",
     title: "Addresses",
-    summary: "I0.0, Q0.1, M0.0, T0 — which terminal a signal is actually on.",
+    summary: "I0.0, Q0.1, M0.0, T0, which terminal a signal is actually on.",
     keywords: [
       "address",
       "addressing",
@@ -259,33 +259,33 @@ export const HELP: HelpSection[] = [
     body: [
       {
         kind: "p",
-        text: "A tag name says what a signal means. An address says where it physically is. The panel in front of you does not know your tag is called Start_PB — it knows terminal I0.0, and so does every wiring drawing, every fault code and every engineer you will ever hand the job over to.",
+        text: "A tag name says what a signal means. An address says where it physically is. The panel in front of you does not know your tag is called Start_PB, it knows terminal I0.0, and so does every wiring drawing, every fault code and every engineer you will ever hand the job over to.",
       },
       {
         kind: "list",
         items: [
-          "I0.0 to I0.7 — the digital inputs, on the top terminal strip.",
-          "Q0.0 to Q0.5 — the digital outputs, on the bottom strip.",
-          "M0.0 upwards — internal bits. Real memory, no terminal, nothing wired to them.",
-          "IW64, IW66 — analog inputs. QW80 — the analog output. Addressed by word, not by bit.",
-          "MW0, MW2, MW4 — internal numbers.",
-          "T0, T1 … and C0, C1 … — timers and counters.",
+          "I0.0 to I0.7, the digital inputs, on the top terminal strip.",
+          "Q0.0 to Q0.5, the digital outputs, on the bottom strip.",
+          "M0.0 upwards, internal bits. Real memory, no terminal, nothing wired to them.",
+          "IW64, IW66: analog inputs. QW80, the analog output. Addressed by word, not by bit.",
+          "MW0, MW2, MW4, internal numbers.",
+          "T0, T1 … and C0, C1 …, timers and counters.",
         ],
       },
       {
         kind: "p",
-        text: "The dot is not decoration and it is not a version number. In I0.3 the 0 is the byte and the 3 is the bit inside that byte. Bits run 0 to 7 and then the byte increments, which is why I0.7 is followed by I1.0 and never by I0.8 — the single most common thing people get wrong writing addresses by hand.",
+        text: "The dot is not decoration and it is not a version number. In I0.3 the 0 is the byte and the 3 is the bit inside that byte. Bits run 0 to 7 and then the byte increments, which is why I0.7 is followed by I1.0 and never by I0.8, the single most common thing people get wrong writing addresses by hand.",
       },
       {
         kind: "note",
-        text: "Words step by two because a word is two bytes. MW0 occupies bytes 0 and 1, so the next free word is MW2 — MW1 would overlap it.",
+        text: "Words step by two because a word is two bytes. MW0 occupies bytes 0 and 1, so the next free word is MW2, MW1 would overlap it.",
       },
       {
         kind: "steps",
         items: [
           "Every tag is given a free address automatically when it is created.",
           "Change it in the Address column of the tag table. It is checked as you type, and refused with a reason rather than silently corrected.",
-          "Ticking input or output on a tag moves it to the right area — an input terminal cannot drive a lamp.",
+          "Ticking input or output on a tag moves it to the right area: an input terminal cannot drive a lamp.",
           "Open the simulator's Wiring view to see the device wired to that exact terminal.",
         ],
       },
@@ -298,7 +298,7 @@ export const HELP: HelpSection[] = [
   {
     id: "members",
     title: "Timer and counter members",
-    summary: "T1.PRE, T1.ACC and T1.DN — addressing the parts of a timer.",
+    summary: "T1.PRE, T1.ACC and T1.DN: addressing the parts of a timer.",
     keywords: ["pre", "acc", "dn", "preset", "accumulated", "done", "member"],
     body: [
       {
@@ -308,11 +308,11 @@ export const HELP: HelpSection[] = [
       {
         kind: "list",
         items: [
-          "T1.PRE — the preset. For a timer this is in milliseconds, so 5000 is five seconds.",
-          "T1.ACC — the accumulated value: how far it has got.",
-          "T1.DN — the done bit, true once ACC reaches PRE.",
-          "T1.TT — timing: true while it is running and not yet done.",
-          "T1.EN — enabled: true while the rung feeding it is true.",
+          "T1.PRE, the preset. For a timer this is in milliseconds, so 5000 is five seconds.",
+          "T1.ACC, the accumulated value: how far it has got.",
+          "T1.DN, the done bit, true once ACC reaches PRE.",
+          "T1.TT, timing: true while it is running and not yet done.",
+          "T1.EN, enabled: true while the rung feeding it is true.",
         ],
       },
       {
@@ -321,7 +321,7 @@ export const HELP: HelpSection[] = [
       },
       {
         kind: "note",
-        text: "Writing to a bare timer name is refused: say which part you mean. The status bits — DN, TT, EN — are set by the controller and cannot be written to.",
+        text: "Writing to a bare timer name is refused: say which part you mean. The status bits, DN, TT, EN: are set by the controller and cannot be written to.",
       },
     ],
   },
@@ -354,7 +354,7 @@ export const HELP: HelpSection[] = [
     body: [
       {
         kind: "p",
-        text: "Compile checks the program without running it. Anything it finds is listed in Messages. Warnings do not stop a download — a half-built program is still worth running to see what the missing piece does.",
+        text: "Compile checks the program without running it. Anything it finds is listed in Messages. Warnings do not stop a download: a half-built program is still worth running to see what the missing piece does.",
       },
       {
         kind: "p",
@@ -374,19 +374,19 @@ export const HELP: HelpSection[] = [
     body: [
       {
         kind: "p",
-        text: "Press Simulate and the controller scans the program repeatedly, exactly as real hardware does: read the inputs, solve every rung top to bottom, write the outputs, repeat. The scan rate is on the toolbar — slow it down to watch what is happening.",
+        text: "Press Simulate and the controller scans the program repeatedly, exactly as real hardware does: read the inputs, solve every rung top to bottom, write the outputs, repeat. The scan rate is on the toolbar, slow it down to watch what is happening.",
       },
       { kind: "p", text: "The simulator has two views." },
       {
         kind: "list",
         items: [
-          "Panel — the controls as they would sit on an enclosure. Quiet, no animation, for when you know the plant.",
-          "Wiring — the whole loop drawn out: +24V, the field device, the wire, the terminal, the controller, and the 0V common, with current animated through the live wires.",
+          "Panel, the controls as they would sit on an enclosure. Quiet, no animation, for when you know the plant.",
+          "Wiring, the whole loop drawn out: +24V, the field device, the wire, the terminal, the controller, and the 0V common, with current animated through the live wires.",
         ],
       },
       {
         kind: "p",
-        text: "Every device is operable while the program is running. A pushbutton is momentary — it releases when you let go. A selector latches. A sensor toggles.",
+        text: "Every device is operable while the program is running. A pushbutton is momentary, it releases when you let go. A selector latches. A sensor toggles.",
       },
     ],
   },
@@ -403,9 +403,9 @@ export const HELP: HelpSection[] = [
       {
         kind: "list",
         items: [
-          "Errors — something is wrong and will not work.",
-          "Warnings — it will run, but it is probably not what you meant. A rung with no output, or two coils driving one tag.",
-          "Info — compiles, downloads, uploads, saves.",
+          "Errors, something is wrong and will not work.",
+          "Warnings, it will run, but it is probably not what you meant. A rung with no output, or two coils driving one tag.",
+          "Info, compiles, downloads, uploads, saves.",
         ],
       },
       {
@@ -435,7 +435,7 @@ export const HELP: HelpSection[] = [
         items: [
           "File → Export project writes a .json file to your computer. Anything you want to keep past three months should be exported.",
           "File → Import project reads one back, as a new project.",
-          "File → Export as PDF produces a document with a cover sheet, the I/O schedule and the ladder — for a portfolio, an assessment or an interview.",
+          "File → Export as PDF produces a document with a cover sheet, the I/O schedule and the ladder, for a portfolio, an assessment or an interview.",
         ],
       },
       {
@@ -455,12 +455,12 @@ export const HELP: HelpSection[] = [
       {
         kind: "list",
         items: [
-          "The rung does nothing when I run it — check the PLC lamp. If it says PLC EMPTY you have not downloaded since your last edit.",
-          "My output never comes on — is the tag ticked as an output? An untagged coil drives nothing.",
-          "My stop button stops everything immediately — a stop button is normally closed, so the contact reading it should be XIC, and the tag should sit at 1 when it is not pressed.",
-          "The timer never finishes — a timer preset is in milliseconds. 5 is five thousandths of a second; you probably meant 5000.",
-          "Two coils with the same tag — the last rung wins, every scan. Compile warns about this; it is almost never what was meant.",
-          "The motor turns on and straight off — you probably have no seal-in. A momentary button only makes the rung true while it is held.",
+          "The rung does nothing when I run it, check the PLC lamp. If it says PLC EMPTY you have not downloaded since your last edit.",
+          "My output never comes on, is the tag ticked as an output? An untagged coil drives nothing.",
+          "My stop button stops everything immediately: a stop button is normally closed, so the contact reading it should be XIC, and the tag should sit at 1 when it is not pressed.",
+          "The timer never finishes: a timer preset is in milliseconds. 5 is five thousandths of a second; you probably meant 5000.",
+          "Two coils with the same tag, the last rung wins, every scan. Compile warns about this; it is almost never what was meant.",
+          "The motor turns on and straight off, you probably have no seal-in. A momentary button only makes the rung true while it is held.",
         ],
       },
     ],
@@ -486,7 +486,7 @@ export function topicForInstruction(type: ElementType): string {
  * Free-text search across titles, summaries, keywords and body text.
  *
  * Matches on the whole phrase and on each word, because somebody types "timer
- * preset" and somebody else types "how long does a timer run" — and a search
+ * preset" and somebody else types "how long does a timer run": and a search
  * that only handles the first is a search that sends the second away.
  */
 export function searchHelp(query: string): HelpSection[] {
@@ -548,7 +548,7 @@ export const INSTRUCTION_DOCS: Record<string, InstructionDoc> = {
   XIC: {
     operands: [["Tag", "A BOOL to examine"]],
     detail:
-      "Examine If Closed. Passes power when the bit is 1, blocks it when the bit is 0. Drawn as a normally-open contact — but the drawing describes the instruction, not the switch in the field. It does not care what kind of device set the bit.",
+      "Examine If Closed. Passes power when the bit is 1, blocks it when the bit is 0. Drawn as a normally-open contact, but the drawing describes the instruction, not the switch in the field. It does not care what kind of device set the bit.",
     example: "A start pushbutton wired normally open: XIC Start passes while the button is held.",
     gotcha:
       "For a stop button, which is wired normally closed and therefore reads 1 when nobody is touching it, XIC is still the instruction you want. Pressing it drops the bit to 0 and the rung opens.",
@@ -564,7 +564,7 @@ export const INSTRUCTION_DOCS: Record<string, InstructionDoc> = {
   ONS: {
     operands: [["Tag", "A BOOL to hold the previous state"]],
     detail:
-      "One Shot. Passes power for exactly one scan on the rung's transition from false to true, then blocks until the rung goes false and true again. The tag it is given is scratch storage remembering last scan's state — it is not a signal you read anywhere else.",
+      "One Shot. Passes power for exactly one scan on the rung's transition from false to true, then blocks until the rung goes false and true again. The tag it is given is scratch storage remembering last scan's state, it is not a signal you read anywhere else.",
     example: "A button that should advance a counter by one, however long it is held.",
     gotcha:
       "Every ONS needs its own tag. Two sharing one tag interfere, and the symptom is an event that fires sometimes.",
@@ -580,7 +580,7 @@ export const INSTRUCTION_DOCS: Record<string, InstructionDoc> = {
   OTL: {
     operands: [["Tag", "The BOOL to latch"]],
     detail:
-      "Output Latch. Sets the bit to 1 and leaves it there. The rung going false does not reset it — only an OTU on the same tag will.",
+      "Output Latch. Sets the bit to 1 and leaves it there. The rung going false does not reset it, only an OTU on the same tag will.",
     example: "Latching a fault so it stays visible after the condition that caused it has cleared.",
     gotcha:
       "A latched bit survives a stop. If it holds a motor on, that motor restarts when the controller goes back to run. Safety interlocks should not be latched.",
@@ -621,7 +621,7 @@ export const INSTRUCTION_DOCS: Record<string, InstructionDoc> = {
       ["Preset", "The count to reach"],
     ],
     detail:
-      "Count Up. Adds one to ACC on each false-to-true transition of the rung — not once per scan while it is true. DN goes true when ACC reaches PRE, and ACC keeps counting past it.",
+      "Count Up. Adds one to ACC on each false-to-true transition of the rung, not once per scan while it is true. DN goes true when ACC reaches PRE, and ACC keeps counting past it.",
     example: "Counting parts past a sensor, with DN signalling a full box.",
     gotcha:
       "A counter is not reset by its rung going false. It needs a RES, or it counts from where it left off forever.",
@@ -663,7 +663,7 @@ export const INSTRUCTION_DOCS: Record<string, InstructionDoc> = {
       ["B", "Second value"],
     ],
     detail:
-      "Passes power when A is strictly greater than B. Equal values do not pass — use GEQ if the boundary should count.",
+      "Passes power when A is strictly greater than B. Equal values do not pass, use GEQ if the boundary should count.",
     example: "GRT Level, 80 raises a high-level alarm once the tank passes eighty.",
   },
   LES: {
@@ -672,7 +672,7 @@ export const INSTRUCTION_DOCS: Record<string, InstructionDoc> = {
       ["B", "Second value"],
     ],
     detail:
-      "Passes power when A is strictly less than B. Equal values do not pass — use LEQ if the boundary should count.",
+      "Passes power when A is strictly less than B. Equal values do not pass, use LEQ if the boundary should count.",
     example: "LES Level, 10 starts the fill pump once the tank drops below ten.",
     gotcha:
       "A GRT and a LES sharing a boundary leave a gap. GRT Level, 80 and LES Level, 80 both fail at exactly 80, so a rung relying on one or the other being true goes dead at that value.",
@@ -691,7 +691,7 @@ export const INSTRUCTION_DOCS: Record<string, InstructionDoc> = {
     ],
     detail: "Passes power when A is less than or equal to B.",
     gotcha:
-      "Comparing against a timer's ACC is a common way to build a sequence — but compare against T1.ACC, not T1. A bare timer name is not a number.",
+      "Comparing against a timer's ACC is a common way to build a sequence, but compare against T1.ACC, not T1. A bare timer name is not a number.",
   },
   MOV: {
     operands: [
@@ -702,7 +702,7 @@ export const INSTRUCTION_DOCS: Record<string, InstructionDoc> = {
       "Move. Copies the source into the destination once per scan while the rung is true. The source is unchanged.",
     example: "MOV 5000 into T1.PRE changes a dwell time while the machine is running.",
     gotcha:
-      "The destination must be writable. A timer's DN, TT and EN bits are set by the controller, so moving into them is refused — write to PRE or ACC instead.",
+      "The destination must be writable. A timer's DN, TT and EN bits are set by the controller, so moving into them is refused, write to PRE or ACC instead.",
   },
   ADD: {
     operands: [
@@ -712,7 +712,7 @@ export const INSTRUCTION_DOCS: Record<string, InstructionDoc> = {
     ],
     detail: "Adds A and B and writes the result to the destination, every scan the rung is true.",
     gotcha:
-      "This runs every scan, not once. ADD Total, 1, Total on a plain rung adds thousands per second — put a ONS in front of it if you meant to count.",
+      "This runs every scan, not once. ADD Total, 1, Total on a plain rung adds thousands per second, put a ONS in front of it if you meant to count.",
   },
   SUB: {
     operands: [

@@ -1,10 +1,10 @@
 // Bridges the Tauri event-bus chat protocol into the
 // `AsyncIterable<string>` shape that @ladx/ui ChatWindow expects.
 //
-// Wire protocol — for a given mint-once channelId:
-//   chat-stream:<id>        — payload = string delta
-//   chat-stream-error:<id>  — payload = string error message (terminates)
-//   chat-stream-end:<id>    — payload = (), emitted exactly once at end
+// Wire protocol, for a given mint-once channelId:
+//   chat-stream:<id>, payload = string delta
+//   chat-stream-error:<id>, payload = string error message (terminates)
+//   chat-stream-end:<id>, payload = (), emitted exactly once at end
 //
 // We attach all three listeners *before* invoking the command so we
 // don't miss the first deltas in flight.

@@ -1,6 +1,6 @@
 // Resend client wrapper. Lazy-instantiated so the app boots without a
 // RESEND_API_KEY (sends no-op-log instead). Production should ALWAYS set
-// the key — the no-op path exists for dev convenience and CI builds.
+// the key, the no-op path exists for dev convenience and CI builds.
 
 import { Resend } from "resend";
 import { env } from "../env";
@@ -27,7 +27,7 @@ export async function sendEmail(
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
   const c = client();
   if (!c) {
-    console.warn("[email] RESEND_API_KEY not set — would have sent:", opts.subject, "to", opts.to);
+    console.warn("[email] RESEND_API_KEY not set, would have sent:", opts.subject, "to", opts.to);
     return { ok: true, id: "dev-no-op" };
   }
 

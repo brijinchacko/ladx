@@ -9,11 +9,11 @@ import { type ElementType, INSTRUCTIONS } from "../lib/types";
  * A paragraph can say "TOF times on the falling edge" and a student can read
  * it twice and still not picture it. A timing chart shows it once. These are
  * the diagrams a PLC manual carries, because for this material they are not
- * decoration — they are the explanation, and the prose is the caption.
+ * decoration, they are the explanation, and the prose is the caption.
  *
  * Drawn as inline SVG rather than shipped as images so they stay sharp at any
  * size, carry no download, and take their colours from the same tokens as the
- * rest of the editor — a red on a chart here is the same red as a fault in
+ * rest of the editor: a red on a chart here is the same red as a fault in
  * the message log, which is the whole point of having tokens.
  */
 
@@ -36,7 +36,7 @@ export function InstructionSymbol({ type, scale = 1 }: { type: ElementType; scal
     <line x1={x1} y1={cy} x2={x2} y2={cy} stroke={stroke} strokeWidth={sw} strokeLinecap="square" />
   );
 
-  // Contacts — two verticals with a gap, the IEC drawing.
+  // Contacts, two verticals with a gap, the IEC drawing.
   if (type === "XIC" || type === "XIO" || type === "ONS") {
     const gap = 15 * scale;
     const l = W / 2 - gap;
@@ -75,7 +75,7 @@ export function InstructionSymbol({ type, scale = 1 }: { type: ElementType; scal
     );
   }
 
-  // Coils — two facing arcs.
+  // Coils, two facing arcs.
   if (meta && meta.side === "output" && meta.group === "Bit") {
     const gap = 15 * scale;
     const l = W / 2 - gap;
@@ -201,7 +201,7 @@ function Timing({
         role="img"
         aria-label={caption ?? "Timing diagram"}
       >
-        {/* Slot grid — faint, so the eye can line events up across rows. */}
+        {/* Slot grid, faint, so the eye can line events up across rows. */}
         {Array.from({ length: slots + 1 }, (_, i) => (
           <line
             key={i}
@@ -269,7 +269,7 @@ function Timing({
   );
 }
 
-/** A square wave, with the vertical edges drawn — that is where the eye looks. */
+/** A square wave, with the vertical edges drawn, that is where the eye looks. */
 function BitWave({
   bits,
   hi,
@@ -475,7 +475,7 @@ function DataFlow({
           source
         </text>
         <text x={outX} y={H - 5} fontSize={8.5} fill={ink.faint}>
-          destination — overwritten
+          destination, overwritten
         </text>
       </svg>
       {note && (
@@ -670,7 +670,7 @@ export function InstructionDiagram({ type }: { type: ElementType }) {
       return (
         <Timing
           markers={[{ slot: 3, label: "rising edge", tone: "live" }]}
-          caption="One scan only. Holding the button down changes nothing — the pulse has already been and gone."
+          caption="One scan only. Holding the button down changes nothing, the pulse has already been and gone."
           traces={[
             { kind: "bit", label: "Rung", bits: OFF_ON, tone: "input" },
             { kind: "bit", label: "Passes", bits: "000100000000", tone: "power" },
@@ -693,7 +693,7 @@ export function InstructionDiagram({ type }: { type: ElementType }) {
       return (
         <Timing
           markers={[{ slot: 2, label: "set", tone: "live" }]}
-          caption="Set and left. The rung going false does not clear it — only an OTU on the same tag will."
+          caption="Set and left. The rung going false does not clear it, only an OTU on the same tag will."
           traces={[
             { kind: "bit", label: "Rung", bits: "001100000000", tone: "input" },
             { kind: "bit", label: "Tag", bits: "001111111111", tone: "output" },
@@ -724,7 +724,7 @@ export function InstructionDiagram({ type }: { type: ElementType }) {
             { slot: 3, label: "rung true" },
             { slot: 8, label: "done", tone: "live" },
           ]}
-          caption="ACC counts up while the rung is true. DN goes true when it reaches the preset — and the rung going false resets ACC to zero at once."
+          caption="ACC counts up while the rung is true. DN goes true when it reaches the preset: and the rung going false resets ACC to zero at once."
           traces={[
             { kind: "bit", label: "Rung", bits: "000111111100", tone: "input" },
             {
@@ -745,7 +745,7 @@ export function InstructionDiagram({ type }: { type: ElementType }) {
             { slot: 2, label: "rung true" },
             { slot: 6, label: "rung false" },
           ]}
-          caption="The mirror of TON. DN comes on immediately and the timing starts when the rung goes false — this is how a fan runs on after the process stops."
+          caption="The mirror of TON. DN comes on immediately and the timing starts when the rung goes false, this is how a fan runs on after the process stops."
           traces={[
             { kind: "bit", label: "Rung", bits: "001111000000", tone: "input" },
             {
@@ -763,7 +763,7 @@ export function InstructionDiagram({ type }: { type: ElementType }) {
       return (
         <Timing
           markers={[{ slot: 9, label: "PRE reached", tone: "live" }]}
-          caption="One count per false-to-true transition, not once per scan while true. ACC keeps counting past the preset — only a RES clears it."
+          caption="One count per false-to-true transition, not once per scan while true. ACC keeps counting past the preset, only a RES clears it."
           traces={[
             { kind: "bit", label: "Rung", bits: "010101010101", tone: "input" },
             {
@@ -838,7 +838,7 @@ export function InstructionDiagram({ type }: { type: ElementType }) {
           inputs={["Total", "1"]}
           op="ADD"
           out="Total"
-          note="Runs every scan the rung is true — thousands of times a second. Put a ONS in front if you meant to count."
+          note="Runs every scan the rung is true, thousands of times a second. Put a ONS in front if you meant to count."
         />
       );
     case "SUB":
@@ -851,7 +851,7 @@ export function InstructionDiagram({ type }: { type: ElementType }) {
           inputs={["7", "2"]}
           op="DIV"
           out="Result = 3"
-          note="Integer division — the remainder is discarded. Dividing by zero raises a fault and leaves the destination untouched."
+          note="Integer division, the remainder is discarded. Dividing by zero raises a fault and leaves the destination untouched."
         />
       );
 

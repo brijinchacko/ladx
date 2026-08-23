@@ -1,6 +1,6 @@
 //! Closes spec §8.1 on the desktop: when the validator fails, we
 //! re-prompt Ollama with the diagnostics ("fix every diagnostic above
-//! and return the corrected routine — reply with ONLY one ```st block"),
+//! and return the corrected routine, reply with ONLY one ```st block"),
 //! validate the response, retry up to MAX_ATTEMPTS. Mirrors the cloud
 //! `autoFix` helper at apps/web/lib/inference/auto-fix.ts.
 
@@ -185,7 +185,7 @@ fn build_feedback_prompt(source: &str, report: &ValidatorReport) -> String {
         ));
     }
     out.push_str("\nFix every diagnostic above and return the corrected routine.\n");
-    out.push_str("Reply with ONLY one ```st code block — no commentary, no markdown around it.");
+    out.push_str("Reply with ONLY one ```st code block, no commentary, no markdown around it.");
     out
 }
 

@@ -3,7 +3,7 @@ import type { Element, LadxProgram, Routine, Rung, Tag } from "./types";
 import { programRoutines } from "./types";
 
 /**
- * LADX Mini — the scan engine.
+ * LADX Mini, the scan engine.
  *
  * A real PLC does three things forever: read the inputs, solve the logic
  * top-to-bottom, write the outputs. This does the same, and the fidelity that
@@ -11,7 +11,7 @@ import { programRoutines } from "./types";
  *
  *   OUTPUTS ARE WRITTEN, NOT READ, MID-SCAN. Every rung in one scan sees the
  *   tag values as they were at the start of that scan. That is why a coil on
- *   rung 5 does not affect a contact on rung 2 until the next scan — the single
+ *   rung 5 does not affect a contact on rung 2 until the next scan, the single
  *   most common source of "but it should work" in a classroom.
  *
  *   EDGES ARE PER INSTRUCTION, NOT PER TAG. A CTU counts once when its rung
@@ -23,7 +23,7 @@ import { programRoutines } from "./types";
  *   to 10 s takes 10 s whether the scan is 20 ms or 200 ms.
  *
  * Pure: it takes state in and returns new state. No React, no DOM, no clock of
- * its own — which is what makes it testable and what stops a rendering bug from
+ * its own, which is what makes it testable and what stops a rendering bug from
  * looking like a logic bug.
  */
 
@@ -50,8 +50,8 @@ function toMap(tags: Tag[]): TagMap {
 /**
  * Split "T1.PRE" into its parts. Returns null for a plain tag name.
  *
- * Dotted members were understood for bits — a student could already put T1.DN
- * on a contact — but nowhere else, so a timer's preset and accumulator could
+ * Dotted members were understood for bits: a student could already put T1.DN
+ * on a contact, but nowhere else, so a timer's preset and accumulator could
  * be neither read as a number nor written to. That is most of what a timer is
  * for: MOV 5000 -> T1.PRE is how a recipe changes a dwell time, and on this
  * simulator it silently did nothing.
@@ -102,7 +102,7 @@ function operandValue(operand: string | undefined, tags: TagMap): number {
  * and the rest of the program still scans.
  *
  * A bare timer or counter is refused on purpose. On real hardware you address
- * the member — T1.PRE or T1.ACC — and guessing which one a student meant would
+ * the member, T1.PRE or T1.ACC: and guessing which one a student meant would
  * teach them a habit that fails the first time they touch a real controller.
  * The message names both choices so the fix is obvious.
  */
@@ -113,7 +113,7 @@ function checkDest(dest: string, tags: TagMap): string | null {
     if (!t) return `Destination "${dest}" is not declared.`;
     if (dotted.member === "PRE" || dotted.member === "ACC") return null;
     if (["DN", "TT", "EN"].includes(dotted.member)) {
-      return `"${dest}" is a status bit the controller owns — it cannot be written to. Use an OTE on a normal tag instead.`;
+      return `"${dest}" is a status bit the controller owns, it cannot be written to. Use an OTE on a normal tag instead.`;
     }
     return `"${dest}" is not a member this simulator knows. Use .PRE or .ACC.`;
   }
@@ -142,7 +142,7 @@ function writeNumber(dest: string, value: number, tags: TagMap): string | null {
       case "DN":
       case "TT":
       case "EN":
-        return `"${dest}" is a status bit the controller owns — it cannot be written to. Use an OTE on a normal tag instead.`;
+        return `"${dest}" is a status bit the controller owns, it cannot be written to. Use an OTE on a normal tag instead.`;
       default:
         return `"${dest}" is not a member this simulator knows. Use .PRE or .ACC.`;
     }
@@ -159,7 +159,7 @@ function writeNumber(dest: string, value: number, tags: TagMap): string | null {
    * Truncated toward zero, because every tag this simulator has holds a whole
    * number and a real controller's integer DIV discards the remainder.
    *
-   * Without this, DIV 7 by 2 stored 3.5 in an INT tag — a value no PLC would
+   * Without this, DIV 7 by 2 stored 3.5 in an INT tag: a value no PLC would
    * ever show, and one the manual explicitly promises you will not see.
    * Math.trunc rather than Math.round on purpose: 7/2 is 3 on the hardware,
    * not 4, and -7/2 is -3 rather than -4.
@@ -288,7 +288,7 @@ function applyOutput(
        * This read `el.preset ?? t.preset` and then assigned it back to
        * t.preset every scan. The instruction box carries the literal a
        * student typed, so a MOV or ADD into T1.PRE was overwritten on the
-       * very next scan by the old number — the value visibly changed and the
+       * very next scan by the old number, the value visibly changed and the
        * timer went on timing to the original, which is the "addition is not
        * resolved" report.
        *
@@ -337,12 +337,12 @@ function applyOutput(
         errors.push(`Counter "${el.tag}" is not declared.`);
         return;
       }
-      // The tag's preset wins, as with the timers — writing to C1.PRE is how
+      // The tag's preset wins, as with the timers, writing to C1.PRE is how
       // a batch size is changed while the machine runs.
       const preset = t.preset ?? el.preset ?? 0;
       const was = edges[el.id] ?? false;
       nextEdges[el.id] = powered;
-      // Counts on the rising edge only — a held input counts once.
+      // Counts on the rising edge only: a held input counts once.
       if (powered && !was) t.acc = (t.acc ?? 0) + 1;
       t.dn = (t.acc ?? 0) >= preset && preset > 0;
       t.en = powered;
@@ -354,7 +354,7 @@ function applyOutput(
         errors.push(`Counter "${el.tag}" is not declared.`);
         return;
       }
-      // The tag's preset wins, as with the timers — writing to C1.PRE is how
+      // The tag's preset wins, as with the timers, writing to C1.PRE is how
       // a batch size is changed while the machine runs.
       const preset = t.preset ?? el.preset ?? 0;
       const was = edges[el.id] ?? false;
@@ -455,7 +455,7 @@ function applyOutput(
  *               leg gets to the other side                                (OR)
  *
  * An empty series is a wire and passes power. That is not a special case to be
- * tolerated — it is what an empty branch leg physically is, and it is why a
+ * tolerated, it is what an empty branch leg physically is, and it is why a
  * half-built branch behaves the way a student expects while they are building
  * it.
  *
@@ -508,7 +508,7 @@ function solveRung(
 /**
  * One scan.
  *
- * `dtMs` is how much real time has passed since the previous scan — the caller
+ * `dtMs` is how much real time has passed since the previous scan, the caller
  * measures it, so timers stay honest even if the browser throttles the tab.
  */
 export function scan(
@@ -532,7 +532,7 @@ export function scan(
    * A JSR runs the named routine THERE AND THEN and comes back, which is what
    * the instruction does on hardware and why a student can reason about order.
    * `stack` guards recursion: a routine that calls itself, directly or round a
-   * loop, would hang the browser, so it is reported as a fault instead — which
+   * loop, would hang the browser, so it is reported as a fault instead, which
    * is also what a real controller does.
    */
   function runRoutine(routine: Routine, stack: string[]) {
@@ -575,7 +575,7 @@ export function scan(
   };
 }
 
-/** Clear runtime state back to a cold start — outputs off, timers zeroed. */
+/** Clear runtime state back to a cold start, outputs off, timers zeroed. */
 export function resetTags(tags: Tag[]): Tag[] {
   return tags.map((t) => ({
     ...t,
@@ -597,9 +597,8 @@ export function resetTags(tags: Tag[]): Tag[] {
  * into a TON box needing somewhere to go: it seeds the tag here, when a
  * project loads and whenever the controller is reset.
  *
- * Which gives both behaviours students need — edit the box and press Run to
- * see the new time, or MOV a value into .PRE and watch it change on the fly —
- * without the instruction fighting the program for the same field every scan.
+ * Which gives both behaviours students need, edit the box and press Run to
+ * see the new time, or MOV a value into .PRE and watch it change on the fly, * without the instruction fighting the program for the same field every scan.
  */
 export function seedPresets(program: LadxProgram, tags: Tag[]): Tag[] {
   const fromInstruction = new Map<string, number>();
@@ -684,7 +683,7 @@ export function validate(program: LadxProgram): string[] {
    * Every routine, not just program.rungs.
    *
    * This walked the legacy flat list, which programRoutines() only falls back
-   * to when there are no routines — so the moment a student added a second
+   * to when there are no routines, so the moment a student added a second
    * page, nothing on any page was validated. Undeclared tags and empty rungs
    * in routines compiled silently clean.
    */
@@ -695,7 +694,7 @@ export function validate(program: LadxProgram): string[] {
     routine.rungs.forEach((r, i) => {
       const all = [...everyElement(rungLogic(r)), ...r.outputs];
       for (const el of all) {
-        // A JSR names a routine, not a tag — check it against the routines.
+        // A JSR names a routine, not a tag, check it against the routines.
         if (el.type === "JSR") {
           if (!el.tag) {
             out.push(`${where(i)}: a JSR has no routine chosen.`);
@@ -722,7 +721,7 @@ export function validate(program: LadxProgram): string[] {
         }
       }
       if (r.outputs.length === 0) {
-        out.push(`${where(i)} has no output — it will do nothing.`);
+        out.push(`${where(i)} has no output, it will do nothing.`);
       }
     });
   }
@@ -737,7 +736,7 @@ export function validate(program: LadxProgram): string[] {
   for (const [tag, n] of coilCounts) {
     if (n > 1) {
       out.push(
-        `"${tag}" is driven by ${n} coils. The last rung wins every scan — this is a duplicate output.`,
+        `"${tag}" is driven by ${n} coils. The last rung wins every scan, this is a duplicate output.`,
       );
     }
   }

@@ -4,7 +4,7 @@
  * Every picture here is a drawing of the thing it describes: a real rung, a
  * real scan cycle, a real conversion path. That is deliberate. The audience
  * spends its working life reading schematics, and a stock photograph of a
- * robot arm — or a generic gradient blob — tells them immediately that whoever
+ * robot arm, or a generic gradient blob, tells them immediately that whoever
  * made the page has never opened a PLC.
  *
  * SVG rather than screenshots: crisp at any size, a few kilobytes, and able to
@@ -105,42 +105,72 @@ export function SealInRung({ className, live = false }: { className?: string; li
   const wire = live ? TEAL : INK;
   return (
     <svg
-      viewBox="0 0 420 130"
+      viewBox="0 0 420 214"
       className={className}
       role="img"
-      aria-label="A ladder rung: Start or Conveyor, in series with Stop and Guard, driving the Conveyor coil"
+      aria-label="Two ladder rungs. The first latches the conveyor through its own contact with Stop and Guard in series; the second drives a running lamp from the conveyor."
     >
-      <title>Motor seal-in rung</title>
-      {/* Power rails */}
-      <line x1="14" y1="18" x2="14" y2="112" stroke={INK} strokeWidth="2" opacity="0.5" />
-      <line x1="406" y1="18" x2="406" y2="112" stroke={INK} strokeWidth="2" opacity="0.5" />
+      <title>Motor seal-in, and the rung it feeds</title>
 
-      {/* Top branch: Start */}
-      <line x1="14" y1="48" x2="52" y2="48" stroke={wire} strokeWidth="1.5" />
-      <Contact x={70} y={48} label="Start_PB" />
-      <line x1="88" y1="48" x2="140" y2="48" stroke={wire} strokeWidth="1.5" />
+      {/* Power rails, spanning both rungs. */}
+      <line x1="14" y1="20" x2="14" y2="196" stroke={INK} strokeWidth="2" opacity="0.5" />
+      <line x1="406" y1="20" x2="406" y2="196" stroke={INK} strokeWidth="2" opacity="0.5" />
 
-      {/* Parallel leg: the seal-in */}
-      <line x1="52" y1="48" x2="52" y2="88" stroke={wire} strokeWidth="1.5" />
-      <line x1="52" y1="88" x2="52" y2="88" stroke={wire} strokeWidth="1.5" />
-      <Contact x={70} y={88} label="Conveyor" />
-      <line x1="88" y1="88" x2="140" y2="88" stroke={wire} strokeWidth="1.5" />
-      <line x1="140" y1="88" x2="140" y2="48" stroke={wire} strokeWidth="1.5" />
+      {/* ── Rung 1: the seal-in ── */}
+      <text
+        x="24"
+        y="34"
+        fontSize="8.5"
+        fontFamily="var(--font-mono, monospace)"
+        fill={INK}
+        opacity="0.4"
+      >
+        RUNG 1
+      </text>
+
+      {/* Main path */}
+      <line x1="14" y1="62" x2="52" y2="62" stroke={wire} strokeWidth="1.5" />
+      <Contact x={70} y={62} label="Start_PB" />
+      <line x1="88" y1="62" x2="140" y2="62" stroke={wire} strokeWidth="1.5" />
+
+      {/* Parallel leg: the latch that makes it a seal-in */}
+      <line x1="52" y1="62" x2="52" y2="102" stroke={wire} strokeWidth="1.5" />
+      <Contact x={70} y={102} label="Conveyor" />
+      <line x1="88" y1="102" x2="140" y2="102" stroke={wire} strokeWidth="1.5" />
+      <line x1="140" y1="102" x2="140" y2="62" stroke={wire} strokeWidth="1.5" />
 
       {/* Series conditions */}
-      <line x1="140" y1="48" x2="172" y2="48" stroke={wire} strokeWidth="1.5" />
-      <Contact x={190} y={48} label="Stop_PB" />
-      <line x1="208" y1="48" x2="252" y2="48" stroke={wire} strokeWidth="1.5" />
-      <Contact x={270} y={48} label="Guard_OK" />
-      <line x1="288" y1="48" x2="340" y2="48" stroke={wire} strokeWidth="1.5" />
+      <line x1="140" y1="62" x2="172" y2="62" stroke={wire} strokeWidth="1.5" />
+      <Contact x={190} y={62} label="Stop_PB" />
+      <line x1="208" y1="62" x2="252" y2="62" stroke={wire} strokeWidth="1.5" />
+      <Contact x={270} y={62} label="Guard_OK" />
+      <line x1="288" y1="62" x2="340" y2="62" stroke={wire} strokeWidth="1.5" />
 
-      {/* Output */}
-      <Coil x={362} y={48} label="Conveyor" />
-      <line x1="382" y1="48" x2="406" y2="48" stroke={wire} strokeWidth="1.5" />
+      <Coil x={362} y={62} label="Conveyor" />
+      <line x1="382" y1="62" x2="406" y2="62" stroke={wire} strokeWidth="1.5" />
 
-      {/* Junction dots */}
-      <circle cx="52" cy="48" r="2.5" fill={wire} />
-      <circle cx="140" cy="48" r="2.5" fill={wire} />
+      <circle cx="52" cy="62" r="2.5" fill={wire} />
+      <circle cx="140" cy="62" r="2.5" fill={wire} />
+
+      {/* Divider between rungs */}
+      <line x1="14" y1="132" x2="406" y2="132" stroke={INK} strokeWidth="0.75" opacity="0.12" />
+
+      {/* ── Rung 2: what the first one drives ── */}
+      <text
+        x="24"
+        y="149"
+        fontSize="8.5"
+        fontFamily="var(--font-mono, monospace)"
+        fill={INK}
+        opacity="0.4"
+      >
+        RUNG 2
+      </text>
+      <line x1="14" y1="178" x2="52" y2="178" stroke={wire} strokeWidth="1.5" />
+      <Contact x={70} y={178} label="Conveyor" />
+      <line x1="88" y1="178" x2="340" y2="178" stroke={wire} strokeWidth="1.5" />
+      <Coil x={362} y={178} label="Run_Lamp" />
+      <line x1="382" y1="178" x2="406" y2="178" stroke={wire} strokeWidth="1.5" />
     </svg>
   );
 }
@@ -149,8 +179,8 @@ export function SealInRung({ className, live = false }: { className?: string; li
  * The scan cycle.
  *
  * Drawn as a loop because that is what it is, and because the single most
- * common misunderstanding — that a coil takes effect the instant it is written
- * — comes from imagining the program as a list rather than a cycle.
+ * common misunderstanding, that a coil takes effect the instant it is written
+ *, comes from imagining the program as a list rather than a cycle.
  */
 export function ScanCycle({ className }: { className?: string }) {
   const teal = TEAL;
@@ -221,7 +251,7 @@ export function ScanCycle({ className }: { className?: string }) {
         fontWeight="800"
         fill={INK}
       >
-        1–20
+        1-20
       </text>
       <text
         x={cx}
@@ -474,7 +504,7 @@ export function ValidationLoop({ className }: { className?: string }) {
       />
       {box(404, 30, 148, "Shown to you", "only if it passes", true)}
 
-      {/* The repair path — the part that makes weak models useful. */}
+      {/* The repair path, the part that makes weak models useful. */}
       <path
         d="M 324 76 L 324 104 L 60 104 L 60 76"
         stroke={teal}

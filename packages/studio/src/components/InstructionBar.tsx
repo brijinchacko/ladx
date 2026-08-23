@@ -13,8 +13,8 @@ import css from "./ladx.module.css";
 /**
  * The instruction palette.
  *
- * Grouped the way PicoSoft groups it — contacts, coils, timers and counters,
- * compare and maths — because that is the mental filing cabinet the hardware
+ * Grouped the way PicoSoft groups it, contacts, coils, timers and counters,
+ * compare and maths, because that is the mental filing cabinet the hardware
  * itself uses, and a student who learns it here recognises it on the panel.
  * One group is open at a time so the palette stays two rows tall instead of
  * pushing the ladder off the screen.
@@ -170,7 +170,7 @@ export default function InstructionBar({
             type="button"
             onClick={() => onAction({ kind: "branch" })}
             disabled={disabled}
-            title="Branch around the selected element — or click one gap in the rung, then another, to enclose what is between them  ·  B"
+            title="Branch around the selected element, or click one gap in the rung, then another, to enclose what is between them  ·  B"
             className={css.barBtn}
             style={
               branchArmed
@@ -213,7 +213,7 @@ export default function InstructionBar({
           return (
             <Tip
               key={type}
-              label={`${type} — ${meta.label}`}
+              label={`${type}, ${meta.label}`}
               /* The one-line help, plus the mistake people actually make with
                  this instruction. That second sentence is the reason the card
                  exists: the summary alone is already on the button. */
@@ -229,7 +229,7 @@ export default function InstructionBar({
                 onDragStart={(e) => {
                   // Both: dataTransfer for the browser's copy cursor, and the
                   // module ref because a custom MIME type on a draggable button
-                  // does not survive the round trip everywhere — which is why
+                  // does not survive the round trip everywhere, which is why
                   // drops fired and did nothing.
                   setDraggedInstruction(type);
                   e.dataTransfer.setData("application/ladx-instruction", type);

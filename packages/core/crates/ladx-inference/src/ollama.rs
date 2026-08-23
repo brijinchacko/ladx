@@ -1,5 +1,5 @@
-//! Ollama client — used by `apps/desktop` only. Hits localhost:11434.
-//! Air-gap policy: no fallback, no remote URL — caller owns the host.
+//! Ollama client, used by `apps/desktop` only. Hits localhost:11434.
+//! Air-gap policy: no fallback, no remote URL, caller owns the host.
 
 use async_trait::async_trait;
 use futures_util::StreamExt;

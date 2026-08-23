@@ -18,8 +18,8 @@ import type { Routine } from "../lib/types";
 /**
  * The project tree.
  *
- * Every PLC IDE opens with the same column on the left — TIA, Studio 5000 and
- * CODESYS all put the project's structure there — because it answers the two
+ * Every PLC IDE opens with the same column on the left, TIA, Studio 5000 and
+ * CODESYS all put the project's structure there, because it answers the two
  * questions a student has on opening a file: what is in this program, and where
  * am I in it. A flat list of rungs answers neither once the program is longer
  * than a screen.
@@ -209,7 +209,7 @@ export default function ProjectTree({
               e.stopPropagation();
               onAddRoutine();
             }}
-            title="Add a routine — a new page of logic, called with JSR"
+            title="Add a routine: a new page of logic, called with JSR"
             className="text-[#94A3B8] hover:text-[#2891FF]"
           >
             <Plus size={12} />

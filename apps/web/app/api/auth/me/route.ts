@@ -1,4 +1,4 @@
-// GET /api/auth/me — returns the current user or null. Used by the client
+// GET /api/auth/me, returns the current user or null. Used by the client
 // to hydrate UI state without a full server round-trip.
 
 import { getCurrentUser } from "@/lib/auth/server";

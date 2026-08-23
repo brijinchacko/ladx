@@ -10,7 +10,7 @@ import { providerKeys } from "./schema";
  * One rule runs through this file: the plaintext key leaves here only through
  * `credentialsFor`, which is called on the server immediately before a provider
  * request. Nothing else returns it, and nothing logs it. Everything the UI
- * needs — which provider, which model, whether it still works — is available
+ * needs, which provider, which model, whether it still works, is available
  * without opening the envelope.
  */
 

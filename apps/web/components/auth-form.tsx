@@ -38,7 +38,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, next }),
         });
-        // Always show "sent" — never disclose whether the email is registered.
+        // Always show "sent", never disclose whether the email is registered.
         setMagicSent(true);
         return;
       }
@@ -76,12 +76,12 @@ export function AuthForm({ mode }: AuthFormProps) {
           {isSignUp ? "Create your account" : "Sign in"}
         </h1>
         <p className="text-sm text-ink-500 text-center mb-8">
-          {isSignUp ? "Free tier — 50 prompts/month, no card required." : "Welcome back."}
+          {isSignUp ? "Free tier, 50 prompts/month, no card required." : "Welcome back."}
         </p>
 
         {magicSent ? (
           <div className="rounded-md border border-teal/30 bg-teal-50 px-4 py-3 text-sm text-ink-700">
-            Check your email — we've sent a sign-in link valid for 15 minutes.
+            Check your email, we've sent a sign-in link valid for 15 minutes.
           </div>
         ) : (
           <>

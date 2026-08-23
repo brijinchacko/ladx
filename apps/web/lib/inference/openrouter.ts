@@ -1,5 +1,5 @@
 // Minimal OpenRouter chat-completion streaming client. Mirrors the Rust
-// `ladx-inference::openrouter` crate — same wire format, same model field.
+// `ladx-inference::openrouter` crate, same wire format, same model field.
 // We keep both sides because Next.js API routes run server-side TS, and
 // shelling out to Rust per request is overkill for plain inference.
 

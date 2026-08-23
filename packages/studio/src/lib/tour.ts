@@ -4,7 +4,7 @@
  * Anchored to elements by a data-tour attribute rather than by position, so
  * moving a button does not silently point the tour at empty space. A step
  * whose anchor is missing is skipped at runtime instead of leaving a bubble
- * floating in a corner — and the test asserts every anchor exists in the
+ * floating in a corner: and the test asserts every anchor exists in the
  * studio, so that skip should never actually fire.
  *
  * It can be left at any point. A tour that traps somebody is worse than no
@@ -28,7 +28,7 @@ export const TOUR: TourStep[] = [
     id: "welcome",
     anchor: "",
     title: "Welcome to LADX Mini",
-    text: "This is a ladder logic editor and a simulated PLC. Two minutes here and you will know where everything is. You can leave at any point — the Skip button is always there, and the tour is on the toolbar whenever you want it back.",
+    text: "This is a ladder logic editor and a simulated PLC. Two minutes here and you will know where everything is. You can leave at any point, the Skip button is always there, and the tour is on the toolbar whenever you want it back.",
     topic: "start",
   },
   {
@@ -67,7 +67,7 @@ export const TOUR: TourStep[] = [
     id: "transfer",
     anchor: "transfer-group",
     title: "Compile, download, run",
-    text: "Compile checks the program. Download transfers it into the controller — editor to PLC, which is the direction that catches everybody out. Then Simulate runs it.",
+    text: "Compile checks the program. Download transfers it into the controller, editor to PLC, which is the direction that catches everybody out. Then Simulate runs it.",
     place: "bottom",
     topic: "transfer",
   },
@@ -83,7 +83,7 @@ export const TOUR: TourStep[] = [
     id: "save",
     anchor: "save-group",
     title: "Saving",
-    text: "Your work saves itself a moment after you stop typing — this tells you where it has got to. Projects are kept in the portal for three months, so export anything you want to keep for longer.",
+    text: "Your work saves itself a moment after you stop typing, this tells you where it has got to. Projects are kept in the portal for three months, so export anything you want to keep for longer.",
     place: "bottom",
     topic: "saving",
   },
@@ -113,7 +113,7 @@ export function tourSeen(): boolean {
   try {
     return window.localStorage.getItem(KEY) === "1";
   } catch {
-    return true; // Cannot tell — assume seen. Better silent than repeating.
+    return true; // Cannot tell: assume seen. Better silent than repeating.
   }
 }
 

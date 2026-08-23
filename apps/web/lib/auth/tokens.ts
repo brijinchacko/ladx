@@ -3,7 +3,7 @@
 // Security model:
 // - Plaintext token = 32 random bytes hex-encoded (64 chars), generated
 //   server-side and emailed to the user. Never logged, never persisted.
-// - DB stores a bcrypt hash of the plaintext (cost 10 — these are
+// - DB stores a bcrypt hash of the plaintext (cost 10, these are
 //   short-lived, so we don't need cost 12 like passwords). A leaked DB
 //   thus exposes only inert hashes; live tokens still require email.
 // - Tokens are single-use: `consumeToken` marks `used_at` atomically.
@@ -79,7 +79,7 @@ export async function consumeToken(opts: {
     const ok = await bcrypt.compare(opts.plaintext, row.tokenHash);
     if (!ok) continue;
 
-    // Mark used atomically — the WHERE includes used_at IS NULL so a
+    // Mark used atomically, the WHERE includes used_at IS NULL so a
     // concurrent consume would only succeed once.
     const [updated] = await db()
       .update(authTokens)
@@ -94,7 +94,7 @@ export async function consumeToken(opts: {
 /**
  * Convenience: validate without knowing the user id ahead of time.
  * Used by magic-link consume where the URL contains only the token.
- * We scan ALL active tokens of the given kind — to keep that bounded
+ * We scan ALL active tokens of the given kind, to keep that bounded
  * we delete expired tokens periodically (cron / on-access).
  */
 export async function consumeTokenByPlaintext(opts: {

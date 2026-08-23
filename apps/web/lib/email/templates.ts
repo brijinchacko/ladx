@@ -1,4 +1,4 @@
-// Email templates. Inline HTML for now — easy to swap to react-email
+// Email templates. Inline HTML for now, easy to swap to react-email
 // later if/when we want richer composition. Brand tokens (ink, teal)
 // are inlined here because most clients ignore <style>.
 
@@ -62,7 +62,7 @@ export function welcomeEmail(opts: WelcomeOpts) {
       <p>${greeting}</p>
       <p>You're in. Upload an L5X (Rockwell) or PLCopen TC6 .xml project, and chat with it grounded in real routine and tag names.</p>
       ${ctaButton(`${opts.appUrl}/projects`, "Upload your first project")}
-      <p style="color:${INK_500};">Reply to this email if anything's broken — humans on this side.</p>
+      <p style="color:${INK_500};">Reply to this email if anything's broken, humans on this side.</p>
     `),
     text: `Welcome to ladX.ai. Upload your first project at ${opts.appUrl}/projects`,
   };
@@ -82,7 +82,7 @@ export function passwordResetEmail(opts: PasswordResetOpts) {
       <h2 style="margin:0 0 16px;font-size:22px;font-weight:600;letter-spacing:-0.01em;">Reset your password</h2>
       <p>Click the button below to set a new password. The link is valid for ${opts.ttlMinutes} minutes and can only be used once.</p>
       ${ctaButton(opts.resetUrl, "Reset password")}
-      <p style="color:${INK_500};font-size:13px;">If you didn't request this, ignore this email — your password is unchanged.</p>
+      <p style="color:${INK_500};font-size:13px;">If you didn't request this, ignore this email, your password is unchanged.</p>
       <p style="color:${INK_500};font-size:13px;word-break:break-all;">Or paste this link: ${escapeHtml(opts.resetUrl)}</p>
     `),
     text: `Reset your ladX.ai password (valid ${opts.ttlMinutes} min): ${opts.resetUrl}`,
@@ -120,7 +120,7 @@ export interface TranscriptOpts {
 
 export function transcriptEmail(opts: TranscriptOpts) {
   const subject = opts.projectName
-    ? `ladX chat transcript — ${opts.projectName}`
+    ? `ladX chat transcript, ${opts.projectName}`
     : "Your ladX chat transcript";
 
   const body = opts.messages

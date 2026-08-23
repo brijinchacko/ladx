@@ -3,7 +3,7 @@
  *
  * The rule these follow: an animation exists to stop the eye having to
  * re-find something that moved, or to report live state. Nothing here loops
- * unless it is telling you the controller is doing something right now — on a
+ * unless it is telling you the controller is doing something right now, on a
  * screen somebody stares at for an hour, decoration becomes irritation.
  *
  * Durations come from theme.ts (instant 90 / quick 160 / settled 240) and are
@@ -12,10 +12,10 @@
  */
 
 /* Anyone who has asked their system not to animate gets no animation. This
-   is not a nicety — motion triggers migraine and nausea for some people, and
+   is not a nicety, motion triggers migraine and nausea for some people, and
    an editor is not somewhere you can look away from. */
 /* `.root` goes on the studio's outermost element. A CSS Module cannot carry a
-   bare `*` rule — every selector must be anchored to a local class — and
+   bare `*` rule, every selector must be anchored to a local class: and
    scoping it this way is better anyway: the reset stops at LADX rather than
    quietly disabling motion for the whole portal. */
 @media (prefers-reduced-motion: reduce) {
@@ -207,7 +207,7 @@
   outline: none;
   box-shadow: 0 0 0 2px rgba(53, 182, 187, 0.5);
 }
-/* The help icon leans brand rather than ink — it is an offer, not a command. */
+/* The help icon leans brand rather than ink, it is an offer, not a command. */
 .iconBtnHelp:hover {
   color: #1b7f84;
   background: rgba(53, 182, 187, 0.12);
@@ -230,7 +230,7 @@
 
 /* ── The dock ───────────────────────────────────────────────────────
    A closed panel is a chip you can pick back up, so it is drawn as a real
-   affordance rather than a label — bordered, raised, and it lifts on hover
+   affordance rather than a label, bordered, raised, and it lifts on hover
    the same way the palette instructions do. */
 .dockChip {
   display: inline-flex;
@@ -348,7 +348,7 @@
 }
 
 /* ── Instruction palette ────────────────────────────────────────────
-   The tabs read as tabs — a moving underline rather than a colour swap, so
+   The tabs read as tabs: a moving underline rather than a colour swap, so
    which group is open is legible from the shape, not only the hue. */
 .groupTab {
   padding: 0 9px;
@@ -464,7 +464,7 @@
   box-shadow: 0 0 0 3px rgba(40, 145, 255, 0.4);
 }
 
-/* Run and Stop. Green is power, red is stop — the two colours a panel uses. */
+/* Run and Stop. Green is power, red is stop, the two colours a panel uses. */
 .runBtn {
   display: inline-flex;
   align-items: center;
@@ -508,7 +508,7 @@
   box-shadow: 0 0 0 3px rgba(179, 56, 44, 0.3);
 }
 
-/* A plain secondary control — Reset, and the Tour/Help pair. */
+/* A plain secondary control, Reset, and the Tour/Help pair. */
 .chipBtn {
   display: inline-flex;
   align-items: center;
@@ -534,7 +534,7 @@
   box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.35);
 }
 
-/* A toolbar cluster — related controls sharing one recessed tray. */
+/* A toolbar cluster, related controls sharing one recessed tray. */
 .toolGroup {
   display: flex;
   align-items: center;
@@ -545,7 +545,7 @@
 }
 
 /* ══ Toolbar ═══════════════════════════════════════════════════════
-   One row. One filled button — the one that commits. Everything else
+   One row. One filled button, the one that commits. Everything else
    is quiet until pointed at, and every explanation lives in a hover
    card rather than in print under the label. */
 .toolbar {
@@ -616,7 +616,7 @@
   gap: 5px;
 }
 
-/* Save state — a dot and a word, sized as status not as an action. */
+/* Save state: a dot and a word, sized as status not as an action. */
 .saveState {
   display: inline-flex;
   align-items: center;
@@ -973,7 +973,7 @@
 }
 
 /* ── Routine tabs ───────────────────────────────────────────────────
-   Only shown when more than one routine is open — a single tab is a
+   Only shown when more than one routine is open: a single tab is a
    label pretending to be a control. */
 .tabStrip {
   display: flex;

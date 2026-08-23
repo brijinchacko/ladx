@@ -11,9 +11,9 @@ export interface ChatMessageProps {
   pending?: boolean;
   /** Optional project id forwarded to <CodeBlock/> for auto-fix grounding. */
   projectId?: string;
-  /** Optional validate transport — used on desktop to call a Tauri command. */
+  /** Optional validate transport, used on desktop to call a Tauri command. */
   validate?: (source: string) => Promise<ValidatorReport>;
-  /** Optional auto-fix transport — used on desktop to call a Tauri command. */
+  /** Optional auto-fix transport, used on desktop to call a Tauri command. */
   autoFix?: (input: {
     source: string;
     report: ValidatorReport;
@@ -94,8 +94,7 @@ export function ChatMessage({
       <div className="min-w-0 flex-1 space-y-2">
         <p className="text-xs font-medium text-ink-500">{isUser ? "You" : "ladX"}</p>
         {blocks.map((b, i) => {
-          // Block-list keys are stable per (kind, position, body-prefix) —
-          // good enough for a chat turn where blocks are append-only.
+          // Block-list keys are stable per (kind, position, body-prefix), // good enough for a chat turn where blocks are append-only.
           const key = `${b.kind}-${i}-${b.body.slice(0, 16)}`;
           return b.kind === "text" ? (
             <div

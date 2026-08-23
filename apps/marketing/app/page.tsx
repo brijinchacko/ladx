@@ -30,8 +30,8 @@ export default function HomePage() {
           Local-first PLC AI for engineers who don't trust the cloud.
         </h1>
         <p className="text-ink-500 text-lg">
-          Generate ladder, ST, HMI, and regulatory documents — air-gapped on Windows or in the
-          cloud. Vendor-IDE integrated. Audit-grade.
+          Generate ladder, ST, HMI, and regulatory documents: air-gapped on Windows or in the cloud.
+          Vendor-IDE integrated. Audit-grade.
         </p>
         <div className="flex gap-3 mt-4">
           <a href={`${APP_URL}/sign-up`}>

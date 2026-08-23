@@ -220,7 +220,7 @@ export default function LadxMarking() {
           <div className="flex items-end gap-3 flex-wrap">
             <label className="w-32">
               <span className="block text-[11px] font-semibold text-text-muted mb-1">
-                Marks (0–{answer.exercise.marks})
+                Marks (0-{answer.exercise.marks})
               </span>
               <input
                 type="number"
@@ -237,8 +237,7 @@ export default function LadxMarking() {
                   wouldPass ? "text-neon-green" : "text-amber-300"
                 }`}
               >
-                {pct}% —{" "}
-                {wouldPass ? "pass" : `below the ${answer.exercise.passPercent}% pass mark`}
+                {pct}%, {wouldPass ? "pass" : `below the ${answer.exercise.passPercent}% pass mark`}
               </span>
             )}
           </div>

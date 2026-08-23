@@ -18,7 +18,7 @@
 //! handles exactly that class and rejects anything else with
 //! [`GraphError::NotSeriesParallel`] rather than guessing.
 //!
-//! The graph that does *not* decompose is the bridged rung — where a wire
+//! The graph that does *not* decompose is the bridged rung, where a wire
 //! crosses between two parallel branches, forming a lattice. It is legal in
 //! some tools, it has no series/parallel expression, and silently mangling one
 //! into the wrong logic is far worse than refusing it. When we meet one, the
@@ -27,7 +27,7 @@
 use crate::{Instruction, Logic};
 use std::collections::{BTreeMap, BTreeSet};
 
-/// The reserved `localId` of the left power rail — the source every path starts
+/// The reserved `localId` of the left power rail, the source every path starts
 /// from. TC6 gives the rail an element like any other; 0 is the conventional id
 /// and the one LADX emits.
 pub const LEFT_POWER_RAIL: u32 = 0;
@@ -63,7 +63,7 @@ pub struct GraphElement {
 /// Flatten a condition tree into TC6 elements.
 ///
 /// Emits the power rail as id 0 and numbers elements from 1 in evaluation
-/// order, so output is deterministic and diffable — the same tree always
+/// order, so output is deterministic and diffable, the same tree always
 /// produces the same ids.
 pub fn tree_to_graph(logic: &Logic) -> Vec<GraphElement> {
     let mut out = vec![GraphElement {
@@ -107,7 +107,7 @@ fn emit(
         Logic::Parallel { children } => {
             // Every leg is fed by the same inputs; the junction downstream sees
             // all their outputs at once. An empty parallel has no legs and so
-            // conducts nothing — deliberately different from an empty series.
+            // conducts nothing, deliberately different from an empty series.
             let mut ends = Vec::new();
             for child in children {
                 ends.extend(emit(child, inputs, out, next_id));
@@ -121,7 +121,7 @@ fn emit(
 
 /// Rebuild the condition tree from TC6 elements.
 ///
-/// `output_inputs` is what feeds the coil — i.e. the `connectionPointIn` of the
+/// `output_inputs` is what feeds the coil, i.e. the `connectionPointIn` of the
 /// output element, which is where the condition side ends.
 pub fn graph_to_tree(
     elements: &[GraphElement],
@@ -193,7 +193,7 @@ impl Builder<'_> {
         let join = self.common_ancestor(heads, stop)?;
 
         // Heads are not necessarily one-per-leg. A leg can fan out again before
-        // reaching the junction — `A then (X or Y)` arrives here as three heads
+        // reaching the junction, `A then (X or Y)` arrives here as three heads
         // (X, Y and whatever else), of which X and Y belong to the *same* leg.
         // Splitting purely on the shared join would emit `(A X) or (A Y) or B`:
         // logically equivalent, structurally wrong, and it duplicates A.
@@ -306,7 +306,7 @@ impl Builder<'_> {
 
 /// Collapse the scaffolding the backward walk leaves behind.
 ///
-/// Building right-to-left produces correct but noisy trees — `Series[Series[],
+/// Building right-to-left produces correct but noisy trees, `Series[Series[],
 /// Element]` where `Element` would do. Flattening matters beyond tidiness: the
 /// round-trip test compares trees for equality, so a tree that survives a trip
 /// through the graph has to come back in the same shape it left in.
@@ -395,7 +395,7 @@ mod tests {
     #[test]
     fn seal_in_round_trips() {
         // The motor latch: (Start OR Motor) AND NotStop. If anything survives a
-        // round trip, this must — it is the first circuit anybody learns.
+        // round trip, this must, it is the first circuit anybody learns.
         let logic = Logic::Series {
             children: vec![
                 Logic::Parallel {
@@ -503,7 +503,7 @@ mod tests {
         //
         // C and D each take power from BOTH A and B, so the legs cross. There
         // is no way to write this as series and parallel, and quietly emitting
-        // (A or B) and (C or D) would be a different circuit — it would let
+        // (A or B) and (C or D) would be a different circuit, it would let
         // A feed D, which the real rung may not permit. Refusing is the only
         // honest answer.
         let el = |id: u32, name: &str, inputs: Vec<u32>| GraphElement {
@@ -544,7 +544,7 @@ mod tests {
             }),
             inputs,
         };
-        // 1 feeds 2 feeds 1 — malformed input, must not hang.
+        // 1 feeds 2 feeds 1, malformed input, must not hang.
         let graph = vec![
             GraphElement { local_id: 0, instruction: None, inputs: vec![] },
             el(1, vec![2]),
@@ -558,7 +558,7 @@ mod tests {
 
     #[test]
     fn ids_are_deterministic() {
-        // Same tree, same ids — otherwise exported XML churns on every save and
+        // Same tree, same ids, otherwise exported XML churns on every save and
         // diffs become useless.
         let logic = Logic::Series {
             children: vec![

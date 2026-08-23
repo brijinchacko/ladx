@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { LadxFrame, LadxMark } from "./LadxLogo";
 import LadxStudio from "./LadxStudio";
 
-/** Project list and worked examples — the way into the studio. */
+/** Project list and worked examples, the way into the studio. */
 
 const LIVE = "#35B6BB";
 /** How many recent programs the home screen shows before "All". */
@@ -55,8 +55,8 @@ export default function LadxHome() {
   /**
    * Which project is open, kept in the URL rather than in state alone.
    *
-   * It was state only, so a refresh — or a restored tab, or a link to your own
-   * work — dropped you back at the project list with no way to tell which one
+   * It was state only, so a refresh, or a restored tab, or a link to your own
+   * work, dropped you back at the project list with no way to tell which one
    * you had been in. A student mid-exercise who reloads should land back in
    * their program, not at the front door.
    *
@@ -145,7 +145,7 @@ export default function LadxHome() {
 
   // ONE frame, mounted once and never swapped. Home and the studio used to
   // render a frame each, so opening a project unmounted one and mounted
-  // another — and an element that leaves the DOM takes fullscreen with it.
+  // another: and an element that leaves the DOM takes fullscreen with it.
   // That is exactly why fullscreen dropped on "New program" and on "Projects".
   return (
     <LadxFrame>
@@ -195,7 +195,7 @@ export default function LadxHome() {
                             {e.feedback}
                             {e.markedBy && (
                               <span className="block text-[10.5px] text-[#64748B] mt-0.5">
-                                — {e.markedBy}
+                                , {e.markedBy}
                               </span>
                             )}
                           </p>
@@ -212,7 +212,7 @@ export default function LadxHome() {
                           </span>
                         ) : e.marksAwarded != null ? (
                           <span className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-red-500/12 text-red-600">
-                            {e.marksAwarded}/{e.marks} — try again
+                            {e.marksAwarded}/{e.marks}, try again
                           </span>
                         ) : (
                           <span className="text-[11.5px] text-[#64748B]">Not attempted</span>
@@ -260,7 +260,7 @@ export default function LadxHome() {
                 <FileCode2 size={22} className="mx-auto mb-2 text-[#64748B]/50" />
                 <p className="text-[13px] text-[#334155]">Nothing saved yet.</p>
                 <p className="text-[11.5px] text-[#64748B] mt-1">
-                  Start from a worked example below — it is quicker than an empty grid.
+                  Start from a worked example below, it is quicker than an empty grid.
                 </p>
               </div>
             ) : (
@@ -292,7 +292,7 @@ export default function LadxHome() {
                         */}
                             {p.networks != null
                               ? `${p.networks} network${p.networks === 1 ? "" : "s"} · ${p.tags ?? 0} tag${p.tags === 1 ? "" : "s"}`
-                              : "—"}
+                              : "-"}
                           </span>
                           <span className="block text-[10px] text-[#94A3B8]">
                             {new Date(p.updatedAt).toLocaleDateString(undefined, {
@@ -324,7 +324,7 @@ export default function LadxHome() {
               <Sparkles size={14} style={{ color: LIVE }} /> Worked examples
             </h2>
             <p className="text-[12px] text-[#64748B] mb-2.5 max-w-[68ch]">
-              Complete, running programs from the course. Open one, press Run, then take it apart —
+              Complete, running programs from the course. Open one, press Run, then take it apart,
               you get your own copy, so nothing you do here affects the original.
             </p>
             <div className="grid sm:grid-cols-2 gap-2">

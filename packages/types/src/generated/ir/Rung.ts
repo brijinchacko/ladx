@@ -13,7 +13,7 @@ import type { Logic } from "./Logic";
 export type Rung = { id: string, comment: string | null, 
 /**
  * The condition side. [`Logic::Series`] with no children is an empty rung,
- * which conducts — the same as a real rung with nothing in it.
+ * which conducts, the same as a real rung with nothing in it.
  */
 logic: Logic, 
 /**

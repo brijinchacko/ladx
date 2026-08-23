@@ -37,7 +37,7 @@ export function UploadButton() {
       }
 
       if (data.parseError) {
-        // Project row exists but parser failed — surface the error and
+        // Project row exists but parser failed, surface the error and
         // still navigate so the user can see / delete it.
         setError(`parsed failed: ${data.parseError}`);
       }

@@ -6,8 +6,8 @@
  * we use" but "how few assumptions can we make about where the model lives".
  *
  * Four adapters cover the field, and the fourth covers the future: any endpoint
- * that speaks the OpenAI chat-completions shape — Groq, Together, a corporate
- * gateway, a local Ollama on the engineer's own laptop — works through `custom`
+ * that speaks the OpenAI chat-completions shape (Groq, Together, a corporate
+ * gateway, a local Ollama on the engineer's own laptop) works through `custom`
  * without new code. That slot is why this file does not need to change when the
  * next provider launches.
  */
@@ -31,7 +31,7 @@ export interface ModelInfo {
   free?: boolean;
   /** Whether the model can be given tools. Absent means unknown. */
   tools?: boolean;
-  /** Whether the model accepts images — gates the PDF/screenshot import path. */
+  /** Whether the model accepts images. Gates the PDF/screenshot import path. */
   vision?: boolean;
 }
 
@@ -84,7 +84,7 @@ export class ProviderError extends Error {
       case "rate_limited":
         return this.retryAfter
           ? `Your provider is rate-limiting this key. Try again in ${this.retryAfter}s.`
-          : "Your provider is rate-limiting this key. Free tiers cap requests per minute — wait a moment and try again.";
+          : "Your provider is rate-limiting this key. Free tiers cap requests per minute. Wait a moment and try again.";
       case "model_unavailable":
         return "That model is not available on your key right now. Free models rotate; pick another.";
       case "network":
@@ -100,7 +100,7 @@ export class ProviderError extends Error {
 export interface Provider {
   readonly kind: ProviderKind;
   readonly label: string;
-  /** Human guidance for the connect screen — where to get a key. */
+  /** Human guidance for the connect screen, where to get a key. */
   readonly keyHint: string;
   /** Shape check before any network call, so obvious typos fail instantly. */
   validateKeyFormat(key: string): string | null;

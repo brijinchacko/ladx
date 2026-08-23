@@ -1,4 +1,4 @@
-// POST /api/chat — streaming chat-completion endpoint with persistence.
+// POST /api/chat, streaming chat-completion endpoint with persistence.
 // Reads the session cookie, loads the user, ensures a conversation exists,
 // appends the user message, streams the assistant response while
 // accumulating it, then writes the final assistant message at end-of-stream.
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
   // No quota gate. Inference runs on the user's own provider key (BYOK), so
   // usage is metered by their provider, not by us. Rate limiting, when it
-  // matters, is the provider's — we surface their 429 rather than inventing one.
+  // matters, is the provider's, we surface their 429 rather than inventing one.
   //
   // Which also means: no key, no chat. That is a 428 rather than a 500, and the
   // client turns it into "connect a provider" rather than "something broke".
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // The last entry MUST be the user's new message — that's what we persist
+  // The last entry MUST be the user's new message, that's what we persist
   // before streaming. Earlier entries are conversation history the client
   // already has.
   const lastUser = parsed.messages[parsed.messages.length - 1];
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
       content: lastUser.content,
     });
   } catch (err) {
-    // DB failure is logged but doesn't block streaming — we'd rather serve
+    // DB failure is logged but doesn't block streaming, we'd rather serve
     // the user a working chat with no persistence than 500.
     console.error("[chat] persistence failed:", err);
   }
@@ -163,7 +163,7 @@ export async function POST(req: Request) {
           }).catch((err) => console.error("[chat] assistant persistence failed:", err));
         }
       } catch (err) {
-        // A provider error carries a message written for a person — rate limits
+        // A provider error carries a message written for a person, rate limits
         // in particular, where "wait 18s" is the difference between a queue and
         // a broken product.
         const msg =

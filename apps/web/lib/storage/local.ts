@@ -35,7 +35,7 @@ export class LocalStorage implements StorageBackend {
   }
 
   private assertSafeKey(key: string): string {
-    // Defence in depth — keys are UUIDs we minted ourselves, but
+    // Defence in depth, keys are UUIDs we minted ourselves, but
     // double-check there's no traversal before touching the filesystem.
     if (key.includes("/") || key.includes("\\") || key.includes("..")) {
       throw new Error("invalid storage key");

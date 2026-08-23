@@ -28,7 +28,7 @@ export default function ProductsPage() {
       <div className="mb-16 rounded-sm border border-ink-100 bg-white p-7">
         <IrHub className="w-full text-ink-800" />
         <p className="mt-4 text-center text-[13px] text-ink-400">
-          Every format is read into one representation and written back out of it — which is why
+          Every format is read into one representation and written back out of it, which is why
           adding a vendor gives every other vendor a new destination.
         </p>
       </div>
@@ -75,7 +75,7 @@ export default function ProductsPage() {
           </h2>
           <p className="mt-4 text-[15.5px] leading-relaxed text-ink-600">
             Nothing generated reaches you before a real IEC 61131-3 compiler has agreed it exists.
-            When it fails, the errors go back to the model rather than to you — which is also what
+            When it fails, the errors go back to the model rather than to you, which is also what
             makes a small free model good enough to be useful.
           </p>
         </div>

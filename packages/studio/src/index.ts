@@ -1,5 +1,5 @@
 /**
- * @ladx/studio — the LADX ladder workbench.
+ * @ladx/studio, the LADX ladder workbench.
  *
  * Formerly "LADX Mini", built inside the Edwartens India CRM. Lifted out whole:
  * the scan engine, the series/parallel program model, the rung editor, the
@@ -10,7 +10,7 @@
  * Two audiences, one package. A student opens `LadxHome` and works through
  * exercises; the LADX web app mounts `LadxStudio` as the canvas an AI writes
  * rungs onto. The teaching surfaces (`LadxExercises`, `LadxMarking`) are
- * optional — import them or don't.
+ * optional, import them or don't.
  *
  * The engine is deliberately pure: `scan()` takes state and returns state, with
  * no React, no DOM, and no clock of its own. That is what lets the same code run

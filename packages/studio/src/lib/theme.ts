@@ -17,7 +17,7 @@
  * On a real panel a green lamp means current is flowing, and a student reads
  * this screen the same way. A green "Saved" tick, a green success toast and a
  * green live rung on the same screen teach that green means nothing in
- * particular — which is worse than no colour at all, because the one green
+ * particular, which is worse than no colour at all, because the one green
  * that carries the lesson stops being noticed. Saves confirm in teal, faults
  * in red, warnings in amber, and green is left to mean power.
  */
@@ -39,7 +39,7 @@ export const ink = {
 export const surface = {
   /** Panels, cards, the ladder itself. */
   raised: "#FFFFFF",
-  /** Panel title bars and toolbars — a half-step down from white. */
+  /** Panel title bars and toolbars: a half-step down from white. */
   subtle: "#F7F9FB",
   /** Grouped toolbar clusters and inactive tabs. */
   sunken: "#EEF2F6",
@@ -50,7 +50,7 @@ export const surface = {
 export const line = {
   /** The standard border. Panels, buttons, inputs. */
   base: "#C9D2DC",
-  /** Rules inside a panel — between rows, under a header. */
+  /** Rules inside a panel, between rows, under a header. */
   soft: "#E2E8F0",
   /** The faintest divider, for dense lists. */
   hairline: "#F1F5F9",
@@ -65,13 +65,13 @@ export const brand = {
   teal: "#35B6BB",
   /** Teal text on a light background, dark enough to read. */
   tealInk: "#1B7F84",
-  /** Teal fills — selected rows, focus rings, gentle highlights. */
+  /** Teal fills, selected rows, focus rings, gentle highlights. */
   tealWash: "#E8F6F7",
   /** Primary actions. Download, Next, anything that commits. */
   blue: "#2891FF",
   /** Blue text and pressed states. */
   blueInk: "#1D4ED8",
-  /** Blue fills — the insertion caret, hovered drop targets. */
+  /** Blue fills, the insertion caret, hovered drop targets. */
   blueWash: "#E8F2FE",
 } as const;
 
@@ -82,7 +82,7 @@ export const state = {
       lamp, the controller in RUN. Nothing else. */
   live: "#16A34A",
   liveWash: "#DCFCE7",
-  /** A lamp or an LED that is drawing the eye — brighter than `live`, for
+  /** A lamp or an LED that is drawing the eye, brighter than `live`, for
       small glowing objects rather than text. */
   liveGlow: "#22C55E",
 
@@ -116,14 +116,14 @@ export const motion = {
   instant: 90,
   /** The default. Panels opening, tooltips, menus. */
   quick: 160,
-  /** Something crossing the screen — a panel docking, a dialog arriving. */
+  /** Something crossing the screen: a panel docking, a dialog arriving. */
   settled: 240,
   /** Deliberately slow, to be watched: a download transferring. */
   narrated: 420,
 
   /** Decelerate. Things arrive quickly and land softly. */
   ease: "cubic-bezier(0.2, 0, 0, 1)",
-  /** For something leaving — accelerate away. */
+  /** For something leaving: accelerate away. */
   easeOut: "cubic-bezier(0.4, 0, 1, 1)",
 } as const;
 

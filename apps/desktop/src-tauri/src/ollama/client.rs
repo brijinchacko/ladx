@@ -1,4 +1,4 @@
-//! Ollama HTTP client wrapper. Talks to localhost:11434 only — see the
+//! Ollama HTTP client wrapper. Talks to localhost:11434 only, see the
 //! desktop network policy in apps/desktop/CLAUDE.md.
 
 use anyhow::Result;
@@ -53,7 +53,7 @@ impl OllamaClient {
     pub fn new(base_url: &str) -> Self {
         Self {
             base_url: base_url.to_string(),
-            // Short timeout — these are localhost calls; longer waits
+            // Short timeout, these are localhost calls; longer waits
             // mean Ollama is hung and we should surface that fast.
             http: reqwest::Client::builder()
                 .timeout(std::time::Duration::from_secs(3))
@@ -67,7 +67,7 @@ impl OllamaClient {
     }
 
     /// Probe `/api/tags`. Returns running=false on any connection error
-    /// — the user's typical state ("Ollama is not yet running") is
+    ///, the user's typical state ("Ollama is not yet running") is
     /// represented by a clean status, not an Err.
     pub async fn status(&self) -> OllamaStatus {
         match self.list_models().await {

@@ -28,15 +28,15 @@ export interface ChatWindowProps {
    */
   onSend: (messages: ChatTurn[], signal: AbortSignal) => Promise<AsyncIterable<string>>;
   /**
-   * Forwarded to <ChatMessage/> — invoked when the user clicks "Accept"
+   * Forwarded to <ChatMessage/>, invoked when the user clicks "Accept"
    * on a code block. The host persists.
    */
   onAcceptCode?: ChatMessageProps["onAcceptCode"];
   /** Optional project id forwarded to <CodeBlock/> for auto-fix grounding. */
   projectId?: string;
-  /** Optional validate transport — forwarded to <CodeBlock/>. */
+  /** Optional validate transport, forwarded to <CodeBlock/>. */
   validate?: ChatMessageProps["validate"];
-  /** Optional auto-fix transport — forwarded to <CodeBlock/>. */
+  /** Optional auto-fix transport, forwarded to <CodeBlock/>. */
   autoFix?: ChatMessageProps["autoFix"];
   placeholder?: string;
   className?: string;

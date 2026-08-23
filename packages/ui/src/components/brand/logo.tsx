@@ -3,8 +3,8 @@ import { cn } from "../../lib/cn";
 /**
  * The LADX mark.
  *
- * There were two of these — a placeholder "L in a teal square" here, and the
- * real wordmark buried in the ladder studio — which meant the product showed a
+ * There were two of these: a placeholder "L in a teal square" here, and the
+ * real wordmark buried in the ladder studio, which meant the product showed a
  * different logo depending on which screen you were on. This is the one.
  *
  * The wordmark is the shipped artwork rather than type, because the real mark
@@ -26,7 +26,7 @@ export interface LogoProps {
   size?: number;
   variant?: "wordmark" | "icon";
   /**
-   * Which ground the mark is sitting on — not which theme the viewer prefers.
+   * Which ground the mark is sitting on, not which theme the viewer prefers.
    *
    * `light` (the default) draws the dark-ink mark for a light surface; `dark`
    * draws the white one. `auto` follows `prefers-color-scheme`, and is correct
@@ -35,7 +35,7 @@ export interface LogoProps {
    * This defaults to `light` because it used to default to `auto`, and every
    * LADX surface is currently light regardless of the OS setting. On a machine
    * set to dark mode the browser dutifully served the white wordmark onto a
-   * white page, and the mark vanished — leaving a lone teal X floating above
+   * white page, and the mark vanished, leaving a lone teal X floating above
    * the sign-in form. Follow the surface, not the operating system.
    */
   tone?: "auto" | "light" | "dark";

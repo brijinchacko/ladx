@@ -1,6 +1,6 @@
-// GET  /api/providers — what this user has connected (never a secret)
-// POST /api/providers — connect or replace a key, verifying it first
-// DELETE /api/providers?kind=… — disconnect
+// GET  /api/providers, what this user has connected (never a secret)
+// POST /api/providers, connect or replace a key, verifying it first
+// DELETE /api/providers?kind=…, disconnect
 
 import { getApiUser } from "@/lib/auth/server";
 import {

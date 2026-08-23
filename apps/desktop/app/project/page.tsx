@@ -118,7 +118,7 @@ function ProjectDetail() {
           <h2 className="text-lg font-semibold mb-2">Chat about this project</h2>
           <p className="text-sm text-ink-500 mb-4">
             Local chat against your Ollama, grounded in this project's routines and tags. Air-
-            gapped — nothing leaves the machine.
+            gapped, nothing leaves the machine.
           </p>
           <Link href={`/chat?project=${row.id}`}>
             <Button variant="primary">Open chat</Button>
@@ -160,7 +160,7 @@ function ProjectDetail() {
 }
 
 function formatDate(iso: string): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   try {
     return new Date(iso).toLocaleString();
   } catch {

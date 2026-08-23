@@ -1,4 +1,4 @@
-// POST /api/inference — non-streaming convenience wrapper used internally
+// POST /api/inference, non-streaming convenience wrapper used internally
 // (e.g. for project naming, conversation titles). For streaming, use /api/chat.
 
 import { getApiUser } from "@/lib/auth/server";

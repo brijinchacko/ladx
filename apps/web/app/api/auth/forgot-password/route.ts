@@ -1,4 +1,4 @@
-// POST /api/auth/forgot-password — emails a password-reset link.
+// POST /api/auth/forgot-password, emails a password-reset link.
 // Always returns 200 even on missing email (avoid user enumeration).
 
 import { createToken } from "@/lib/auth/tokens";
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       await sendEmail({ to: user.email, subject: tpl.subject, html: tpl.html, text: tpl.text });
     } catch (err) {
       console.error("[forgot-password] failed:", err);
-      // Swallow — caller still gets the canonical 200.
+      // Swallow, caller still gets the canonical 200.
     }
   }
 

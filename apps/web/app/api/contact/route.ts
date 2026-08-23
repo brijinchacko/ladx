@@ -1,4 +1,4 @@
-// POST /api/contact — the help form.
+// POST /api/contact, the help form.
 //
 // Delivers by email if Resend is configured, and always writes the message to
 // the server log. The log is the point: a contact form that silently drops
@@ -26,21 +26,21 @@ export async function POST(req: Request) {
     return Response.json({ error: "Please check the form and try again." }, { status: 400 });
   }
 
-  const line = `[contact] ${body.name} <${body.email}> — ${body.topic ?? "no topic"}`;
+  const line = `[contact] ${body.name} <${body.email}>, ${body.topic ?? "no topic"}`;
   console.info(line, JSON.stringify({ message: body.message.slice(0, 4000) }));
 
   if (env.resendApiKey) {
     try {
       await sendEmail({
         to: "hello@ladx.ai",
-        subject: `LADX contact — ${body.topic ?? "message"} — ${body.name}`,
+        subject: `LADX contact, ${body.topic ?? "message"}, ${body.name}`,
         // Reply goes to the person who wrote in, not to us.
         replyTo: body.email,
-        text: `From: ${body.name} <${body.email}>\nTopic: ${body.topic ?? "—"}\n\n${body.message}`,
+        text: `From: ${body.name} <${body.email}>\nTopic: ${body.topic ?? "-"}\n\n${body.message}`,
         // Escaped, because the message is arbitrary text from a stranger and
         // this lands in a mail client that will happily render markup.
         html: `<p><strong>${escapeHtml(body.name)}</strong> &lt;${escapeHtml(body.email)}&gt;<br>
-<em>${escapeHtml(body.topic ?? "—")}</em></p>
+<em>${escapeHtml(body.topic ?? "-")}</em></p>
 <pre style="white-space:pre-wrap;font-family:ui-monospace,monospace">${escapeHtml(body.message)}</pre>`,
       });
     } catch (err) {

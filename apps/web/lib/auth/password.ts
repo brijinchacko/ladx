@@ -1,4 +1,4 @@
-// bcrypt password hashing. Cost factor 12 — slow enough to defeat brute
+// bcrypt password hashing. Cost factor 12, slow enough to defeat brute
 // force, fast enough not to block the request thread on hot signup paths.
 // If you ever migrate to argon2id, the password_hash column is a text
 // field so you can prefix-detect the algo (`$2b$` vs `$argon2id$`).

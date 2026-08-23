@@ -8,7 +8,7 @@ import { DEVICE_LABEL, type DeviceKind, type Tag, defaultDevice } from "../lib/t
  *
  * The panel view tells a student what a tag is doing. It does not tell them
  * where the 24 volts comes from, why a normally-closed stop button reads 1
- * when nobody is touching it, or what the M terminal is for — and those are
+ * when nobody is touching it, or what the M terminal is for: and those are
  * the three things that confuse everybody in the first week.
  *
  * ── Why it looks like a ladder ────────────────────────────────────
@@ -24,7 +24,7 @@ import { DEVICE_LABEL, type DeviceKind, type Tag, defaultDevice } from "../lib/t
  * The CPU here is the same CPU as the panel view, with the same terminal
  * numbers, because a wiring diagram that shows a different-looking box is a
  * wiring diagram of something else. Devices land on the terminal their tag is
- * actually addressed to — move a tag from I0.2 to I0.5 and the wire moves.
+ * actually addressed to, move a tag from I0.2 to I0.5 and the wire moves.
  *
  * Live: current in a conducting wire is drawn green, so pressing a button
  * shows the loop complete from L+ through the contact into the terminal.
@@ -46,7 +46,7 @@ const deviceOf = (t: Tag): DeviceKind => t.device ?? defaultDevice(t);
  *
  * Every band has its own vertical space and nothing shares a y with
  * anything else. The nameplate used to be drawn at the top of the CPU body,
- * which is exactly where the first terminal row sits — so "VCX CPU 1212C"
+ * which is exactly where the first terminal row sits, so "VCX CPU 1212C"
  * ran straight through the I0.0 and Q0.0 labels. Terminals now start below
  * a reserved nameplate band, and the device captions sit in the gap between
  * rows rather than on top of the next one.
@@ -58,7 +58,7 @@ const CPU_L = 158;
 const CPU_R = 262;
 const ROW = 52; // tall enough for a symbol AND its two caption lines
 const HEAD = 40; // the rail labels
-const PLATE = 30; // the CPU nameplate band — no terminals in it
+const PLATE = 30; // the CPU nameplate band, no terminals in it
 const FOOT = 44; // the CPU's own supply, on its own line
 
 /**
@@ -67,7 +67,7 @@ const FOOT = 44; // the CPU's own supply, on its own line
  * The pushbuttons were wrong: the actuator was drawn as a free-floating stem
  * and bar above the contact, joined to nothing, which read as a stray T
  * hanging over the wire. On a proper symbol the actuator sits ON the moving
- * contact and is linked to it by a dashed mechanical line — that dashed line
+ * contact and is linked to it by a dashed mechanical line, that dashed line
  * is the whole point, because it says "this is operated by hand" rather than
  * "this is energised by a coil".
  *
@@ -266,7 +266,7 @@ export default function SimWiring({
 }: {
   tags: Tag[];
   powered: boolean;
-  /** Scales the drawing only. The caption stays readable at one size — it is
+  /** Scales the drawing only. The caption stays readable at one size, it is
       prose, and prose does not need magnifying because a terminal number
       does. */
   zoom?: number;
@@ -397,7 +397,7 @@ export default function SimWiring({
           strokeWidth={0.8}
         />
 
-        {/* The controller's own supply — it needs power before anything else
+        {/* The controller's own supply, it needs power before anything else
             works, which is the step students skip. */}
         {(() => {
           const y = railBottom - 12;
@@ -536,14 +536,14 @@ export default function SimWiring({
 
       <p className="mt-1.5 text-[10px] leading-relaxed" style={{ color: LABEL }}>
         Every circuit runs from <b style={{ color: RAIL_POS }}>L+</b> on the left to{" "}
-        <b style={{ color: "#0f172a" }}>M</b> on the right — which is exactly the shape of a rung.
-        An input completes its circuit through the field device into the terminal; an output is
+        <b style={{ color: "#0f172a" }}>M</b> on the right, which is exactly the shape of a rung. An
+        input completes its circuit through the field device into the terminal; an output is
         completed by the controller closing its own contact.
       </p>
 
       {unwired.length > 0 && (
         <p className="mt-1.5 text-[9.5px] leading-relaxed" style={{ color: "#B45309" }}>
-          Not shown: {unwired.map((t) => t.name).join(", ")} —{" "}
+          Not shown: {unwired.map((t) => t.name).join(", ")},{" "}
           {unwired.length === 1 ? "it has" : "they have"} no terminal address, so{" "}
           {unwired.length === 1 ? "it lives" : "they live"} in memory rather than on a screw.
         </p>
