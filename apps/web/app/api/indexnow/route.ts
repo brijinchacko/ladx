@@ -10,6 +10,8 @@
 
 import { POSTS } from "@/content/posts";
 import { PRODUCTS } from "@/content/products";
+import { TEMPLATES } from "@/content/templates";
+import { CATEGORIES as FORUM_CATEGORIES } from "@/lib/forum/categories";
 import { SITE } from "@/lib/seo/schema";
 
 const ENDPOINT = "https://api.indexnow.org/IndexNow";
@@ -21,9 +23,13 @@ function allUrls(): string[] {
     `${host}/products`,
     `${host}/resources`,
     `${host}/studio`,
+    `${host}/documents`,
+    `${host}/convert`,
     `${host}/forum`,
     `${host}/help`,
     ...PRODUCTS.map((p) => `${host}/products/${p.slug}`),
+    ...TEMPLATES.map((t) => `${host}/documents/${t.slug}`),
+    ...FORUM_CATEGORIES.map((c) => `${host}/forum/c/${c.slug}`),
     ...POSTS.map((p) => `${host}/resources/${p.slug}`),
   ];
 }

@@ -1,5 +1,7 @@
 import { POSTS } from "@/content/posts";
 import { PRODUCTS } from "@/content/products";
+import { TEMPLATES } from "@/content/templates";
+import { CATEGORIES as FORUM_CATEGORIES } from "@/lib/forum/categories";
 import { SITE } from "@/lib/seo/schema";
 import type { MetadataRoute } from "next";
 
@@ -21,9 +23,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE.url}/products`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE.url}/resources`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE.url}/studio`, changeFrequency: "monthly", priority: 0.9 },
-    { url: `${SITE.url}/forum`, changeFrequency: "weekly", priority: 0.7 },
+    // The template library is the strongest thing here for search: an engineer
+    // looking for a FAT protocol wants a file, and these pages hand them one.
+    { url: `${SITE.url}/documents`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE.url}/convert`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE.url}/forum`, changeFrequency: "daily", priority: 0.7 },
     { url: `${SITE.url}/help`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE.url}/cookies`, changeFrequency: "yearly", priority: 0.2 },
   ];
+
+  const templatePages: MetadataRoute.Sitemap = TEMPLATES.map((t) => ({
+    url: `${SITE.url}/documents/${t.slug}`,
+    changeFrequency: "monthly",
+    priority: 0.8,
+  }));
+
+  const forumPages: MetadataRoute.Sitemap = FORUM_CATEGORIES.map((c) => ({
+    url: `${SITE.url}/forum/c/${c.slug}`,
+    changeFrequency: "daily",
+    priority: 0.5,
+  }));
 
   const productPages: MetadataRoute.Sitemap = PRODUCTS.map((p) => ({
     url: `${SITE.url}/products/${p.slug}`,
@@ -38,5 +57,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...productPages, ...postPages];
+  return [...staticPages, ...productPages, ...templatePages, ...forumPages, ...postPages];
 }
