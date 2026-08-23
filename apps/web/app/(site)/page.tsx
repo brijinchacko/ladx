@@ -1,6 +1,7 @@
 import { LiveRung } from "@/components/site/live-rung";
 import { IrHub, RungDivider, ScanCycle, ValidationLoop } from "@/components/site/schematics";
 import { CornerTicks, Eyebrow, GridField } from "@/components/site/squares";
+import { jsonLd, organizationSchema, softwareSchema, websiteSchema } from "@/lib/seo/schema";
 import Link from "next/link";
 
 export const metadata = {
@@ -56,6 +57,21 @@ const STATE_LABEL = {
 export default function HomePage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD has no other injection point
+        dangerouslySetInnerHTML={jsonLd(organizationSchema())}
+      />
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: as above
+        dangerouslySetInnerHTML={jsonLd(websiteSchema())}
+      />
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: as above
+        dangerouslySetInnerHTML={jsonLd(softwareSchema())}
+      />
       {/* ── Hero ──────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-ink-100">
         <GridField size={34} />

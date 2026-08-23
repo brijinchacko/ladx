@@ -198,6 +198,32 @@ export function LiveRung() {
   const press = useCallback((name: string) => set(name, 1), [set]);
   const release = useCallback((name: string) => set(name, 0), [set]);
 
+  /**
+   * Press and release on its own, for a plain click.
+   *
+   * Hold-to-press alone was a trap. `pointerdown` and `pointerup` cover a mouse
+   * drag, but a keyboard Enter, a screen reader activation and a programmatic
+   * click all fire `click` and nothing else, so for those users the button did
+   * exactly nothing. A real pushbutton is a pulse, so this pulses: long enough
+   * to see the button depress, and the seal-in does the rest.
+   */
+  const heldRef = useRef(false);
+  const pulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pulse = useCallback(
+    (name: string) => {
+      if (pulseTimer.current) clearTimeout(pulseTimer.current);
+      set(name, 1);
+      pulseTimer.current = setTimeout(() => set(name, 0), 220);
+    },
+    [set],
+  );
+  useEffect(
+    () => () => {
+      if (pulseTimer.current) clearTimeout(pulseTimer.current);
+    },
+    [],
+  );
+
   const { power, rungPower, scans } = view;
 
   const running = value("Conveyor") === 1;
@@ -237,10 +263,30 @@ export function LiveRung() {
                   <button
                     key={input.tag}
                     type="button"
-                    onPointerDown={input.momentary ? () => press(input.tag) : undefined}
+                    onPointerDown={
+                      input.momentary
+                        ? (e) => {
+                            // A real pointer holds the button down; the click
+                            // that follows must not pulse it a second time.
+                            heldRef.current = true;
+                            e.preventDefault();
+                            press(input.tag);
+                          }
+                        : undefined
+                    }
                     onPointerUp={input.momentary ? () => release(input.tag) : undefined}
                     onPointerLeave={input.momentary ? () => release(input.tag) : undefined}
-                    onClick={input.momentary ? undefined : () => toggle(input.tag)}
+                    onClick={
+                      input.momentary
+                        ? () => {
+                            if (heldRef.current) {
+                              heldRef.current = false;
+                              return;
+                            }
+                            pulse(input.tag);
+                          }
+                        : () => toggle(input.tag)
+                    }
                     aria-pressed={on}
                     className={`grid grid-cols-[auto_1fr_auto] items-center gap-2.5 border px-2.5 py-2 text-left transition-colors ${
                       on
@@ -294,6 +340,19 @@ export function LiveRung() {
                   </div>
                 );
               })}
+
+              {/* Rung state. Three rows against three inputs, and it shows the
+                  condition side resolving rather than only its result. */}
+              <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2.5 border border-ink-100 bg-ink-50/50 px-2.5 py-2">
+                <span
+                  aria-hidden="true"
+                  className={`h-3 w-3 border ${rungPower.rung1 ? "border-teal-600 bg-teal-500" : "border-ink-200 bg-white"}`}
+                />
+                <span className="font-mono text-[12.5px] text-ink-400">Rung 1 / 2</span>
+                <span className="font-mono text-[10px] tabular-nums text-ink-400">
+                  {rungPower.rung1 ? "TRUE" : "FALSE"} · {rungPower.rung2 ? "TRUE" : "FALSE"}
+                </span>
+              </div>
             </div>
           </div>
         </div>

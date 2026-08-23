@@ -15,6 +15,12 @@ import type { ChatMessage } from "@/lib/providers/types";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
+/**
+ * Headroom for a reasoning model to think and still answer. Measured against a
+ * free model that needed roughly 800 tokens of reasoning before its first word.
+ */
+const DEFAULT_MAX_TOKENS = 2048;
+
 const requestSchema = z.object({
   conversationId: z.string().uuid().optional(),
   projectId: z.string().uuid().optional(),
@@ -33,6 +39,8 @@ const requestSchema = z.object({
   // named a model that may not exist on their key at all.
   model: z.string().optional(),
   temperature: z.number().min(0).max(2).optional(),
+  // Bounded generously: a low ceiling truncates mid-answer, and on a
+  // reasoning model it can consume the whole budget before any answer starts.
   maxTokens: z.number().int().min(1).max(8192).optional(),
 });
 
@@ -147,7 +155,13 @@ export async function POST(req: Request) {
           model,
           messages: messagesWithGrounding,
           temperature: parsed.temperature,
-          maxTokens: parsed.maxTokens,
+          // A generous default matters more than it looks. Many of the free
+          // models on OpenRouter today are reasoning models: they emit their
+          // working into a separate field and only start the actual answer
+          // afterwards. One measured here produced 2,900 characters of
+          // reasoning before its first word of content, so a small budget
+          // means the model finishes without ever answering.
+          maxTokens: parsed.maxTokens ?? DEFAULT_MAX_TOKENS,
           signal: req.signal,
         })) {
           accumulated += delta;

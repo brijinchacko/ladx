@@ -1,5 +1,6 @@
 import { ArticleFigure } from "@/components/site/figures";
 import { POSTS, getPost, sortedPosts } from "@/content/posts";
+import { SITE, articleSchema, breadcrumbSchema, faqSchema, jsonLd } from "@/lib/seo/schema";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -14,10 +15,30 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) return { title: "Not found" };
+  const url = `${SITE.url}/resources/${post.slug}`;
   return {
     title: post.title,
     description: post.summary,
-    openGraph: { title: post.title, description: post.summary, type: "article" },
+    keywords: post.about,
+    // A canonical on every article, because the same content reachable at two
+    // URLs splits its own authority and answer engines pick one arbitrarily.
+    alternates: { canonical: url },
+    openGraph: {
+      title: post.title,
+      description: post.summary,
+      type: "article",
+      url,
+      publishedTime: post.published,
+      modifiedTime: post.updated ?? post.published,
+      section: post.topic,
+      images: [{ url: `/og/resources/${post.slug}`, width: 1200, height: 630, alt: post.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.summary,
+      images: [`/og/resources/${post.slug}`],
+    },
   };
 }
 
@@ -134,8 +155,37 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     day: "numeric",
   });
 
+  const url = `/resources/${post.slug}`;
+
   return (
     <article>
+      {/* Structured data, server rendered. ChatGPT's crawler parses HTML only
+          and does not run JavaScript, so anything added on the client is
+          invisible to it. */}
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD has no other injection point
+        dangerouslySetInnerHTML={jsonLd(articleSchema(post))}
+      />
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: as above
+        dangerouslySetInnerHTML={jsonLd(
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Resources", path: "/resources" },
+            { name: post.title, path: url },
+          ]),
+        )}
+      />
+      {post.faq?.length ? (
+        <script
+          type="application/ld+json"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: as above
+          dangerouslySetInnerHTML={jsonLd(faqSchema(post.faq, url))}
+        />
+      ) : null}
+
       <div className="mx-auto max-w-3xl px-5 pt-14">
         <Link
           href="/resources"
@@ -158,6 +208,15 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           {post.title}
         </h1>
         <p className="mt-5 text-[17.5px] leading-relaxed text-ink-600">{post.summary}</p>
+
+        {/* The direct answer, first and self-contained. Retrieval selects
+            passages rather than pages, and this is the passage. */}
+        <div className="mt-8 border-l-2 border-teal-500 bg-teal-50/40 py-4 pl-5 pr-4">
+          <p className="mb-1.5 font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-teal-700">
+            Short answer
+          </p>
+          <p className="text-[16.5px] leading-relaxed text-ink-800">{post.answer}</p>
+        </div>
       </div>
 
       <figure className="mx-auto my-11 max-w-4xl px-5">
@@ -168,6 +227,24 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
       <div className="mx-auto max-w-3xl px-5">
         <Body lines={post.body} />
+
+        {post.faq?.length ? (
+          <section className="mt-14 border-t border-ink-100 pt-10">
+            <h2 className="mb-6 font-display text-[1.35rem] font-bold tracking-[-0.012em] text-ink-900">
+              Common questions
+            </h2>
+            <dl className="divide-y divide-ink-100 border-y border-ink-100">
+              {post.faq.map((item) => (
+                <div key={item.q} className="py-5">
+                  <dt className="mb-2 text-[16px] font-semibold leading-snug text-ink-900">
+                    {item.q}
+                  </dt>
+                  <dd className="text-[15.5px] leading-relaxed text-ink-600">{item.a}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ) : null}
 
         <aside className="mt-14 rounded-sm border border-ink-200 bg-ink-50/60 p-6">
           <h2 className="mb-2 font-display text-[1.1rem] font-bold text-ink-900">

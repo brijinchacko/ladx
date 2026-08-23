@@ -97,6 +97,30 @@ export async function listModelsCompat(
   });
 }
 
+/**
+ * Why an empty stream needs its own error.
+ *
+ * Reasoning models return their working in a `reasoning` field and leave
+ * `content` null until they are ready to answer. Give one a small token budget
+ * and it spends the whole allowance thinking, finishes with reason "length",
+ * and produces a technically successful response containing nothing at all.
+ *
+ * Read naively that looks like a working stream with no output, which is the
+ * worst thing to show somebody: no answer, no error, nothing to act on. So the
+ * reasoning deltas are counted even though they are not shown, and a stream
+ * that produced only reasoning says so.
+ */
+export class EmptyStreamError extends ProviderError {
+  constructor(sawReasoning: boolean) {
+    super(
+      "bad_request",
+      sawReasoning
+        ? "The model spent its entire token budget reasoning and never produced an answer. Raise the token limit, or choose a model that is not reasoning-only."
+        : "The model returned an empty response.",
+    );
+  }
+}
+
 export async function* streamCompat(
   creds: Credentials,
   opts: StreamOptions,
@@ -132,6 +156,8 @@ export async function* streamCompat(
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let sawContent = false;
+  let sawReasoning = false;
 
   try {
     while (true) {
@@ -152,10 +178,14 @@ export async function* streamCompat(
           if (!payload || payload === "[DONE]") continue;
           try {
             const parsed = JSON.parse(payload) as {
-              choices?: Array<{ delta?: { content?: string } }>;
+              choices?: Array<{ delta?: { content?: string; reasoning?: string } }>;
             };
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) yield delta;
+            const delta = parsed.choices?.[0]?.delta;
+            if (delta?.reasoning) sawReasoning = true;
+            if (delta?.content) {
+              sawContent = true;
+              yield delta.content;
+            }
           } catch {
             // A frame that will not parse is not worth killing the stream for;
             // providers occasionally emit keepalives and comments.
@@ -166,6 +196,8 @@ export async function* streamCompat(
   } finally {
     reader.releaseLock();
   }
+
+  if (!sawContent) throw new EmptyStreamError(sawReasoning);
 }
 
 /** Anthropic's Messages API needs the system prompt lifted out of the array. */

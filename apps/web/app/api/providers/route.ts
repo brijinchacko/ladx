@@ -76,9 +76,16 @@ export async function POST(req: Request) {
     );
   }
 
-  // Default to a free model when there is one, so a new user can send a message
-  // without first understanding a model list.
-  const fallback = models.find((m) => m.free) ?? models[0];
+  // Default to a free model so a new user can send a message without first
+  // understanding a model list. Reasoning-only and preview models are skipped:
+  // they return their working in a `reasoning` field and leave `content` empty
+  // until they are ready, which on a modest token budget means they finish
+  // without ever answering. A first message that silently returns nothing is
+  // the worst possible introduction.
+  const usableFree = models.filter(
+    (m) => m.free && !/reason|thinking|preview|alpha|stealth/i.test(m.id),
+  );
+  const fallback = usableFree[0] ?? models.find((m) => m.free) ?? models[0];
   await saveProviderKey({
     userId: user.id,
     kind: body.kind,
