@@ -21,3 +21,20 @@
 [data-studio-immersive] body {
   overflow: hidden;
 }
+
+/*
+ * Clearance for the consent banner.
+ *
+ * The banner is fixed to the bottom of the viewport, so the document needs
+ * room underneath it or the last thing on every page sits behind it. The value
+ * is generous enough for the two-line wrap the banner takes on a narrow window.
+ */
+[data-consent-open] body {
+  padding-bottom: 8.5rem;
+}
+
+@media (min-width: 1024px) {
+  [data-consent-open] body {
+    padding-bottom: 5rem;
+  }
+}

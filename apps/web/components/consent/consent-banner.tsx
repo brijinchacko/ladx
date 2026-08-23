@@ -48,6 +48,21 @@ export default function ConsentBanner() {
     setDialogOpen(false);
   }, []);
 
+  /**
+   * Reserve space for the banner while it is showing.
+   *
+   * It is fixed to the bottom of the viewport, so without this it covers
+   * whatever the page ends with. Padding the document rather than the banner
+   * is what keeps the last paragraph of every page readable.
+   */
+  useEffect(() => {
+    const showing = decided === false && !dialogOpen;
+    const root = document.documentElement;
+    if (showing) root.setAttribute("data-consent-open", "");
+    else root.removeAttribute("data-consent-open");
+    return () => root.removeAttribute("data-consent-open");
+  }, [decided, dialogOpen]);
+
   // Unknown yet: render nothing rather than guessing, so there is no flash.
   if (decided === null) return null;
 
