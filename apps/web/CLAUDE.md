@@ -1,6 +1,10 @@
 # apps/web — ladX.ai Cloud
 
-Next.js 15 App Router. Hosted at ladx.ai. Inference via OpenRouter (default) or Anthropic direct.
+Next.js 15 App Router. Hosted at ladx.ai. Serves both the public site and the authenticated web app.
+
+Inference is **bring-your-own-key**: each user connects their own provider (OpenRouter by
+default, plus Anthropic, OpenAI, or any OpenAI-compatible base URL). LADX holds no shared
+inference key and does no metering — there is no billing layer.
 
 ## Conventions
 
@@ -14,15 +18,12 @@ Next.js 15 App Router. Hosted at ladx.ai. Inference via OpenRouter (default) or 
 Anything under `(app)/` plus `/api/chat`, `/api/projects`, `/api/inference`, `/api/documents/*`.
 
 ## Routes that don't
-`/api/stripe/webhook` (validates signature instead), `/api/activation` (uses licence key).
-
-## Stripe events to handle
-- `customer.subscription.created`
-- `customer.subscription.updated`
-- `customer.subscription.deleted`
-- `invoice.payment_failed`
+`/api/activation` (uses licence key), and the public marketing routes.
 
 ## Things to never do
 - Don't load PLC project files into Next.js memory — use the Rust parser via subprocess. PLC projects can be 50MB+.
 - Don't store project file content in Postgres. Use S3 / R2 with signed URLs.
-- Don't expose the inference API key to the client. Always proxy through `/api/inference`.
+- Don't expose any inference API key to the client. Always proxy through `/api/inference`.
+- Don't store a user's provider key in plaintext. It goes through `lib/crypto/secrets.ts`
+  (AES-256-GCM envelope, key-id prefixed so the master key can rotate). Never log it, and
+  never return it to the client — only a masked preview.

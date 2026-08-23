@@ -1,0 +1,1059 @@
+/*
+ * Motion for LADX Mini.
+ *
+ * The rule these follow: an animation exists to stop the eye having to
+ * re-find something that moved, or to report live state. Nothing here loops
+ * unless it is telling you the controller is doing something right now — on a
+ * screen somebody stares at for an hour, decoration becomes irritation.
+ *
+ * Durations come from theme.ts (instant 90 / quick 160 / settled 240) and are
+ * repeated here because CSS cannot read the TS tokens. If you change one,
+ * change both.
+ */
+
+/* Anyone who has asked their system not to animate gets no animation. This
+   is not a nicety — motion triggers migraine and nausea for some people, and
+   an editor is not somewhere you can look away from. */
+/* `.root` goes on the studio's outermost element. A CSS Module cannot carry a
+   bare `*` rule — every selector must be anchored to a local class — and
+   scoping it this way is better anyway: the reset stops at LADX rather than
+   quietly disabling motion for the whole portal. */
+@media (prefers-reduced-motion: reduce) {
+  .panelIn,
+  .dialogIn,
+  .tipIn,
+  .rowIn,
+  .scanPulse,
+  .dockIn,
+  .scrimIn {
+    animation: none !important;
+  }
+  .root,
+  .root * {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* The studio root. Also the anchor for the reduced-motion reset above. */
+.root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── A panel arriving from the dock ─────────────────────────────────
+   It grew out of the strip along the bottom, so it comes up and settles
+   rather than appearing fully formed. */
+.panelIn {
+  animation: ladxPanelIn 240ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes ladxPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── A chip landing in the dock ─────────────────────────────────── */
+.dockIn {
+  animation: ladxDockIn 160ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes ladxDockIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── A dialog ───────────────────────────────────────────────────── */
+.dialogIn {
+  animation: ladxDialogIn 240ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes ladxDialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.scrimIn {
+  animation: ladxFade 160ms linear both;
+}
+@keyframes ladxFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── A tooltip ──────────────────────────────────────────────────── */
+.tipIn {
+  animation: ladxTipIn 120ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes ladxTipIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── A new message ──────────────────────────────────────────────────
+   A one-shot wash that fades out, so the newest row is findable without
+   leaving a permanent highlight that competes with the level colours. */
+.rowIn {
+  animation: ladxRowIn 900ms ease-out both;
+}
+@keyframes ladxRowIn {
+  from {
+    background: rgba(53, 182, 187, 0.16);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+/* ── The controller is scanning ─────────────────────────────────────
+   The one deliberate loop in the product: it reports live state, and it
+   stops the moment the controller does. */
+.scanPulse {
+  animation: ladxScan 1.15s ease-in-out infinite;
+}
+@keyframes ladxScan {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ── Shared interaction feel ────────────────────────────────────────
+   One hover and one press behaviour for every control in the editor, so
+   things that behave alike feel alike. */
+.control {
+  transition:
+    background-color 90ms cubic-bezier(0.2, 0, 0, 1),
+    border-color 90ms cubic-bezier(0.2, 0, 0, 1),
+    color 90ms cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 90ms cubic-bezier(0.2, 0, 0, 1),
+    transform 90ms cubic-bezier(0.2, 0, 0, 1);
+}
+.control:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+.control:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.35);
+}
+
+/* A palette button lifts very slightly, because it is a thing you pick up. */
+.pickable {
+  transition: border-color 90ms cubic-bezier(0.2, 0, 0, 1), background-color 90ms
+    cubic-bezier(0.2, 0, 0, 1), box-shadow 160ms cubic-bezier(0.2, 0, 0, 1), transform 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.pickable:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);
+}
+.pickable:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* The seam between two panels. Widens on hover so it is findable, without
+   drawing a permanent line down the middle of the workspace. */
+.seam {
+  transition: background-color 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ── Panel chrome ───────────────────────────────────────────────────
+   Hover and focus belong in CSS, not in JS mouse handlers: a handler
+   cannot express :focus-visible, and it leaves the control stuck in its
+   hover colour if the pointer leaves during a re-render. */
+.iconBtn {
+  color: #94a3b8;
+  border-radius: 3px;
+  padding: 1px;
+  display: grid;
+  place-items: center;
+  transition: color 90ms cubic-bezier(0.2, 0, 0, 1), background-color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.iconBtn:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.06);
+}
+.iconBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(53, 182, 187, 0.5);
+}
+/* The help icon leans brand rather than ink — it is an offer, not a command. */
+.iconBtnHelp:hover {
+  color: #1b7f84;
+  background: rgba(53, 182, 187, 0.12);
+}
+
+.seamGrip {
+  background: #c9d2dc;
+  border-radius: 999px;
+  transition: background-color 160ms cubic-bezier(0.2, 0, 0, 1), transform 160ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.seam:hover .seamGrip,
+.seam:focus-visible .seamGrip {
+  background: #35b6bb;
+  transform: scale(1.12);
+}
+.seam:focus-visible {
+  outline: none;
+}
+
+/* ── The dock ───────────────────────────────────────────────────────
+   A closed panel is a chip you can pick back up, so it is drawn as a real
+   affordance rather than a label — bordered, raised, and it lifts on hover
+   the same way the palette instructions do. */
+.dockChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid #c9d2dc;
+  border-radius: 3px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: border-color 90ms cubic-bezier(0.2, 0, 0, 1), color 90ms cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 160ms cubic-bezier(0.2, 0, 0, 1), transform 90ms cubic-bezier(0.2, 0, 0, 1);
+}
+.dockChip:hover {
+  border-color: #35b6bb;
+  color: #1b7f84;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);
+}
+.dockChip:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+.dockChip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.35);
+}
+
+.dockReset {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  color: #64748b;
+  transition: color 90ms cubic-bezier(0.2, 0, 0, 1), background-color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.dockReset:hover {
+  color: #1b7f84;
+  background: rgba(53, 182, 187, 0.1);
+}
+.dockReset:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(53, 182, 187, 0.5);
+}
+
+/* ── Help dialog ────────────────────────────────────────────────── */
+.searchBox {
+  height: 24px;
+  width: 224px;
+  padding: 0 8px 0 24px;
+  border: 1px solid #c9d2dc;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #334155;
+  background: #ffffff;
+  transition: border-color 90ms cubic-bezier(0.2, 0, 0, 1), box-shadow 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.searchBox:focus {
+  outline: none;
+  border-color: #35b6bb;
+  box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.25);
+}
+.searchBox::placeholder {
+  color: #94a3b8;
+}
+
+.tocItem {
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1);
+}
+.tocItem:hover {
+  background: rgba(53, 182, 187, 0.08) !important;
+}
+.tocItem:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(53, 182, 187, 0.5);
+}
+
+/* ── Tooltip ────────────────────────────────────────────────────── */
+.tipLink {
+  font-size: 10px;
+  transition: opacity 90ms cubic-bezier(0.2, 0, 0, 1);
+}
+.tipLink:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+/* ── Message log ────────────────────────────────────────────────── */
+.logRow {
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1);
+}
+.logRow:hover {
+  background: #f8fafc;
+}
+
+.logChip {
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.logChip:hover {
+  background: rgba(53, 182, 187, 0.1);
+}
+.logChip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(53, 182, 187, 0.5);
+}
+
+/* ── Instruction palette ────────────────────────────────────────────
+   The tabs read as tabs — a moving underline rather than a colour swap, so
+   which group is open is legible from the shape, not only the hue. */
+.groupTab {
+  padding: 0 9px;
+  height: 21px;
+  border-radius: 3px 3px 0 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 2px solid transparent;
+  transition: color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 160ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 90ms cubic-bezier(0.2, 0, 0, 1);
+}
+.groupTab:hover {
+  color: #0f172a;
+  background: rgba(53, 182, 187, 0.08);
+}
+.groupTab[data-active="true"] {
+  color: #0f172a;
+  border-bottom-color: #35b6bb;
+}
+.groupTab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(53, 182, 187, 0.5);
+}
+
+.barBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 21px;
+  padding: 0 7px;
+  border: 1px solid #c9d2dc;
+  border-radius: 3px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 10px;
+  font-weight: 600;
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
+    cubic-bezier(0.2, 0, 0, 1), color 90ms cubic-bezier(0.2, 0, 0, 1);
+}
+.barBtn:hover:not(:disabled) {
+  border-color: #35b6bb;
+  color: #1b7f84;
+  background: rgba(53, 182, 187, 0.07);
+}
+.barBtn:disabled {
+  opacity: 0.4;
+}
+.barBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.35);
+}
+.barBtnDanger {
+  color: #b3382c;
+}
+.barBtnDanger:hover:not(:disabled) {
+  border-color: #e9a69e;
+  color: #b3382c;
+  background: #fbeae8;
+}
+
+.paletteBtn {
+  min-width: 38px;
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid #c9d2dc;
+  border-radius: 4px;
+  background: #ffffff;
+}
+.paletteBtn:hover:not(:disabled) {
+  border-color: #35b6bb;
+  background: rgba(53, 182, 187, 0.06);
+}
+.paletteBtn:disabled {
+  opacity: 0.4;
+}
+.paletteBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.35);
+}
+
+/* ── Toolbar ────────────────────────────────────────────────────────
+   Compile / Download / Upload share one shape so they read as one
+   sequence; only Download is filled, because only Download commits. */
+.toolBtn {
+  height: 32px;
+  border-radius: 4px;
+  border: 1px solid #c9d2dc;
+  background: #ffffff;
+  color: #334155;
+}
+.toolBtn:hover:not(:disabled) {
+  border-color: #35b6bb;
+  background: rgba(53, 182, 187, 0.07);
+  color: #0f172a;
+}
+.toolBtn:disabled {
+  opacity: 0.4;
+}
+.toolBtn[data-primary="true"] {
+  border-color: #2891ff;
+  background: #2891ff;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(40, 145, 255, 0.3);
+}
+.toolBtn[data-primary="true"]:hover:not(:disabled) {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.34);
+}
+.toolBtn[data-primary="true"]:focus-visible {
+  box-shadow: 0 0 0 3px rgba(40, 145, 255, 0.4);
+}
+
+/* Run and Stop. Green is power, red is stop — the two colours a panel uses. */
+.runBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
+    cubic-bezier(0.2, 0, 0, 1), box-shadow 90ms cubic-bezier(0.2, 0, 0, 1), transform 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.runBtn:active {
+  transform: translateY(0.5px);
+}
+.runBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.35);
+}
+.runStart {
+  background: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(22, 163, 74, 0.32);
+}
+.runStart:hover {
+  background: #15803d;
+  box-shadow: 0 2px 6px rgba(21, 128, 61, 0.34);
+}
+.runStop {
+  background: #fbeae8;
+  border-color: #e9a69e;
+  color: #b3382c;
+}
+.runStop:hover {
+  background: #f7dbd7;
+  border-color: #b3382c;
+}
+.runStop:focus-visible {
+  box-shadow: 0 0 0 3px rgba(179, 56, 44, 0.3);
+}
+
+/* A plain secondary control — Reset, and the Tour/Help pair. */
+.chipBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid #c9d2dc;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
+    cubic-bezier(0.2, 0, 0, 1), color 90ms cubic-bezier(0.2, 0, 0, 1);
+}
+.chipBtn:hover:not(:disabled) {
+  border-color: #35b6bb;
+  color: #1b7f84;
+  background: rgba(53, 182, 187, 0.07);
+}
+.chipBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.35);
+}
+
+/* A toolbar cluster — related controls sharing one recessed tray. */
+.toolGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: #eef2f6;
+}
+
+/* ══ Toolbar ═══════════════════════════════════════════════════════
+   One row. One filled button — the one that commits. Everything else
+   is quiet until pointed at, and every explanation lives in a hover
+   card rather than in print under the label. */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 10px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.backBtn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  color: #64748b;
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.backBtn:hover {
+  background: #eef2f6;
+  color: #0f172a;
+}
+.backBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(53, 182, 187, 0.5);
+}
+
+.projectName {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  background: transparent;
+  min-width: 60px;
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.projectName:hover {
+  background: #f7f9fb;
+}
+.projectName:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #35b6bb;
+  box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.2);
+}
+
+/* A hairline, not a filled tray. A tray is another box. */
+.sep {
+  width: 1px;
+  height: 20px;
+  background: #e2e8f0;
+  margin: 0 3px;
+  flex: none;
+}
+.spacer {
+  flex: 1 1 auto;
+}
+.group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Save state — a dot and a word, sized as status not as an action. */
+.saveState {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 7px 0 6px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.saveState[data-state="saved"] {
+  color: #64748b;
+}
+.saveState[data-state="dirty"] {
+  color: #b45309;
+  background: #fffbeb;
+}
+.saveState[data-state="saving"] {
+  color: #64748b;
+}
+.saveState:hover {
+  background: #eef2f6;
+}
+.saveState[data-state="dirty"]:hover {
+  background: #fdf3df;
+}
+.saveState:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(53, 182, 187, 0.5);
+}
+.saveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.75;
+}
+.saveState[data-state="saved"] .saveDot {
+  background: #16a34a;
+  opacity: 1;
+}
+
+/* The toolbar button. Text-weight by default; filled only for Download. */
+.tbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), color 90ms
+    cubic-bezier(0.2, 0, 0, 1), border-color 90ms cubic-bezier(0.2, 0, 0, 1), box-shadow 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.tbtn:hover:not(:disabled) {
+  background: #eef2f6;
+  color: #0f172a;
+}
+.tbtn:active:not(:disabled) {
+  background: #e4eaf1;
+}
+.tbtn:disabled {
+  opacity: 0.35;
+}
+.tbtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.35);
+}
+
+.tbtn[data-primary="true"] {
+  background: #2891ff;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(40, 145, 255, 0.28);
+}
+.tbtn[data-primary="true"]:hover {
+  background: #1d4ed8;
+  box-shadow: 0 2px 7px rgba(29, 78, 216, 0.3);
+}
+.tbtn[data-primary="true"]:focus-visible {
+  box-shadow: 0 0 0 3px rgba(40, 145, 255, 0.4);
+}
+
+.startBtn {
+  background: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(22, 163, 74, 0.28);
+}
+.startBtn:hover:not(:disabled) {
+  background: #15803d;
+  color: #ffffff;
+  box-shadow: 0 2px 7px rgba(21, 128, 61, 0.3);
+}
+.stopBtn {
+  background: #fbeae8;
+  color: #b3382c;
+  border-color: #e9a69e;
+}
+.stopBtn:hover:not(:disabled) {
+  background: #f6dcd8;
+  color: #b3382c;
+  border-color: #b3382c;
+}
+
+.iconOnly {
+  display: grid;
+  place-items: center;
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  color: #64748b;
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.iconOnly:hover {
+  background: #eef2f6;
+  color: #0f172a;
+}
+.iconOnly:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.35);
+}
+/* Never taken the tour? One dot, no banner. */
+.iconOnly[data-flag="true"] {
+  color: #1b7f84;
+}
+.iconOnly[data-flag="true"]::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #35b6bb;
+}
+
+/* The controller lamp. A dot and three letters; the tooltip says the rest. */
+.plcLamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: default;
+}
+.plcLamp[data-loaded="true"] {
+  background: #dcfce7;
+  color: #15803d;
+}
+.plcDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+.plcLamp[data-loaded="true"] .plcDot {
+  background: #16a34a;
+}
+
+.scanSelect {
+  height: 26px;
+  padding: 0 5px;
+  border: 1px solid #c9d2dc;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 11px;
+  transition: border-color 90ms cubic-bezier(0.2, 0, 0, 1), box-shadow 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.scanSelect:hover {
+  border-color: #94a3b8;
+}
+.scanSelect:focus {
+  outline: none;
+  border-color: #35b6bb;
+  box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.2);
+}
+
+.runBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ══ Tag table ═════════════════════════════════════════════════════
+   A document an engineer reads down a column of, so it is a real table
+   with a header that stays put while the rows scroll. */
+.tagTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 11px;
+}
+.tagTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  padding: 4px 6px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #94a3b8;
+  background: #f7f9fb;
+  border-bottom: 1px solid #c9d2dc;
+  cursor: help;
+}
+.tagTable td {
+  padding: 1px 3px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+.tagRow {
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1);
+}
+.tagRow:hover {
+  background: #f7f9fb;
+}
+
+.cellInput {
+  width: 100%;
+  height: 22px;
+  padding: 0 5px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: #0f172a;
+  font-size: 11px;
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.cellInput:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+.cellInput:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #35b6bb;
+  box-shadow: 0 0 0 2px rgba(53, 182, 187, 0.22);
+}
+.cellInput[data-invalid="true"] {
+  border-color: #e9a69e;
+  background: #fbeae8;
+}
+.cellInput[data-invalid="true"]:focus {
+  border-color: #b3382c;
+  box-shadow: 0 0 0 2px rgba(179, 56, 44, 0.22);
+}
+.cellInput::placeholder {
+  color: #cbd5e1;
+  font-weight: 400;
+}
+
+.cellSelect {
+  width: 100%;
+  height: 22px;
+  padding: 0 2px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: #334155;
+  font-size: 10.5px;
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.cellSelect:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+.cellSelect:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #35b6bb;
+  box-shadow: 0 0 0 2px rgba(53, 182, 187, 0.22);
+}
+.cellSelect:disabled {
+  opacity: 0.45;
+}
+
+.rowDelete {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  color: #cbd5e1;
+  transition: color 90ms cubic-bezier(0.2, 0, 0, 1), background-color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.rowDelete:hover:not(:disabled) {
+  color: #b3382c;
+  background: #fbeae8;
+}
+.rowDelete:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(179, 56, 44, 0.4);
+}
+
+/* ── Online ─────────────────────────────────────────────────────────
+   The program window has to say it is live, not just the toolbar: while
+   you are watching a rung the toolbar is out of view, and "why is nothing
+   happening" is nearly always "it is not running". */
+.onlineBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 15px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  flex: none;
+}
+.onlineDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+/* A contact that can be operated right now. */
+.drivable {
+  cursor: pointer;
+}
+
+/* ── Routine tabs ───────────────────────────────────────────────────
+   Only shown when more than one routine is open — a single tab is a
+   label pretending to be a control. */
+.tabStrip {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 3px 4px 0;
+  flex: none;
+  background: #eef2f6;
+  border-bottom: 1px solid #c9d2dc;
+  overflow-x: auto;
+}
+.tab {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  background: transparent;
+  transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.tab:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+.tab[data-active="true"] {
+  background: #ffffff;
+  border-color: #c9d2dc;
+  /* Lifted a pixel over the strip's border, so the open tab joins the page
+     below it rather than sitting on a line. */
+  margin-bottom: -1px;
+  padding-bottom: 1px;
+}
+.tabLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 21px;
+  padding: 0 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+.tab[data-active="true"] .tabLabel {
+  color: #0f172a;
+}
+.tabLabel:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(53, 182, 187, 0.5);
+}
+.tabCount {
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  background: #eef2f6;
+  border-radius: 999px;
+  padding: 0 4px;
+  min-width: 13px;
+  text-align: center;
+}
+.tab[data-active="true"] .tabCount {
+  background: #e8f6f7;
+  color: #1b7f84;
+}
+.tabClose {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  margin-right: 4px;
+  border-radius: 3px;
+  color: #cbd5e1;
+  transition: color 90ms cubic-bezier(0.2, 0, 0, 1), background-color 90ms
+    cubic-bezier(0.2, 0, 0, 1);
+}
+.tabClose:hover {
+  color: #b3382c;
+  background: #fbeae8;
+}
+.tabClose:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(179, 56, 44, 0.4);
+}

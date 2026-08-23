@@ -21,11 +21,12 @@ export const env = {
   databaseUrl: optional("DATABASE_URL"),
   openrouterApiKey: optional("OPENROUTER_API_KEY"),
   anthropicApiKey: optional("ANTHROPIC_API_KEY"),
-  stripeSecretKey: optional("STRIPE_SECRET_KEY"),
-  stripeWebhookSecret: optional("STRIPE_WEBHOOK_SECRET"),
-  stripePublishableKey: optional("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"),
-  stripePriceProMonthly: optional("STRIPE_PRICE_PRO_MONTHLY"),
-  stripePriceStudioYearly: optional("STRIPE_PRICE_STUDIO_YEARLY"),
+
+  // Master key for the AES-256-GCM envelope that wraps each user's stored
+  // provider keys. 32 bytes, hex-encoded. Rotating it is safe: every record
+  // carries the id of the key that sealed it (see lib/crypto/secrets.ts).
+  secretsKey: optional("LADX_SECRETS_KEY"),
+
   r2: {
     accountId: optional("R2_ACCOUNT_ID"),
     accessKeyId: optional("R2_ACCESS_KEY_ID"),
@@ -41,8 +42,5 @@ export const env = {
   requireDatabaseUrl: () => required("DATABASE_URL"),
   requireOpenRouter: () => required("OPENROUTER_API_KEY"),
   requireResend: () => required("RESEND_API_KEY"),
-  requireStripe: () => ({
-    secret: required("STRIPE_SECRET_KEY"),
-    webhookSecret: required("STRIPE_WEBHOOK_SECRET"),
-  }),
+  requireSecretsKey: () => required("LADX_SECRETS_KEY"),
 } as const;

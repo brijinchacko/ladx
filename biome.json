@@ -45,6 +45,27 @@
       }
     }
   },
+  "overrides": [
+    {
+      "include": ["packages/studio/**"],
+      "linter": {
+        "rules": {
+          "correctness": { "useExhaustiveDependencies": "off" },
+          "suspicious": { "noArrayIndexKey": "off" },
+          "style": {
+            "noNonNullAssertion": "off",
+            "useSingleVarDeclarator": "off",
+            "noParameterAssign": "off"
+          },
+          "a11y": {
+            "useSemanticElements": "off",
+            "useKeyWithClickEvents": "off",
+            "noAutofocus": "off"
+          }
+        }
+      }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "double",

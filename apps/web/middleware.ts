@@ -11,7 +11,6 @@ function isPublic(pathname: string): boolean {
   if (pathname.startsWith("/sign-in")) return true;
   if (pathname.startsWith("/sign-up")) return true;
   if (pathname.startsWith("/api/auth/")) return true;
-  if (pathname === "/api/webhooks/stripe") return true;
   if (pathname === "/api/activation") return true;
   if (pathname === "/pricing") return true;
   return false;

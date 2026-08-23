@@ -53,3 +53,6 @@ test-results/
 
 # Local storage backend (uploaded project files)
 .ladx-storage/
+
+# Local uploads written by the dev storage driver
+apps/web/.ladx-storage/

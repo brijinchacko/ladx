@@ -7,7 +7,6 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { appendMessage, ensureConversation } from "@/lib/db/conversations";
 import { projects } from "@/lib/db/schema";
-import { checkQuota, incrementPromptCount } from "@/lib/db/subscriptions";
 import { type ChatMessage, streamChat } from "@/lib/inference/openrouter";
 import { buildProjectSystemPrompt } from "@/lib/inference/project-prompt";
 import { ssEncode } from "@/lib/inference/stream";
@@ -46,21 +45,9 @@ export async function POST(req: Request) {
     );
   }
 
-  // Quota gate: free tier blocks at 50 prompts/month. Pro/Site/Enterprise
-  // are unlimited. We check before invoking the model so a blocked user
-  // gets a clean 402 (Payment Required) instead of consuming inference.
-  const quota = await checkQuota(user.id);
-  if (quota.blocked) {
-    return Response.json(
-      {
-        error: "free_quota_exceeded",
-        message: `Free tier limit of ${quota.limit} prompts/month reached. Upgrade to Pro for unlimited.`,
-        used: quota.used,
-        limit: quota.limit,
-      },
-      { status: 402 },
-    );
-  }
+  // No quota gate. Inference runs on the user's own provider key (BYOK), so
+  // usage is metered by their provider, not by us. Rate limiting, when it
+  // matters, is the provider's — we surface their 429 rather than inventing one.
 
   // The last entry MUST be the user's new message — that's what we persist
   // before streaming. Earlier entries are conversation history the client
@@ -94,12 +81,6 @@ export async function POST(req: Request) {
       role: "user",
       content: lastUser.content,
     });
-
-    // Counts against the user's quota. Done after the message persists so
-    // a DB-write failure on the message doesn't burn a prompt slot.
-    await incrementPromptCount(user.id).catch((err) =>
-      console.error("[chat] increment prompt count failed:", err),
-    );
   } catch (err) {
     // DB failure is logged but doesn't block streaming — we'd rather serve
     // the user a working chat with no persistence than 500.

@@ -94,6 +94,10 @@ export const sessions = pgTable(
 );
 
 // ----- subscriptions -----
+// DORMANT. Billing was removed when LADX moved to bring-your-own-key: users
+// pay their own provider, so there is nothing to meter. The table is left in
+// place (unread, unwritten) rather than migrated away, so that reinstating
+// billing later is an additive change instead of a schema resurrection.
 // One row per user. Stripe customer + subscription IDs link back.
 export const subscriptions = pgTable("subscriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
