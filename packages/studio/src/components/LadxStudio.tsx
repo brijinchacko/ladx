@@ -44,7 +44,9 @@ import {
   loadLayout,
   saveLayout,
 } from "../lib/panels";
-import { RETENTION_MONTHS, RETENTION_NOTE, buildExport, parseImport } from "../lib/portable";
+import { buildExport, parseImport } from "../lib/portable";
+import { emptyProgram } from "../lib/starters";
+import { type StudioStorage, localStorageStorage } from "../lib/storage";
 import { brand, ink, line, radius, state, surface } from "../lib/theme";
 import { tourSeen } from "../lib/tour";
 import {
@@ -127,10 +129,22 @@ type Exercise = {
 type Props = {
   projectId: string;
   exercises?: Exercise[];
-  onBack: () => void;
+  /**
+   * Where this project is loaded from and saved to. Defaults to the browser,
+   * so Studio runs with no backend at all; the web app passes an HTTP-backed
+   * one and the desktop app a filesystem-backed one. See lib/storage.ts.
+   */
+  storage?: StudioStorage;
+  /** Leaving the studio. Optional — a standalone canvas has nowhere to go. */
+  onBack?: () => void;
 };
 
-export default function LadxStudio({ projectId, exercises = [], onBack }: Props) {
+export default function LadxStudio({ projectId, exercises = [], storage, onBack }: Props) {
+  // Held in a ref, not recreated per render: the default builds a new object
+  // each call, and a changing storage identity would re-trigger the load effect
+  // on every render.
+  const storageRef = useRef<StudioStorage>(storage ?? localStorageStorage());
+  if (storage && storageRef.current !== storage) storageRef.current = storage;
   const [submitTo, setSubmitTo] = useState<Exercise | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState<string | null>(null);
@@ -562,16 +576,26 @@ export default function LadxStudio({ projectId, exercises = [], onBack }: Props)
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`/api/student/ladx/${projectId}`);
-        if (!res.ok) {
-          // A stale ?project= in the URL — a bookmark to something deleted, or
-          // another student's id. Return to the list rather than stranding the
-          // student on a dead screen.
-          setError("That project could not be opened. It may have been deleted.");
-          setTimeout(onBack, 1200);
+        const stored = await storageRef.current.load(projectId).catch(() => null);
+        if (!stored) {
+          // Nothing under that id. With a server that means a stale bookmark or
+          // a deleted project, and going back to the list beats stranding the
+          // student on a dead screen. With browser storage it just means this
+          // id is new, so start a blank project instead of reporting a failure.
+          if (onBack) {
+            setError("That project could not be opened. It may have been deleted.");
+            setTimeout(onBack, 1200);
+            return;
+          }
+          const blank = emptyProgram();
+          setProgram(blank);
+          setName(blank.name);
+          programRef.current = blank;
+          const seeded = seedPresets(blank, resetTags(blank.tags ?? []));
+          setTags(seeded);
+          tagsRef.current = seeded;
           return;
         }
-        const d = await res.json();
         /*
          * Give every tag an address on the way in.
          *
@@ -580,10 +604,10 @@ export default function LadxStudio({ projectId, exercises = [], onBack }: Props)
          * stored on the next save, and editable afterwards — the student can
          * always move a signal to a different terminal.
          */
-        const raw: LadxProgram = d.program;
+        const raw: LadxProgram = stored.program;
         const p: LadxProgram = { ...raw, tags: assignMissingAddresses(raw.tags ?? []) };
         setProgram(p);
-        setName(d.name);
+        setName(stored.name);
         programRef.current = p;
         // Seed timer/counter presets from the instructions before the first
         // scan — after this the tag owns the preset, so a MOV into .PRE sticks.
@@ -644,18 +668,15 @@ export default function LadxStudio({ projectId, exercises = [], onBack }: Props)
       // Save the program with cold tag values, not whatever the sim left behind
       // — reopening a project should not restore a half-run machine.
       const toStore: LadxProgram = { ...program, name, tags: resetTags(program.tags) };
-      const res = await fetch(`/api/student/ladx/${projectId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, program: toStore }),
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        setError(j.error ?? "Could not save.");
+      try {
+        await storageRef.current.save(projectId, { name, program: toStore });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save.");
         return;
       }
       setSavedAt(Date.now());
-      say("success", "save", `Saved. ${RETENTION_NOTE}`);
+      const note = storageRef.current.retentionNote;
+      say("success", "save", note ? `Saved. ${note}` : "Saved.");
     } finally {
       setSaving(false);
     }
@@ -2792,11 +2813,19 @@ export default function LadxStudio({ projectId, exercises = [], onBack }: Props)
               label={saving ? "Saving now" : dirty ? "Not saved yet" : "Saved"}
               text={
                 saving
-                  ? "Writing your changes to the portal."
+                  ? "Saving your changes."
                   : dirty
                     ? "Your work saves itself a moment after you stop editing. Click to save now."
                     : savedAt
-                      ? `Last saved ${new Date(savedAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })}. Projects are kept ${RETENTION_MONTHS} months — export anything you want longer.`
+                      ? // The reader's own clock, not the author's: this used to be
+                        // pinned to Asia/Kolkata, which told a German engineer the
+                        // wrong time. And retention is whatever the store says it
+                        // is — see lib/storage.ts.
+                        `Last saved ${new Date(savedAt).toLocaleTimeString()}.${
+                          storageRef.current.retentionNote
+                            ? ` ${storageRef.current.retentionNote}`
+                            : ""
+                        }`
                       : "Your work saves itself as you go."
               }
               topic="saving"

@@ -32,7 +32,7 @@ export const LADX_BRANDING: Branding = {
   legalName: "LADX",
   addressLines: [],
   website: "ladx.ai",
-  logoPath: "public/ladx-logo.png",
+  logoPath: "public/brand/wordmark.png",
   // The shipped wordmark is 3860x900.
   logoAspect: 3860 / 900,
 };

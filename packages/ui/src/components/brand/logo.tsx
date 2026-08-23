@@ -1,22 +1,84 @@
 import { cn } from "../../lib/cn";
 
+/**
+ * The LADX mark.
+ *
+ * There were two of these — a placeholder "L in a teal square" here, and the
+ * real wordmark buried in the ladder studio — which meant the product showed a
+ * different logo depending on which screen you were on. This is the one.
+ *
+ * The wordmark is the shipped artwork rather than type, because the real mark
+ * is set in Pirulen, which is licensed and not redistributable. Drawing it with
+ * a font stack means it renders correctly only on machines that happen to have
+ * that font and silently wrong everywhere else; an image is the same everywhere.
+ *
+ * Two files, not one recoloured: `wordmark.png` for light grounds and
+ * `wordmark-dark.png` for dark, swapped with a CSS media query so the logo does
+ * not disappear into the background when someone's OS is in dark mode.
+ *
+ * @example
+ * <Logo />                       // wordmark, header size
+ * <Logo variant="icon" size={32} /> // square mark, for tight spaces
+ */
 export interface LogoProps {
   className?: string;
+  /** Height in pixels for `wordmark`; width and height for `icon`. */
   size?: number;
+  variant?: "wordmark" | "icon";
+  /**
+   * Force a theme instead of following the viewer's. Use when the logo sits on
+   * a surface whose colour you control and the page theme doesn't apply — an
+   * always-dark hero on a light page, say.
+   */
+  tone?: "auto" | "light" | "dark";
 }
 
-// Simple wordmark — image-based logo lives at /assets/ladx-logo.png in each app.
-export function Logo({ className, size = 32 }: LogoProps) {
+/** Source aspect ratio of the wordmark artwork: 3860 × 900. */
+const WORDMARK_ASPECT = 3860 / 900;
+
+export function Logo({ className, size, variant = "wordmark", tone = "auto" }: LogoProps) {
+  if (variant === "icon") {
+    const px = size ?? 32;
+    return (
+      <img
+        src="/brand/icon-512.png"
+        alt="LADX"
+        width={px}
+        height={px}
+        className={cn("shrink-0", className)}
+        style={{ width: px, height: px }}
+      />
+    );
+  }
+
+  const height = size ?? 28;
+  const width = Math.round(height * WORDMARK_ASPECT);
+
+  // `tone` picks a single file; `auto` ships both and lets the browser choose,
+  // which keeps it correct without JavaScript and without a hydration flash.
+  if (tone !== "auto") {
+    return (
+      <img
+        src={tone === "dark" ? "/brand/wordmark-dark.png" : "/brand/wordmark.png"}
+        alt="LADX"
+        width={width}
+        height={height}
+        className={cn("shrink-0", className)}
+        style={{ height, width: "auto" }}
+      />
+    );
+  }
+
   return (
-    <div className={cn("flex items-center gap-2 font-semibold text-ink-900", className)}>
-      <span
-        aria-hidden="true"
-        style={{ width: size, height: size }}
-        className="rounded-md bg-teal text-white inline-flex items-center justify-center font-bold"
-      >
-        L
-      </span>
-      <span className="tracking-tight">ladX.ai</span>
-    </div>
+    <picture className={cn("shrink-0 inline-flex", className)}>
+      <source srcSet="/brand/wordmark-dark.png" media="(prefers-color-scheme: dark)" />
+      <img
+        src="/brand/wordmark.png"
+        alt="LADX"
+        width={width}
+        height={height}
+        style={{ height, width: "auto" }}
+      />
+    </picture>
   );
 }

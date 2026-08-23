@@ -47,6 +47,9 @@ export * from "./lib/tree";
 /* ── Supporting libs ────────────────────────────────────────────────── */
 export * from "./lib/addressing";
 export * from "./lib/portable";
+export { emptyProgram, STARTER_PROGRAMS, STARTER_BY_KEY } from "./lib/starters";
+export { localStorageStorage, httpStorage } from "./lib/storage";
+export type { StudioStorage, StudioProject } from "./lib/storage";
 export { LADX_BRANDING } from "./lib/branding";
 export type { Branding } from "./lib/branding";
 

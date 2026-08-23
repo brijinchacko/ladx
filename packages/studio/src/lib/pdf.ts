@@ -59,8 +59,9 @@ function loadPng(relPath: string): string | null {
   }
 }
 
-const ist = (d: Date) =>
-  d.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "long", timeStyle: "short" });
+/** Generated-at stamp, in the locale and zone of whoever exported it. */
+const stampedAt = (d: Date) =>
+  d.toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" });
 
 export function buildProjectPdf(input: ProjectPdfInput): Buffer {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -120,7 +121,7 @@ export function buildProjectPdf(input: ProjectPdfInput): Buffer {
       : []),
     ...(input.student.course ? ([["Programme", input.student.course]] as [string, string][]) : []),
     ...(input.student.batch ? ([["Batch", input.student.batch]] as [string, string][]) : []),
-    ["Issued", ist(when)],
+    ["Issued", stampedAt(when)],
   ];
 
   for (const [k, v] of rows) {

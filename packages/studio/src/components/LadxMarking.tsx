@@ -168,7 +168,7 @@ export default function LadxMarking() {
             {answer.exercise.title}
             {answer.batchName && ` · ${answer.batchName}`}
             {" · submitted "}
-            {new Date(answer.submittedAt).toLocaleDateString("en-IN", {
+            {new Date(answer.submittedAt).toLocaleDateString(undefined, {
               day: "numeric",
               month: "short",
               hour: "2-digit",

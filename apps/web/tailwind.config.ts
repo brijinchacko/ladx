@@ -6,6 +6,7 @@ const config: Config = {
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "../../packages/ui/src/**/*.{ts,tsx}",
+    "../../packages/studio/src/**/*.{ts,tsx}",
   ],
   presets: [ladxPreset as Config],
   darkMode: "class",

@@ -295,7 +295,7 @@ export default function LadxHome() {
                               : "—"}
                           </span>
                           <span className="block text-[10px] text-[#94A3B8]">
-                            {new Date(p.updatedAt).toLocaleDateString("en-IN", {
+                            {new Date(p.updatedAt).toLocaleDateString(undefined, {
                               day: "numeric",
                               month: "short",
                               hour: "2-digit",

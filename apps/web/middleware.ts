@@ -13,6 +13,10 @@ function isPublic(pathname: string): boolean {
   if (pathname.startsWith("/api/auth/")) return true;
   if (pathname === "/api/activation") return true;
   if (pathname === "/pricing") return true;
+  // Studio runs entirely in the browser and stores projects there, so it needs
+  // no account. Being able to open the ladder editor from a cold link, draw a
+  // rung and press Run is the shortest path to understanding what LADX is.
+  if (pathname.startsWith("/studio")) return true;
   return false;
 }
 
@@ -34,5 +38,12 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/|.*\\.(?:ico|png|jpg|jpeg|svg|webp|css|js|map)$).*)"],
+  // Skip anything that is an asset rather than a page. `webmanifest`, `txt` and
+  // `xml` are here because the manifest, robots.txt and sitemap are generated
+  // routes, not files in public/ — without them the auth check catches the
+  // manifest and redirects it to /sign-in, which browsers read as a broken
+  // install target rather than as a login prompt.
+  matcher: [
+    "/((?!_next/|.*\\.(?:ico|png|jpg|jpeg|svg|webp|avif|css|js|map|woff2?|webmanifest|txt|xml)$).*)",
+  ],
 };

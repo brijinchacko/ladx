@@ -59,10 +59,16 @@ export function countBy(log: LogMessage[], level: MessageLevel): number {
   return log.reduce((n, m) => (m.level === level ? n + m.count : n), 0);
 }
 
-/** "14:32:07" in IST — the log is read against the clock on the wall. */
+/**
+ * "14:32:07" on the reader's own clock.
+ *
+ * The log is read against the clock on the wall, so it has to be *their* wall.
+ * This was pinned to Asia/Kolkata, which is right for one office and wrong for
+ * every other reader. 24-hour is kept deliberately: a controller log is scanned
+ * for ordering and duration, and am/pm makes that harder in every locale.
+ */
 export function stamp(at: number): string {
-  return new Date(at).toLocaleTimeString("en-IN", {
-    timeZone: "Asia/Kolkata",
+  return new Date(at).toLocaleTimeString(undefined, {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",

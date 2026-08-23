@@ -1,3 +1,4 @@
+import { nid } from "./tree";
 import type { LadxProgram } from "./types";
 
 /**
@@ -220,3 +221,23 @@ export const STARTER_PROGRAMS: {
 ];
 
 export const STARTER_BY_KEY = new Map(STARTER_PROGRAMS.map((s) => [s.key, s]));
+
+/**
+ * A blank project.
+ *
+ * The CRM used to mint this server-side, which meant Studio could not open a
+ * new project without a backend agreeing to make one first. It belongs here:
+ * "what an empty ladder program is" is a fact about the program model, not
+ * about anybody's database.
+ *
+ * One empty rung rather than none, because a canvas with nowhere to put a
+ * contact reads as broken, and the first thing anyone does is add one.
+ */
+export function emptyProgram(name = "Untitled"): LadxProgram {
+  return {
+    name,
+    scanMs: 100,
+    tags: [],
+    rungs: [{ id: nid("rung"), branches: [[]], outputs: [] }],
+  };
+}
