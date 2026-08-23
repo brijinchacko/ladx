@@ -332,3 +332,72 @@ export const providerKeys = pgTable(
     userKindIdx: uniqueIndex("provider_keys_user_kind_idx").on(t.userId, t.kind),
   }),
 );
+
+// ----- forum -----
+//
+// Categories are configuration rather than rows: they change with the product,
+// not with user activity, and keeping them in code means a category rename is a
+// deploy rather than a migration plus a data fix.
+//
+// Threads carry a denormalised reply count and last-activity timestamp. The
+// alternative is a correlated subquery on every index page load, and the index
+// page is the one people hit most.
+
+export const forumThreads = pgTable(
+  "forum_threads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    category: text("category").notNull(),
+    title: text("title").notNull(),
+    // URL form of the title, with a short random suffix so two threads asking
+    // the same question do not collide.
+    slug: text("slug").notNull(),
+    body: text("body").notNull(),
+    replyCount: integer("reply_count").notNull().default(0),
+    // Set when the author marks a reply as the one that solved it.
+    answerPostId: uuid("answer_post_id"),
+    locked: boolean("locked").notNull().default(false),
+    pinned: boolean("pinned").notNull().default(false),
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    slugIdx: uniqueIndex("forum_thread_slug_idx").on(t.slug),
+    categoryIdx: index("forum_thread_category_idx").on(t.category),
+    authorIdx: index("forum_thread_author_idx").on(t.authorId),
+    // The default sort on every listing page.
+    activityIdx: index("forum_thread_activity_idx").on(t.lastActivityAt),
+  }),
+);
+
+export const forumPosts = pgTable(
+  "forum_posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => forumThreads.id, { onDelete: "cascade" }),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    // Soft delete: removing a reply mid-thread would orphan the replies that
+    // quote it, so the row stays and the body is hidden.
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    threadIdx: index("forum_post_thread_idx").on(t.threadId),
+    authorIdx: index("forum_post_author_idx").on(t.authorId),
+  }),
+);
+
+export type ForumThread = typeof forumThreads.$inferSelect;
+export type NewForumThread = typeof forumThreads.$inferInsert;
+export type ForumPost = typeof forumPosts.$inferSelect;
+export type NewForumPost = typeof forumPosts.$inferInsert;

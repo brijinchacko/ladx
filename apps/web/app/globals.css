@@ -1,1 +1,23 @@
 @import "@ladx/design-system/globals.css";
+
+/*
+ * Studio focus mode.
+ *
+ * Studio sets data-studio-immersive on <html> when it wants the whole viewport.
+ * Hiding the chrome from here, rather than by conditionally rendering it, keeps
+ * the site layout a server component: the alternative is lifting a client-side
+ * mode into the layout and turning the entire site shell into a client tree for
+ * the sake of one page.
+ *
+ * The scroll lock matters as much as the hiding. Without it the page behind
+ * Studio is still scrollable, so a stray wheel event over a non-scrolling part
+ * of the editor drifts the whole viewport.
+ */
+[data-studio-immersive] [data-site-chrome] {
+  display: none;
+}
+
+[data-studio-immersive],
+[data-studio-immersive] body {
+  overflow: hidden;
+}

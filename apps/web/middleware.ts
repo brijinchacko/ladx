@@ -18,7 +18,7 @@ import type { NextRequest } from "next/server";
  *
  * Adding a page should not require editing auth. Adding a *private* page should.
  */
-const PROTECTED_PREFIXES = ["/chat", "/projects", "/documents", "/memory", "/settings"];
+const PROTECTED_PREFIXES = ["/chat", "/projects", "/memory", "/settings"];
 
 /**
  * API routes the session check does not apply to.
@@ -32,7 +32,16 @@ const PROTECTED_PREFIXES = ["/chat", "/projects", "/documents", "/memory", "/set
  * out of this list meant the middleware rejected every call before the route
  * ran, and the endpoint could not be used at all.
  */
-const PUBLIC_API = ["/api/auth/", "/api/activation", "/api/contact", "/api/indexnow"];
+const PUBLIC_API = [
+  "/api/auth/",
+  "/api/activation",
+  "/api/contact",
+  "/api/indexnow",
+  // The document template library is deliberately account free, so its download
+  // endpoint has to be too. Gating it would make the most linkable pages on the
+  // site useless to the people who find them.
+  "/api/templates/",
+];
 
 function needsAuth(pathname: string): boolean {
   if (pathname.startsWith("/api/")) {

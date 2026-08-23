@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Public_Sans, Saira } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
+import ConsentBanner from "@/components/consent/consent-banner";
 
 /**
  * Three faces, each doing one job.
@@ -88,7 +89,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${sans.variable} ${display.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <ConsentBanner />
+      </body>
     </html>
   );
 }

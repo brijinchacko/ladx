@@ -1,163 +1,162 @@
-import { RungDivider } from "@/components/site/schematics";
+import { Eyebrow, GridField, Sq } from "@/components/site/squares";
+import { CATEGORIES } from "@/lib/forum/categories";
+import { countByCategory, listThreads } from "@/lib/forum/queries";
+import { SITE } from "@/lib/seo/schema";
 import Link from "next/link";
+import { ThreadRow } from "./thread-row";
 
 export const metadata = {
-  title: "Forum",
+  title: "Forum, technical discussion for automation engineers",
   description:
-    "A technical forum for automation engineers, ladder logic, platform differences, migrations, and where AI actually helps.",
+    "Ask and answer questions about ladder logic, PLC platforms, migrations, HMI, safety standards and commissioning. Open to read, free to join.",
+  alternates: { canonical: `${SITE.url}/forum` },
 };
 
-/**
- * The forum, before it has people in it.
- *
- * Seeded with the questions this audience genuinely asks, taken from what gets
- * asked repeatedly on the existing automation forums, rather than with invented
- * threads and fake reply counts. A forum that opens with "247 replies" from
- * usernames nobody has met reads as a lie, and this audience notices.
- *
- * So: real categories, real opening questions, and an honest note that it is
- * new. Threads become interactive once accounts and posting land.
- */
+// Threads change as people post, so this page is rendered per request rather
+// than baked at build time.
+export const dynamic = "force-dynamic";
 
-const CATEGORIES = [
-  {
-    slug: "ladder-logic",
-    name: "Ladder logic",
-    blurb: "Rungs, timers, counters, seal-ins, and the scan-order problems that look like magic.",
-    seeds: [
-      "Why does my coil only work on the second scan?",
-      "TON vs RTO for a machine-hours meter, which and why?",
-      "Seal-in versus a latch instruction: is there a real difference?",
-      "How do I one-shot a signal that is already only one scan long?",
-    ],
-  },
-  {
-    slug: "platforms",
-    name: "Platforms & migration",
-    blurb:
-      "Siemens, Rockwell, Beckhoff, CODESYS, differences, conversions, and the parts that don't map.",
-    seeds: [
-      "PLC-5 to ControlLogix: how are people handling indexed addressing?",
-      "Siemens IEC timers vs Rockwell timer structures when converting",
-      "Is there any sane path from Modicon to S7-1500?",
-      "What actually breaks when you export PLCopen XML between tools?",
-    ],
-  },
-  {
-    slug: "analog-io",
-    name: "Analog & I/O",
-    blurb: "Scaling, raw counts, wiring, and diagnosing the readings that look almost right.",
-    seeds: [
-      "4-20 mA scaling: what raw range does your card actually use?",
-      "Should underrange fault or clamp to zero?",
-      "Shielding and grounding for a long analog run, practical rules?",
-    ],
-  },
-  {
-    slug: "ai-automation",
-    name: "AI in automation",
-    blurb:
-      "What is genuinely useful, what is marketing, and what nobody should let near a controller.",
-    seeds: [
-      "Has anyone got a local model working usefully for ST generation?",
-      "Where do you draw the line on AI-written code in a safety function?",
-      "Vendor copilots: is anyone seeing the productivity numbers they claim?",
-      "Air-gapped networks, what are people actually running on site?",
-    ],
-  },
-  {
-    slug: "ladx",
-    name: "LADX",
-    blurb: "Using the tools, reporting what broke, and asking for the thing that is missing.",
-    seeds: [
-      "Studio: how do I model a branch that opens between two contacts?",
-      "Which file formats can I import today?",
-      "Feature request: SFC support",
-    ],
-  },
-];
+export default async function ForumPage() {
+  const [recent, counts] = await Promise.all([listThreads({ limit: 12 }), countByCategory()]);
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
-export default function ForumPage() {
   return (
-    <div className="mx-auto max-w-6xl px-5 py-16">
-      <header className="mb-12 max-w-2xl">
-        <p className="mb-3 font-mono text-[11.5px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-          Forum
-        </p>
-        <h1 className="font-display text-[2.4rem] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink-900">
-          Ask the awkward questions
-        </h1>
-        <p className="mt-5 text-[16px] leading-relaxed text-ink-600">
-          A place for the problems that do not fit in a manual, why the rung works on the bench and
-          not on the line, what breaks in a migration, whether anyone has got a local model to write
-          usable structured text.
-        </p>
-      </header>
+    <>
+      <section className="relative border-b border-ink-100">
+        <GridField />
+        <div className="relative mx-auto max-w-6xl px-5 py-14">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-2xl">
+              <Eyebrow>Forum</Eyebrow>
+              <h1 className="font-display text-[2.4rem] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink-900">
+                Ask the people who have hit it before
+              </h1>
+              <p className="mt-5 text-[16px] leading-relaxed text-ink-600">
+                A technical forum for people who program machines. Open to read without an account.
+                Post a question, answer one, and mark what actually worked so the next person
+                searching finds it.
+              </p>
+            </div>
+            <Link
+              href="/forum/new"
+              className="rounded-sm bg-ink-900 px-5 py-2.5 text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+            >
+              Start a thread
+            </Link>
+          </div>
+          <p className="mt-6 flex items-center gap-2 font-mono text-[12px] text-ink-400">
+            <Sq size={6} />
+            {total === 0
+              ? "No threads yet. The first one is yours."
+              : `${total} ${total === 1 ? "thread" : "threads"} across ${CATEGORIES.length} categories`}
+          </p>
+        </div>
+      </section>
 
-      <div className="mb-14 rounded-sm border border-ink-200 bg-ink-50/70 px-6 py-5">
-        <h2 className="mb-1.5 text-[15px] font-semibold text-ink-900">This forum is new</h2>
-        <p className="max-w-3xl text-[14.5px] leading-relaxed text-ink-600">
-          Rather than fill it with invented threads and reply counts nobody earned, the categories
-          below are seeded with questions this industry genuinely asks, the ones that come up over
-          and over on the existing forums. Posting opens with accounts shortly. Until then,{" "}
-          <Link href="/help" className="border-b border-ink-300 text-ink-800 hover:border-ink-900">
-            send the question directly
-          </Link>{" "}
-          and it will be answered and posted here.
-        </p>
-      </div>
+      <div className="mx-auto max-w-6xl px-5 py-12">
+        <div className="grid gap-12 lg:grid-cols-[1fr_300px] lg:items-start">
+          <div className="min-w-0">
+            <h2 className="mb-5 border-b border-ink-200 pb-2 font-display text-[1.2rem] font-bold tracking-[-0.012em] text-ink-900">
+              {recent.length ? "Recent activity" : "Nothing posted yet"}
+            </h2>
 
-      <ul className="space-y-10">
-        {CATEGORIES.map((cat) => (
-          <li key={cat.slug} className="border-t border-ink-100 pt-8">
-            <div className="grid gap-6 lg:grid-cols-[1fr_1.7fr] lg:gap-12">
-              <div>
-                <h2 className="font-display text-[1.3rem] font-bold tracking-[-0.012em] text-ink-900">
-                  {cat.name}
-                </h2>
-                <p className="mt-2 max-w-xs text-[14px] leading-relaxed text-ink-500">
-                  {cat.blurb}
-                </p>
-              </div>
+            {recent.length === 0 ? (
+              <EmptyState />
+            ) : (
               <ul className="divide-y divide-ink-100">
-                {cat.seeds.map((q) => (
-                  <li key={q}>
-                    <Link
-                      href={`/help?subject=${encodeURIComponent(q)}`}
-                      className="group flex items-baseline justify-between gap-4 py-3"
-                    >
-                      <span className="text-[15px] leading-snug text-ink-700 group-hover:text-teal-700">
-                        {q}
+                {recent.map((t) => (
+                  <ThreadRow key={t.id} thread={t} showCategory />
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <aside>
+            <h2 className="mb-4 font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-400">
+              Categories
+            </h2>
+            <ul className="space-y-px">
+              {CATEGORIES.map((c) => (
+                <li key={c.slug}>
+                  <Link
+                    href={`/forum/c/${c.slug}`}
+                    className="group block border border-transparent px-3 py-2.5 transition-colors hover:border-ink-200 hover:bg-ink-50/60"
+                  >
+                    <span className="flex items-baseline justify-between gap-3">
+                      <span className="font-display text-[14px] font-bold text-ink-900 group-hover:text-teal-700">
+                        {c.name}
                       </span>
-                      <span className="shrink-0 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-300 group-hover:text-ink-500">
-                        Ask
+                      <span className="font-mono text-[11px] tabular-nums text-ink-400">
+                        {counts[c.slug] ?? 0}
                       </span>
-                    </Link>
+                    </span>
+                    <span className="mt-0.5 block text-[12.5px] leading-relaxed text-ink-500">
+                      {c.blurb}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-8 border-t border-ink-100 pt-5">
+              <h2 className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-400">
+                House rules
+              </h2>
+              <ul className="space-y-2 text-[12.5px] leading-relaxed text-ink-500">
+                {[
+                  "Say which platform and version. Half the answers depend on it.",
+                  "Post the rung, not a description of the rung.",
+                  "Mark the reply that worked, for whoever searches next.",
+                  "No safety bypasses. Ask how to do it properly instead.",
+                ].map((rule) => (
+                  <li key={rule} className="flex items-start gap-2">
+                    <Sq size={5} className="mt-[6px] shrink-0 text-ink-300" />
+                    {rule}
                   </li>
                 ))}
               </ul>
             </div>
-          </li>
+          </aside>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/**
+ * What an empty forum shows.
+ *
+ * Real prompts rather than invented threads with fake reply counts. A new forum
+ * seeded with posts from people who do not exist is the fastest way to lose the
+ * trust of an audience that checks things for a living.
+ */
+function EmptyState() {
+  return (
+    <div>
+      <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-600">
+        This forum is new and nobody has posted yet. Below are the questions that get asked
+        repeatedly in this field. They are prompts, not threads: pick one, or bring your own.
+      </p>
+      <div className="grid gap-6 sm:grid-cols-2">
+        {CATEGORIES.slice(0, 4).map((c) => (
+          <div key={c.slug} className="border-t-2 border-ink-900 pt-3">
+            <h3 className="font-display text-[14.5px] font-bold text-ink-900">{c.name}</h3>
+            <ul className="mt-2.5 space-y-1.5">
+              {c.prompts.slice(0, 3).map((p) => (
+                <li key={p}>
+                  <Link
+                    href={`/forum/new?category=${c.slug}`}
+                    className="flex items-start gap-2 text-[13.5px] leading-relaxed text-ink-600 transition-colors hover:text-teal-700"
+                  >
+                    <Sq size={5} className="mt-[7px] shrink-0 text-ink-300" />
+                    {p}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
-
-      <RungDivider className="mx-auto my-14 h-4 w-full max-w-xl text-ink-900" />
-
-      <section className="mx-auto max-w-2xl text-center">
-        <h2 className="font-display text-[1.4rem] font-bold tracking-[-0.015em] text-ink-900">
-          Answers get written up
-        </h2>
-        <p className="mt-3 text-[15.5px] leading-relaxed text-ink-600">
-          Questions that come up more than once become articles. Several of the pieces in{" "}
-          <Link
-            href="/resources"
-            className="border-b border-ink-300 text-ink-800 hover:border-ink-900"
-          >
-            Resources
-          </Link>{" "}
-          started as somebody asking why their coil did not work.
-        </p>
-      </section>
+      </div>
     </div>
   );
 }
