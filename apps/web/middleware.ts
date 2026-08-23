@@ -20,8 +20,19 @@ import type { NextRequest } from "next/server";
  */
 const PROTECTED_PREFIXES = ["/chat", "/projects", "/documents", "/memory", "/settings"];
 
-/** API routes anyone may call: sign-in itself, licence activation, the contact form. */
-const PUBLIC_API = ["/api/auth/", "/api/activation", "/api/contact"];
+/**
+ * API routes the session check does not apply to.
+ *
+ * Most are genuinely public: sign-in itself, licence activation, the contact
+ * form. `/api/indexnow` is the odd one, and it is listed here because it does
+ * its own auth rather than because it is open. It takes a Bearer token holding
+ * INDEXNOW_KEY, which is the right check for it, since a submission should be
+ * triggerable by a deploy script with no browser session, and should NOT be
+ * triggerable by any signed-in user who happens to find the route. Leaving it
+ * out of this list meant the middleware rejected every call before the route
+ * ran, and the endpoint could not be used at all.
+ */
+const PUBLIC_API = ["/api/auth/", "/api/activation", "/api/contact", "/api/indexnow"];
 
 function needsAuth(pathname: string): boolean {
   if (pathname.startsWith("/api/")) {
