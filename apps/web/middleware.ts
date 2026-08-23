@@ -6,23 +6,33 @@ import { SESSION_COOKIE } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-function isPublic(pathname: string): boolean {
-  if (pathname === "/") return true;
-  if (pathname.startsWith("/sign-in")) return true;
-  if (pathname.startsWith("/sign-up")) return true;
-  if (pathname.startsWith("/api/auth/")) return true;
-  if (pathname === "/api/activation") return true;
-  if (pathname === "/pricing") return true;
-  // Studio runs entirely in the browser and stores projects there, so it needs
-  // no account. Being able to open the ladder editor from a cold link, draw a
-  // rung and press Run is the shortest path to understanding what LADX is.
-  if (pathname.startsWith("/studio")) return true;
-  return false;
+/**
+ * The routes that need an account.
+ *
+ * This list is deliberately the *protected* one rather than the public one.
+ * It used to be inverted — everything was private unless named — which meant
+ * every new marketing page silently redirected to /sign-in until somebody
+ * remembered to come here. The failure was invisible in development, where you
+ * are always signed in, and obvious to a first-time visitor, which is the worst
+ * possible split.
+ *
+ * Adding a page should not require editing auth. Adding a *private* page should.
+ */
+const PROTECTED_PREFIXES = ["/chat", "/projects", "/documents", "/memory", "/settings"];
+
+/** API routes anyone may call: sign-in itself, licence activation, the contact form. */
+const PUBLIC_API = ["/api/auth/", "/api/activation", "/api/contact"];
+
+function needsAuth(pathname: string): boolean {
+  if (pathname.startsWith("/api/")) {
+    return !PUBLIC_API.some((p) => pathname === p || pathname.startsWith(p));
+  }
+  return PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (isPublic(pathname)) return NextResponse.next();
+  if (!needsAuth(pathname)) return NextResponse.next();
 
   const sessionId = req.cookies.get(SESSION_COOKIE)?.value;
   if (sessionId) return NextResponse.next();

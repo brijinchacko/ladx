@@ -1,6 +1,38 @@
 import type { Metadata, Viewport } from "next";
+import { Chivo, JetBrains_Mono, Public_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
+
+/**
+ * Three faces, each doing one job.
+ *
+ * Public Sans for reading: a utility face drawn for government forms, which
+ * makes it plain and extremely legible at the small sizes a page full of tag
+ * names needs. Chivo for headings: a grotesque with squared terminals that
+ * reads as industrial signage. JetBrains Mono for anything that lines up in a
+ * column — addresses, mnemonics, scan times.
+ *
+ * Self-hosted by next/font, so there is no render-blocking request to Google
+ * and no layout shift when the face arrives.
+ */
+const sans = Public_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+});
+
+const display = Chivo({
+  subsets: ["latin"],
+  weight: ["700", "800"],
+  display: "swap",
+  variable: "--font-display",
+});
+
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-mono",
+});
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://ladx.ai";
 
@@ -55,7 +87,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${sans.variable} ${display.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

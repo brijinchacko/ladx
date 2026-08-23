@@ -38,6 +38,7 @@ export const ladxPreset: Partial<Config> = {
       },
       fontFamily: {
         sans: fonts.sans.split(", "),
+        display: fonts.display.split(", "),
         mono: fonts.mono.split(", "),
       },
       borderRadius: {

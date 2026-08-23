@@ -6,7 +6,9 @@
 @layer base {
   :root {
     --ladx-ink: 15 26 36;
-    --ladx-teal: 63 191 181;
+    --ladx-teal: 53 182 186;
+    /* Hex form, for SVG fills that can't take an rgb() triplet. */
+    --ladx-teal-hex: #35b6ba;
     --ladx-white: 255 255 255;
     --background: var(--ladx-white);
     --foreground: var(--ladx-ink);
@@ -21,7 +23,7 @@
   body {
     background: rgb(var(--background));
     color: rgb(var(--foreground));
-    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans, "Public Sans"), system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
