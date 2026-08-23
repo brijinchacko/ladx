@@ -6,10 +6,12 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { appendMessage, ensureConversation } from "@/lib/db/conversations";
+import { credentialsFor, preferredProvider } from "@/lib/db/provider-keys";
 import { projects } from "@/lib/db/schema";
-import { type ChatMessage, streamChat } from "@/lib/inference/openrouter";
 import { buildProjectSystemPrompt } from "@/lib/inference/project-prompt";
 import { ssEncode } from "@/lib/inference/stream";
+import { ProviderError, getProvider } from "@/lib/providers";
+import type { ChatMessage } from "@/lib/providers/types";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -25,7 +27,11 @@ const requestSchema = z.object({
     )
     .min(1)
     .max(100),
-  model: z.string().default("anthropic/claude-sonnet-4.6"),
+  // No default. A hardcoded fallback here would silently win over the model the
+  // user actually chose in Settings, because `.default()` means the field is
+  // never undefined and the `??` below would never reach their choice. It also
+  // named a model that may not exist on their key at all.
+  model: z.string().optional(),
   temperature: z.number().min(0).max(2).optional(),
   maxTokens: z.number().int().min(1).max(8192).optional(),
 });
@@ -48,6 +54,34 @@ export async function POST(req: Request) {
   // No quota gate. Inference runs on the user's own provider key (BYOK), so
   // usage is metered by their provider, not by us. Rate limiting, when it
   // matters, is the provider's — we surface their 429 rather than inventing one.
+  //
+  // Which also means: no key, no chat. That is a 428 rather than a 500, and the
+  // client turns it into "connect a provider" rather than "something broke".
+  const preferred = await preferredProvider(user.id);
+  if (!preferred) {
+    return Response.json(
+      {
+        error: "no_provider",
+        message: "Connect an AI provider in Settings before chatting.",
+      },
+      { status: 428 },
+    );
+  }
+
+  const creds = await credentialsFor(user.id, preferred.kind);
+  if (!creds) {
+    return Response.json({ error: "no_provider" }, { status: 428 });
+  }
+  const provider = getProvider(preferred.kind);
+  // The request may name a model; otherwise use whichever the user chose when
+  // they connected the provider.
+  const model = parsed.model ?? creds.defaultModel;
+  if (!model) {
+    return Response.json(
+      { error: "no_model", message: "Choose a default model in Settings." },
+      { status: 428 },
+    );
+  }
 
   // The last entry MUST be the user's new message — that's what we persist
   // before streaming. Earlier entries are conversation history the client
@@ -109,8 +143,8 @@ export async function POST(req: Request) {
             ]
           : parsed.messages;
 
-        for await (const delta of streamChat({
-          model: parsed.model,
+        for await (const delta of provider.stream(creds, {
+          model,
           messages: messagesWithGrounding,
           temperature: parsed.temperature,
           maxTokens: parsed.maxTokens,
@@ -129,8 +163,19 @@ export async function POST(req: Request) {
           }).catch((err) => console.error("[chat] assistant persistence failed:", err));
         }
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "stream error";
-        controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ msg })}\n\n`));
+        // A provider error carries a message written for a person — rate limits
+        // in particular, where "wait 18s" is the difference between a queue and
+        // a broken product.
+        const msg =
+          err instanceof ProviderError
+            ? err.userMessage
+            : err instanceof Error
+              ? err.message
+              : "stream error";
+        const kind = err instanceof ProviderError ? err.kind : "unknown";
+        controller.enqueue(
+          encoder.encode(`event: error\ndata: ${JSON.stringify({ msg, kind })}\n\n`),
+        );
       } finally {
         controller.close();
       }

@@ -26,9 +26,17 @@ export interface LogoProps {
   size?: number;
   variant?: "wordmark" | "icon";
   /**
-   * Force a theme instead of following the viewer's. Use when the logo sits on
-   * a surface whose colour you control and the page theme doesn't apply — an
-   * always-dark hero on a light page, say.
+   * Which ground the mark is sitting on — not which theme the viewer prefers.
+   *
+   * `light` (the default) draws the dark-ink mark for a light surface; `dark`
+   * draws the white one. `auto` follows `prefers-color-scheme`, and is correct
+   * ONLY on a surface that also follows it.
+   *
+   * This defaults to `light` because it used to default to `auto`, and every
+   * LADX surface is currently light regardless of the OS setting. On a machine
+   * set to dark mode the browser dutifully served the white wordmark onto a
+   * white page, and the mark vanished — leaving a lone teal X floating above
+   * the sign-in form. Follow the surface, not the operating system.
    */
   tone?: "auto" | "light" | "dark";
 }
@@ -36,7 +44,7 @@ export interface LogoProps {
 /** Source aspect ratio of the wordmark artwork: 3860 × 900. */
 const WORDMARK_ASPECT = 3860 / 900;
 
-export function Logo({ className, size, variant = "wordmark", tone = "auto" }: LogoProps) {
+export function Logo({ className, size, variant = "wordmark", tone = "light" }: LogoProps) {
   if (variant === "icon") {
     const px = size ?? 32;
     return (

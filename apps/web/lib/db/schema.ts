@@ -17,6 +17,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -284,3 +285,50 @@ export type AuditLogRow = typeof auditLog.$inferSelect;
 
 // SQL helper kept around for future raw-SQL escape hatches.
 export { sql };
+
+// ----- provider keys -----
+// A user's own credentials for their AI provider. LADX holds no shared
+// inference key, so this table is the only way a request gets made at all.
+//
+// `secret` is an AES-256-GCM envelope (see lib/crypto/secrets.ts), never a
+// key. `masked` and `fingerprint` exist so the UI can show which key is
+// connected, and so we can answer "is this the same one?" without opening
+// the envelope. Nothing here is ever returned to the client in the clear.
+export const providerKindEnum = pgEnum("provider_kind", [
+  "openrouter",
+  "anthropic",
+  "openai",
+  "custom",
+]);
+
+export const providerKeys = pgTable(
+  "provider_keys",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: providerKindEnum("kind").notNull(),
+    /** Shown in the UI: "sk-or-v1-••••a91f". Never the key. */
+    masked: text("masked").notNull(),
+    /** Non-reversible; used to detect a re-paste of the same key. */
+    fingerprint: text("fingerprint").notNull(),
+    /** The sealed envelope. */
+    secret: text("secret").notNull(),
+    /** Required for `custom`; the OpenAI-compatible base URL. */
+    baseUrl: text("base_url"),
+    /** Which model this provider should use by default for this user. */
+    defaultModel: text("default_model"),
+    /** Set when a live call last succeeded, so the UI can show staleness. */
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("provider_keys_user_idx").on(t.userId),
+    // One key per provider per user: connecting again replaces rather than
+    // accumulates, because two keys for the same provider has no meaning and
+    // every read would need a tie-break rule.
+    userKindIdx: uniqueIndex("provider_keys_user_kind_idx").on(t.userId, t.kind),
+  }),
+);
