@@ -23,7 +23,7 @@ export type TourStep = {
   topic?: string;
 };
 
-export const TOUR: TourStep[] = [
+export const TOUR: [TourStep, ...TourStep[]] = [
   {
     id: "welcome",
     anchor: "",

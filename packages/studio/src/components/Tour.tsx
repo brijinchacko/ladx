@@ -45,7 +45,8 @@ export default function Tour({
   const [i, setI] = useState(0);
   const [box, setBox] = useState<Box | null>(null);
 
-  const step = TOUR[Math.min(i, TOUR.length - 1)];
+  // The index is clamped, so the fallback is only there to say so in types.
+  const step = TOUR[Math.min(i, TOUR.length - 1)] ?? TOUR[0];
 
   const finish = useCallback(() => {
     markTourSeen();

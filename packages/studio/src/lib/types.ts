@@ -396,11 +396,19 @@ export const INSTRUCTION_BY_TYPE = new Map(INSTRUCTIONS.map((i) => [i.type, i]))
  * a flat `rungs` list. That list IS Main, so the conversion is exact and
  * nothing needs re-authoring.
  */
+const flatRungsAsMain = (p: LadxProgram): Routine => ({
+  id: "main",
+  name: "Main",
+  rungs: p.rungs ?? [],
+});
+
 export function programRoutines(p: LadxProgram): Routine[] {
   if (p.routines && p.routines.length > 0) return p.routines;
-  return [{ id: "main", name: "Main", rungs: p.rungs ?? [] }];
+  return [flatRungsAsMain(p)];
 }
 
 export function mainRoutine(p: LadxProgram): Routine {
-  return programRoutines(p)[0];
+  // Never actually empty — programRoutines falls back to a Main built from the
+  // flat rungs — so the fallback here is the same routine, not a second one.
+  return programRoutines(p)[0] ?? flatRungsAsMain(p);
 }

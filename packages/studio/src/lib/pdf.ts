@@ -145,9 +145,17 @@ export function buildProjectPdf(input: ProjectPdfInput): Buffer {
     return rank(a) - rank(b) || a.name.localeCompare(b.name);
   });
 
-  const cols = [M, M + 42, M + 68, M + 96, M + 126];
+  const [tagCol, typeCol, dirCol, deviceCol, commentCol] = [M, M + 42, M + 68, M + 96, M + 126];
   doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(MUTED);
-  ["TAG", "TYPE", "DIRECTION", "DEVICE", "COMMENT"].forEach((h, i) => doc.text(h, cols[i], y));
+  for (const [head, x] of [
+    ["TAG", tagCol],
+    ["TYPE", typeCol],
+    ["DIRECTION", dirCol],
+    ["DEVICE", deviceCol],
+    ["COMMENT", commentCol],
+  ] as const) {
+    doc.text(head, x, y);
+  }
   y += 3;
   doc.setDrawColor(RULE).line(M, y, W - M, y);
   y += 6;
@@ -159,13 +167,13 @@ export function buildProjectPdf(input: ProjectPdfInput): Buffer {
       y = pageHeader(doc, W, M, "I/O schedule (continued)", input.projectName);
     }
     doc.setFont("helvetica", "bold").setTextColor(INK);
-    doc.text(t.name, cols[0], y);
+    doc.text(t.name, tagCol, y);
     doc.setFont("helvetica", "normal").setTextColor(MUTED);
-    doc.text(t.type, cols[1], y);
-    doc.text(t.isInput ? "Input" : t.isOutput ? "Output" : "Internal", cols[2], y);
-    doc.text(t.device ? String(t.device).replace(/_/g, " ").toLowerCase() : "—", cols[3], y);
-    const comment = doc.splitTextToSize(t.comment ?? "", W - M - cols[4]);
-    doc.text(comment.length ? comment[0] : "—", cols[4], y);
+    doc.text(t.type, typeCol, y);
+    doc.text(t.isInput ? "Input" : t.isOutput ? "Output" : "Internal", dirCol, y);
+    doc.text(t.device ? String(t.device).replace(/_/g, " ").toLowerCase() : "—", deviceCol, y);
+    const [firstLine] = doc.splitTextToSize(t.comment ?? "", W - M - commentCol);
+    doc.text(firstLine ?? "—", commentCol, y);
     y += 6.5;
   }
 
@@ -338,11 +346,20 @@ function drawNode(doc: jsPDF, node: LadderNode, x: number, y: number, cell: numb
     ly += legCount(leg) * ROW;
   }
 
+  const firstLeg = legs[0];
+  const lastLeg = legs[legs.length - 1];
+  if (!firstLeg || !lastLeg) {
+    // A branch with no legs at all. normalise() collapses those, so only a
+    // tree that never went through it can get here — draw the wire an empty
+    // series draws rather than failing the whole export.
+    doc.setDrawColor(INK).setLineWidth(0.4);
+    doc.line(x, y, x + cell, y);
+    return x + cell;
+  }
+
   doc.setDrawColor(INK).setLineWidth(0.5);
-  const firstTop = legs[0].top;
-  const lastTop = legs[legs.length - 1].top;
-  doc.line(x, firstTop, x, lastTop);
-  doc.line(widest, firstTop, widest, lastTop);
+  doc.line(x, firstLeg.top, x, lastLeg.top);
+  doc.line(widest, firstLeg.top, widest, lastLeg.top);
 
   doc.setLineWidth(0.4);
   for (const leg of legs) {

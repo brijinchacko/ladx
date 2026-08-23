@@ -564,7 +564,8 @@ export function scan(
     }
   }
 
-  if (routines.length > 0) runRoutine(routines[0], []);
+  const [main] = routines;
+  if (main) runRoutine(main, []);
 
   return {
     tags: [...tags.values()],

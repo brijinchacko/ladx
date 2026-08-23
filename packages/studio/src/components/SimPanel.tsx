@@ -614,7 +614,9 @@ export default function SimPanel({
   const zoomBy = (dir: 1 | -1) => {
     const i = ZOOMS.indexOf(zoom);
     const next = ZOOMS[Math.min(ZOOMS.length - 1, Math.max(0, (i < 0 ? 2 : i) + dir))];
-    setZoom(next);
+    // The index is clamped to the array, so `next` is only ever missing in
+    // types, never at runtime — staying at the current zoom is the safe read.
+    setZoom(next ?? zoom);
   };
 
   return (
