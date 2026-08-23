@@ -1,10 +1,6 @@
-import {
-  IrHub,
-  RungDivider,
-  ScanCycle,
-  SealInRung,
-  ValidationLoop,
-} from "@/components/site/schematics";
+import { LiveRung } from "@/components/site/live-rung";
+import { IrHub, RungDivider, ScanCycle, ValidationLoop } from "@/components/site/schematics";
+import { CornerTicks, Eyebrow, GridField } from "@/components/site/squares";
 import Link from "next/link";
 
 export const metadata = {
@@ -61,12 +57,13 @@ export default function HomePage() {
   return (
     <>
       {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <section className="border-b border-ink-100">
-        <div className="mx-auto grid max-w-6xl gap-12 px-5 py-16 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:py-24">
+      <section className="relative overflow-hidden border-b border-ink-100">
+        <GridField size={34} />
+        <div className="relative mx-auto grid max-w-6xl gap-12 px-5 py-16 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:py-24">
           <div>
-            <p className="mb-5 font-mono text-[11.5px] font-semibold uppercase tracking-[0.18em] text-teal-700">
-              Vendor-neutral · validated · runs offline
-            </p>
+            <Eyebrow className="mb-5">
+              Vendor-neutral &middot; validated &middot; runs offline
+            </Eyebrow>
             <h1 className="font-display text-[2.6rem] font-extrabold leading-[1.03] tracking-[-0.025em] text-ink-900 sm:text-[3.4rem]">
               Ladder logic you can
               <br />
@@ -98,14 +95,11 @@ export default function HomePage() {
           </div>
 
           <figure className="lg:justify-self-end">
-            <div className="rounded-sm border border-ink-100 bg-white p-6 shadow-[0_1px_2px_rgba(15,26,36,0.05)]">
-              <SealInRung className="w-full text-ink-800" live />
-            </div>
-            <figcaption className="mt-3 text-[12.5px] leading-relaxed text-ink-400">
-              The seal-in: <span className="font-mono text-ink-500">Start</span> latches through the
-              motor's own contact, and <span className="font-mono text-ink-500">Stop</span> or the
-              guard breaks it. The first rung anyone learns, and the one that proves an editor is
-              real, because it cannot be drawn without a parallel branch.
+            <LiveRung />
+            <figcaption className="mt-3 max-w-md text-[12.5px] leading-relaxed text-ink-400">
+              Not a picture of a ladder program. This is the same scan engine the editor uses,
+              solving these two rungs on a timer, in your browser. Operate the switches and it
+              behaves the way the logic says it should.
             </figcaption>
           </figure>
         </div>
@@ -145,9 +139,7 @@ export default function HomePage() {
       {/* ── How it works ──────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 py-20">
         <header className="mb-3 max-w-2xl">
-          <p className="mb-3 font-mono text-[11.5px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-            How it works
-          </p>
+          <Eyebrow>How it works</Eyebrow>
           <h2 className="font-display text-[1.75rem] font-bold leading-tight tracking-[-0.015em] text-ink-900">
             Nothing reaches you until a compiler agrees it exists
           </h2>
@@ -177,7 +169,8 @@ export default function HomePage() {
               p: "Failures go back to the model with the compiler's own errors attached. This is what makes a free model good enough to be useful.",
             },
           ].map((c) => (
-            <div key={c.h} className="border-t-2 border-ink-900 pt-4">
+            <div key={c.h} className="relative border border-ink-100 bg-white p-5">
+              <CornerTicks />
               <h3 className="mb-1.5 text-[15px] font-semibold text-ink-900">{c.h}</h3>
               <p className="text-[14px] leading-relaxed text-ink-500">{c.p}</p>
             </div>
@@ -190,9 +183,7 @@ export default function HomePage() {
       {/* ── Products ──────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 py-20">
         <header className="mb-12 max-w-2xl">
-          <p className="mb-3 font-mono text-[11.5px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-            What's in it
-          </p>
+          <Eyebrow>What's in it</Eyebrow>
           <h2 className="font-display text-[1.75rem] font-bold leading-tight tracking-[-0.015em] text-ink-900">
             Five tools that share one program
           </h2>
@@ -244,9 +235,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-5 py-20">
           <div className="grid gap-12 lg:grid-cols-[1fr_1.3fr] lg:items-center">
             <div>
-              <p className="mb-3 font-mono text-[11.5px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                Why conversion works
-              </p>
+              <Eyebrow>Why conversion works</Eyebrow>
               <h2 className="font-display text-[1.75rem] font-bold leading-tight tracking-[-0.015em] text-ink-900">
                 Every format meets in the middle
               </h2>
@@ -274,9 +263,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-6xl px-5 py-20">
         <div className="grid gap-12 lg:grid-cols-[1.3fr_1fr] lg:items-center">
           <div>
-            <p className="mb-3 font-mono text-[11.5px] font-semibold uppercase tracking-[0.18em] text-ink-400">
-              Also, it teaches
-            </p>
+            <Eyebrow>Also, it teaches</Eyebrow>
             <h2 className="font-display text-[1.75rem] font-bold leading-tight tracking-[-0.015em] text-ink-900">
               The simulator does not lie to you
             </h2>
@@ -310,8 +297,17 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA ───────────────────────────────────────────────────────── */}
-      <section className="border-t border-ink-100 bg-ink-900">
-        <div className="mx-auto max-w-6xl px-5 py-16 text-center">
+      <section className="relative overflow-hidden border-t border-ink-100 bg-ink-900">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, #fff 1px, transparent 1px),linear-gradient(to bottom, #fff 1px, transparent 1px)",
+            backgroundSize: "34px 34px",
+          }}
+        />
+        <div className="relative mx-auto max-w-6xl px-5 py-16 text-center">
           <h2 className="font-display text-[1.9rem] font-extrabold tracking-[-0.02em] text-white">
             Open it and draw a rung.
           </h2>
