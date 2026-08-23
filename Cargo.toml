@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "packages/core/crates/ladx-types",
+    "packages/core/crates/ladx-ir",
     "packages/core/crates/ladx-parsers",
     "packages/core/crates/ladx-vendor",
     "packages/core/crates/ladx-agents",
@@ -28,6 +29,7 @@ version = "0.0.0"
 [workspace.dependencies]
 # Local crates
 ladx-types = { path = "packages/core/crates/ladx-types" }
+ladx-ir = { path = "packages/core/crates/ladx-ir" }
 ladx-parsers = { path = "packages/core/crates/ladx-parsers" }
 ladx-vendor = { path = "packages/core/crates/ladx-vendor" }
 ladx-agents = { path = "packages/core/crates/ladx-agents" }

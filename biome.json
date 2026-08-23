@@ -8,6 +8,7 @@
   "files": {
     "ignoreUnknown": true,
     "ignore": [
+      "**/.claude/worktrees/**",
       "**/.next/**",
       "**/out/**",
       "**/dist/**",
@@ -50,8 +51,12 @@
       "include": ["packages/studio/**"],
       "linter": {
         "rules": {
-          "correctness": { "useExhaustiveDependencies": "off" },
-          "suspicious": { "noArrayIndexKey": "off" },
+          "correctness": {
+            "useExhaustiveDependencies": "off"
+          },
+          "suspicious": {
+            "noArrayIndexKey": "off"
+          },
           "style": {
             "noNonNullAssertion": "off",
             "useSingleVarDeclarator": "off",

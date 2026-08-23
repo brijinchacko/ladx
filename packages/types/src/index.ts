@@ -21,3 +21,25 @@ export type { TagRef } from "./generated/TagRef";
 export type { ValidatorDiagnostic } from "./generated/ValidatorDiagnostic";
 export type { ValidatorReport } from "./generated/ValidatorReport";
 export type { VendorKind } from "./generated/VendorKind";
+
+// ── LADX IR ──────────────────────────────────────────────────────────────
+// Generated from the `ladx-ir` crate into ./generated/ir/. Namespaced in its
+// own directory because ts-rs writes one flat file per type name, so two
+// crates exporting the same name overwrite each other silently.
+export type { IrProject } from "./generated/ir/IrProject";
+export type { Vendor } from "./generated/ir/Vendor";
+export type { Pou } from "./generated/ir/Pou";
+export type { PouKind } from "./generated/ir/PouKind";
+export type { PouBody } from "./generated/ir/PouBody";
+export type { Rung } from "./generated/ir/Rung";
+export type { Logic } from "./generated/ir/Logic";
+export type { Instruction } from "./generated/ir/Instruction";
+export type { OpCode } from "./generated/ir/OpCode";
+export type { Operand } from "./generated/ir/Operand";
+export type { VendorDetail } from "./generated/ir/VendorDetail";
+export type { DataTypeDef } from "./generated/ir/DataTypeDef";
+// `Tag` and `DataType` exist in both crates with different shapes; the IR ones
+// are aliased rather than re-exported bare, so a wrong import is a type error
+// instead of a surprise at runtime.
+export type { Tag as IrTag } from "./generated/ir/Tag";
+export type { DataType as IrDataType } from "./generated/ir/DataType";

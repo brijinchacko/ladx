@@ -8,9 +8,20 @@ See root `Cargo.toml`. Each crate has its own `CLAUDE.md` once it has real code.
 ## Type-sharing rule
 
 Every Rust struct/enum that crosses the FFI boundary to TypeScript MUST:
-1. Live in `ladx-types` crate
+1. Live in `ladx-types` — **or** in `ladx-ir`, which owns the intermediate
+   representation and is big enough to be its own crate
 2. Derive `serde::Serialize`, `serde::Deserialize`, `ts_rs::TS`
-3. Have `#[ts(export, export_to = "../../../../types/src/generated/")]` attribute (4 `..` from `crates/ladx-types/`, no leading `packages/`)
+3. Carry an `#[ts(export, export_to = ...)]` attribute pointing at the right
+   output directory (4 `..` from `crates/<crate>/`, no leading `packages/`):
+   - `ladx-types` → `"../../../../types/src/generated/"`
+   - `ladx-ir` → `"../../../../types/src/generated/ir/"`
+
+**The subdirectory is not cosmetic.** ts-rs writes one file per type name into a
+flat directory, so two crates exporting a type of the same name silently
+overwrite each other — last writer wins, no error, no warning. That happened
+once already: `ladx-ir::Tag` clobbered `ladx-types::Tag`, and the only symptom
+was a TypeScript type quietly changing shape. Any new crate that exports types
+gets its own subdirectory.
 
 After adding/changing types, run `pnpm test:rust` to regenerate TS bindings. CI fails if bindings drift.
 

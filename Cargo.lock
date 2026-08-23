@@ -2126,6 +2126,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ladx-ir"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "ts-rs",
+]
+
+[[package]]
 name = "ladx-parsers"
 version = "0.0.0"
 dependencies = [
