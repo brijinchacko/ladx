@@ -38,3 +38,86 @@
     padding-bottom: 5rem;
   }
 }
+
+/*
+ * The document preview.
+ *
+ * Styled to look like the printed page rather than like the app, because the
+ * whole point of the pane is to show what the exported PDF and Word file will
+ * look like. Scoped to .doc-preview so it cannot leak into the workspace.
+ */
+.doc-preview h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 .25rem;
+  letter-spacing: -.01em;
+}
+.doc-preview h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1.4rem 0 .4rem;
+  padding-bottom: .25rem;
+  border-bottom: 1px solid rgb(var(--ladx-ink) / 0.12);
+}
+.doc-preview h3 {
+  font-size: .95rem;
+  font-weight: 700;
+  margin: 1rem 0 .25rem;
+}
+.doc-preview h4 {
+  font-size: .85rem;
+  font-weight: 600;
+  margin: .8rem 0 .25rem;
+  color: rgb(var(--ladx-ink) / 0.7);
+}
+.doc-preview p {
+  margin: .4rem 0;
+  font-size: .875rem;
+  line-height: 1.6;
+}
+.doc-preview ul {
+  margin: .4rem 0 .4rem 1.1rem;
+  font-size: .875rem;
+}
+.doc-preview li {
+  margin: .15rem 0;
+}
+.doc-preview hr {
+  border: 0;
+  border-top: 1px solid rgb(var(--ladx-ink) / 0.12);
+  margin: 1.1rem 0;
+}
+.doc-preview blockquote {
+  margin: .6rem 0;
+  padding: .5rem .9rem;
+  font-size: .82rem;
+  border-left: 3px solid rgb(var(--ladx-teal));
+  background: rgb(var(--ladx-teal) / 0.06);
+}
+.doc-preview code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .8rem;
+  background: rgb(var(--ladx-ink) / 0.05);
+  padding: .05rem .25rem;
+  border-radius: 2px;
+}
+.doc-preview .table-wrap {
+  overflow-x: auto;
+  margin: .6rem 0;
+}
+.doc-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: .78rem;
+}
+.doc-preview th,
+.doc-preview td {
+  border: 1px solid rgb(var(--ladx-ink) / 0.15);
+  padding: .3rem .45rem;
+  text-align: left;
+  vertical-align: top;
+}
+.doc-preview th {
+  background: rgb(var(--ladx-ink) / 0.04);
+  font-weight: 700;
+}

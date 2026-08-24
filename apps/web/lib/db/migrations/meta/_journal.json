@@ -57,6 +57,13 @@
       "when": 1787549264106,
       "tag": "0007_boring_wasp",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787558081533,
+      "tag": "0008_ambitious_steve_rogers",
+      "breakpoints": true
     }
   ]
 }

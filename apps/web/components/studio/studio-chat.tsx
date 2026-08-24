@@ -90,15 +90,14 @@ function NoProvider() {
     <div className="flex flex-1 items-center justify-center p-8">
       <div className="max-w-md text-center">
         <h2 className="font-display text-[1.3rem] font-bold text-ink-900">
-          Connect a provider to start
+          Chat is unavailable right now
         </h2>
         <p className="mt-3 text-[14.5px] leading-relaxed text-ink-600">
-          LADX runs on your own AI key, so nothing you send is metered or billed by us. OpenRouter
-          takes an email and no card, and its free models cost nothing to run.
+          The shared free tier is not reachable, and no provider of your own is connected. Connect a
+          key in Settings to continue.
         </p>
         <p className="mt-3 text-[13.5px] leading-relaxed text-ink-500">
-          Once a key is connected, Studio picks a free model for you automatically. You do not have
-          to choose one.
+          OpenRouter takes an email and no card, and its free models cost nothing to run.
         </p>
         <Link
           href="/studio/settings"

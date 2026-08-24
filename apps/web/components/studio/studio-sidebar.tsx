@@ -1,5 +1,6 @@
 "use client";
 
+import { Logo } from "@ladx/ui";
 import {
   ChevronsLeft,
   FileText,
@@ -136,10 +137,8 @@ export default function StudioSidebar({
     <aside className="flex w-64 shrink-0 flex-col border-r border-ink-100 bg-ink-50/40">
       {/* brand + collapse */}
       <div className="flex items-center justify-between px-4 py-3.5">
-        <Link href="/studio" className="flex items-baseline gap-1.5">
-          <span className="font-display text-[15px] font-extrabold tracking-tight text-ink-900">
-            LADX
-          </span>
+        <Link href="/studio" className="flex items-center gap-2" aria-label="LADX Studio">
+          <Logo size={18} />
           <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-400">
             Studio
           </span>

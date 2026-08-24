@@ -568,3 +568,82 @@ export type CompanyProfile = typeof companyProfiles.$inferSelect;
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
 export type Project = typeof projects.$inferSelect;
+
+// ----- documents -----
+//
+// Two kinds of thing live in one table, because they are the same thing to the
+// person using them: a document attached to a project or a client.
+//
+// `generated` starts from a template, is filled from the project and company,
+// and is then editable, so the row keeps its markdown rather than regenerating
+// from the template every time. Editing is the point: a template gets you 90%
+// of an FDS and the last 10% is the actual job.
+//
+// `uploaded` is a file the user brought, a datasheet or a signed scan. Its bytes
+// live in `fileData` as a data URL for the same reason the company logo does:
+// there is no object store on this host, and these are documents rather than
+// 50 MB PLC archives. The size cap is enforced at the API.
+export const documentKindEnum = pgEnum("document_kind", ["generated", "uploaded"]);
+
+export const documents = pgTable(
+  "documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // A document can hang off a project, a client, or both. Both nullable so a
+    // loose document is possible rather than forbidden.
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }),
+    kind: documentKindEnum("kind").notNull().default("generated"),
+    /** Which template this came from, when it was generated from one. */
+    templateSlug: text("template_slug"),
+    title: text("title").notNull(),
+    /** Markdown, editable. Empty for uploads. */
+    content: text("content").notNull().default(""),
+    /** Uploads only: the original file, as a data URL. */
+    fileName: text("file_name"),
+    mimeType: text("mime_type"),
+    fileData: text("file_data"),
+    byteSize: integer("byte_size").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("documents_user_idx").on(t.userId),
+    projectIdx: index("documents_project_idx").on(t.projectId),
+    clientIdx: index("documents_client_idx").on(t.clientId),
+  }),
+);
+
+// ----- CAD drawings -----
+//
+// Vector drawings for a project: panel layouts, wiring schematics, GA drawings.
+//
+// Entities are stored as JSON rather than as a DXF blob, because the editor
+// works on structured entities and re-parsing a text format on every load would
+// be slower and lossier than keeping the structure. DXF is the interchange
+// format on the way in and out, not the storage format.
+export const cadDrawings = pgTable(
+  "cad_drawings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** Entities and layers. Shape defined in lib/cad/types.ts. */
+    data: jsonb("data").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("cad_user_idx").on(t.userId),
+    projectIdx: index("cad_project_idx").on(t.projectId),
+  }),
+);
+
+export type DocumentRow = typeof documents.$inferSelect;
+export type CadDrawing = typeof cadDrawings.$inferSelect;

@@ -93,6 +93,11 @@ export async function listModelsCompat(
             ? m.context_window
             : undefined,
       free: free || id.endsWith(":free"),
+      outputModalities: Array.isArray(
+        (m.architecture as { output_modalities?: unknown })?.output_modalities,
+      )
+        ? (m.architecture as { output_modalities: string[] }).output_modalities
+        : undefined,
       vision: Array.isArray(modalities) ? modalities.includes("image") : undefined,
     } satisfies ModelInfo;
   });

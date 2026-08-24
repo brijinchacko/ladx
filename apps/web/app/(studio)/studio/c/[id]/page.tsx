@@ -5,6 +5,7 @@ import { db } from "@/lib/db/client";
 import { listMessages } from "@/lib/db/conversations";
 import { preferredProvider } from "@/lib/db/provider-keys";
 import { conversations } from "@/lib/db/schema";
+import { platformKey } from "@/lib/providers/free-tier";
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
@@ -36,7 +37,7 @@ export default async function ConversationPage({
       <WorkspaceHeader title={convo.title?.trim() || "Chat"} />
       <StudioChat
         conversationId={convo.id}
-        hasProvider={Boolean(provider)}
+        hasProvider={Boolean(provider) || Boolean(platformKey())}
         initialMessages={messages
           .filter((m) => m.role !== "system")
           // ChatTurn carries an id, which React uses as the list key. Reusing

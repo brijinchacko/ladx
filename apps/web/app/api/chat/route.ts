@@ -11,7 +11,13 @@ import { projects } from "@/lib/db/schema";
 import { buildProjectSystemPrompt } from "@/lib/inference/project-prompt";
 import { ssEncode } from "@/lib/inference/stream";
 import { ProviderError, getProvider } from "@/lib/providers";
-import { pickFreeModel } from "@/lib/providers/auto-model";
+import {
+  freeTierNotice,
+  platformKey,
+  rankFreeModels,
+  streamWithFallback,
+} from "@/lib/providers/free-tier";
+import type { Credentials } from "@/lib/providers/types";
 import type { ChatMessage } from "@/lib/providers/types";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -60,14 +66,21 @@ export async function POST(req: Request) {
     );
   }
 
-  // No quota gate. Inference runs on the user's own provider key (BYOK), so
-  // usage is metered by their provider, not by us. Rate limiting, when it
-  // matters, is the provider's, we surface their 429 rather than inventing one.
+  // Where the inference runs.
   //
-  // Which also means: no key, no chat. That is a 428 rather than a 500, and the
-  // client turns it into "connect a provider" rather than "something broke".
+  // Preference is the user's own provider: it is their key, their choice of
+  // model, and their account with the provider. Failing that, LADX's own
+  // OpenRouter key runs a shared free tier so that chat works in the first five
+  // minutes rather than after a signup at a third party. That key is restricted
+  // to free models, and the answer says so.
   const preferred = await preferredProvider(user.id);
-  if (!preferred) {
+  const ownCreds = preferred ? await credentialsFor(user.id, preferred.kind) : null;
+
+  const usingOwnKey = Boolean(preferred && ownCreds);
+  const provider = getProvider(usingOwnKey && preferred ? preferred.kind : "openrouter");
+
+  const shared = platformKey();
+  if (!usingOwnKey && !shared) {
     return Response.json(
       {
         error: "no_provider",
@@ -77,35 +90,35 @@ export async function POST(req: Request) {
     );
   }
 
-  const creds = await credentialsFor(user.id, preferred.kind);
-  if (!creds) {
-    return Response.json({ error: "no_provider" }, { status: 428 });
-  }
-  const provider = getProvider(preferred.kind);
-  // The request may name a model; otherwise use whichever the user chose when
-  // they connected the provider.
-  let model = parsed.model ?? creds.defaultModel;
+  const creds: Credentials = usingOwnKey ? (ownCreds as Credentials) : { apiKey: shared as string };
 
-  // Nothing chosen: pick the best free model the key can reach rather than
-  // stopping to make the user choose from a list of hundreds. `autoNotice` is
-  // sent to the client so it can say, once, that a paid model would do better.
+  // A model named by the request wins, then the user's saved default. With
+  // neither, the free tier falls through a ranked list of free models.
+  const explicitModel = parsed.model ?? (usingOwnKey ? ownCreds?.defaultModel : null);
+
   let autoNotice: string | null = null;
-  if (!model) {
-    const pick = await pickFreeModel(provider, creds);
-    if (pick) {
-      model = pick.model;
-      autoNotice = pick.notice;
-    }
-  }
+  let freeCandidates: Awaited<ReturnType<typeof rankFreeModels>> = [];
 
-  if (!model) {
-    return Response.json(
-      {
-        error: "no_model",
-        message: "No free model was available on this key. Choose a model in Settings to continue.",
-      },
-      { status: 428 },
-    );
+  if (!explicitModel) {
+    let listed: Awaited<ReturnType<typeof provider.listModels>> = [];
+    try {
+      listed = await provider.listModels(creds);
+    } catch {
+      // Listing failed; the fallback below will report it properly.
+    }
+    freeCandidates = rankFreeModels(listed);
+
+    if (freeCandidates.length === 0) {
+      return Response.json(
+        {
+          error: "no_model",
+          message: usingOwnKey
+            ? "No free model was reachable on your key. Choose a model in Settings to continue."
+            : "The shared free tier is unavailable right now. Connect your own key in Settings to continue.",
+        },
+        { status: 428 },
+      );
+    }
   }
 
   // The last entry MUST be the user's new message, that's what we persist
@@ -161,17 +174,6 @@ export async function POST(req: Request) {
           );
         }
 
-        // Say once, before any tokens, that a model was chosen automatically.
-        // The client shows it as a dismissible note rather than as an error,
-        // because nothing has gone wrong.
-        if (autoNotice) {
-          controller.enqueue(
-            encoder.encode(
-              `event: notice\ndata: ${JSON.stringify({ message: autoNotice, model })}\n\n`,
-            ),
-          );
-        }
-
         const messagesWithGrounding: ChatMessage[] = project
           ? [
               { role: "system", content: buildProjectSystemPrompt(project) },
@@ -179,19 +181,48 @@ export async function POST(req: Request) {
             ]
           : parsed.messages;
 
-        for await (const delta of provider.stream(creds, {
-          model,
-          messages: messagesWithGrounding,
-          temperature: parsed.temperature,
-          // A generous default matters more than it looks. Many of the free
-          // models on OpenRouter today are reasoning models: they emit their
-          // working into a separate field and only start the actual answer
-          // afterwards. One measured here produced 2,900 characters of
-          // reasoning before its first word of content, so a small budget
-          // means the model finishes without ever answering.
-          maxTokens: parsed.maxTokens ?? DEFAULT_MAX_TOKENS,
-          signal: req.signal,
-        })) {
+        // A generous token budget matters more than it looks. Several free
+        // models emit reasoning into a separate field before the answer, and a
+        // small budget means they finish without ever answering.
+        const maxTokens = parsed.maxTokens ?? DEFAULT_MAX_TOKENS;
+
+        let deltas: AsyncIterable<string>;
+
+        if (explicitModel) {
+          deltas = provider.stream(creds, {
+            model: explicitModel,
+            messages: messagesWithGrounding,
+            temperature: parsed.temperature,
+            maxTokens,
+            signal: req.signal,
+          });
+        } else {
+          // Fall through the free models until one actually starts answering.
+          const result = await streamWithFallback({
+            provider,
+            creds,
+            candidates: freeCandidates,
+            messages: messagesWithGrounding,
+            temperature: parsed.temperature,
+            maxTokens,
+            signal: req.signal,
+          });
+          deltas = result.stream;
+          autoNotice = usingOwnKey
+            ? `Running on ${result.model}, a free model on your key. Choose a paid model in Settings for better results.`
+            : freeTierNotice(result.model, result.attempts.length);
+
+          controller.enqueue(
+            encoder.encode(
+              `event: notice\ndata: ${JSON.stringify({
+                message: autoNotice,
+                model: result.model,
+              })}\n\n`,
+            ),
+          );
+        }
+
+        for await (const delta of deltas) {
           accumulated += delta;
           controller.enqueue(encoder.encode(ssEncode(delta)));
         }

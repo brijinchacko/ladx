@@ -33,6 +33,14 @@ export interface ModelInfo {
   tools?: boolean;
   /** Whether the model accepts images. Gates the PDF/screenshot import path. */
   vision?: boolean;
+  /**
+   * What the model emits, e.g. ["text"] or ["text","audio"].
+   *
+   * Needed because a free-model list contains more than chat models. Ranking a
+   * free tier by context window alone will happily pick a music generation
+   * model, which accepts a prompt and returns audio.
+   */
+  outputModalities?: string[];
 }
 
 export interface Credentials {

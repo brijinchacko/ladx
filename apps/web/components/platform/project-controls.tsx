@@ -15,12 +15,15 @@ interface ClientOption {
  * choosing them here is what makes every document that project generates come
  * out addressed to the right client with no further typing.
  */
-export function NewProjectForm({ clients }: { clients: ClientOption[] }) {
+export function NewProjectForm({
+  clients,
+  defaultClientId,
+}: { clients: ClientOption[]; defaultClientId?: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-  const [clientId, setClientId] = useState("");
+  const [clientId, setClientId] = useState(defaultClientId ?? "");
   const [site, setSite] = useState("");
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
@@ -119,7 +122,7 @@ export function NewProjectForm({ clients }: { clients: ClientOption[] }) {
               onChange={(e) => setClientId(e.target.value)}
               className="w-full rounded-sm border border-ink-200 bg-white px-2.5 py-1.5 text-[14px] outline-none focus:border-ink-500"
             >
-              <option value="">No client yet</option>
+              {!defaultClientId && <option value="">No client yet</option>}
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
