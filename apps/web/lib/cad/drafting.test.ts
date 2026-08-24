@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { readDxf, writeDxf } from "./dxf";
-import { hitTestBox, translateEntity } from "./render";
+import {
+  centreOf,
+  hitTestBox,
+  mirrorAbout,
+  rotateAbout,
+  scaleAbout,
+  transformEntity,
+  translateEntity,
+} from "./render";
 import { findSnap } from "./snap";
 import { SYMBOLS, getSymbol } from "./symbols";
 import { SHEETS, buildTitleBlock, getSheet } from "./titleblock";
@@ -228,5 +236,104 @@ describe("the title block", () => {
         }
       }
     }
+  });
+});
+
+describe("modify", () => {
+  const line: Entity = {
+    id: "l",
+    type: "line",
+    layer: "0",
+    a: { x: 0, y: 0 },
+    b: { x: 100, y: 0 },
+  };
+
+  it("rotates about the base point, not the origin", () => {
+    // Rotating a symbol about 0,0 flings it off the sheet. About its own
+    // centre, or about the terminal it connects to, is the operation meant.
+    const base = { x: 50, y: 0 };
+    const r = transformEntity(line, base, rotateAbout(base, 90), { angleDelta: 90 }) as typeof line;
+    expect(r.a.x).toBeCloseTo(50);
+    expect(r.a.y).toBeCloseTo(-50);
+    expect(r.b.x).toBeCloseTo(50);
+    expect(r.b.y).toBeCloseTo(50);
+  });
+
+  it("four rotations of ninety come back to where it started", () => {
+    const base = centreOf([line]);
+    let e: Entity = line;
+    for (let i = 0; i < 4; i++) {
+      e = transformEntity(e, base, rotateAbout(base, 90), { angleDelta: 90 });
+    }
+    if (e.type !== "line") throw new Error("changed type");
+    expect(e.a.x).toBeCloseTo(line.a.x);
+    expect(e.a.y).toBeCloseTo(line.a.y);
+    expect(e.b.x).toBeCloseTo(line.b.x);
+    expect(e.b.y).toBeCloseTo(line.b.y);
+  });
+
+  it("mirrors an arc by reversing its sweep, not just its angles", () => {
+    // Reflecting the endpoints without swapping them leaves the arc drawn as
+    // its own complement, which looks like the tool deleted most of it.
+    const arc: Entity = {
+      id: "a",
+      type: "arc",
+      layer: "0",
+      c: { x: 0, y: 0 },
+      r: 10,
+      start: 0,
+      end: 90,
+    };
+    const m = transformEntity(arc, { x: 0, y: 0 }, mirrorAbout({ x: 0, y: 0 }, "x"), {
+      mirrorX: true,
+    });
+    if (m.type !== "arc") throw new Error("changed type");
+    expect(m.start).toBe(90);
+    expect(m.end).toBe(180);
+  });
+
+  it("flips a dimension to the other side when mirrored", () => {
+    const dim: Entity = {
+      id: "d",
+      type: "dimension",
+      layer: "0",
+      a: { x: 0, y: 0 },
+      b: { x: 100, y: 0 },
+      offset: 20,
+      height: 3.5,
+    };
+    const m = transformEntity(dim, { x: 50, y: 0 }, mirrorAbout({ x: 50, y: 0 }, "x"), {
+      mirrorX: true,
+    });
+    if (m.type !== "dimension") throw new Error("changed type");
+    expect(m.offset).toBe(-20);
+  });
+
+  it("scales the radius and the text height, not just the positions", () => {
+    const circle: Entity = { id: "c", type: "circle", layer: "0", c: { x: 10, y: 10 }, r: 5 };
+    const s = transformEntity(circle, { x: 0, y: 0 }, scaleAbout({ x: 0, y: 0 }, 3), { scale: 3 });
+    if (s.type !== "circle") throw new Error("changed type");
+    expect(s.r).toBe(15);
+    expect(s.c).toEqual({ x: 30, y: 30 });
+
+    const text: Entity = {
+      id: "t",
+      type: "text",
+      layer: "0",
+      at: { x: 4, y: 4 },
+      text: "X1:1",
+      height: 3,
+    };
+    const st = transformEntity(text, { x: 0, y: 0 }, scaleAbout({ x: 0, y: 0 }, 2), { scale: 2 });
+    if (st.type !== "text") throw new Error("changed type");
+    expect(st.height).toBe(6);
+  });
+
+  it("takes the centre of a set, not of the first thing in it", () => {
+    const c = centreOf([
+      { id: "1", type: "rect", layer: "0", a: { x: 0, y: 0 }, b: { x: 10, y: 10 } },
+      { id: "2", type: "rect", layer: "0", a: { x: 90, y: 90 }, b: { x: 100, y: 100 } },
+    ]);
+    expect(c).toEqual({ x: 50, y: 50 });
   });
 });

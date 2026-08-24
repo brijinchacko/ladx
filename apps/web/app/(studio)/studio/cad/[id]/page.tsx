@@ -5,7 +5,7 @@ import { emptyDrawing } from "@/lib/cad/types";
 import { db } from "@/lib/db/client";
 import { cadDrawings, clients, projects } from "@/lib/db/schema";
 import { getCompany } from "@/lib/platform/queries";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -36,11 +36,27 @@ export default async function CadPage({ params }: { params: Promise<{ id: string
     .limit(1);
   if (!row) notFound();
 
-  const company = await getCompany(user.id);
+  // Every sheet in this set, for the tree. A drawing filed against a project is
+  // one sheet of that project's package; a loose one sits with the other loose
+  // ones, which is the only grouping there is for it.
+  const [company, sheets] = await Promise.all([
+    getCompany(user.id),
+    db()
+      .select({ id: cadDrawings.id, name: cadDrawings.name, updatedAt: cadDrawings.updatedAt })
+      .from(cadDrawings)
+      .where(
+        row.drawing.projectId
+          ? and(eq(cadDrawings.userId, user.id), eq(cadDrawings.projectId, row.drawing.projectId))
+          : and(eq(cadDrawings.userId, user.id), isNull(cadDrawings.projectId)),
+      )
+      .orderBy(cadDrawings.name),
+  ]);
 
   return (
     <CadEditor
       drawingId={row.drawing.id}
+      projectId={row.drawing.projectId}
+      sheets={sheets.map((s) => ({ ...s, updatedAt: s.updatedAt.toISOString() }))}
       name={row.drawing.name}
       initial={(row.drawing.data as Drawing) ?? emptyDrawing()}
       projectName={row.projectName ?? undefined}

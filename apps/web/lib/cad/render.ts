@@ -249,3 +249,110 @@ export function translateEntity(e: Entity, dx: number, dy: number): Entity {
       return { ...e, at: m(e.at) };
   }
 }
+
+/* ── transforms about a point ──────────────────────────────────────────── */
+
+/**
+ * Rotate, mirror and scale, all about a base point.
+ *
+ * The base point is what makes these usable. Rotating a symbol about the
+ * drawing origin flings it off the sheet; rotating it about its own centre, or
+ * about the terminal it connects to, is the operation an engineer means. The
+ * editor passes the centre of the selection unless the user has snapped to
+ * something, in which case it passes that.
+ *
+ * Text and dimensions rotate by moving their anchors only. A dimension already
+ * derives its own angle from the points it measures, and text that follows an
+ * arbitrary rotation is unreadable on a drawing; both are conventions a
+ * draughtsman would recognise rather than shortcuts.
+ */
+export function transformEntity(
+  e: Entity,
+  base: Point,
+  fn: (p: Point) => Point,
+  opts: { angleDelta?: number; scale?: number; mirrorX?: boolean } = {},
+): Entity {
+  const m = fn;
+  switch (e.type) {
+    case "line":
+      return { ...e, a: m(e.a), b: m(e.b) };
+    case "rect":
+      return { ...e, a: m(e.a), b: m(e.b) };
+    case "dimension":
+      return {
+        ...e,
+        a: m(e.a),
+        b: m(e.b),
+        // A mirrored dimension would otherwise flip to the wrong side of the
+        // line it measures.
+        offset: opts.mirrorX ? -e.offset : e.offset * (opts.scale ?? 1),
+      };
+    case "circle":
+      return { ...e, c: m(e.c), r: e.r * (opts.scale ?? 1) };
+    case "arc": {
+      const rotated = (opts.angleDelta ?? 0) % 360;
+      if (opts.mirrorX) {
+        // Mirroring reverses the sweep direction as well as reflecting the
+        // angles, or the arc comes out as its own complement.
+        return {
+          ...e,
+          c: m(e.c),
+          start: 180 - e.end,
+          end: 180 - e.start,
+          r: e.r * (opts.scale ?? 1),
+        };
+      }
+      return {
+        ...e,
+        c: m(e.c),
+        r: e.r * (opts.scale ?? 1),
+        start: e.start + rotated,
+        end: e.end + rotated,
+      };
+    }
+    case "polyline":
+      return { ...e, points: e.points.map(m) };
+    case "text":
+      return { ...e, at: m(e.at), height: e.height * (opts.scale ?? 1) };
+  }
+}
+
+export function rotateAbout(base: Point, degrees: number): (p: Point) => Point {
+  const rad = (degrees * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  return (p) => {
+    const dx = p.x - base.x;
+    const dy = p.y - base.y;
+    return { x: base.x + dx * cos - dy * sin, y: base.y + dx * sin + dy * cos };
+  };
+}
+
+export function mirrorAbout(base: Point, axis: "x" | "y"): (p: Point) => Point {
+  return (p) =>
+    axis === "x" ? { x: base.x - (p.x - base.x), y: p.y } : { x: p.x, y: base.y - (p.y - base.y) };
+}
+
+export function scaleAbout(base: Point, factor: number): (p: Point) => Point {
+  return (p) => ({
+    x: base.x + (p.x - base.x) * factor,
+    y: base.y + (p.y - base.y) * factor,
+  });
+}
+
+/** The centre of a set of entities, which is the natural base point. */
+export function centreOf(entities: Entity[]): Point {
+  if (entities.length === 0) return { x: 0, y: 0 };
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+  for (const e of entities) {
+    const b = entityBounds(e);
+    minX = Math.min(minX, b.min.x);
+    minY = Math.min(minY, b.min.y);
+    maxX = Math.max(maxX, b.max.x);
+    maxY = Math.max(maxY, b.max.y);
+  }
+  return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
+}

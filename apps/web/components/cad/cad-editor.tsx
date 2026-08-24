@@ -1,10 +1,22 @@
 "use client";
 
+import CadProperties from "@/components/cad/cad-properties";
 import CadRail from "@/components/cad/cad-rail";
+import CadSheets, { type SheetRow } from "@/components/cad/cad-sheets";
 import { type DrawingTemplate, buildDrawingFromTemplate } from "@/lib/cad/drawing-templates";
 import { readDxf, writeDxf } from "@/lib/cad/dxf";
 import { drawingToPdf } from "@/lib/cad/pdf";
-import { drawEntity, hitTest, hitTestBox, translateEntity } from "@/lib/cad/render";
+import {
+  centreOf,
+  drawEntity,
+  hitTest,
+  hitTestBox,
+  mirrorAbout,
+  rotateAbout,
+  scaleAbout,
+  transformEntity,
+  translateEntity,
+} from "@/lib/cad/render";
 import { type SnapHit, findSnap } from "@/lib/cad/snap";
 import type { CadSymbol } from "@/lib/cad/symbols";
 import {
@@ -14,6 +26,7 @@ import {
   buildTitleBlock,
 } from "@/lib/cad/titleblock";
 import {
+  DEFAULT_LAYERS,
   type Drawing,
   type Entity,
   type Point,
@@ -21,6 +34,7 @@ import {
   formatLength,
   newId,
 } from "@/lib/cad/types";
+import { type Menu, MenuBar } from "@ladx/studio";
 import {
   Circle as CircleIcon,
   Copy,
@@ -42,6 +56,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Tool = "select" | "line" | "rect" | "circle" | "arc" | "polyline" | "text" | "dimension";
@@ -108,6 +123,8 @@ export default function CadEditor({
   name: initialName,
   projectName,
   titleFields,
+  sheets = [],
+  projectId = null,
 }: {
   drawingId: string;
   initial: Drawing;
@@ -115,14 +132,38 @@ export default function CadEditor({
   projectName?: string;
   /** Project, client and company details, for the generated title block. */
   titleFields?: Omit<TitleBlockFields, "drawingTitle">;
+  /** Every sheet in this set, for the tree. */
+  sheets?: SheetRow[];
+  projectId?: string | null;
 }) {
+  const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  // Reached from both the toolbar and the File menu, so it lives here rather
+  // than inside either.
+  const importRef = useRef<HTMLInputElement>(null);
 
-  const [drawing, setDrawing] = useState<Drawing>(initial);
+  /**
+   * A drawing always has layers.
+   *
+   * One can arrive without them: created through the API with an empty set, or
+   * imported from a DXF whose layer table was missing. With none, the active
+   * layer picker is empty and every new entity is filed on a layer that does
+   * not exist, so it cannot be hidden, locked or coloured. Backfilled on the
+   * way in rather than guarded at twenty call sites.
+   */
+  const seeded = useMemo<Drawing>(
+    () =>
+      initial.layers.length > 0
+        ? initial
+        : { ...initial, layers: DEFAULT_LAYERS.map((l) => ({ ...l })) },
+    [initial],
+  );
+
+  const [drawing, setDrawing] = useState<Drawing>(seeded);
   const [name, setName] = useState(initialName);
   const [tool, setTool] = useState<Tool>("select");
-  const [layer, setLayer] = useState(initial.layers[0]?.name ?? "0");
+  const [layer, setLayer] = useState(seeded.layers[0]?.name ?? "0");
   const [view, setView] = useState<View>({ scale: 1, ox: 0, oy: 0 });
   const [gridSnap, setGridSnap] = useState(true);
   const [objectSnap, setObjectSnap] = useState(true);
@@ -137,12 +178,27 @@ export default function CadEditor({
   const [snapHit, setSnapHit] = useState<SnapHit | null>(null);
   const [drag, setDrag] = useState<Drag>({ kind: "none" });
 
-  const [history, setHistory] = useState<Drawing[]>([initial]);
+  const [history, setHistory] = useState<Drawing[]>([seeded]);
   const [historyAt, setHistoryAt] = useState(0);
+
+  /**
+   * The clipboard, and whether there is unsaved work.
+   *
+   * The clipboard is deliberately in memory rather than the system one: what is
+   * being copied is geometry, and serialising it through text to survive a
+   * round trip through the OS clipboard would lose the layer assignment and the
+   * entity types for no gain. Copy and paste between sheets of the same set
+   * work because the editor is not remounted between them.
+   */
+  const clipboardRef = useRef<Entity[]>([]);
+  const savedRef = useRef<Drawing>(seeded);
+  const [dirty, setDirty] = useState(false);
+  const [showProperties, setShowProperties] = useState(true);
 
   const commit = useCallback(
     (next: Drawing) => {
       setDrawing(next);
+      setDirty(next !== savedRef.current);
       setHistory((h) => [...h.slice(0, historyAt + 1), next].slice(-60));
       setHistoryAt((i) => Math.min(i + 1, 59));
     },
@@ -662,6 +718,133 @@ export default function CadEditor({
     [drawing, commit, titleFields],
   );
 
+  /* ── clipboard and transforms ── */
+
+  const selectedEntities = useMemo(
+    () => drawing.entities.filter((e) => selected.includes(e.id)),
+    [drawing.entities, selected],
+  );
+
+  const copySelected = useCallback(() => {
+    if (selectedEntities.length === 0) return;
+    clipboardRef.current = selectedEntities.map((e) => ({ ...e }));
+    setStatus(`${selectedEntities.length} copied.`);
+    setTimeout(() => setStatus(null), 2000);
+  }, [selectedEntities]);
+
+  const cutSelected = useCallback(() => {
+    if (selectedEntities.length === 0) return;
+    clipboardRef.current = selectedEntities.map((e) => ({ ...e }));
+    commit({ ...drawing, entities: drawing.entities.filter((e) => !selected.includes(e.id)) });
+    setSelected([]);
+  }, [selectedEntities, drawing, selected, commit]);
+
+  /**
+   * Paste, offset by one grid square.
+   *
+   * Landing a paste exactly on top of the original looks like nothing happened
+   * and leaves two entities the user cannot tell apart. One grid square is
+   * enough to see, and small enough to nudge back.
+   */
+  const paste = useCallback(() => {
+    const held = clipboardRef.current;
+    if (held.length === 0) return;
+    const copies = held.map((e) => ({
+      ...translateEntity(e, grid, -grid),
+      id: newId("v"),
+    }));
+    // Any layer the copied geometry used must exist on this sheet, or a paste
+    // between sheets silently lands on a layer that is not there.
+    const missing = [...new Set(copies.map((c) => c.layer))].filter(
+      (n) => !drawing.layers.some((l) => l.name === n),
+    );
+    commit({
+      ...drawing,
+      layers: [
+        ...drawing.layers,
+        ...missing.map((n) => ({ name: n, color: "0F1A24", visible: true, locked: false })),
+      ],
+      entities: [...drawing.entities, ...copies],
+    });
+    setSelected(copies.map((c) => c.id));
+    clipboardRef.current = copies.map((c) => ({ ...c }));
+  }, [drawing, commit, grid]);
+
+  /** Rotate, mirror or scale the selection about its own centre. */
+  const transformSelected = useCallback(
+    (kind: "rotate90" | "rotate-90" | "mirrorX" | "mirrorY" | "scale", factor?: number) => {
+      if (selectedEntities.length === 0) return;
+      // The snapped cursor wins as the base point when the user has one: it is
+      // how you rotate a symbol about the terminal it connects to rather than
+      // about its own middle.
+      const base = snapHit?.point ?? centreOf(selectedEntities);
+      const ids = new Set(selected);
+
+      const apply = (e: Entity): Entity => {
+        switch (kind) {
+          case "rotate90":
+            return transformEntity(e, base, rotateAbout(base, 90), { angleDelta: 90 });
+          case "rotate-90":
+            return transformEntity(e, base, rotateAbout(base, -90), { angleDelta: -90 });
+          case "mirrorX":
+            return transformEntity(e, base, mirrorAbout(base, "x"), { mirrorX: true });
+          case "mirrorY":
+            return transformEntity(e, base, mirrorAbout(base, "y"), { mirrorX: true });
+          case "scale":
+            return transformEntity(e, base, scaleAbout(base, factor ?? 1), { scale: factor ?? 1 });
+        }
+      };
+
+      commit({
+        ...drawing,
+        entities: drawing.entities.map((e) => (ids.has(e.id) ? apply(e) : e)),
+      });
+    },
+    [selectedEntities, selected, drawing, commit, snapHit],
+  );
+
+  /** One entity replaced, from the properties panel. */
+  const replaceEntity = useCallback(
+    (next: Entity) => {
+      commit({
+        ...drawing,
+        entities: drawing.entities.map((e) => (e.id === next.id ? next : e)),
+      });
+    },
+    [drawing, commit],
+  );
+
+  const moveSelectedToLayer = useCallback(
+    (target: string) => {
+      const ids = new Set(selected);
+      commit({
+        ...drawing,
+        entities: drawing.entities.map((e) => (ids.has(e.id) ? { ...e, layer: target } : e)),
+      });
+    },
+    [drawing, selected, commit],
+  );
+
+  /* ── view ── */
+
+  /** Frame everything, or just the selection when there is one. */
+  const zoomFit = useCallback(
+    (onlySelection = false) => {
+      const wrap = wrapRef.current;
+      if (!wrap) return;
+      const subject =
+        onlySelection && selectedEntities.length > 0 ? selectedEntities : drawing.entities;
+      const b = drawingBounds({ ...drawing, entities: subject });
+      if (!b) return;
+      const pad = 40;
+      const sx = (b.max.x - b.min.x || 100) / Math.max(wrap.clientWidth - pad * 2, 1);
+      const sy = (b.max.y - b.min.y || 100) / Math.max(wrap.clientHeight - pad * 2, 1);
+      const scale = Math.max(sx, sy, 0.01) * 1.08;
+      setView({ scale, ox: b.min.x - pad * scale, oy: b.max.y + pad * scale });
+    },
+    [drawing, selectedEntities],
+  );
+
   const setLayerFlag = useCallback(
     (layerName: string, flag: "visible" | "locked", value: boolean) => {
       commit({
@@ -688,6 +871,26 @@ export default function CadEditor({
       if (mod && ev.key.toLowerCase() === "d") {
         ev.preventDefault();
         duplicateSelected();
+        return;
+      }
+      if (mod && ev.key.toLowerCase() === "c") {
+        ev.preventDefault();
+        copySelected();
+        return;
+      }
+      if (mod && ev.key.toLowerCase() === "x") {
+        ev.preventDefault();
+        cutSelected();
+        return;
+      }
+      if (mod && ev.key.toLowerCase() === "v") {
+        ev.preventDefault();
+        paste();
+        return;
+      }
+      if (mod && ev.key.toLowerCase() === "s") {
+        ev.preventDefault();
+        void save();
         return;
       }
       if (mod && ev.key.toLowerCase() === "a") {
@@ -741,19 +944,11 @@ export default function CadEditor({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [
-    undo,
-    redo,
-    tool,
-    finishPolyline,
-    deleteSelected,
-    duplicateSelected,
-    selected,
-    drawing,
-    commit,
-    grid,
-    layerOf,
-  ]);
+    // No dependency list, deliberately. The handler closes over most of the
+    // editor's state, and an incomplete list here is how a shortcut quietly
+    // starts acting on a stale drawing. Re-registering one listener per render
+    // costs nothing next to that.
+  });
 
   /* ── persistence and interchange ── */
 
@@ -766,6 +961,10 @@ export default function CadEditor({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, data: drawing }),
       });
+      if (res.ok) {
+        savedRef.current = drawing;
+        setDirty(false);
+      }
       setStatus(res.ok ? "Saved" : "Could not save");
     } finally {
       setSaving(false);
@@ -807,6 +1006,188 @@ export default function CadEditor({
       "pdf",
     );
 
+  /**
+   * The menu bar.
+   *
+   * The same arrangement as the ladder editor, which is the same arrangement
+   * every CAD package and every PLC IDE uses. Somebody who learns that export
+   * is under File and mirror is under Modify carries that to AutoCAD unchanged;
+   * inventing a tidier grouping here would teach a habit that works in one
+   * piece of software.
+   *
+   * Modify is its own menu rather than part of Edit, because that is where a
+   * draughtsman looks for rotate and mirror.
+   */
+  /*
+   * Rebuilt every render rather than memoised.
+   *
+   * The menus close over most of the editor: the drawing, the selection, the
+   * history, the clipboard, and half a dozen handlers that are plain functions
+   * and therefore new each time. A dependency list over that is a list somebody
+   * will get wrong, and the failure mode is a menu item that quietly acts on a
+   * drawing from three edits ago. Building five arrays of objects costs
+   * nothing next to that.
+   */
+  const menus: Menu[] = [
+    {
+      label: "File",
+      items: [
+        { label: "New sheet", onSelect: () => router.push("/studio/cad") },
+        { label: "Save", shortcut: "Cmd S", onSelect: () => void save(), disabled: saving },
+        { label: "Import DXF…", separator: true, onSelect: () => importRef.current?.click() },
+        { label: "Export DXF", onSelect: exportDxf },
+        { label: "Export PDF", onSelect: exportPdf },
+        { label: "Print", shortcut: "Cmd P", onSelect: () => window.print() },
+        {
+          label: "Close",
+          separator: true,
+          onSelect: () => router.push(projectId ? `/studio/projects/${projectId}` : "/studio/cad"),
+        },
+      ],
+    },
+    {
+      label: "Edit",
+      items: [
+        { label: "Undo", shortcut: "Cmd Z", onSelect: undo, disabled: historyAt <= 0 },
+        {
+          label: "Redo",
+          shortcut: "Shift Cmd Z",
+          onSelect: redo,
+          disabled: historyAt >= history.length - 1,
+        },
+        {
+          label: "Cut",
+          shortcut: "Cmd X",
+          separator: true,
+          onSelect: cutSelected,
+          disabled: selected.length === 0,
+        },
+        {
+          label: "Copy",
+          shortcut: "Cmd C",
+          onSelect: copySelected,
+          disabled: selected.length === 0,
+        },
+        {
+          label: "Paste",
+          shortcut: "Cmd V",
+          onSelect: paste,
+          disabled: clipboardRef.current.length === 0,
+        },
+        {
+          label: "Duplicate",
+          shortcut: "Cmd D",
+          onSelect: duplicateSelected,
+          disabled: selected.length === 0,
+        },
+        {
+          label: "Delete",
+          shortcut: "Del",
+          onSelect: deleteSelected,
+          disabled: selected.length === 0,
+        },
+        {
+          label: "Select all",
+          shortcut: "Cmd A",
+          separator: true,
+          onSelect: () =>
+            setSelected(
+              drawing.entities.filter((e) => layerOf(e.layer)?.locked !== true).map((e) => e.id),
+            ),
+        },
+        { label: "Select none", shortcut: "Esc", onSelect: () => setSelected([]) },
+      ],
+    },
+    {
+      label: "Draw",
+      items: TOOLS.filter((t) => t.id !== "select").map((t) => ({
+        label: t.label,
+        shortcut: t.key,
+        onSelect: () => {
+          setTool(t.id);
+          setPending([]);
+        },
+      })),
+    },
+    {
+      label: "Modify",
+      items: [
+        {
+          label: "Rotate 90 clockwise",
+          onSelect: () => transformSelected("rotate-90"),
+          disabled: selected.length === 0,
+        },
+        {
+          label: "Rotate 90 anticlockwise",
+          onSelect: () => transformSelected("rotate90"),
+          disabled: selected.length === 0,
+        },
+        {
+          label: "Mirror horizontally",
+          separator: true,
+          onSelect: () => transformSelected("mirrorX"),
+          disabled: selected.length === 0,
+        },
+        {
+          label: "Mirror vertically",
+          onSelect: () => transformSelected("mirrorY"),
+          disabled: selected.length === 0,
+        },
+        {
+          label: "Scale by 2",
+          separator: true,
+          onSelect: () => transformSelected("scale", 2),
+          disabled: selected.length === 0,
+        },
+        {
+          label: "Scale by a half",
+          onSelect: () => transformSelected("scale", 0.5),
+          disabled: selected.length === 0,
+        },
+        {
+          label: "Move to active layer",
+          separator: true,
+          onSelect: () => moveSelectedToLayer(layer),
+          disabled: selected.length === 0,
+        },
+      ],
+    },
+    {
+      label: "View",
+      items: [
+        { label: "Zoom to fit", shortcut: "Cmd 0", onSelect: () => zoomFit(false) },
+        {
+          label: "Zoom to selection",
+          onSelect: () => zoomFit(true),
+          disabled: selected.length === 0,
+        },
+        {
+          label: "Zoom in",
+          separator: true,
+          onSelect: () => setView((v) => ({ ...v, scale: Math.max(v.scale / 1.3, 0.01) })),
+        },
+        {
+          label: "Zoom out",
+          onSelect: () => setView((v) => ({ ...v, scale: Math.min(v.scale * 1.3, 200) })),
+        },
+        {
+          label: gridSnap ? "Grid snap off" : "Grid snap on",
+          separator: true,
+          onSelect: () => setGridSnap((g) => !g),
+        },
+        {
+          label: objectSnap ? "Object snap off" : "Object snap on",
+          onSelect: () => setObjectSnap((o) => !o),
+        },
+        {
+          label: showProperties ? "Hide properties" : "Show properties",
+          separator: true,
+          onSelect: () => setShowProperties((p) => !p),
+        },
+      ],
+    },
+  ];
+
   const stats = useMemo(
     () => ({ entities: drawing.entities.length, layers: drawing.layers.length }),
     [drawing],
@@ -822,11 +1203,32 @@ export default function CadEditor({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      <MenuBar
+        menus={menus}
+        title={
+          <span className="flex items-center gap-2">
+            <span className="font-mono text-[11.5px] text-ink-400">
+              {projectName ?? "No project"}
+            </span>
+            {dirty && (
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-[#B4531A]"
+                title="Unsaved changes"
+                aria-label="Unsaved changes"
+              />
+            )}
+          </span>
+        }
+      />
+
       {/* toolbar */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-2">
         <input
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+            setDirty(true);
+          }}
           className="w-40 rounded-md border border-ink-200 bg-white px-2 py-1 text-[13px] outline-none focus:border-ink-500"
         />
 
@@ -975,6 +1377,15 @@ export default function CadEditor({
       </div>
 
       <div className="flex min-h-0 flex-1">
+        <CadSheets
+          sheets={sheets}
+          currentId={drawingId}
+          projectId={projectId}
+          projectName={projectName ?? null}
+          onDirtyCheck={() => dirty}
+          onOpen={(id) => router.push(`/studio/cad/${id}`)}
+        />
+
         {/* canvas */}
         <div ref={wrapRef} className="relative min-h-0 flex-1 bg-white">
           <canvas
@@ -1023,6 +1434,24 @@ export default function CadEditor({
             {projectName && <span className="ml-auto">{projectName}</span>}
           </div>
         </div>
+
+        {showProperties && (
+          <aside className="flex w-56 shrink-0 flex-col border-l border-ink-100 bg-ink-50/40">
+            <div className="shrink-0 border-b border-ink-100 px-2.5 py-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
+                Properties
+              </span>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-2.5">
+              <CadProperties
+                selected={selectedEntities}
+                layers={drawing.layers}
+                onChange={replaceEntity}
+                onChangeLayer={moveSelectedToLayer}
+              />
+            </div>
+          </aside>
+        )}
 
         <CadRail
           layers={drawing.layers}

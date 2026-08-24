@@ -57,6 +57,16 @@ export type { Branding } from "./lib/branding";
 export { default as LadxStudio } from "./components/LadxStudio";
 export { default as LadxHome } from "./components/LadxHome";
 export { default as LadxWindow } from "./components/LadxWindow";
+
+/*
+ * The chrome, shared.
+ *
+ * The menu bar and the context menu are not ladder-specific: they are the
+ * arrangement every PLC IDE uses, and CAD is another tool in the same
+ * workbench. A second implementation would drift, and a drawing tool whose File
+ * menu sits in a different order from the ladder editor's teaches nothing.
+ */
+export { default as MenuBar, type Menu, type MenuItem } from "./components/MenuBar";
 export { default as LadxLogo } from "./components/LadxLogo";
 export { default as LadderPreview } from "./components/LadderPreview";
 
