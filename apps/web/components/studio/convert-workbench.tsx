@@ -66,12 +66,24 @@ export default function ConvertWorkbench({
   sources,
   companyName,
   author,
+  initialProjectId,
+  unreadable = [],
 }: {
   sources: ConvertSource[];
   companyName: string | null;
   author: string;
+  /** A project named in the URL, from a "Convert" link on a project page. */
+  initialProjectId?: string | null;
+  /** Programs that could not be read, named so their absence is not a mystery. */
+  unreadable?: string[];
 }) {
-  const [sourceKey, setSourceKey] = useState<string>(sources[0]?.projectId ?? "__none");
+  // A project named in the URL wins over "whatever is first", so a "Convert"
+  // link from a project opens that project's program.
+  const [sourceKey, setSourceKey] = useState<string>(
+    (initialProjectId && sources.some((s) => s.projectId === initialProjectId)
+      ? initialProjectId
+      : sources[0]?.projectId) ?? "__none",
+  );
   const [uploaded, setUploaded] = useState<ConvertSource | null>(null);
   const [target, setTarget] = useState<Target>("st");
   const [error, setError] = useState<string | null>(null);
@@ -219,6 +231,13 @@ export default function ConvertWorkbench({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      {unreadable.length > 0 && (
+        <p className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900">
+          {unreadable.length} saved program{unreadable.length === 1 ? "" : "s"} could not be read
+          and {unreadable.length === 1 ? "is" : "are"} not listed: {unreadable.join(", ")}. Open{" "}
+          {unreadable.length === 1 ? "it" : "them"} in Ladder and save again to repair the file.
+        </p>
+      )}
       {/* source bar */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-2">
         <FolderKanban className="h-3.5 w-3.5 shrink-0 text-ink-400" />
@@ -322,7 +341,7 @@ export default function ConvertWorkbench({
       )}
 
       {!source || !all || !current ? (
-        <Empty />
+        <Empty unreadable={unreadable} />
       ) : (
         <>
           {/* target tabs, each carrying what it will cost you */}
@@ -435,7 +454,7 @@ export default function ConvertWorkbench({
   );
 }
 
-function Empty() {
+function Empty({ unreadable = [] }: { unreadable?: string[] }) {
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center p-8">
       <div className="max-w-sm text-center">
@@ -445,6 +464,15 @@ function Empty() {
           Write a program in Ladder and save it against a project, open an exported project file, or
           load the example to see what conversion produces.
         </p>
+        {unreadable.length > 0 && (
+          <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-left text-[12.5px] leading-relaxed text-amber-900">
+            {unreadable.length === 1
+              ? `"${unreadable[0]}" is saved against a project but could not be read, so it is not listed here.`
+              : `${unreadable.length} saved programs could not be read, so they are not listed here: ${unreadable.join(", ")}.`}{" "}
+            Open in Ladder and save again to repair the file.
+          </p>
+        )}
+
         <a
           href="/studio/ladder"
           className="mt-4 inline-block rounded-md bg-ink-900 px-4 py-2 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"

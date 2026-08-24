@@ -40,6 +40,7 @@ export function autoFillValues(input: {
 
   return {
     PROJECT_NAME: project.name,
+    SITE: project.site ?? "",
     CLIENT: client?.name ?? "",
     COMPANY: company?.name ?? "",
     AUTHOR: author,
@@ -417,12 +418,19 @@ export function renderDocument(input: {
         <div class="v"><strong>${esc(project.name)}</strong>${esc(project.code ?? "")}</div>
       </section>
       ${
-        client
+        // The site belongs here rather than under Project: a document is
+        // prepared for a client at a place, and on a multi-site client that
+        // place is the only thing distinguishing two otherwise identical
+        // packages. Rendered without a client too, because a project can have
+        // a site before anybody has decided who is being invoiced.
+        client || project.site
           ? `<section>
         <h4>Prepared for</h4>
-        <div class="v"><strong>${esc(client.name)}</strong>${clientLines
+        <div class="v">${client ? `<strong>${esc(client.name)}</strong>` : ""}${clientLines
           .map((l) => esc(l))
-          .join("<br />")}${clientContact ? `<br />${esc(clientContact)}` : ""}</div>
+          .join(
+            "<br />",
+          )}${project.site ? `<br />${esc(project.site)}` : ""}${clientContact ? `<br />${esc(clientContact)}` : ""}</div>
       </section>`
           : ""
       }

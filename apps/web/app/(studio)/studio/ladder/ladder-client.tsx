@@ -30,11 +30,18 @@ const SCRATCH = "scratch";
 export default function LadderClient({
   projects,
   programs,
+  initialProjectId,
 }: {
   projects: LadderProject[];
   programs: LadderProgramRow[];
+  /**
+   * A project named in the URL, from a "Open in Ladder" link on a project page.
+   * Arriving with one skips the home screen: the caller has already answered
+   * the only question it asks.
+   */
+  initialProjectId?: string | null;
 }) {
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(initialProjectId ?? null);
   const [focus, setFocus] = useState(false);
 
   // Escape leaves focus mode, which is where a hand goes on a screen with

@@ -81,12 +81,25 @@ export default function Monitor({
   sources,
   companyName,
   author,
+  initialProjectId,
+  unreadable = [],
 }: {
   sources: ProgramSource[];
   companyName: string | null;
   author: string;
+  /** A project named in the URL, from a "Run it" link on a project page. */
+  initialProjectId?: string | null;
+  /** Programs the engine cannot read, named so their absence is not a mystery. */
+  unreadable?: string[];
 }) {
-  const [sourceKey, setSourceKey] = useState(sources[0]?.projectId ?? "__scratch");
+  // A project named in the URL wins over "whatever is first", so a "Run it"
+  // link from a project lands on that project's program rather than on the
+  // most recently touched one.
+  const [sourceKey, setSourceKey] = useState(
+    (initialProjectId && sources.some((s) => s.projectId === initialProjectId)
+      ? initialProjectId
+      : sources[0]?.projectId) ?? "__scratch",
+  );
   const source = useMemo(
     () => sources.find((s) => (s.projectId ?? "__scratch") === sourceKey) ?? sources[0] ?? null,
     [sources, sourceKey],
@@ -336,6 +349,14 @@ export default function Monitor({
             Write a program in the Ladder tool and save it. Anything saved against a project shows
             up here, ready to run.
           </p>
+          {unreadable.length > 0 && (
+            <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-left text-[12.5px] leading-relaxed text-amber-900">
+              {unreadable.length === 1
+                ? `"${unreadable[0]}" is saved against a project but could not be read, so it is not listed here.`
+                : `${unreadable.length} saved programs could not be read, so they are not listed here: ${unreadable.join(", ")}.`}{" "}
+              Open in Ladder and save again to repair the file.
+            </p>
+          )}
           <a
             href="/studio/ladder"
             className="mt-4 inline-block rounded-md bg-ink-900 px-4 py-2 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
@@ -349,6 +370,13 @@ export default function Monitor({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      {unreadable.length > 0 && (
+        <p className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900">
+          {unreadable.length} saved program{unreadable.length === 1 ? "" : "s"} could not be read
+          and {unreadable.length === 1 ? "is" : "are"} not listed: {unreadable.join(", ")}. Open{" "}
+          {unreadable.length === 1 ? "it" : "them"} in Ladder and save again to repair the file.
+        </p>
+      )}
       {/* controls */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-2">
         <select

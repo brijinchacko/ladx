@@ -16,6 +16,7 @@
 /** A token the download step substitutes before handing the file over. */
 export type Placeholder =
   | "PROJECT_NAME"
+  | "SITE"
   | "CLIENT"
   | "DOC_NO"
   | "REV"
@@ -68,6 +69,7 @@ export interface DocTemplate {
 
 export const PLACEHOLDER_LABELS: Record<Placeholder, string> = {
   PROJECT_NAME: "Project name",
+  SITE: "Site",
   CLIENT: "Client",
   COMPANY: "Your company",
   DOC_NO: "Document number",
@@ -79,6 +81,7 @@ export const PLACEHOLDER_LABELS: Record<Placeholder, string> = {
 /** Sensible stand-ins, so an un-filled download is still a readable document. */
 export const PLACEHOLDER_DEFAULTS: Record<Placeholder, string> = {
   PROJECT_NAME: "[Project name]",
+  SITE: "[Site]",
   CLIENT: "[Client]",
   COMPANY: "[Your company]",
   DOC_NO: "[Doc no.]",

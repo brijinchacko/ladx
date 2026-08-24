@@ -44,6 +44,32 @@ const TOOL_LINK: Record<string, { href: string; label: string }> = {
  * lives on the project's row in the sidebar, where you are choosing between
  * projects rather than working inside one.
  */
+/**
+ * Rungs in a stored program, without trusting its shape.
+ *
+ * The column is jsonb, so a row written by an older build can be any shape at
+ * all. A project page that throws because one program is odd is worse than one
+ * that says zero.
+ */
+function rungCount(program: unknown): number {
+  if (!program || typeof program !== "object") return 0;
+  const p = program as { routines?: unknown; rungs?: unknown };
+  // Routines win when present, and a program saved before routines existed
+  // still has its rungs on the flat field. Counting only one of the two
+  // reports half the library as empty.
+  if (Array.isArray(p.routines) && p.routines.length > 0) {
+    return p.routines.reduce(
+      (n: number, r: unknown) =>
+        n +
+        (Array.isArray((r as { rungs?: unknown })?.rungs)
+          ? (r as { rungs: unknown[] }).rungs.length
+          : 0),
+      0,
+    );
+  }
+  return Array.isArray(p.rungs) ? p.rungs.length : 0;
+}
+
 export default async function ProjectWorkspace({
   params,
   searchParams,
@@ -91,7 +117,12 @@ export default async function ProjectWorkspace({
       .orderBy(asc(projectTasks.position), asc(projectTasks.createdAt)),
     listClients(user.id),
     db()
-      .select({ id: ladderPrograms.id })
+      .select({
+        id: ladderPrograms.id,
+        name: ladderPrograms.name,
+        program: ladderPrograms.program,
+        updatedAt: ladderPrograms.updatedAt,
+      })
       .from(ladderPrograms)
       .where(and(eq(ladderPrograms.userId, user.id), eq(ladderPrograms.projectId, id))),
   ]);
@@ -338,6 +369,49 @@ export default async function ProjectWorkspace({
                   projectId={project.id}
                   drawings={drawings.map((d) => ({ ...d, updatedAt: d.updatedAt.toISOString() }))}
                 />
+              </section>
+
+              {/* The ladder program written for this project. Separate from the
+                  uploaded file below: one is authored here, the other is
+                  somebody else's export. Both can exist at once. */}
+              <section className="rounded-sm border border-ink-100 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="text-[15px] font-semibold text-ink-900">Ladder program</h2>
+                    <p className="mt-0.5 text-[13px] text-ink-500">
+                      {programs.length > 0
+                        ? (() => {
+                            const n = rungCount(programs[0]?.program);
+                            return `${programs[0]?.name ?? "Untitled"} · ${n} rung${n === 1 ? "" : "s"}`;
+                          })()
+                        : "Nothing written for this project yet."}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <Link
+                      href={`/studio/ladder?project=${project.id}`}
+                      className="rounded-sm border border-ink-200 px-3 py-1.5 text-[13px] text-ink-700 transition-colors hover:border-ink-400"
+                    >
+                      {programs.length > 0 ? "Open in Ladder" : "Write one"}
+                    </Link>
+                    {programs.length > 0 && (
+                      <>
+                        <Link
+                          href={`/studio/monitor?project=${project.id}`}
+                          className="rounded-sm border border-ink-200 px-3 py-1.5 text-[13px] text-ink-700 transition-colors hover:border-ink-400"
+                        >
+                          Run it
+                        </Link>
+                        <Link
+                          href={`/studio/convert?project=${project.id}`}
+                          className="rounded-sm border border-ink-200 px-3 py-1.5 text-[13px] text-ink-700 transition-colors hover:border-ink-400"
+                        >
+                          Convert
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                </div>
               </section>
 
               {/* the PLC file, if one was uploaded to this project */}

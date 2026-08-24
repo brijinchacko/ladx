@@ -135,4 +135,58 @@ describe("renderDocument", () => {
     expect(html).toContain("Prepared for");
     expect(html).toContain("Acme Foods");
   });
+
+  it("prints the project site under the client, which is where the project page says it goes", () => {
+    // The Site field on the project summary is labelled "Printed under the
+    // client on documents". It was not printed anywhere at all: renderDocument
+    // never read project.site. On a client with three plants that made two
+    // packages identical on the page.
+    const html = renderDocument({
+      template,
+      fileBody: "Body",
+      values: {},
+      company: { name: "Wartens" } as CompanyProfile,
+      client: { name: "Acme Foods" } as Client,
+      project: { ...project, site: "Wakefield, packing hall" } as Project,
+    });
+    expect(html).toMatch(/Prepared for[\s\S]{0,400}Wakefield, packing hall/);
+  });
+
+  it("still shows the site when no client has been chosen yet", () => {
+    // A project has a site long before anybody decides who is being invoiced,
+    // and the whole block used to be gated on the client existing.
+    const html = renderDocument({
+      template,
+      fileBody: "Body",
+      values: {},
+      company: { name: "Wartens" } as CompanyProfile,
+      client: null,
+      project: { ...project, site: "Wakefield, packing hall" } as Project,
+    });
+    expect(html).toContain("Wakefield, packing hall");
+  });
+
+  it("substitutes {{SITE}} in a template body", () => {
+    const html = renderDocument({
+      template,
+      fileBody: "Installed at {{SITE}}.",
+      values: { SITE: "Wakefield, packing hall" },
+      company: null,
+      client: null,
+      project,
+    });
+    expect(html).toContain("Installed at Wakefield, packing hall.");
+  });
+
+  it("omits the block entirely when there is neither client nor site", () => {
+    const html = renderDocument({
+      template,
+      fileBody: "Body",
+      values: {},
+      company: { name: "Wartens" } as CompanyProfile,
+      client: null,
+      project,
+    });
+    expect(html).not.toContain("Prepared for");
+  });
 });

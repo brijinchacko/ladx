@@ -223,22 +223,29 @@ export async function renderDocx(input: {
   );
 
   // The "prepared for" block, which is what makes it a client deliverable
-  // rather than a generic document.
-  if (client) {
+  // rather than a generic document. Matches the HTML letterhead: client, then
+  // the project's site under it. On a multi-site client the site is the only
+  // thing telling two otherwise identical packages apart, so it is not
+  // optional decoration.
+  if (client || project.site) {
+    const line: TextRun[] = [];
+    if (client) line.push(new TextRun({ text: client.name, bold: true, size: 20 }));
+    const place = project.site ?? client?.city;
+    if (place) {
+      line.push(
+        new TextRun({
+          text: client ? `  ·  ${place}` : place,
+          size: client ? 18 : 20,
+          color: client ? MUTED : INK,
+        }),
+      );
+    }
     header.push(
       new Paragraph({
         spacing: { after: 40 },
         children: [new TextRun({ text: "PREPARED FOR", bold: true, size: 14, color: MUTED })],
       }),
-      new Paragraph({
-        spacing: { after: 200 },
-        children: [
-          new TextRun({ text: client.name, bold: true, size: 20 }),
-          ...(client.city
-            ? [new TextRun({ text: `  ·  ${client.city}`, size: 18, color: MUTED })]
-            : []),
-        ],
-      }),
+      new Paragraph({ spacing: { after: 200 }, children: line }),
     );
   }
 
