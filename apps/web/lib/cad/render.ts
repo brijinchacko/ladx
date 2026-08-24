@@ -73,6 +73,62 @@ export function drawEntity(ctx: CanvasRenderingContext2D, e: Entity, s: Screen):
       ctx.fillText(e.text, q.x, q.y);
       break;
     }
+    case "ellipse": {
+      const c = toScreen(e.c);
+      ctx.ellipse(
+        c.x,
+        c.y,
+        Math.max(e.rx / scale, 0.5),
+        Math.max(e.ry / scale, 0.5),
+        0,
+        0,
+        Math.PI * 2,
+      );
+      ctx.stroke();
+      break;
+    }
+    case "point": {
+      // A cross at a fixed screen size, because a point marks a position and
+      // has no size of its own; scaling it with the zoom would make it a blob.
+      const q = toScreen(e.at);
+      ctx.moveTo(q.x - 4, q.y);
+      ctx.lineTo(q.x + 4, q.y);
+      ctx.moveTo(q.x, q.y - 4);
+      ctx.lineTo(q.x, q.y + 4);
+      ctx.stroke();
+      break;
+    }
+    case "leader": {
+      const a = toScreen(e.from);
+      const b = toScreen(e.to);
+      // Arrow, slope, then a short horizontal shoulder the text sits on.
+      const shoulder = b.x >= a.x ? 14 : -14;
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.lineTo(b.x + shoulder, b.y);
+      ctx.stroke();
+
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len;
+      const uy = dy / len;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(a.x + ux * 9 - uy * 3, a.y + uy * 9 + ux * 3);
+      ctx.lineTo(a.x + ux * 9 + uy * 3, a.y + uy * 9 - ux * 3);
+      ctx.closePath();
+      ctx.fill();
+
+      const px = e.height / scale;
+      if (px >= 3) {
+        ctx.font = `${px}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.textAlign = shoulder > 0 ? "left" : "right";
+        ctx.fillText(e.text, b.x + shoulder + (shoulder > 0 ? 2 : -2), b.y - 2);
+        ctx.textAlign = "start";
+      }
+      break;
+    }
     case "dimension": {
       const g = dimensionGeometry(e);
       for (const [a, b] of [...g.witness, g.line, ...g.arrows]) {
@@ -170,6 +226,20 @@ export function distToEntity(p: Point, e: Entity): number {
     }
     case "text":
       return Math.hypot(p.x - e.at.x, p.y - e.at.y);
+    case "point":
+      return Math.hypot(p.x - e.at.x, p.y - e.at.y);
+    case "ellipse": {
+      // Distance to the ellipse's outline, approximated by the radial scale.
+      // Exact would need an iterative solve for no gain on a hit test.
+      const dx = (p.x - e.c.x) / (e.rx || 1);
+      const dy = (p.y - e.c.y) / (e.ry || 1);
+      const k = Math.hypot(dx, dy);
+      if (k === 0) return Math.min(e.rx, e.ry);
+      const nearest = { x: e.c.x + (p.x - e.c.x) / k, y: e.c.y + (p.y - e.c.y) / k };
+      return Math.hypot(p.x - nearest.x, p.y - nearest.y);
+    }
+    case "leader":
+      return Math.min(distToSegment(p, e.from, e.to), Math.hypot(p.x - e.to.x, p.y - e.to.y));
     case "dimension": {
       const g = dimensionGeometry(e);
       let d = distToSegment(p, g.line[0], g.line[1]);
@@ -246,7 +316,12 @@ export function translateEntity(e: Entity, dx: number, dy: number): Entity {
     case "polyline":
       return { ...e, points: e.points.map(m) };
     case "text":
+    case "point":
       return { ...e, at: m(e.at) };
+    case "ellipse":
+      return { ...e, c: m(e.c) };
+    case "leader":
+      return { ...e, from: m(e.from), to: m(e.to) };
   }
 }
 
@@ -314,6 +389,27 @@ export function transformEntity(
       return { ...e, points: e.points.map(m) };
     case "text":
       return { ...e, at: m(e.at), height: e.height * (opts.scale ?? 1) };
+    case "point":
+      return { ...e, at: m(e.at) };
+    case "ellipse": {
+      const k = opts.scale ?? 1;
+      // A quarter turn swaps the axes; anything else would need a rotated
+      // ellipse, which this model does not carry, so it is left axis aligned.
+      const quarter = Math.abs(((opts.angleDelta ?? 0) / 90) % 2) === 1;
+      return {
+        ...e,
+        c: m(e.c),
+        rx: (quarter ? e.ry : e.rx) * k,
+        ry: (quarter ? e.rx : e.ry) * k,
+      };
+    }
+    case "leader":
+      return {
+        ...e,
+        from: m(e.from),
+        to: m(e.to),
+        height: e.height * (opts.scale ?? 1),
+      };
   }
 }
 

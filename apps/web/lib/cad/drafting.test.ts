@@ -145,7 +145,8 @@ describe("the symbol library", () => {
       // insertion point looks fine on an empty sheet and is unusable on a
       // busy one.
       const anywhereNearOrigin = parts.some((p) => {
-        const pt = "a" in p ? p.a : "c" in p ? p.c : "at" in p ? p.at : p.points[0];
+        const pt =
+          "a" in p ? p.a : "c" in p ? p.c : "at" in p ? p.at : "from" in p ? p.from : p.points[0];
         return pt !== undefined && Math.abs(pt.x) < 100 && Math.abs(pt.y) < 100;
       });
       expect(anywhereNearOrigin, `${s.id} ignores its insertion point`).toBe(false);

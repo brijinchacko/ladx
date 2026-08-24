@@ -167,9 +167,32 @@ type Props = {
   storage?: StudioStorage;
   /** Leaving the studio. Optional: a standalone canvas has nowhere to go. */
   onBack?: () => void;
+  /**
+   * A panel docked under the canvas, rendered by the host.
+   *
+   * A render prop rather than a component, because the thing that goes here is
+   * the web app's AI box and this package must not learn about the web app's
+   * API routes. What it needs is the program and a way to hand one back, which
+   * is exactly what it is given.
+   *
+   * `load` goes through the same mutate the editor's own edits use, so a
+   * generated program lands on the undo stack and History takes it straight
+   * back out. That is the whole safety property: nothing a model writes is
+   * harder to remove than anything a person typed.
+   */
+  bottomDock?: (ctx: {
+    program: LadxProgram | null;
+    load: (next: LadxProgram) => void;
+  }) => React.ReactNode;
 };
 
-export default function LadxStudio({ projectId, exercises = [], storage, onBack }: Props) {
+export default function LadxStudio({
+  projectId,
+  exercises = [],
+  storage,
+  onBack,
+  bottomDock,
+}: Props) {
   // Held in a ref, not recreated per render: the default builds a new object
   // each call, and a changing storage identity would re-trigger the load effect
   // on every render.
@@ -3788,6 +3811,21 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
           onReset={resetLayout}
           onHelp={openHelp}
         />
+
+        {bottomDock?.({
+          program,
+          load: (next) =>
+            mutate(() => {
+              // Whatever comes back is a whole program. Routines are dropped
+              // rather than merged: a generated program is a flat list of
+              // rungs, and programRoutines migrates that into Main on read,
+              // which is the same path a legacy saved program takes.
+              const { routines: _dropped, ...flat } = next as LadxProgram & {
+                routines?: unknown;
+              };
+              return flat as LadxProgram;
+            }),
+        })}
       </div>
 
       {branchHint && (

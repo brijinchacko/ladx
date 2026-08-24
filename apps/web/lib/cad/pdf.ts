@@ -156,6 +156,29 @@ function drawOne(doc: jsPDF, e: Entity, P: (p: Point) => [number, number], scale
       doc.text(e.text, x, y);
       break;
     }
+    case "ellipse": {
+      const [cx, cy] = P(e.c);
+      doc.ellipse(cx, cy, e.rx * scale, e.ry * scale);
+      break;
+    }
+    case "point": {
+      const [x, y] = P(e.at);
+      doc.line(x - 1, y, x + 1, y);
+      doc.line(x, y - 1, x, y + 1);
+      break;
+    }
+    case "leader": {
+      const [ax, ay] = P(e.from);
+      const [bx, by] = P(e.to);
+      const shoulder = e.to.x >= e.from.x ? e.height * scale * 3 : -e.height * scale * 3;
+      doc.line(ax, ay, bx, by);
+      doc.line(bx, by, bx + shoulder, by);
+      doc.setFontSize(e.height * scale * 2.834);
+      doc.text(e.text, bx + shoulder + (shoulder > 0 ? 1 : -1), by - 0.5, {
+        align: shoulder > 0 ? "left" : "right",
+      });
+      break;
+    }
     case "dimension": {
       const g = dimensionGeometry(e);
       for (const [a, b] of [...g.witness, g.line, ...g.arrows]) {

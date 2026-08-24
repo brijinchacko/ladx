@@ -137,7 +137,18 @@ export function findSnap(
       consider({ x: e.c.x, y: e.c.y + e.r }, "quadrant");
       consider({ x: e.c.x, y: e.c.y - e.r }, "quadrant");
     }
-    if (e.type === "text") consider(e.at, "endpoint");
+    if (e.type === "text" || e.type === "point") consider(e.at, "endpoint");
+    if (e.type === "ellipse") {
+      consider(e.c, "centre");
+      consider({ x: e.c.x + e.rx, y: e.c.y }, "quadrant");
+      consider({ x: e.c.x - e.rx, y: e.c.y }, "quadrant");
+      consider({ x: e.c.x, y: e.c.y + e.ry }, "quadrant");
+      consider({ x: e.c.x, y: e.c.y - e.ry }, "quadrant");
+    }
+    if (e.type === "leader") {
+      consider(e.from, "endpoint");
+      consider(e.to, "endpoint");
+    }
   }
 
   return best ? { point: (best as SnapHit).point, kind: (best as SnapHit).kind } : null;

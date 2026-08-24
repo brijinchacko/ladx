@@ -1,5 +1,6 @@
 "use client";
 
+import LadderAi from "@/components/studio/ladder-ai";
 import { LadxStudio, httpStorage } from "@ladx/studio";
 import { FolderKanban } from "lucide-react";
 import { useState } from "react";
@@ -62,7 +63,18 @@ export default function LadderClient({ projects }: { projects: LadderProject[] }
 
       {/* Remounted on change so the editor loads the chosen program. */}
       <div className="min-h-0 flex-1">
-        <LadxStudio key={projectId} projectId={projectId} storage={storage} />
+        <LadxStudio
+          key={projectId}
+          projectId={projectId}
+          storage={storage}
+          bottomDock={({ program, load }) => (
+            <LadderAi
+              projectId={projectId}
+              getProgram={() => program}
+              onProgram={(next) => load(next)}
+            />
+          )}
+        />
       </div>
     </div>
   );

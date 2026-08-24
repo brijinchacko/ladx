@@ -333,6 +333,52 @@ function entityToDxf(e: Entity): string {
       return s;
     }
 
+    case "ellipse":
+      // Major axis vector from the centre, then the minor/major ratio, which
+      // is how DXF carries an ellipse.
+      return (
+        head("ELLIPSE") +
+        pair(10, e.c.x) +
+        pair(20, e.c.y) +
+        pair(30, 0) +
+        pair(11, e.rx) +
+        pair(21, 0) +
+        pair(31, 0) +
+        pair(40, e.rx === 0 ? 1 : e.ry / e.rx) +
+        pair(41, 0) +
+        pair(42, Math.PI * 2)
+      );
+
+    case "point":
+      return head("POINT") + pair(10, e.at.x) + pair(20, e.at.y) + pair(30, 0);
+
+    // Exploded, like the dimension above and for the same reason: DXF LEADER
+    // references a dimension style every reader interprets differently, and
+    // two lines with an arrow and a label land identically everywhere.
+    case "leader": {
+      const seg = (a: Point, b: Point) =>
+        pair(0, "LINE") +
+        pair(8, e.layer) +
+        pair(10, a.x) +
+        pair(20, a.y) +
+        pair(30, 0) +
+        pair(11, b.x) +
+        pair(21, b.y) +
+        pair(31, 0);
+      const shoulder = e.to.x >= e.from.x ? e.height * 3 : -e.height * 3;
+      return (
+        seg(e.from, e.to) +
+        seg(e.to, { x: e.to.x + shoulder, y: e.to.y }) +
+        pair(0, "TEXT") +
+        pair(8, e.layer) +
+        pair(10, e.to.x + shoulder + (shoulder > 0 ? 1 : -1)) +
+        pair(20, e.to.y + e.height * 0.4) +
+        pair(30, 0) +
+        pair(40, e.height) +
+        pair(1, e.text)
+      );
+    }
+
     case "text":
       return (
         head("TEXT") +

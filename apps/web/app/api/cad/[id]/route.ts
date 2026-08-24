@@ -11,6 +11,8 @@ import { z } from "zod";
 const updateSchema = z.object({
   name: z.string().trim().min(1).max(160).optional(),
   data: z.unknown().optional(),
+  /** Null unfiles the drawing. Ownership of the target is checked below. */
+  projectId: z.string().uuid().nullable().optional(),
 });
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -24,6 +26,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const patch: Record<string, unknown> = { updatedAt: new Date() };
   if (parsed.data.name !== undefined) patch.name = parsed.data.name;
   if (parsed.data.data !== undefined) patch.data = parsed.data.data;
+  if (parsed.data.projectId !== undefined) {
+    // A project id from the client is only trusted once the caller is proven to
+    // own it, or a drawing could be filed into somebody else's job.
+    if (parsed.data.projectId) {
+      const { getProject } = await import("@/lib/platform/queries");
+      const owned = await getProject(auth.user.id, parsed.data.projectId);
+      if (!owned) return NextResponse.json({ error: "project not found" }, { status: 404 });
+      patch.projectId = owned.id;
+    } else {
+      patch.projectId = null;
+    }
+  }
 
   const updated = await db()
     .update(cadDrawings)

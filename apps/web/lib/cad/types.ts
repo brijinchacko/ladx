@@ -98,6 +98,52 @@ export interface DimensionEntity extends Base {
   label?: string;
 }
 
+/**
+ * An ellipse, axis aligned.
+ *
+ * Rotated ellipses exist and are rare on a control drawing; the axis aligned
+ * one covers the actual uses, which are oval cable entries and cutouts. DXF
+ * carries it as ELLIPSE with a major axis vector and a ratio, which this maps
+ * to directly.
+ */
+export interface EllipseEntity extends Base {
+  type: "ellipse";
+  c: Point;
+  /** Semi-axis along X. */
+  rx: number;
+  /** Semi-axis along Y. */
+  ry: number;
+}
+
+/**
+ * A point, drawn as a small cross.
+ *
+ * Not decoration. A point is a snap target you place deliberately: the centre
+ * of a hole to be drilled, a setting-out mark, the datum a dimension runs from.
+ * DXF has POINT for exactly this.
+ */
+export interface PointEntity extends Base {
+  type: "point";
+  at: Point;
+}
+
+/**
+ * A leader: an arrow, a shoulder, and a note.
+ *
+ * The annotation a drawing actually needs and a plain text entity cannot give
+ * you, because the value of a callout is that it points at the thing it is
+ * about. Two points and a string.
+ */
+export interface LeaderEntity extends Base {
+  type: "leader";
+  /** The arrow end, on the thing being called out. */
+  from: Point;
+  /** Where the text sits. */
+  to: Point;
+  text: string;
+  height: number;
+}
+
 export type Entity =
   | LineEntity
   | CircleEntity
@@ -105,7 +151,10 @@ export type Entity =
   | RectEntity
   | PolylineEntity
   | TextEntity
-  | DimensionEntity;
+  | DimensionEntity
+  | EllipseEntity
+  | PointEntity
+  | LeaderEntity;
 
 export interface Layer {
   name: string;
@@ -169,6 +218,20 @@ export function entityBounds(e: Entity): { min: Point; max: Point } {
         min: { x: e.at.x, y: e.at.y },
         max: { x: e.at.x + e.text.length * e.height * 0.6, y: e.at.y + e.height },
       };
+    case "ellipse":
+      return {
+        min: { x: e.c.x - e.rx, y: e.c.y - e.ry },
+        max: { x: e.c.x + e.rx, y: e.c.y + e.ry },
+      };
+    case "point":
+      return { min: { x: e.at.x, y: e.at.y }, max: { x: e.at.x, y: e.at.y } };
+    case "leader": {
+      const w = e.text.length * e.height * 0.6;
+      return {
+        min: { x: Math.min(e.from.x, e.to.x), y: Math.min(e.from.y, e.to.y) },
+        max: { x: Math.max(e.from.x, e.to.x + w), y: Math.max(e.from.y, e.to.y + e.height) },
+      };
+    }
     case "dimension": {
       const pts = [e.a, e.b, ...dimensionGeometry(e).witness.flat()];
       const xs = pts.map((p) => p.x);

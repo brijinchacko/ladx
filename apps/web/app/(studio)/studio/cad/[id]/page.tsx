@@ -4,7 +4,7 @@ import type { Drawing } from "@/lib/cad/types";
 import { emptyDrawing } from "@/lib/cad/types";
 import { db } from "@/lib/db/client";
 import { cadDrawings, clients, projects } from "@/lib/db/schema";
-import { getCompany } from "@/lib/platform/queries";
+import { getCompany, listProjects } from "@/lib/platform/queries";
 import { and, eq, isNull } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
@@ -39,7 +39,7 @@ export default async function CadPage({ params }: { params: Promise<{ id: string
   // Every sheet in this set, for the tree. A drawing filed against a project is
   // one sheet of that project's package; a loose one sits with the other loose
   // ones, which is the only grouping there is for it.
-  const [company, sheets] = await Promise.all([
+  const [company, sheets, userProjects] = await Promise.all([
     getCompany(user.id),
     db()
       .select({ id: cadDrawings.id, name: cadDrawings.name, updatedAt: cadDrawings.updatedAt })
@@ -50,6 +50,7 @@ export default async function CadPage({ params }: { params: Promise<{ id: string
           : and(eq(cadDrawings.userId, user.id), isNull(cadDrawings.projectId)),
       )
       .orderBy(cadDrawings.name),
+    listProjects(user.id),
   ]);
 
   return (
@@ -57,6 +58,7 @@ export default async function CadPage({ params }: { params: Promise<{ id: string
       drawingId={row.drawing.id}
       projectId={row.drawing.projectId}
       sheets={sheets.map((s) => ({ ...s, updatedAt: s.updatedAt.toISOString() }))}
+      projects={userProjects.map((p) => ({ id: p.id, name: p.name }))}
       name={row.drawing.name}
       initial={(row.drawing.data as Drawing) ?? emptyDrawing()}
       projectName={row.projectName ?? undefined}

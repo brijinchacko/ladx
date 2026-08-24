@@ -34,6 +34,7 @@ export {
   OUTPUT_DEVICES,
   defaultDevice,
   INSTRUCTION_BY_TYPE,
+  INSTRUCTIONS,
   programRoutines,
 } from "./lib/types";
 
