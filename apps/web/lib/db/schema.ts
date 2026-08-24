@@ -60,6 +60,10 @@ export const messageRoleEnum = pgEnum("message_role", ["system", "user", "assist
  * templates the platform can generate with the project already filled in.
  */
 export const projectPhaseEnum = pgEnum("project_phase", [
+  // Added at the front rather than the end. Postgres appends new enum values
+  // in declaration order, and the order here is only a list: what a phase means
+  // and where it sits in the lifecycle is decided in lib/platform/lifecycle.ts.
+  "summary",
   "requirements",
   "design",
   "development",
@@ -202,6 +206,50 @@ export const projects = pgTable(
   (t) => ({
     userIdx: index("projects_user_idx").on(t.userId),
     clientIdx: index("projects_client_idx").on(t.clientId),
+  }),
+);
+
+// ----- project tasks -----
+//
+// The planner. A project's lifecycle already says what has to be produced; this
+// says when, by whom, and whether it is done.
+//
+// Deliberately not derived from the documents. A task can exist for work that
+// produces no document at all (order the panel, book the FAT witness), and a
+// document can exist that nobody planned. Where the two do line up, `templateSlug`
+// carries the connection so the planner can show that a deliverable has been
+// started without the two needing to be the same record.
+export const taskStatusEnum = pgEnum("task_status", ["todo", "doing", "blocked", "done"]);
+
+export const projectTasks = pgTable(
+  "project_tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    detail: text("detail"),
+    /** Which lifecycle phase this belongs to. Drives the grouping. */
+    phase: projectPhaseEnum("phase").notNull().default("requirements"),
+    status: taskStatusEnum("status").notNull().default("todo"),
+    /** Free text rather than a user id: most of these are somebody else's people. */
+    owner: text("owner"),
+    dueOn: timestamp("due_on", { withTimezone: true }),
+    /** The deliverable this task is for, when it is for one. */
+    templateSlug: text("template_slug"),
+    /** Manual ordering within a phase. */
+    position: integer("position").notNull().default(0),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("project_tasks_user_idx").on(t.userId),
+    projectIdx: index("project_tasks_project_idx").on(t.projectId),
   }),
 );
 

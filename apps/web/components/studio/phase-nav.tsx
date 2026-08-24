@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Circle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -14,17 +14,18 @@ export interface PhaseTab {
 }
 
 /**
- * The lifecycle, as navigation.
+ * The lifecycle, pinned to the top of the project.
  *
- * The workspace previously showed only the phase the project was recorded as
- * being in, so looking ahead at what the FAT will need, or back at whether the
- * URS was ever finished, meant changing the project's phase to peek and then
- * changing it back. Every phase is reachable now, and viewing one is separate
- * from the project actually being in it.
+ * It is navigation, not a wizard. Real projects overlap and double back, so
+ * every phase is reachable at any time and looking at one is separate from the
+ * project being in it: peeking at what the FAT needs must not move the project
+ * into factory test.
  *
- * Real projects overlap and double back, so this is a view selector rather than
- * a wizard. The phase the project is *in* is marked, and moving it there is a
- * deliberate second action.
+ * Sticky, and deliberately small. It is the thing you steer with, so it has to
+ * be there after scrolling past the design basis; and it is not the content, so
+ * it has to cost one line. A single row of names with a rule under the one you
+ * are reading, a filled dot on the phase the project is actually in, and a tick
+ * where every deliverable has been started. Nothing else earns the height.
  */
 export default function PhaseNav({
   projectId,
@@ -56,8 +57,8 @@ export default function PhaseNav({
   }
 
   return (
-    <div>
-      <ol className="flex flex-wrap gap-1">
+    <div className="sticky top-0 z-20 -mx-8 border-b border-ink-100 bg-white/95 px-8 backdrop-blur">
+      <nav className="flex items-stretch gap-0.5 overflow-x-auto">
         {phases.map((p) => {
           const isViewing = p.id === viewing;
           const isCurrent = p.id === current;
@@ -65,69 +66,59 @@ export default function PhaseNav({
           const complete = p.deliverableCount > 0 && p.startedCount >= p.deliverableCount;
 
           return (
-            <li key={p.id} className="min-w-[7rem] flex-1">
-              <button
-                type="button"
-                onClick={() => router.push(`/studio/projects/${projectId}?phase=${p.id}`)}
-                aria-current={isViewing ? "step" : undefined}
-                className={`w-full border-t-2 pb-1 pt-2 text-left transition-colors ${
-                  isViewing
-                    ? "border-teal-600"
-                    : isCurrent
-                      ? "border-ink-900"
-                      : done
-                        ? "border-ink-300"
-                        : "border-ink-150 hover:border-ink-300"
-                }`}
-              >
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className={`font-mono text-[10px] ${isViewing ? "text-teal-700" : "text-ink-400"}`}
-                  >
-                    {p.step}
-                  </span>
-                  {complete && <Check className="h-2.5 w-2.5 text-teal-600" />}
-                  {isCurrent && (
-                    <span className="ml-auto rounded-sm bg-ink-900 px-1 py-px font-mono text-[8.5px] uppercase tracking-[0.08em] text-white">
-                      now
-                    </span>
-                  )}
-                </span>
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => router.push(`/studio/projects/${projectId}?phase=${p.id}`)}
+              aria-current={isViewing ? "step" : undefined}
+              title={p.purpose}
+              className={`group flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 py-2 text-[12.5px] transition-colors ${
+                isViewing
+                  ? "border-teal-600 text-ink-900"
+                  : "border-transparent text-ink-400 hover:border-ink-200 hover:text-ink-700"
+              }`}
+            >
+              {isCurrent ? (
+                <Circle
+                  className="h-2 w-2 shrink-0 text-teal-600"
+                  fill="currentColor"
+                  aria-label="the project is here"
+                />
+              ) : complete ? (
+                <Check className="h-2.5 w-2.5 shrink-0 text-teal-600" />
+              ) : (
                 <span
-                  className={`mt-0.5 block text-[12.5px] font-medium ${
-                    isViewing ? "text-ink-900" : done ? "text-ink-600" : "text-ink-400"
+                  className={`font-mono text-[9.5px] tabular-nums ${
+                    done ? "text-ink-400" : "text-ink-300"
                   }`}
                 >
-                  {p.name}
+                  {p.step === 0 ? "·" : p.step}
                 </span>
-                {p.deliverableCount > 0 && (
-                  <span className="mt-0.5 block font-mono text-[10px] text-ink-300">
-                    {p.startedCount}/{p.deliverableCount}
-                  </span>
-                )}
-              </button>
-            </li>
+              )}
+              <span className={isViewing || isCurrent ? "font-medium" : ""}>{p.name}</span>
+              {p.deliverableCount > 0 && (
+                <span className="font-mono text-[9.5px] tabular-nums text-ink-300">
+                  {p.startedCount}/{p.deliverableCount}
+                </span>
+              )}
+            </button>
           );
         })}
-      </ol>
 
-      {/* Looking at a phase the project is not in: offer to move it, rather
-          than moving it silently because somebody clicked to look. */}
-      {viewing !== current && (
-        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-md border border-ink-200 bg-ink-50/60 px-3 py-2">
-          <p className="text-[12.5px] text-ink-600">
-            You are viewing a phase this project is not in.
-          </p>
+        {/* Looking at a phase the project is not in: offer to move it, rather
+            than moving it silently because somebody clicked to look. Inline in
+            the bar, so the row still costs one line. */}
+        {viewing !== current && (
           <button
             type="button"
             disabled={busy}
             onClick={() => setProjectPhase(viewing)}
-            className="rounded-md bg-ink-900 px-2.5 py-1 font-mono text-[11px] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="my-1 ml-auto shrink-0 self-center rounded-md border border-ink-200 px-2.5 py-1 font-mono text-[10.5px] text-ink-600 transition-colors hover:border-ink-400 hover:text-ink-900 disabled:opacity-50"
           >
             {busy ? "Moving…" : "Move project here"}
           </button>
-        </div>
-      )}
+        )}
+      </nav>
     </div>
   );
 }

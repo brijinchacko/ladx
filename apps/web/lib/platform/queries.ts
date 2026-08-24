@@ -162,6 +162,11 @@ export async function createProject(
       code: input.code ?? null,
       description: input.description ?? null,
       site: input.site ?? null,
+      // A new project starts on its own summary rather than in requirements.
+      // The first thing anybody does is fill in who it is for and what it has
+      // to do, and dropping them into a list of documents to write before that
+      // is answered is the wrong order.
+      phase: "summary",
     })
     .returning({ id: projects.id });
   if (!row) throw new Error("project insert returned no row");

@@ -17,6 +17,7 @@ import { getTemplate } from "@/content/templates";
  */
 
 export type PhaseId =
+  | "summary"
   | "requirements"
   | "design"
   | "development"
@@ -40,6 +41,24 @@ export interface Phase {
 }
 
 export const PHASES: Phase[] = [
+  {
+    /*
+     * Where the project itself is edited.
+     *
+     * Every other phase is a set of documents to produce. This one is the
+     * project: its client, its number, its site, and the design basis every
+     * document is written from. It has no deliverables because it produces
+     * none, and it sits first because it is what the rest is written from and
+     * because a project's own details are the thing people come back to change
+     * long after the phase has moved on.
+     */
+    id: "summary",
+    step: 0,
+    name: "Summary",
+    purpose: "The project itself: who it is for, what it has to do, and what it is made of.",
+    deliverables: [],
+    tools: [],
+  },
   {
     id: "requirements",
     step: 1,
