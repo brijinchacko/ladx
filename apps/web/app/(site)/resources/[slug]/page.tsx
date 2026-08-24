@@ -256,7 +256,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             runs in the browser with no account.
           </p>
           <Link
-            href="/studio"
+            href="/ladder"
             className="inline-block rounded-sm bg-ink-900 px-4 py-2 text-[14px] font-semibold text-white hover:opacity-90"
           >
             Open Studio

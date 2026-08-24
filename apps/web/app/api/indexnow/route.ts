@@ -22,7 +22,7 @@ function allUrls(): string[] {
     host,
     `${host}/products`,
     `${host}/resources`,
-    `${host}/studio`,
+    `${host}/ladder`,
     `${host}/documents`,
     `${host}/convert`,
     `${host}/forum`,

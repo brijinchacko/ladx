@@ -9,7 +9,7 @@ export default async function NewClientPage() {
   return (
     <div className="mx-auto max-w-3xl p-8">
       <nav className="mb-6 font-mono text-[11.5px] text-ink-400">
-        <Link href="/clients" className="hover:text-ink-700">
+        <Link href="/studio/clients" className="hover:text-ink-700">
           Clients
         </Link>
       </nav>

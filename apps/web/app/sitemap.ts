@@ -22,7 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: SITE.url, changeFrequency: "weekly", priority: 1 },
     { url: `${SITE.url}/products`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE.url}/resources`, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${SITE.url}/studio`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE.url}/ladder`, changeFrequency: "monthly", priority: 0.9 },
     // The template library is the strongest thing here for search: an engineer
     // looking for a FAT protocol wants a file, and these pages hand them one.
     { url: `${SITE.url}/documents`, changeFrequency: "weekly", priority: 0.9 },

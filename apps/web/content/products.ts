@@ -29,7 +29,7 @@ export const PRODUCTS: Product[] = [
     name: "Ladder",
     tagline: "Draw a rung. Press run. Watch it conduct.",
     state: "live",
-    open: { href: "/studio", label: "Open Ladder" },
+    open: { href: "/ladder", label: "Open Ladder" },
     summary:
       "A ladder editor with a scan-accurate simulator behind it. It is the canvas the AI writes onto, and it works entirely on its own with no account and no backend.",
     problem:

@@ -45,10 +45,10 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-2">
           <Link
-            href="/studio"
+            href="/ladder"
             className="hidden rounded-sm border border-ink-200 px-3.5 py-1.5 text-[13.5px] font-medium text-ink-700 transition-colors hover:border-ink-400 hover:text-ink-900 sm:block"
           >
-            Open Studio
+            Try the editor
           </Link>
           <Link
             href="/sign-up"
@@ -106,7 +106,7 @@ export function SiteFooter() {
       links: [
         { href: "/resources", label: "Articles" },
         { href: "/forum", label: "Forum" },
-        { href: "/studio", label: "Try the simulator" },
+        { href: "/ladder", label: "Try the simulator" },
       ],
     },
     {

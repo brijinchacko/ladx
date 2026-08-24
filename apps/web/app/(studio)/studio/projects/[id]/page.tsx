@@ -10,11 +10,11 @@ import { notFound } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 const TOOL_LINK: Record<string, { href: string; label: string }> = {
-  ladder: { href: "/studio", label: "Ladder editor" },
-  chat: { href: "/chat", label: "Chat" },
-  convert: { href: "/convert", label: "Convert" },
-  knowledge: { href: "/knowledge", label: "Knowledge" },
-  documents: { href: "/documents", label: "Template library" },
+  ladder: { href: "/studio/ladder", label: "Ladder editor" },
+  chat: { href: "/studio", label: "Chat" },
+  convert: { href: "/studio/convert", label: "Convert" },
+  knowledge: { href: "/studio/knowledge", label: "Knowledge" },
+  documents: { href: "/studio/documents", label: "Template library" },
 };
 
 /**
@@ -44,7 +44,7 @@ export default async function ProjectWorkspace({ params }: { params: Promise<{ i
   return (
     <div className="mx-auto max-w-5xl p-8">
       <nav className="mb-5 font-mono text-[11.5px] text-ink-400">
-        <Link href="/projects" className="hover:text-ink-700">
+        <Link href="/studio/projects" className="hover:text-ink-700">
           Projects
         </Link>
       </nav>
@@ -59,7 +59,7 @@ export default async function ProjectWorkspace({ params }: { params: Promise<{ i
           </div>
           <p className="mt-1.5 text-[14px] text-ink-500">
             {client ? (
-              <Link href={`/clients/${client.id}`} className="text-teal-700 hover:underline">
+              <Link href={`/studio/clients/${client.id}`} className="text-teal-700 hover:underline">
                 {client.name}
               </Link>
             ) : (
@@ -133,7 +133,7 @@ export default async function ProjectWorkspace({ params }: { params: Promise<{ i
           {!companyReady && (
             <p className="mb-5 rounded-sm border-l-2 border-amber-500 bg-amber-50 py-2 pl-3 text-[13px] text-amber-800">
               Add your company profile in{" "}
-              <Link href="/settings" className="underline">
+              <Link href="/studio/settings" className="underline">
                 Settings
               </Link>{" "}
               so generated documents carry your logo and letterhead.

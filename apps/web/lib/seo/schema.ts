@@ -83,11 +83,11 @@ export function softwareSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "LADX Studio",
+    name: "LADX Ladder",
     applicationCategory: "DeveloperApplication",
     applicationSubCategory: "PLC programming and simulation",
     operatingSystem: "Web browser",
-    url: `${SITE.url}/studio`,
+    url: `${SITE.url}/ladder`,
     description:
       "A browser ladder logic editor with a scan-accurate PLC simulator. Real output image, per-instruction edge memory, and timers that count elapsed milliseconds rather than scans. No account required.",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },

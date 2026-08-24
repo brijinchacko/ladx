@@ -313,7 +313,7 @@ export default function KnowledgeClient() {
           >
             {notice.text}{" "}
             {notice.text.includes("Settings") && (
-              <Link href="/settings" className="underline underline-offset-2">
+              <Link href="/studio/settings" className="underline underline-offset-2">
                 Open Settings
               </Link>
             )}

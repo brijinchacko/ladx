@@ -18,7 +18,10 @@ import type { NextRequest } from "next/server";
  *
  * Adding a page should not require editing auth. Adding a *private* page should.
  */
-const PROTECTED_PREFIXES = ["/chat", "/projects", "/clients", "/memory", "/settings", "/knowledge"];
+// LADX Studio is the whole application and lives under one prefix, so the
+// protected list is one entry rather than a list that has to be extended every
+// time a tool is added. Everything outside it is the public site.
+const PROTECTED_PREFIXES = ["/studio"];
 
 /**
  * API routes the session check does not apply to.

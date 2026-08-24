@@ -48,7 +48,7 @@ export function NewProjectForm({ clients }: { clients: ClientOption[] }) {
         return;
       }
       const { id } = (await res.json()) as { id: string };
-      router.push(`/projects/${id}`);
+      router.push(`/studio/projects/${id}`);
       router.refresh();
     } finally {
       setBusy(false);
@@ -236,7 +236,7 @@ export function DeleteProjectButton({ projectId }: { projectId: string }) {
     if (!window.confirm("Delete this project? This cannot be undone.")) return;
     setBusy(true);
     await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
-    router.push("/projects");
+    router.push("/studio/projects");
     router.refresh();
   }
 

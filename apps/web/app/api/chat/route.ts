@@ -11,6 +11,7 @@ import { projects } from "@/lib/db/schema";
 import { buildProjectSystemPrompt } from "@/lib/inference/project-prompt";
 import { ssEncode } from "@/lib/inference/stream";
 import { ProviderError, getProvider } from "@/lib/providers";
+import { pickFreeModel } from "@/lib/providers/auto-model";
 import type { ChatMessage } from "@/lib/providers/types";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -83,10 +84,26 @@ export async function POST(req: Request) {
   const provider = getProvider(preferred.kind);
   // The request may name a model; otherwise use whichever the user chose when
   // they connected the provider.
-  const model = parsed.model ?? creds.defaultModel;
+  let model = parsed.model ?? creds.defaultModel;
+
+  // Nothing chosen: pick the best free model the key can reach rather than
+  // stopping to make the user choose from a list of hundreds. `autoNotice` is
+  // sent to the client so it can say, once, that a paid model would do better.
+  let autoNotice: string | null = null;
+  if (!model) {
+    const pick = await pickFreeModel(provider, creds);
+    if (pick) {
+      model = pick.model;
+      autoNotice = pick.notice;
+    }
+  }
+
   if (!model) {
     return Response.json(
-      { error: "no_model", message: "Choose a default model in Settings." },
+      {
+        error: "no_model",
+        message: "No free model was available on this key. Choose a model in Settings to continue.",
+      },
       { status: 428 },
     );
   }
@@ -140,6 +157,17 @@ export async function POST(req: Request) {
           controller.enqueue(
             encoder.encode(
               `event: conversation\ndata: ${JSON.stringify({ id: conversationId })}\n\n`,
+            ),
+          );
+        }
+
+        // Say once, before any tokens, that a model was chosen automatically.
+        // The client shows it as a dismissible note rather than as an error,
+        // because nothing has gone wrong.
+        if (autoNotice) {
+          controller.enqueue(
+            encoder.encode(
+              `event: notice\ndata: ${JSON.stringify({ message: autoNotice, model })}\n\n`,
             ),
           );
         }

@@ -9,6 +9,8 @@ export interface SendOpts {
   model?: string;
   signal?: AbortSignal;
   onConversationId?: (id: string) => void;
+  /** Fired when the server chose a model for us, with the reason to show. */
+  onNotice?: (notice: { message: string; model: string }) => void;
 }
 
 export async function* streamChatFromApi(opts: SendOpts): AsyncIterable<string> {
@@ -21,7 +23,11 @@ export async function* streamChatFromApi(opts: SendOpts): AsyncIterable<string> 
       messages: opts.messages,
       conversationId: opts.conversationId,
       projectId: opts.projectId,
-      model: opts.model ?? "anthropic/claude-sonnet-4.6",
+      // Deliberately omitted when the caller has none. A hardcoded fallback
+      // here used to send an Anthropic model id on every request, which is not
+      // a model an OpenRouter key can reach, and it silently overrode both the
+      // user's chosen default and the server's free-model pick.
+      ...(opts.model ? { model: opts.model } : {}),
     }),
   });
 
@@ -47,6 +53,15 @@ export async function* streamChatFromApi(opts: SendOpts): AsyncIterable<string> 
       try {
         const parsed = JSON.parse(payload) as { id?: string };
         if (parsed.id) opts.onConversationId?.(parsed.id);
+      } catch {
+        // ignore malformed control frame
+      }
+    } else if (event === "notice") {
+      try {
+        const parsed = JSON.parse(payload) as { message?: string; model?: string };
+        if (parsed.message) {
+          opts.onNotice?.({ message: parsed.message, model: parsed.model ?? "" });
+        }
       } catch {
         // ignore malformed control frame
       }

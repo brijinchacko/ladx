@@ -93,7 +93,7 @@ export default function HomePage() {
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
-                href="/studio"
+                href="/ladder"
                 className="rounded-sm bg-ink-900 px-5 py-2.5 text-[14.5px] font-semibold text-white transition-opacity hover:opacity-90"
               >
                 Open the simulator
@@ -332,7 +332,7 @@ export default function HomePage() {
             to install.
           </p>
           <Link
-            href="/studio"
+            href="/ladder"
             className="mt-7 inline-block rounded-sm bg-teal-400 px-6 py-3 text-[15px] font-semibold text-ink-900 transition-opacity hover:opacity-90"
           >
             Open Studio

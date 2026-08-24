@@ -53,7 +53,7 @@ export default function ClientForm({ initial }: { initial?: Client }) {
         setError("Could not save. Try again.");
         return;
       }
-      router.push("/clients");
+      router.push("/studio/clients");
       router.refresh();
     } finally {
       setSaving(false);
@@ -112,7 +112,7 @@ export default function ClientForm({ initial }: { initial?: Client }) {
         </button>
         <button
           type="button"
-          onClick={() => router.push("/clients")}
+          onClick={() => router.push("/studio/clients")}
           className="rounded-sm border border-ink-200 px-4 py-2.5 text-[14px] text-ink-700 transition-colors hover:border-ink-400"
         >
           Cancel
@@ -133,7 +133,7 @@ export function DeleteClientButton({ id, name }: { id: string; name: string }) {
     }
     setBusy(true);
     await fetch(`/api/clients/${id}`, { method: "DELETE" });
-    router.push("/clients");
+    router.push("/studio/clients");
     router.refresh();
   }
 

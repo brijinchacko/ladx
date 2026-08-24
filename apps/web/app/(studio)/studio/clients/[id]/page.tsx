@@ -17,7 +17,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
   return (
     <div className="mx-auto max-w-3xl p-8">
       <nav className="mb-6 font-mono text-[11.5px] text-ink-400">
-        <Link href="/clients" className="hover:text-ink-700">
+        <Link href="/studio/clients" className="hover:text-ink-700">
           Clients
         </Link>
       </nav>
@@ -35,7 +35,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
         {projects.length === 0 ? (
           <p className="text-[14px] text-ink-500">
             None yet.{" "}
-            <Link href="/projects" className="text-teal-700 hover:underline">
+            <Link href="/studio/projects" className="text-teal-700 hover:underline">
               Create a project
             </Link>{" "}
             and assign it here.
@@ -45,7 +45,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
             {projects.map((p) => (
               <li key={p.id}>
                 <Link
-                  href={`/projects/${p.id}`}
+                  href={`/studio/projects/${p.id}`}
                   className="block px-4 py-3 transition-colors hover:bg-ink-50"
                 >
                   <span className="font-medium text-ink-900">{p.name}</span>
