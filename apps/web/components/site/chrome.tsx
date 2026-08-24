@@ -3,7 +3,7 @@
 import { Logo } from "@ladx/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const NAV = [
   { href: "/products", label: "Products" },
@@ -15,6 +15,34 @@ const NAV = [
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  /**
+   * Whether anyone is signed in.
+   *
+   * Checked on the client rather than in the layout on purpose. Reading the
+   * session in the site layout would make every marketing page dynamic, and
+   * fifty-one articles and seventeen template pages are pre-rendered today.
+   *
+   * The signed-out buttons render first, which is correct for crawlers and for
+   * most visitors, and swap once the check returns. The slot keeps its size
+   * either way, so nothing moves on the page.
+   */
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.user) setSignedIn(true);
+      })
+      .catch(() => {
+        // Not signed in, or offline. The default is already correct.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <header
@@ -44,18 +72,29 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Link
-            href="/ladder"
-            className="hidden rounded-sm border border-ink-200 px-3.5 py-1.5 text-[13.5px] font-medium text-ink-700 transition-colors hover:border-ink-400 hover:text-ink-900 sm:block"
-          >
-            Try the editor
-          </Link>
-          <Link
-            href="/sign-up"
-            className="rounded-sm bg-ink-900 px-3.5 py-1.5 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
-          >
-            Start free
-          </Link>
+          {signedIn ? (
+            <Link
+              href="/studio"
+              className="rounded-sm bg-ink-900 px-3.5 py-1.5 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
+            >
+              Open Studio
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/ladder"
+                className="hidden rounded-sm border border-ink-200 px-3.5 py-1.5 text-[13.5px] font-medium text-ink-700 transition-colors hover:border-ink-400 hover:text-ink-900 sm:block"
+              >
+                Try the editor
+              </Link>
+              <Link
+                href="/sign-up"
+                className="rounded-sm bg-ink-900 px-3.5 py-1.5 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
+              >
+                Start free
+              </Link>
+            </>
+          )}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}

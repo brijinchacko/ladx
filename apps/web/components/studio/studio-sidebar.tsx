@@ -1,5 +1,6 @@
 "use client";
 
+import AccountMenu from "@/components/studio/account-menu";
 import { Logo } from "@ladx/ui";
 import {
   ChevronsLeft,
@@ -129,6 +130,9 @@ export default function StudioSidebar({
         >
           <Settings className="h-4 w-4" />
         </Link>
+        <div className="mt-2 w-full px-2">
+          <AccountMenu userName={userName} userEmail={userEmail} collapsed />
+        </div>
       </aside>
     );
   }
@@ -216,25 +220,9 @@ export default function StudioSidebar({
         </Section>
       </div>
 
-      {/* account */}
+      {/* account: settings, the way back to the website, and sign out */}
       <div className="border-t border-ink-100 p-3">
-        <Link
-          href="/studio/settings"
-          className={`flex items-center gap-2.5 rounded-md px-2 py-2 transition-colors ${
-            isActive("/studio/settings") ? "bg-ink-100" : "hover:bg-ink-100"
-          }`}
-        >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink-900 font-mono text-[11px] font-semibold text-white">
-            {(userName ?? userEmail).slice(0, 2).toUpperCase()}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-[13px] font-medium text-ink-900">
-              {userName ?? userEmail.split("@")[0]}
-            </span>
-            <span className="block truncate text-[11px] text-ink-400">Settings</span>
-          </span>
-          <Settings className="h-3.5 w-3.5 shrink-0 text-ink-300" />
-        </Link>
+        <AccountMenu userName={userName} userEmail={userEmail} />
       </div>
     </aside>
   );

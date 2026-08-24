@@ -393,6 +393,17 @@ function Contact({ x, y, label, on }: { x: number; y: number; label: string; on:
   );
 }
 
+/**
+ * How far the coil's arcs actually reach from its centre.
+ *
+ * The arcs run from x∓9 with radius 12 over a 20 unit chord, which bulges a
+ * further 5.4 units outward. Wires used to be drawn to x∓9, so the incoming
+ * wire stopped short with a visible gap and the outgoing wire was drawn
+ * straight through the right-hand arc. Connecting at the real extent fixes
+ * both, and naming it stops the next person guessing.
+ */
+export const COIL_HALF = 14.4;
+
 function Coil({ x, y, label, on }: { x: number; y: number; label: string; on: boolean }) {
   const stroke = on ? LIVE : INK;
   return (
@@ -451,23 +462,24 @@ function LadderSvg({
       aria-label="A live two rung ladder program. Rung one latches the conveyor; rung two drives the run lamp."
     >
       {/* Rails */}
-      <line x1="18" y1="22" x2="18" y2="192" stroke={INK} strokeWidth="2.5" opacity="0.45" />
+      <line x1="32" y1="22" x2="32" y2="192" stroke={LIVE} strokeWidth="2.5" />
       <line x1="422" y1="22" x2="422" y2="192" stroke={INK} strokeWidth="2.5" opacity="0.45" />
 
       {/* ── Rung 1 ── */}
       <text
-        x="18"
-        y="36"
-        fontSize="8.5"
+        x="26"
+        y="74"
+        textAnchor="end"
+        fontSize="9"
         fontFamily="var(--font-mono, monospace)"
         fill={INK}
-        opacity="0.35"
+        opacity="0.4"
       >
-        RUNG 1
+        1
       </text>
 
       {/* rail to the branch split */}
-      <line x1="18" y1="70" x2="62" y2="70" stroke={LIVE} strokeWidth="2" />
+      <line x1="32" y1="70" x2="62" y2="70" stroke={LIVE} strokeWidth="2" />
       {/* upper leg: Start */}
       <line x1="62" y1="70" x2="84" y2="70" stroke={LIVE} strokeWidth="2" />
       <Contact x={92} y={70} label="Start_PB" on={startOn} />
@@ -527,7 +539,7 @@ function LadderSvg({
       <line
         x1="288"
         y1="70"
-        x2="350"
+        x2={371 - COIL_HALF}
         y2="70"
         stroke={wire(guardOn)}
         strokeWidth={w(guardOn)}
@@ -536,7 +548,7 @@ function LadderSvg({
 
       <Coil x={371} y={70} label="Conveyor" on={rung1} />
       <line
-        x1="380"
+        x1={371 + COIL_HALF}
         y1="70"
         x2="422"
         y2="70"
@@ -549,25 +561,26 @@ function LadderSvg({
       <circle cx="158" cy="70" r="3" fill={wire(junction)} opacity={dim(junction)} />
 
       {/* divider */}
-      <line x1="18" y1="140" x2="422" y2="140" stroke={INK} strokeWidth="1" opacity="0.1" />
+      <line x1="32" y1="140" x2="422" y2="140" stroke={INK} strokeWidth="1" opacity="0.1" />
 
       {/* ── Rung 2 ── */}
       <text
-        x="18"
-        y="156"
-        fontSize="8.5"
+        x="26"
+        y="186"
+        textAnchor="end"
+        fontSize="9"
         fontFamily="var(--font-mono, monospace)"
         fill={INK}
-        opacity="0.35"
+        opacity="0.4"
       >
-        RUNG 2
+        2
       </text>
-      <line x1="18" y1="182" x2="84" y2="182" stroke={LIVE} strokeWidth="2" />
+      <line x1="32" y1="182" x2="84" y2="182" stroke={LIVE} strokeWidth="2" />
       <Contact x={92} y={182} label="Conveyor" on={conv} />
       <line
         x1="100"
         y1="182"
-        x2="350"
+        x2={371 - COIL_HALF}
         y2="182"
         stroke={wire(conv)}
         strokeWidth={w(conv)}
@@ -575,7 +588,7 @@ function LadderSvg({
       />
       <Coil x={371} y={182} label="Run_Lamp" on={rung2} />
       <line
-        x1="380"
+        x1={371 + COIL_HALF}
         y1="182"
         x2="422"
         y2="182"

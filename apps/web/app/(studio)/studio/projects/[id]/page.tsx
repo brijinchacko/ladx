@@ -1,9 +1,14 @@
 import { DeleteProjectButton, PhaseSelect } from "@/components/platform/project-controls";
+import DeliverableRow from "@/components/studio/deliverable-row";
+import DocumentList from "@/components/studio/document-list";
+import ProjectDrawings from "@/components/studio/project-drawings";
 import { UploadButton } from "@/components/upload-button";
-import { getTemplate } from "@/content/templates";
 import { requireUser } from "@/lib/auth/server";
+import { db } from "@/lib/db/client";
+import { cadDrawings, documents } from "@/lib/db/schema";
 import { ACTIVE_PHASES, PHASES, deliverablesFor, getPhase } from "@/lib/platform/lifecycle";
 import { getClient, getCompany, getProject } from "@/lib/platform/queries";
+import { and, desc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -32,10 +37,40 @@ export default async function ProjectWorkspace({ params }: { params: Promise<{ i
   const project = await getProject(user.id, id);
   if (!project) notFound();
 
-  const [company, client] = await Promise.all([
+  const [company, client, projectDocs, drawings] = await Promise.all([
     getCompany(user.id),
     project.clientId ? getClient(user.id, project.clientId) : Promise.resolve(null),
+    db()
+      .select({
+        id: documents.id,
+        title: documents.title,
+        kind: documents.kind,
+        templateSlug: documents.templateSlug,
+        fileName: documents.fileName,
+        mimeType: documents.mimeType,
+        byteSize: documents.byteSize,
+        projectId: documents.projectId,
+        updatedAt: documents.updatedAt,
+      })
+      .from(documents)
+      .where(and(eq(documents.userId, user.id), eq(documents.projectId, id)))
+      .orderBy(desc(documents.updatedAt)),
+    db()
+      .select({
+        id: cadDrawings.id,
+        name: cadDrawings.name,
+        updatedAt: cadDrawings.updatedAt,
+      })
+      .from(cadDrawings)
+      .where(and(eq(cadDrawings.userId, user.id), eq(cadDrawings.projectId, id)))
+      .orderBy(desc(cadDrawings.updatedAt)),
   ]);
+
+  // A deliverable that has already been started opens rather than regenerating,
+  // so an edited document is never silently replaced by a fresh template.
+  const startedByTemplate = new Map(
+    projectDocs.filter((d) => d.templateSlug).map((d) => [d.templateSlug as string, d.id]),
+  );
 
   const currentPhase = getPhase(project.phase);
   const deliverables = deliverablesFor(project.phase);
@@ -146,43 +181,17 @@ export default async function ProjectWorkspace({ params }: { params: Promise<{ i
                 Deliverables
               </h3>
               <ul className="space-y-2.5">
-                {deliverables.map((d) => {
-                  const template = getTemplate(d.slug);
-                  const hasDoc = template?.files.some((f) => f.kind === "markdown");
-                  const mdFile = template?.files.find((f) => f.kind === "markdown");
-                  return (
-                    <li
-                      key={d.slug}
-                      className="flex flex-wrap items-center gap-3 border border-ink-100 px-4 py-3"
-                    >
-                      <span className="shrink-0 bg-ink-900 px-1.5 py-0.5 font-mono text-[10.5px] font-semibold text-white">
-                        {d.abbr}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-display text-[14px] font-bold text-ink-900">{d.title}</p>
-                        <p className="truncate text-[12.5px] text-ink-500">{d.summary}</p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        {hasDoc && (
-                          <a
-                            href={`/api/projects/${project.id}/document?slug=${d.slug}${mdFile ? `&file=${encodeURIComponent(mdFile.name)}` : ""}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="rounded-sm bg-ink-900 px-3 py-1.5 font-mono text-[11px] text-white transition-opacity hover:opacity-90"
-                          >
-                            Generate
-                          </a>
-                        )}
-                        <Link
-                          href={`/documents/${d.slug}`}
-                          className="rounded-sm border border-ink-200 px-3 py-1.5 font-mono text-[11px] text-ink-600 transition-colors hover:border-ink-400"
-                        >
-                          Files
-                        </Link>
-                      </div>
-                    </li>
-                  );
-                })}
+                {deliverables.map((d) => (
+                  <DeliverableRow
+                    key={d.slug}
+                    projectId={project.id}
+                    slug={d.slug}
+                    title={d.title}
+                    abbr={d.abbr}
+                    summary={d.summary}
+                    existingId={startedByTemplate.get(d.slug) ?? null}
+                  />
+                ))}
               </ul>
             </>
           ) : (
@@ -214,6 +223,35 @@ export default async function ProjectWorkspace({ params }: { params: Promise<{ i
             </div>
           )}
         </div>
+      </section>
+
+      {/* every document filed against this project */}
+      <section className="mb-10">
+        <h2 className="mb-1 font-display text-[15px] font-bold text-ink-900">
+          Documents{projectDocs.length > 0 && ` (${projectDocs.length})`}
+        </h2>
+        <p className="mb-3 text-[13px] text-ink-500">
+          Everything generated or uploaded for this project, in one place.
+        </p>
+        <DocumentList
+          documents={projectDocs.map((d) => ({ ...d, updatedAt: d.updatedAt.toISOString() }))}
+          projectId={project.id}
+          emptyHint="No documents yet. Create one from the deliverables above, or upload a file."
+        />
+      </section>
+
+      {/* CAD */}
+      <section className="mb-10">
+        <h2 className="mb-1 font-display text-[15px] font-bold text-ink-900">
+          Drawings{drawings.length > 0 && ` (${drawings.length})`}
+        </h2>
+        <p className="mb-3 text-[13px] text-ink-500">
+          Panel layouts, wiring schematics and general arrangements, drawn here or imported.
+        </p>
+        <ProjectDrawings
+          projectId={project.id}
+          drawings={drawings.map((d) => ({ ...d, updatedAt: d.updatedAt.toISOString() }))}
+        />
       </section>
 
       {/* the PLC file, if one was uploaded to this project */}

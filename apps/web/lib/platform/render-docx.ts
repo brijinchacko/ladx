@@ -14,7 +14,7 @@ import {
   WidthType,
 } from "docx";
 import type { Block, Inline } from "./doc-ast";
-import { parseDocument } from "./doc-ast";
+import { parseDocument, tableHasHeader } from "./doc-ast";
 
 /**
  * The document as a real .docx.
@@ -153,7 +153,7 @@ function blockToDocx(block: Block): (Paragraph | Table)[] {
       return [
         new Table({
           width: { size: 100, type: WidthType.PERCENTAGE },
-          rows: [headerRow, ...bodyRows],
+          rows: tableHasHeader(block.header) ? [headerRow, ...bodyRows] : bodyRows,
         }),
         // Word butts a following paragraph straight against a table otherwise.
         new Paragraph({ spacing: { after: 120 }, children: [] }),

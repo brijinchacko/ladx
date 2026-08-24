@@ -128,7 +128,11 @@ export function markdownToHtml(md: string): string {
         i++;
       }
       html.push('<div class="table-wrap"><table>');
-      html.push(`<thead><tr>${header.map((h) => `<th>${inline(h)}</th>`).join("")}</tr></thead>`);
+      // An all-empty header is the document control block's key/value table; a
+      // shaded empty strip above it reads as a rendering fault.
+      if (header.some((h) => h.trim().length > 0)) {
+        html.push(`<thead><tr>${header.map((h) => `<th>${inline(h)}</th>`).join("")}</tr></thead>`);
+      }
       html.push("<tbody>");
       for (const row of body) {
         html.push(`<tr>${header.map((_, c) => `<td>${inline(row[c] ?? "")}</td>`).join("")}</tr>`);

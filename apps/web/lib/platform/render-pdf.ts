@@ -1,7 +1,7 @@
 import type { Client, CompanyProfile, Project } from "@/lib/db/schema";
 import { jsPDF } from "jspdf";
 import type { Block, Inline } from "./doc-ast";
-import { parseDocument, spansToText } from "./doc-ast";
+import { parseDocument, spansToText, tableHasHeader } from "./doc-ast";
 
 /**
  * The document as a PDF.
@@ -154,13 +154,14 @@ function drawTable(ctx: Ctx, block: Extract<Block, { kind: "table" }>) {
     ctx.y += rowH;
   };
 
-  drawRow(block.header, true);
+  const showHeader = tableHasHeader(block.header);
+  if (showHeader) drawRow(block.header, true);
   for (const row of block.rows) {
     // A page break inside a table repeats the header, so the second page is
     // still readable on its own.
     if (ctx.y + 8 > A4.h - MARGIN.bottom) {
       ctx.page();
-      drawRow(block.header, true);
+      if (showHeader) drawRow(block.header, true);
     }
     drawRow(row, false);
   }

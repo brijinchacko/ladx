@@ -86,9 +86,8 @@ export default function HomePage() {
               actually <span className="text-teal-600">run</span>.
             </h1>
             <p className="mt-6 max-w-lg text-[16.5px] leading-relaxed text-ink-600">
-              LADX is an AI workbench for the people who program machines. Draw a rung and watch it
-              conduct. Ask for logic and get logic a compiler has already agreed with. Move a
-              program from one vendor to another and see exactly what changed.
+              An AI workbench for the people who program machines. Draw a rung and watch it conduct.
+              Ask for logic and get logic a compiler has already agreed with.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">

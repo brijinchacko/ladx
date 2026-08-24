@@ -138,6 +138,19 @@ export function parseDocument(md: string): Block[] {
   return blocks;
 }
 
+/**
+ * Whether a table's header row carries anything.
+ *
+ * The document control block at the top of every template is a two column
+ * key/value table written with an empty header, because markdown has no way to
+ * express a headerless table. Rendering that as a header produces an empty
+ * shaded strip above the first row, which looks like a mistake. Every renderer
+ * asks this before drawing one.
+ */
+export function tableHasHeader(header: Inline[][]): boolean {
+  return header.some((cell) => spansToText(cell).trim().length > 0);
+}
+
 /** Flatten spans back to plain text, for widths and alt text. */
 export function spansToText(spans: Inline[]): string {
   return spans.map((s) => s.text).join("");
