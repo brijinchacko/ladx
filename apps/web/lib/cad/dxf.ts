@@ -1,3 +1,4 @@
+import { hatchLines } from "./operations";
 import {
   DEFAULT_LAYERS,
   type Drawing,
@@ -330,6 +331,32 @@ function entityToDxf(e: Entity): string {
     case "polyline": {
       let s = head("LWPOLYLINE") + pair(90, e.points.length) + pair(70, e.closed ? 1 : 0);
       for (const p of e.points) s += pair(10, p.x) + pair(20, p.y);
+      return s;
+    }
+
+    // Exploded to its shading lines and its outline, like the dimension and
+    // the leader. A DXF HATCH carries a boundary path definition and a pattern
+    // table that readers disagree about; lines land identically everywhere.
+    case "hatch": {
+      const seg = (a: Point, b: Point) =>
+        pair(0, "LINE") +
+        pair(8, e.layer) +
+        pair(10, a.x) +
+        pair(20, a.y) +
+        pair(30, 0) +
+        pair(11, b.x) +
+        pair(21, b.y) +
+        pair(31, 0);
+      let s = "";
+      for (let i = 0; i < e.points.length; i++) {
+        s += seg(e.points[i] as Point, e.points[(i + 1) % e.points.length] as Point);
+      }
+      if (e.pattern !== "solid") {
+        const angles = e.pattern === "cross" ? [e.angle, e.angle + 90] : [e.angle];
+        for (const a of angles) {
+          for (const [p, q] of hatchLines(e.points, e.spacing, a)) s += seg(p, q);
+        }
+      }
       return s;
     }
 

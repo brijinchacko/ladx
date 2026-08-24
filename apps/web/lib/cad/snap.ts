@@ -59,6 +59,13 @@ function segments(e: Entity): [Point, Point][] {
         [c[3] as Point, c[0] as Point],
       ];
     }
+    case "hatch": {
+      const out: [Point, Point][] = [];
+      for (let i = 0; i < e.points.length; i++) {
+        out.push([e.points[i] as Point, e.points[(i + 1) % e.points.length] as Point]);
+      }
+      return out;
+    }
     case "polyline": {
       const out: [Point, Point][] = [];
       for (let i = 0; i < e.points.length - 1; i++) {

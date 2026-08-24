@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import { hatchLines } from "./operations";
 import { type Drawing, type Entity, type Point, dimensionGeometry, drawingBounds } from "./types";
 
 /**
@@ -154,6 +155,24 @@ function drawOne(doc: jsPDF, e: Entity, P: (p: Point) => [number, number], scale
       // jsPDF sizes text in points; drawing units are millimetres.
       doc.setFontSize(e.height * scale * 2.834);
       doc.text(e.text, x, y);
+      break;
+    }
+    case "hatch": {
+      const poly = e.points.map(P);
+      for (let i = 0; i < poly.length; i++) {
+        const a = poly[i] as [number, number];
+        const b = poly[(i + 1) % poly.length] as [number, number];
+        doc.line(a[0], a[1], b[0], b[1]);
+      }
+      const angles = e.pattern === "cross" ? [e.angle, e.angle + 90] : [e.angle];
+      const spacing = e.pattern === "solid" ? Math.max(e.spacing / 4, 0.4 / scale) : e.spacing;
+      for (const a of angles) {
+        for (const [p, q] of hatchLines(e.points, spacing, a)) {
+          const [x1, y1] = P(p);
+          const [x2, y2] = P(q);
+          doc.line(x1, y1, x2, y2);
+        }
+      }
       break;
     }
     case "ellipse": {

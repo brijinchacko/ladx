@@ -3,8 +3,11 @@ import {
   arrayPolar,
   arrayRectangular,
   constrainAngle,
+  extendLine,
   filletLines,
+  hatchLines,
   offsetEntity,
+  trimLine,
 } from "./operations";
 import { rotateAbout, transformEntity, translateEntity } from "./render";
 import type { Entity } from "./types";
@@ -222,5 +225,160 @@ describe("ortho", () => {
   it("leaves a zero length drag alone", () => {
     const p = constrainAngle({ x: 5, y: 5 }, { x: 5, y: 5 }, 90);
     expect(p).toEqual({ x: 5, y: 5 });
+  });
+});
+
+describe("trim", () => {
+  // A horizontal line crossed by two verticals, which is the shape every trim
+  // on a real drawing is: lines drawn long and cleaned at the intersections.
+  const target = line(0, 0, 100, 0, "t");
+  const left = line(20, -20, 20, 20, "L");
+  const right = line(80, -20, 80, 20, "R");
+
+  it("removes the stub before the first crossing", () => {
+    const r = trimLine(target, [left, right], { x: 5, y: 0 });
+    if (r?.type !== "line") throw new Error("no trim");
+    expect(r.a.x).toBeCloseTo(20);
+    expect(r.b.x).toBeCloseTo(100);
+  });
+
+  it("removes the stub after the last crossing", () => {
+    const r = trimLine(target, [left, right], { x: 95, y: 0 });
+    if (r?.type !== "line") throw new Error("no trim");
+    expect(r.a.x).toBeCloseTo(0);
+    expect(r.b.x).toBeCloseTo(80);
+  });
+
+  it("keeps the longer remainder when the pick is between two crossings", () => {
+    // Removing the middle would split one line into two. One entity in, one
+    // out, and the longer piece is the one worth keeping.
+    const r = trimLine(target, [left, right], { x: 50, y: 0 });
+    if (r?.type !== "line") throw new Error("no trim");
+    const length = Math.abs(r.b.x - r.a.x);
+    expect(length).toBeGreaterThanOrEqual(20);
+  });
+
+  it("does nothing when nothing crosses it", () => {
+    expect(trimLine(target, [line(200, -20, 200, 20, "far")], { x: 50, y: 0 })).toBeNull();
+  });
+
+  it("trims against a rectangle's edges, not just against lines", () => {
+    const box: Entity = {
+      id: "b",
+      type: "rect",
+      layer: "0",
+      a: { x: 40, y: -10 },
+      b: { x: 60, y: 10 },
+    };
+    const r = trimLine(target, [box], { x: 5, y: 0 });
+    if (r?.type !== "line") throw new Error("no trim");
+    expect(r.a.x).toBeCloseTo(40);
+  });
+
+  it("never trims a line against itself", () => {
+    expect(trimLine(target, [target], { x: 50, y: 0 })).toBeNull();
+  });
+});
+
+describe("extend", () => {
+  const short = line(0, 0, 50, 0, "s");
+  const wall = line(100, -30, 100, 30, "w");
+
+  it("stretches the end nearer the pick until it meets the boundary", () => {
+    const r = extendLine(short, [wall], { x: 48, y: 0 });
+    if (r?.type !== "line") throw new Error("no extend");
+    expect(r.b.x).toBeCloseTo(100);
+    expect(r.a.x).toBeCloseTo(0);
+  });
+
+  it("stretches the other end when that is the one picked", () => {
+    const behind = line(-100, -30, -100, 30, "b");
+    const r = extendLine(short, [behind], { x: 2, y: 0 });
+    if (r?.type !== "line") throw new Error("no extend");
+    expect(r.a.x).toBeCloseTo(-100);
+    expect(r.b.x).toBeCloseTo(50);
+  });
+
+  it("takes the nearest boundary, not the first one found", () => {
+    const far = line(300, -30, 300, 30, "f");
+    const r = extendLine(short, [far, wall], { x: 48, y: 0 });
+    if (r?.type !== "line") throw new Error("no extend");
+    expect(r.b.x).toBeCloseTo(100);
+  });
+
+  it("refuses to extend backwards through its own body", () => {
+    // A boundary crossing the line itself is trim's job, not extend's.
+    const crossing = line(25, -30, 25, 30, "c");
+    expect(extendLine(short, [crossing], { x: 48, y: 0 })).toBeNull();
+  });
+});
+
+describe("hatch", () => {
+  const square: { x: number; y: number }[] = [
+    { x: 0, y: 0 },
+    { x: 100, y: 0 },
+    { x: 100, y: 100 },
+    { x: 0, y: 100 },
+  ];
+
+  it("fills a square with lines that stay inside it", () => {
+    const lines = hatchLines(square, 10, 0);
+    expect(lines.length).toBeGreaterThan(5);
+    for (const [a, b] of lines) {
+      for (const p of [a, b]) {
+        expect(p.x).toBeGreaterThanOrEqual(-0.001);
+        expect(p.x).toBeLessThanOrEqual(100.001);
+        expect(p.y).toBeGreaterThanOrEqual(-0.001);
+        expect(p.y).toBeLessThanOrEqual(100.001);
+      }
+    }
+  });
+
+  it("shades at the angle asked for", () => {
+    for (const asked of [0, 45, 90, 135]) {
+      const lines = hatchLines(square, 20, asked);
+      expect(lines.length, `no shading at ${asked} degrees`).toBeGreaterThan(0);
+      for (const [a, b] of lines) {
+        const deg = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+        expect(((deg % 180) + 180) % 180).toBeCloseTo(((asked % 180) + 180) % 180, 1);
+      }
+    }
+  });
+
+  it("emits no zero length spans", () => {
+    // A scanline clipping a corner produces one, and it becomes a stray dot on
+    // the print and a degenerate line in the DXF.
+    for (const angle of [0, 30, 45, 60, 90]) {
+      for (const [a, b] of hatchLines(square, 7, angle)) {
+        expect(Math.hypot(b.x - a.x, b.y - a.y)).toBeGreaterThan(1e-6);
+      }
+    }
+  });
+
+  it("leaves a hole unshaded", () => {
+    // Even-odd is what makes a cutout come out as a cutout rather than being
+    // shaded straight over.
+    const withHole = [
+      ...square,
+      { x: 0, y: 0 },
+      // A square hole, traced back into the outline.
+      { x: 30, y: 30 },
+      { x: 30, y: 70 },
+      { x: 70, y: 70 },
+      { x: 70, y: 30 },
+      { x: 30, y: 30 },
+    ];
+    const lines = hatchLines(withHole, 5, 0);
+    // No shading line may run straight across the middle of the hole.
+    const throughHole = lines.filter(
+      ([a, b]) => a.y > 35 && a.y < 65 && Math.min(a.x, b.x) < 35 && Math.max(a.x, b.x) > 65,
+    );
+    expect(throughHole).toHaveLength(0);
+  });
+
+  it("refuses a spacing that would produce millions of lines", () => {
+    expect(hatchLines(square, 0.0001, 0)).toHaveLength(0);
+    expect(hatchLines(square, 0, 0)).toHaveLength(0);
+    expect(hatchLines([{ x: 0, y: 0 }], 10, 0)).toHaveLength(0);
   });
 });

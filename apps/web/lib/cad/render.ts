@@ -1,3 +1,4 @@
+import { hatchLines } from "./operations";
 import { type Drawing, type Entity, type Point, dimensionGeometry, entityBounds } from "./types";
 
 /**
@@ -71,6 +72,38 @@ export function drawEntity(ctx: CanvasRenderingContext2D, e: Entity, s: Screen):
       if (px < 3) break; // unreadable at this zoom, and expensive to draw
       ctx.font = `${px}px ui-sans-serif, system-ui, sans-serif`;
       ctx.fillText(e.text, q.x, q.y);
+      break;
+    }
+    case "hatch": {
+      const poly = e.points.map(toScreen);
+      if (poly.length < 3) break;
+      // The outline always, so an empty region still reads as a region.
+      poly.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+      ctx.closePath();
+      ctx.stroke();
+
+      if (e.pattern === "solid") {
+        ctx.save();
+        ctx.globalAlpha = 0.28;
+        ctx.fill();
+        ctx.restore();
+        break;
+      }
+
+      const angles = e.pattern === "cross" ? [e.angle, e.angle + 90] : [e.angle];
+      ctx.beginPath();
+      for (const a of angles) {
+        for (const [p, q] of hatchLines(e.points, e.spacing, a)) {
+          const sp = toScreen(p);
+          const sq = toScreen(q);
+          ctx.moveTo(sp.x, sp.y);
+          ctx.lineTo(sq.x, sq.y);
+        }
+      }
+      ctx.save();
+      ctx.globalAlpha = 0.75;
+      ctx.stroke();
+      ctx.restore();
       break;
     }
     case "ellipse": {
@@ -238,6 +271,16 @@ export function distToEntity(p: Point, e: Entity): number {
       const nearest = { x: e.c.x + (p.x - e.c.x) / k, y: e.c.y + (p.y - e.c.y) / k };
       return Math.hypot(p.x - nearest.x, p.y - nearest.y);
     }
+    case "hatch": {
+      let d = Number.POSITIVE_INFINITY;
+      for (let i = 0; i < e.points.length; i++) {
+        d = Math.min(
+          d,
+          distToSegment(p, e.points[i] as Point, e.points[(i + 1) % e.points.length] as Point),
+        );
+      }
+      return d;
+    }
     case "leader":
       return Math.min(distToSegment(p, e.from, e.to), Math.hypot(p.x - e.to.x, p.y - e.to.y));
     case "dimension": {
@@ -322,6 +365,8 @@ export function translateEntity(e: Entity, dx: number, dy: number): Entity {
       return { ...e, c: m(e.c) };
     case "leader":
       return { ...e, from: m(e.from), to: m(e.to) };
+    case "hatch":
+      return { ...e, points: e.points.map(m) };
   }
 }
 
@@ -409,6 +454,15 @@ export function transformEntity(
         from: m(e.from),
         to: m(e.to),
         height: e.height * (opts.scale ?? 1),
+      };
+    case "hatch":
+      return {
+        ...e,
+        points: e.points.map(m),
+        // The shading follows the shape: scaling a region without scaling its
+        // spacing turns a hatch into a solid or into an outline.
+        spacing: e.spacing * (opts.scale ?? 1),
+        angle: e.angle + (opts.angleDelta ?? 0),
       };
   }
 }

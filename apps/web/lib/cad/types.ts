@@ -144,6 +144,28 @@ export interface LeaderEntity extends Base {
   height: number;
 }
 
+/**
+ * A filled or shaded region.
+ *
+ * On a control drawing this is what marks a cutout, a plinth, a section
+ * through a gland plate, or an area that belongs to somebody else. The
+ * boundary is carried as its own points rather than as a reference to other
+ * entities: a hatch that silently changes shape because a line it never
+ * mentioned was moved is worse than one that has to be redrawn.
+ *
+ * Patterns are the three that earn their place. Solid fills, lines shade, and
+ * cross is the conventional hatch for a section.
+ */
+export interface HatchEntity extends Base {
+  type: "hatch";
+  points: Point[];
+  pattern: "solid" | "lines" | "cross";
+  /** Spacing between pattern lines, in drawing units. Ignored for solid. */
+  spacing: number;
+  /** Degrees, anticlockwise from east. */
+  angle: number;
+}
+
 export type Entity =
   | LineEntity
   | CircleEntity
@@ -154,7 +176,8 @@ export type Entity =
   | DimensionEntity
   | EllipseEntity
   | PointEntity
-  | LeaderEntity;
+  | LeaderEntity
+  | HatchEntity;
 
 export interface Layer {
   name: string;
@@ -225,6 +248,14 @@ export function entityBounds(e: Entity): { min: Point; max: Point } {
       };
     case "point":
       return { min: { x: e.at.x, y: e.at.y }, max: { x: e.at.x, y: e.at.y } };
+    case "hatch": {
+      const xs = e.points.map((p) => p.x);
+      const ys = e.points.map((p) => p.y);
+      return {
+        min: { x: Math.min(...xs), y: Math.min(...ys) },
+        max: { x: Math.max(...xs), y: Math.max(...ys) },
+      };
+    }
     case "leader": {
       const w = e.text.length * e.height * 0.6;
       return {

@@ -1,17 +1,27 @@
 "use client";
 
+import CadCommandLine from "@/components/cad/cad-commandline";
 import CadProperties from "@/components/cad/cad-properties";
 import CadRail from "@/components/cad/cad-rail";
 import CadSheets, { type SheetRow } from "@/components/cad/cad-sheets";
+import CadToolbar, { ALL_TOOLS, type ToolId, toolSpec } from "@/components/cad/cad-toolbar";
 import AiDock, { type AiTurn } from "@/components/studio/ai-dock";
+import {
+  type CommandSpec,
+  findCommand,
+  parseCoordinate,
+  resolveCoordinate,
+} from "@/lib/cad/commands";
 import { type DrawingTemplate, buildDrawingFromTemplate } from "@/lib/cad/drawing-templates";
 import { readDxf, writeDxf } from "@/lib/cad/dxf";
 import {
   arrayPolar,
   arrayRectangular,
   constrainAngle,
+  extendLine,
   filletLines,
   offsetEntity,
+  trimLine,
 } from "@/lib/cad/operations";
 import { drawingToPdf } from "@/lib/cad/pdf";
 import {
@@ -44,93 +54,12 @@ import {
   newId,
 } from "@/lib/cad/types";
 import { type Menu, MenuBar } from "@ladx/studio";
-import {
-  Circle as CircleIcon,
-  Copy,
-  CornerUpRight,
-  Dot,
-  Download,
-  Egg,
-  FileText,
-  Grid3x3,
-  Magnet,
-  MessageSquareQuote,
-  Minus,
-  MousePointer2,
-  Redo2,
-  Ruler,
-  Save,
-  Spline,
-  Square,
-  Trash2,
-  Type as TypeIcon,
-  Undo2,
-  Upload,
-  ZoomIn,
-  ZoomOut,
-} from "lucide-react";
+import { Download, FileText, Maximize2, Minimize2, Save, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-type Tool =
-  | "select"
-  | "line"
-  | "rect"
-  | "circle"
-  | "arc"
-  | "ellipse"
-  | "polyline"
-  | "text"
-  | "point"
-  | "dimension"
-  | "leader"
-  | "measure"
-  | "offset"
-  | "fillet";
-
-const TOOLS: { id: Tool; label: string; icon: typeof Minus; key: string; hint?: string }[] = [
-  {
-    id: "select",
-    label: "Select",
-    icon: MousePointer2,
-    key: "V",
-    hint: "drag to move, Alt to copy",
-  },
-  { id: "line", label: "Line", icon: Minus, key: "L" },
-  { id: "rect", label: "Rectangle", icon: Square, key: "R" },
-  { id: "circle", label: "Circle", icon: CircleIcon, key: "C" },
-  { id: "arc", label: "Arc", icon: Spline, key: "A", hint: "centre, then start, then end" },
-  { id: "ellipse", label: "Ellipse", icon: Egg, key: "E", hint: "centre, then a corner" },
-  { id: "polyline", label: "Polyline", icon: Spline, key: "P" },
-  { id: "point", label: "Point", icon: Dot, key: ".", hint: "a snap target you place" },
-  { id: "text", label: "Text", icon: TypeIcon, key: "T" },
-  {
-    id: "dimension",
-    label: "Dimension",
-    icon: Ruler,
-    key: "D",
-    hint: "two points, then the offset",
-  },
-  {
-    id: "leader",
-    label: "Leader",
-    icon: MessageSquareQuote,
-    key: "Q",
-    hint: "arrow, then the note",
-  },
-  { id: "measure", label: "Measure", icon: Ruler, key: "M", hint: "two points, nothing is drawn" },
-  { id: "offset", label: "Offset", icon: Copy, key: "O", hint: "pick a line, then the side" },
-  {
-    id: "fillet",
-    label: "Fillet",
-    icon: Spline,
-    key: "F",
-    hint: "two lines. Radius 0 closes a corner.",
-  },
-];
-
 /** How many clicks each tool takes before it produces something. */
-const CLICKS: Partial<Record<Tool, number>> = {
+const CLICKS: Partial<Record<ToolId, number>> = {
   line: 2,
   rect: 2,
   circle: 2,
@@ -218,7 +147,7 @@ export default function CadEditor({
 
   const [drawing, setDrawing] = useState<Drawing>(seeded);
   const [name, setName] = useState(initialName);
-  const [tool, setTool] = useState<Tool>("select");
+  const [tool, setTool] = useState<ToolId>("select");
   const [layer, setLayer] = useState(seeded.layers[0]?.name ?? "0");
   const [view, setView] = useState<View>({ scale: 1, ox: 0, oy: 0 });
   const [gridSnap, setGridSnap] = useState(true);
@@ -250,6 +179,19 @@ export default function CadEditor({
   const savedRef = useRef<Drawing>(seeded);
   const [dirty, setDirty] = useState(false);
   const [showProperties, setShowProperties] = useState(true);
+  const [showSheets, setShowSheets] = useState(true);
+  const [showRail, setShowRail] = useState(true);
+
+  /**
+   * Focus mode.
+   *
+   * Everything but the drawing goes: the sheet tree, the properties, the
+   * library, and the application's own sidebar. A schematic is read across its
+   * whole width and a panel layout is read at scale, and on a laptop the panels
+   * either side cost more than they give once the drawing is the thing being
+   * thought about rather than the thing being started.
+   */
+  const [focus, setFocus] = useState(false);
 
   const [theme, setTheme] = useState<CanvasTheme>(THEMES[0] as CanvasTheme);
   useEffect(() => setTheme(loadTheme()), []);
@@ -270,6 +212,9 @@ export default function CadEditor({
   /** The first line picked, while fillet waits for the second. */
   const [filletFirst, setFilletFirst] = useState<string | null>(null);
   const [measured, setMeasured] = useState<string | null>(null);
+  const [hatchPattern, setHatchPattern] = useState<"solid" | "lines" | "cross">("lines");
+  const [hatchSpacing, setHatchSpacing] = useState(4);
+  const [cmdHistory, setCmdHistory] = useState<string[]>([]);
 
   const [aiTurns, setAiTurns] = useState<AiTurn[]>([]);
   const [aiBusy, setAiBusy] = useState(false);
@@ -573,6 +518,46 @@ export default function CadEditor({
       return;
     }
 
+    if (tool === "trim" || tool === "extend") {
+      const hit = hitTest(drawing, raw, view.scale * 6, layerOf);
+      if (!hit) return;
+      const target = drawing.entities.find((x) => x.id === hit);
+      if (!target) return;
+
+      // Everything else on a visible layer is a boundary. AutoCAD asks you to
+      // select boundaries first and then implies "everything" if you press
+      // Enter; implying it always is the same answer with one fewer step, and
+      // on a control drawing it is the answer every time.
+      const boundaries = drawing.entities.filter(
+        (x) => x.id !== hit && layerOf(x.layer)?.visible !== false,
+      );
+      const result =
+        tool === "trim" ? trimLine(target, boundaries, raw) : extendLine(target, boundaries, raw);
+
+      if (!result) {
+        setStatus(
+          tool === "trim"
+            ? "Nothing crosses that line, so there is nothing to trim it to."
+            : "That line does not reach anything if extended. Only lines can be extended.",
+        );
+        setTimeout(() => setStatus(null), 4000);
+        return;
+      }
+      commit({
+        ...drawing,
+        entities: drawing.entities.map((x) => (x.id === hit ? result : x)),
+      });
+      setSelected([]);
+      return;
+    }
+
+    if (tool === "hatch") {
+      // Traced like a polyline, closed with Enter, because a boundary picked
+      // by clicking inside a region needs a topology this model does not carry.
+      setPending([...pending, world]);
+      return;
+    }
+
     if (tool === "offset") {
       // Pick a line, then the side. Offsetting is two decisions and pretending
       // otherwise means guessing which way the user meant.
@@ -629,23 +614,7 @@ export default function CadEditor({
     }
 
     if (tool === "measure") {
-      // Draws nothing. A measurement is a question, and leaving a dimension on
-      // the drawing every time somebody asks one is how a sheet fills with
-      // annotation nobody wanted.
-      const next = [...pending, world];
-      if (next.length === 2) {
-        const [p1, p2] = next as [Point, Point];
-        setMeasured(
-          `${formatLength(Math.hypot(p2.x - p1.x, p2.y - p1.y))} mm  ·  dx ${formatLength(
-            Math.abs(p2.x - p1.x),
-          )}  dy ${formatLength(Math.abs(p2.y - p1.y))}  ·  ${(
-            (Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180) / Math.PI
-          ).toFixed(1)} deg`,
-        );
-        setPending([]);
-        return;
-      }
-      setPending(next);
+      takeMeasurement([...pending, world]);
       return;
     }
 
@@ -789,6 +758,56 @@ export default function CadEditor({
     },
     [pending, drawing, layer, commit],
   );
+
+  /**
+   * Distance, the two offsets, and the angle between two points.
+   *
+   * Draws nothing. A measurement is a question, and leaving a dimension behind
+   * every time somebody asks one is how a sheet fills with annotation nobody
+   * wanted. Shared by the click path and the typed path, so DI followed by two
+   * coordinates measures exactly as clicking twice does; keeping the arithmetic
+   * in the pointer handler meant typing the points silently did nothing.
+   */
+  const takeMeasurement = useCallback((points: Point[]) => {
+    if (points.length < 2) {
+      setPending(points);
+      return;
+    }
+    const [p1, p2] = points.slice(-2) as [Point, Point];
+    setMeasured(
+      `${formatLength(Math.hypot(p2.x - p1.x, p2.y - p1.y))} mm  ·  dx ${formatLength(
+        Math.abs(p2.x - p1.x),
+      )}  dy ${formatLength(Math.abs(p2.y - p1.y))}  ·  ${(
+        (Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180) / Math.PI
+      ).toFixed(1)} deg`,
+    );
+    setPending([]);
+  }, []);
+
+  /** Close the traced boundary and shade it. */
+  const finishHatch = useCallback(() => {
+    if (pending.length >= 3) {
+      commit({
+        ...drawing,
+        entities: [
+          ...drawing.entities,
+          {
+            id: newId("hx"),
+            type: "hatch",
+            layer,
+            points: pending,
+            pattern: hatchPattern,
+            spacing: hatchSpacing,
+            angle: 45,
+          },
+        ],
+      });
+    } else if (pending.length > 0) {
+      setStatus("A region needs at least three corners.");
+      setTimeout(() => setStatus(null), 3000);
+    }
+    setPending([]);
+  }, [pending, drawing, layer, commit, hatchPattern, hatchSpacing]);
 
   const deleteSelected = useCallback(() => {
     if (selected.length === 0) return;
@@ -1173,10 +1192,17 @@ export default function CadEditor({
         setSelected([]);
         setFilletFirst(null);
         setMeasured(null);
+        // Escape is also the way out of focus mode, because that is where a
+        // hand goes when a screen has nothing else on it.
+        if (focus) setFocus(false);
         return;
       }
       if (ev.key === "Enter" && tool === "polyline") {
         finishPolyline(false);
+        return;
+      }
+      if (ev.key === "Enter" && tool === "hatch") {
+        finishHatch();
         return;
       }
       if (ev.key === "Delete" || ev.key === "Backspace") {
@@ -1206,11 +1232,9 @@ export default function CadEditor({
         });
         return;
       }
-      const found = TOOLS.find((x) => x.key.toLowerCase() === ev.key.toLowerCase());
-      if (found) {
-        setTool(found.id);
-        setPending([]);
-      }
+      // Single letters are not bound to tools any more: they open the command
+      // line, which is where a CAD user expects a typed letter to go, and where
+      // the aliases live.
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1288,6 +1312,127 @@ export default function CadEditor({
    * Modify is its own menu rather than part of Edit, because that is where a
    * draughtsman looks for rotate and mirror.
    */
+  /* ── the command line ── */
+
+  /**
+   * One command, whatever it was typed as.
+   *
+   * Tools set the tool; everything else acts now. Both routes go through the
+   * same handlers the menus use, so a command and a menu item cannot drift
+   * apart into two behaviours with one name.
+   */
+  const runCommand = (spec: CommandSpec) => {
+    setCmdHistory((h) => [spec.name, ...h].slice(0, 20));
+
+    const asTool = ALL_TOOLS.find((t) => t.id === (spec.id as ToolId));
+    if (asTool) {
+      setTool(asTool.id);
+      setPending([]);
+      setMeasured(null);
+      setFilletFirst(null);
+      return;
+    }
+
+    switch (spec.id) {
+      case "erase":
+        deleteSelected();
+        break;
+      case "copy":
+        duplicateSelected();
+        break;
+      case "move":
+        setTool("select");
+        setStatus("Drag the selection. Hold Alt to copy it.");
+        setTimeout(() => setStatus(null), 3500);
+        break;
+      case "array":
+        arraySelection("rect");
+        break;
+      case "polararray":
+        arraySelection("polar");
+        break;
+      case "rotate":
+        transformSelected("rotate-90");
+        break;
+      case "mirror":
+        transformSelected("mirrorX");
+        break;
+      case "scale":
+        transformSelected("scale", 2);
+        break;
+      case "undo":
+        undo();
+        break;
+      case "redo":
+        redo();
+        break;
+      case "zoomfit":
+        zoomFit(false);
+        break;
+      case "zoomselection":
+        zoomFit(true);
+        break;
+      case "ortho":
+        setOrtho((o) => !o);
+        break;
+      case "grid":
+        setGridSnap((g) => !g);
+        break;
+      case "osnap":
+        setObjectSnap((o) => !o);
+        break;
+      case "save":
+        void save();
+        break;
+      default:
+        break;
+    }
+    // Not memoised, for the reason the menus are not: this closes over most of
+    // the editor including plain functions that are new every render, and a
+    // dependency list over that is a list somebody gets wrong. The failure is a
+    // command acting on a drawing from three edits ago.
+  };
+
+  /**
+   * A typed coordinate, fed to whatever is being drawn.
+   *
+   * Returns false when there is nothing it could mean, so the command line can
+   * say so rather than swallowing it.
+   */
+  const runCoordinate = useCallback(
+    (raw: string): boolean => {
+      const parsed = parseCoordinate(raw);
+      if (!parsed) return false;
+
+      const last = pending.length > 0 ? (pending[pending.length - 1] as Point) : null;
+      const point = resolveCoordinate(parsed, last, cursor);
+      if (!point) return false;
+
+      // From here it is exactly a click at that point, so the tools do not each
+      // need a second way in.
+      const need = CLICKS[tool];
+      const next = [...pending, point];
+
+      if (tool === "measure") {
+        takeMeasurement(next);
+        return true;
+      }
+      if (tool === "polyline" || tool === "hatch") {
+        setPending(next);
+        return true;
+      }
+      if (need && next.length === need) {
+        const entity = makeEntity(tool, next, layer);
+        if (entity) commit({ ...drawing, entities: [...drawing.entities, entity] });
+        setPending([]);
+        return true;
+      }
+      setPending(next);
+      return true;
+    },
+    [pending, cursor, tool, drawing, layer, commit, takeMeasurement],
+  );
+
   /* ── drawing from a description ── */
 
   /**
@@ -1497,7 +1642,7 @@ export default function CadEditor({
     },
     {
       label: "Draw",
-      items: TOOLS.filter((t) => t.id !== "select").map((t) => ({
+      items: ALL_TOOLS.filter((t) => t.id !== "select").map((t) => ({
         label: t.label,
         shortcut: t.key,
         onSelect: () => {
@@ -1561,6 +1706,17 @@ export default function CadEditor({
           },
         },
         {
+          label: `Hatch: ${hatchPattern} at ${hatchSpacing} mm…`,
+          onSelect: () => {
+            const pattern = window.prompt("Hatch pattern: solid, lines or cross", hatchPattern);
+            if (pattern === "solid" || pattern === "lines" || pattern === "cross") {
+              setHatchPattern(pattern);
+            }
+            const gap = Number(window.prompt("Spacing, mm", String(hatchSpacing)) ?? "");
+            if (Number.isFinite(gap) && gap > 0) setHatchSpacing(gap);
+          },
+        },
+        {
           label: `Fillet radius: ${filletRadius} mm…`,
           onSelect: () => {
             const v = Number(
@@ -1613,9 +1769,23 @@ export default function CadEditor({
           onSelect: () => setAngleStep((a) => (a === 90 ? 45 : a === 45 ? 15 : 90)),
         },
         {
-          label: showProperties ? "Hide properties" : "Show properties",
+          label: focus ? "Leave focus mode" : "Focus mode",
+          shortcut: "Esc",
           separator: true,
+          onSelect: () => setFocus((f) => !f),
+        },
+        {
+          label: showSheets ? "Hide sheets" : "Show sheets",
+          separator: true,
+          onSelect: () => setShowSheets((v) => !v),
+        },
+        {
+          label: showProperties ? "Hide properties" : "Show properties",
           onSelect: () => setShowProperties((p) => !p),
+        },
+        {
+          label: showRail ? "Hide library" : "Show library",
+          onSelect: () => setShowRail((v) => !v),
         },
       ],
     },
@@ -1664,7 +1834,25 @@ export default function CadEditor({
     [drawing],
   );
 
-  const activeTool = TOOLS.find((t) => t.id === tool);
+  const activeTool = toolSpec(tool);
+
+  /**
+   * What the drawing is waiting for, in words.
+   *
+   * The command line echoes it, which is the thing that makes a multi-click
+   * tool usable without memorising it: an arc takes three clicks and nobody
+   * remembers which is which until they are told, once, each time.
+   */
+  const promptText = (() => {
+    if (tool === "select") return selected.length > 0 ? `${selected.length} selected` : "Select";
+    const need = CLICKS[tool];
+    if (need && pending.length > 0) return `${activeTool?.label}: ${pending.length} of ${need}`;
+    if ((tool === "polyline" || tool === "hatch") && pending.length > 0) {
+      return `${activeTool?.label}: ${pending.length} points, Enter to finish`;
+    }
+    if (tool === "fillet") return filletFirst ? "Fillet: second line" : "Fillet: first line";
+    return activeTool?.label ?? "Command";
+  })();
   const measuring =
     tool === "dimension" && pending.length >= 1 && cursor
       ? formatLength(
@@ -1692,46 +1880,21 @@ export default function CadEditor({
         }
       />
 
-      {/* toolbar */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-2">
+      {/* The name, the project it belongs to, and what leaves the machine. */}
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/40 px-3 py-1.5">
         <input
           value={name}
           onChange={(e) => {
             setName(e.target.value);
             setDirty(true);
           }}
-          className="w-40 rounded-md border border-ink-200 bg-white px-2 py-1 text-[13px] outline-none focus:border-ink-500"
+          className="w-44 rounded-md border border-ink-200 bg-white px-2 py-1 text-[13px] outline-none focus:border-ink-500"
         />
-
-        <div className="flex items-center gap-0.5 rounded-md border border-ink-200 bg-white p-0.5">
-          {TOOLS.map((t) => {
-            const Icon = t.icon;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                title={`${t.label} (${t.key})${t.hint ? ` — ${t.hint}` : ""}`}
-                onClick={() => {
-                  setTool(t.id);
-                  setPending([]);
-                  setMeasured(null);
-                  setFilletFirst(null);
-                }}
-                className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${
-                  tool === t.id ? "bg-ink-900 text-white" : "text-ink-500 hover:bg-ink-100"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-              </button>
-            );
-          })}
-        </div>
-
         <select
           value={projectId ?? ""}
           onChange={(e) => void attachToProject(e.target.value)}
           title="The project this sheet belongs to"
-          className="max-w-[10rem] rounded-md border border-ink-200 bg-white px-2 py-1 text-[12.5px] outline-none focus:border-ink-500"
+          className="max-w-[11rem] rounded-md border border-ink-200 bg-white px-2 py-1 text-[12.5px] outline-none focus:border-ink-500"
         >
           <option value="">No project</option>
           {projects.map((p) => (
@@ -1740,11 +1903,10 @@ export default function CadEditor({
             </option>
           ))}
         </select>
-
         <select
           value={layer}
           onChange={(e) => setLayer(e.target.value)}
-          title="Active layer"
+          title="New geometry is drawn on this layer"
           className="rounded-md border border-ink-200 bg-white px-2 py-1 text-[12.5px] outline-none focus:border-ink-500"
         >
           {drawing.layers.map((l) => (
@@ -1754,89 +1916,19 @@ export default function CadEditor({
           ))}
         </select>
 
-        <button
-          type="button"
-          onClick={() => setGridSnap((s) => !s)}
-          title="Snap to grid"
-          className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-[12px] transition-colors ${
-            gridSnap
-              ? "border-teal-400 bg-teal-50 text-teal-700"
-              : "border-ink-200 bg-white text-ink-500"
-          }`}
-        >
-          <Grid3x3 className="h-3.5 w-3.5" />
-          {grid}mm
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setOrtho((o) => !o)}
-          title={`Constrain to ${angleStep} degree steps from the last point`}
-          className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-[12px] transition-colors ${
-            ortho
-              ? "border-teal-400 bg-teal-50 text-teal-700"
-              : "border-ink-200 bg-white text-ink-500"
-          }`}
-        >
-          <CornerUpRight className="h-3.5 w-3.5" />
-          Ortho
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setObjectSnap((s) => !s)}
-          title="Snap to existing geometry: endpoints, midpoints, centres"
-          className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-[12px] transition-colors ${
-            objectSnap
-              ? "border-teal-400 bg-teal-50 text-teal-700"
-              : "border-ink-200 bg-white text-ink-500"
-          }`}
-        >
-          <Magnet className="h-3.5 w-3.5" />
-          Object
-        </button>
-
-        <div className="flex items-center gap-0.5">
-          <IconBtn title="Undo (Cmd+Z)" onClick={undo} disabled={historyAt <= 0}>
-            <Undo2 className="h-3.5 w-3.5" />
-          </IconBtn>
-          <IconBtn
-            title="Redo (Shift+Cmd+Z)"
-            onClick={redo}
-            disabled={historyAt >= history.length - 1}
-          >
-            <Redo2 className="h-3.5 w-3.5" />
-          </IconBtn>
-          <IconBtn
-            title="Duplicate (Cmd+D)"
-            onClick={duplicateSelected}
-            disabled={selected.length === 0}
-          >
-            <Copy className="h-3.5 w-3.5" />
-          </IconBtn>
-          <IconBtn title="Delete" onClick={deleteSelected} disabled={selected.length === 0}>
-            <Trash2 className="h-3.5 w-3.5" />
-          </IconBtn>
-          <IconBtn
-            title="Zoom in"
-            onClick={() => setView((v) => ({ ...v, scale: Math.max(v.scale / 1.3, 0.01) }))}
-          >
-            <ZoomIn className="h-3.5 w-3.5" />
-          </IconBtn>
-          <IconBtn
-            title="Zoom out"
-            onClick={() => setView((v) => ({ ...v, scale: Math.min(v.scale * 1.3, 200) }))}
-          >
-            <ZoomOut className="h-3.5 w-3.5" />
-          </IconBtn>
-        </div>
-
         <div className="ml-auto flex items-center gap-2">
           {status && <span className="font-mono text-[11.5px] text-ink-500">{status}</span>}
+          <IconBtn
+            title={focus ? "Leave focus mode (Esc)" : "Focus mode: hide everything but the drawing"}
+            onClick={() => setFocus((f) => !f)}
+          >
+            {focus ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+          </IconBtn>
           <label className="flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-ink-200 bg-white px-2.5 text-[12px] text-ink-600 transition-colors hover:border-ink-400">
             <Upload className="h-3.5 w-3.5" />
             DXF
             <input
+              ref={importRef}
               type="file"
               accept=".dxf,application/dxf,text/plain"
               className="sr-only"
@@ -1877,15 +1969,49 @@ export default function CadEditor({
         </div>
       </div>
 
+      <CadToolbar
+        tool={tool}
+        onTool={(id) => {
+          setTool(id);
+          setPending([]);
+          setMeasured(null);
+          setFilletFirst(null);
+        }}
+        gridSnap={gridSnap}
+        objectSnap={objectSnap}
+        ortho={ortho}
+        grid={grid}
+        angleStep={angleStep}
+        canUndo={historyAt > 0}
+        canRedo={historyAt < history.length - 1}
+        hasSelection={selected.length > 0}
+        onToggle={(which) => {
+          if (which === "grid") setGridSnap((g) => !g);
+          if (which === "object") setObjectSnap((o) => !o);
+          if (which === "ortho") setOrtho((o) => !o);
+        }}
+        onUndo={undo}
+        onRedo={redo}
+        onDelete={deleteSelected}
+        onZoom={(dir) =>
+          setView((v) => ({
+            ...v,
+            scale: dir === "in" ? Math.max(v.scale / 1.3, 0.01) : Math.min(v.scale * 1.3, 200),
+          }))
+        }
+      />
+
       <div className="flex min-h-0 flex-1">
-        <CadSheets
-          sheets={sheets}
-          currentId={drawingId}
-          projectId={projectId}
-          projectName={projectName ?? null}
-          onDirtyCheck={() => dirty}
-          onOpen={(id) => router.push(`/studio/cad/${id}`)}
-        />
+        {showSheets && !focus && (
+          <CadSheets
+            sheets={sheets}
+            currentId={drawingId}
+            projectId={projectId}
+            projectName={projectName ?? null}
+            onDirtyCheck={() => dirty}
+            onOpen={(id) => router.push(`/studio/cad/${id}`)}
+          />
+        )}
 
         {/* canvas */}
         <div ref={wrapRef} className="relative min-h-0 flex-1 bg-white">
@@ -1944,7 +2070,7 @@ export default function CadEditor({
           </div>
         </div>
 
-        {showProperties && (
+        {showProperties && !focus && (
           <aside className="flex w-56 shrink-0 flex-col border-l border-ink-100 bg-ink-50/40">
             <div className="shrink-0 border-b border-ink-100 px-2.5 py-2">
               <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
@@ -1962,16 +2088,33 @@ export default function CadEditor({
           </aside>
         )}
 
-        <CadRail
-          layers={drawing.layers}
-          activeLayer={layer}
-          onActivateLayer={setLayer}
-          onLayerFlag={setLayerFlag}
-          onInsertSymbol={insertSymbol}
-          onInsertSheet={insertSheet}
-          onInsertTemplate={insertTemplate}
-        />
+        {showRail && !focus && (
+          <CadRail
+            layers={drawing.layers}
+            activeLayer={layer}
+            onActivateLayer={setLayer}
+            onLayerFlag={setLayerFlag}
+            onInsertSymbol={insertSymbol}
+            onInsertSheet={insertSheet}
+            onInsertTemplate={insertTemplate}
+          />
+        )}
       </div>
+
+      <CadCommandLine
+        prompt={promptText}
+        onCommand={runCommand}
+        onCoordinate={runCoordinate}
+        onEnter={() => {
+          if (tool === "polyline") finishPolyline(false);
+          else if (tool === "hatch") finishHatch();
+          else if (cmdHistory[0]) {
+            const repeat = findCommand(cmdHistory[0]);
+            if (repeat) runCommand(repeat);
+          }
+        }}
+        history={cmdHistory}
+      />
 
       <AiDock
         title="Draw with LADX"
@@ -2018,7 +2161,7 @@ function IconBtn({
 
 /* ── geometry helpers ── */
 
-function makeEntity(tool: Tool, pts: Point[], layer: string): Entity | null {
+function makeEntity(tool: ToolId, pts: Point[], layer: string): Entity | null {
   const [a, b, c] = pts as [Point, Point, Point?];
   switch (tool) {
     case "line":
@@ -2060,7 +2203,7 @@ function makeEntity(tool: Tool, pts: Point[], layer: string): Entity | null {
   }
 }
 
-function previewEntity(tool: Tool, pts: Point[], cursor: Point, layer: string): Entity | null {
+function previewEntity(tool: ToolId, pts: Point[], cursor: Point, layer: string): Entity | null {
   if (tool === "polyline") {
     return { id: "preview", type: "polyline", layer, points: [...pts, cursor], closed: false };
   }
