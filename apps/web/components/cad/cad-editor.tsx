@@ -4,7 +4,12 @@ import CadCommandLine from "@/components/cad/cad-commandline";
 import CadProperties from "@/components/cad/cad-properties";
 import CadRail from "@/components/cad/cad-rail";
 import CadSheets, { type SheetRow } from "@/components/cad/cad-sheets";
-import CadToolbar, { ALL_TOOLS, type ToolId, toolSpec } from "@/components/cad/cad-toolbar";
+import CadToolbar, {
+  ALL_TOOLS,
+  TOOL_PANELS,
+  type ToolId,
+  toolSpec,
+} from "@/components/cad/cad-toolbar";
 import AiDock, { type AiTurn } from "@/components/studio/ai-dock";
 import {
   type CommandSpec,
@@ -1570,6 +1575,24 @@ export default function CadEditor({
    * drawing from three edits ago. Building five arrays of objects costs
    * nothing next to that.
    */
+  /**
+   * One menu's worth of tools, taken from the same panels the toolbar draws.
+   *
+   * Built from TOOL_PANELS rather than from a second hand-kept list, so the
+   * menu bar cannot drift from the toolbar. It used to: every tool was
+   * flattened into Draw, which filed Trim, Extend, Offset and Fillet as
+   * drawing commands while the toolbar right above them called them Modify.
+   */
+  const toolItems = (panel: string) =>
+    (TOOL_PANELS.find((p) => p.name === panel)?.tools ?? []).map((t) => ({
+      label: t.label,
+      shortcut: t.key,
+      onSelect: () => {
+        setTool(t.id);
+        setPending([]);
+      },
+    }));
+
   const menus: Menu[] = [
     {
       label: "File",
@@ -1642,20 +1665,22 @@ export default function CadEditor({
     },
     {
       label: "Draw",
-      items: ALL_TOOLS.filter((t) => t.id !== "select").map((t) => ({
-        label: t.label,
-        shortcut: t.key,
-        onSelect: () => {
-          setTool(t.id);
-          setPending([]);
-        },
-      })),
+      items: toolItems("Draw"),
+    },
+    {
+      label: "Annotate",
+      items: toolItems("Annotate"),
     },
     {
       label: "Modify",
       items: [
+        // The four editing tools first, because trim and offset are most of
+        // what anybody reaches for, then the transforms that act on whatever
+        // is already selected.
+        ...toolItems("Modify"),
         {
           label: "Rotate 90 clockwise",
+          separator: true,
           onSelect: () => transformSelected("rotate-90"),
           disabled: selected.length === 0,
         },
