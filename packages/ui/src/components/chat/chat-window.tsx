@@ -1,16 +1,8 @@
 "use client";
 
-import { Send } from "lucide-react";
-import {
-  type FormEvent,
-  type KeyboardEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/cn";
-import { Button } from "../ui/button";
+import { type Attachment, Composer, type ModelPicker } from "./composer";
 import { ChatMessage, type ChatMessageProps } from "./message";
 
 export interface ChatTurn {
@@ -45,6 +37,22 @@ export interface ChatWindowProps {
    *  so the person can edit it before committing. */
   suggestions?: string[];
   className?: string;
+
+  /**
+   * Attaching a document.
+   *
+   * The host does the reading, because how a file becomes text is its business
+   * and this package must not grow a PDF parser. What arrives back is text,
+   * which is appended to the message as a quoted block so the model sees the
+   * specification and the person can see what was sent.
+   */
+  onAttach?: (files: FileList) => void;
+  attachments?: Attachment[];
+  onRemoveAttachment?: (id: string) => void;
+  attachAccept?: string;
+  attaching?: boolean;
+  /** Model selection. Absent hides the picker. */
+  models?: ModelPicker;
 }
 
 export function ChatWindow({
@@ -58,6 +66,12 @@ export function ChatWindow({
   emptyTitle = "What are you working on?",
   suggestions = [],
   className,
+  onAttach,
+  attachments = [],
+  onRemoveAttachment,
+  attachAccept,
+  attaching = false,
+  models,
 }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatTurn[]>(initialMessages);
   const [input, setInput] = useState("");
@@ -82,13 +96,19 @@ export function ChatWindow({
     async (e?: FormEvent) => {
       e?.preventDefault();
       const trimmed = input.trim();
-      if (!trimmed || streaming) return;
+      if ((!trimmed && attachments.length === 0) || streaming) return;
 
       setError(null);
+      // Attached text is fenced and labelled rather than merged into the
+      // question, so the model can tell the specification from the request and
+      // the person can see exactly what was sent on their behalf.
+      const attached = attachments
+        .map((a) => `--- attached: ${a.name} ---\n${a.text}`)
+        .join("\n\n");
       const userTurn: ChatTurn = {
         id: `u-${Date.now()}`,
         role: "user",
-        content: trimmed,
+        content: attached ? `${attached}\n\n${trimmed}`.trim() : trimmed,
       };
       const assistantId = `a-${Date.now()}`;
       const next: ChatTurn[] = [
@@ -117,15 +137,8 @@ export function ChatWindow({
         setStreaming(false);
       }
     },
-    [input, messages, onSend, streaming],
+    [input, messages, onSend, streaming, attachments],
   );
-
-  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      void handleSubmit();
-    }
-  };
 
   return (
     <div className={cn("flex h-full flex-col bg-white", className)}>
@@ -172,43 +185,22 @@ export function ChatWindow({
         </div>
       </div>
 
-      {/* The composer. One rounded field with the send control inside it, which
-          is the shape every assistant has converged on: it reads as one object
-          rather than as a form with a button beside it. */}
       <div className="shrink-0 px-3 pb-3">
-        <form onSubmit={handleSubmit} className="mx-auto w-full max-w-3xl">
-          <div className="flex items-end gap-2 rounded-2xl border border-ink-200 bg-white p-2 shadow-sm transition-colors focus-within:border-ink-400">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={onKeyDown}
-              placeholder={placeholder}
-              rows={1}
-              // Grows with the content up to a ceiling, then scrolls, so a long
-              // paste does not push the conversation off the screen.
-              onInput={(e) => {
-                const el = e.currentTarget;
-                el.style.height = "auto";
-                el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
-              }}
-              className="max-h-[200px] min-h-[24px] flex-1 resize-none border-0 bg-transparent px-2 py-1.5 text-[14.5px] text-ink-900 outline-none placeholder:text-ink-400"
-            />
-            <Button
-              type="submit"
-              variant="primary"
-              size="icon"
-              disabled={!input.trim() || streaming}
-              aria-label="Send"
-              className="shrink-0 rounded-xl"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="mt-1.5 text-center text-[11px] text-ink-400">
-            Enter to send, Shift and Enter for a new line. Check generated logic before it reaches a
-            machine.
-          </p>
-        </form>
+        <Composer
+          value={input}
+          onChange={setInput}
+          onSubmit={() => void handleSubmit()}
+          onStop={() => abortRef.current?.abort()}
+          streaming={streaming}
+          placeholder={placeholder}
+          attachments={attachments}
+          onAttach={onAttach}
+          onRemoveAttachment={onRemoveAttachment}
+          accept={attachAccept}
+          attaching={attaching}
+          models={models}
+          footnote="Enter to send, Shift and Enter for a new line. Check generated logic before it reaches a machine."
+        />
       </div>
     </div>
   );

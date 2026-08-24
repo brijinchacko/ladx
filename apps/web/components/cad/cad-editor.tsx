@@ -1,6 +1,7 @@
 "use client";
 
 import CadRail from "@/components/cad/cad-rail";
+import { type DrawingTemplate, buildDrawingFromTemplate } from "@/lib/cad/drawing-templates";
 import { readDxf, writeDxf } from "@/lib/cad/dxf";
 import { drawingToPdf } from "@/lib/cad/pdf";
 import { drawEntity, hitTest, hitTestBox, translateEntity } from "@/lib/cad/render";
@@ -599,6 +600,68 @@ export default function CadEditor({
     [drawing, commit, name, titleFields],
   );
 
+  /**
+   * A whole sheet from the standard set.
+   *
+   * Replaces rather than appends when the drawing is empty, which it usually is
+   * at this point: a template is how you start a sheet. On a drawing with work
+   * on it the template is added instead, because silently discarding somebody's
+   * geometry to make room for a frame would be unforgivable.
+   */
+  const insertTemplate = useCallback(
+    (template: DrawingTemplate) => {
+      const parts = buildDrawingFromTemplate(template, {
+        drawingTitle: template.name,
+        date: new Date().toISOString().slice(0, 10),
+        ...titleFields,
+      });
+      const needed = [...new Set(parts.map((p) => p.layer))].filter(
+        (n) => !drawing.layers.some((l) => l.name === n),
+      );
+      const colours: Record<string, string> = {
+        SHEET: "4A5A68",
+        NOTES: "7A8894",
+        WIRING: "B4531A",
+        PANEL: "2C9A9E",
+        TEXT: "4A5A68",
+      };
+      commit({
+        ...drawing,
+        layers: [
+          ...drawing.layers,
+          ...needed.map((n) => ({
+            name: n,
+            color: colours[n] ?? "0F1A24",
+            visible: true,
+            locked: false,
+          })),
+        ],
+        entities: [...drawing.entities, ...parts],
+      });
+      if (drawing.entities.length === 0) setName(`${template.sheet} ${template.name}`);
+      setStatus(
+        drawing.entities.length === 0
+          ? `Sheet ${template.sheet} started.`
+          : `Sheet ${template.sheet} added to this drawing.`,
+      );
+      setTimeout(() => setStatus(null), 4000);
+      // Frame it, because a template is drawn at sheet scale and the view was
+      // wherever the last piece of work left it.
+      const wrap = wrapRef.current;
+      if (wrap) {
+        const b = drawingBounds({ ...drawing, entities: parts });
+        if (b) {
+          const pad = 30;
+          const sx = (b.max.x - b.min.x || 100) / Math.max(wrap.clientWidth - pad * 2, 1);
+          const sy = (b.max.y - b.min.y || 100) / Math.max(wrap.clientHeight - pad * 2, 1);
+          const scale = Math.max(sx, sy) * 1.08;
+          setView({ scale, ox: b.min.x - pad * scale, oy: b.max.y + pad * scale });
+        }
+      }
+    },
+    [drawing, commit, titleFields],
+  );
+
   const setLayerFlag = useCallback(
     (layerName: string, flag: "visible" | "locked", value: boolean) => {
       commit({
@@ -968,6 +1031,7 @@ export default function CadEditor({
           onLayerFlag={setLayerFlag}
           onInsertSymbol={insertSymbol}
           onInsertSheet={insertSheet}
+          onInsertTemplate={insertTemplate}
         />
       </div>
     </div>

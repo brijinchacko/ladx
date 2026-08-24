@@ -1,6 +1,7 @@
 import { PhaseSelect } from "@/components/platform/project-controls";
 import DeliverableRow from "@/components/studio/deliverable-row";
 import DocumentList from "@/components/studio/document-list";
+import OnboardingGate from "@/components/studio/onboarding-gate";
 import PhaseNav from "@/components/studio/phase-nav";
 import ProjectBriefPanel from "@/components/studio/project-brief";
 import ProjectChatDock from "@/components/studio/project-chat-dock";
@@ -104,11 +105,19 @@ export default async function ProjectWorkspace({
         title={project.name}
         subtitle={[project.code, client?.name, project.site].filter(Boolean).join("  ·  ")}
         actions={
-          <PhaseSelect
-            projectId={project.id}
-            phase={project.phase}
-            phases={PHASES.map((p) => ({ id: p.id, name: p.name, step: p.step }))}
-          />
+          <>
+            <OnboardingGate
+              projectId={project.id}
+              projectName={project.name}
+              brief={project.brief ?? {}}
+              onboarded={Boolean(project.onboardedAt)}
+            />
+            <PhaseSelect
+              projectId={project.id}
+              phase={project.phase}
+              phases={PHASES.map((p) => ({ id: p.id, name: p.name, step: p.step }))}
+            />
+          </>
         }
       />
 

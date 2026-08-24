@@ -14,6 +14,13 @@ export {
 export { Logo, type LogoProps } from "./components/brand/logo";
 export { ChatMessage, type ChatMessageProps } from "./components/chat/message";
 export {
+  Composer,
+  type Attachment,
+  type ComposerProps,
+  type ModelOption,
+  type ModelPicker,
+} from "./components/chat/composer";
+export {
   ChatWindow,
   type ChatTurn,
   type ChatWindowProps,

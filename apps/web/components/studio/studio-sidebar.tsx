@@ -5,13 +5,16 @@ import ChatHistory, { type HistoryItem } from "@/components/studio/chat-history"
 import { Logo } from "@ladx/ui";
 import {
   Activity,
+  ChevronDown,
   ChevronsLeft,
   FileText,
   FolderKanban,
   GitCompareArrows,
   Grid2x2Check,
+  House,
   Library,
   type MessageSquare,
+  MessageSquarePlus,
   MoreHorizontal,
   PanelLeft,
   PencilRuler,
@@ -161,29 +164,42 @@ export default function StudioSidebar({
         </button>
       </div>
 
-      {/* primary action */}
-      <div className="px-3 pb-3">
-        <Link
-          href="/studio"
-          className="flex items-center gap-2 rounded-md bg-ink-900 px-3 py-2 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          New chat
-        </Link>
+      {/*
+        Home and Projects.
+
+        The two places work starts from, given equal weight at the top because
+        that is what they are: a question you want answered now, and a job you
+        are part way through. Everything below is reached from one of them.
+      */}
+      <div className="px-3">
+        <div className="flex gap-1">
+          <TopTab
+            href="/studio"
+            icon={House}
+            active={pathname === "/studio" || pathname.startsWith("/studio/c/")}
+          >
+            Home
+          </TopTab>
+          <TopTab
+            href="/studio/projects"
+            icon={FolderKanban}
+            active={isActive("/studio/projects")}
+            count={projects.length || undefined}
+          >
+            Projects
+          </TopTab>
+        </div>
+      </div>
+
+      {/* New, which means whichever of the two you are standing in. */}
+      <div className="px-3 py-3">
+        <NewButton onProjects={isActive("/studio/projects")} />
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 pb-3">
         {/* the work */}
         <Section label="Workspace">
-          <Row
-            href="/studio/projects"
-            active={isActive("/studio/projects")}
-            icon={FolderKanban}
-            count={projects.length || undefined}
-          >
-            Projects
-          </Row>
-          {projects.slice(0, 4).map((p) => (
+          {projects.slice(0, 5).map((p) => (
             <ProjectRow
               key={p.id}
               project={p}
@@ -193,6 +209,11 @@ export default function StudioSidebar({
               onClose={() => setMenuFor(null)}
             />
           ))}
+          {projects.length === 0 && (
+            <p className="px-2 py-1 text-[12px] leading-snug text-ink-400">
+              No projects yet. New starts one.
+            </p>
+          )}
           <Row href="/studio/clients" active={isActive("/studio/clients")} icon={Users}>
             Clients
           </Row>
@@ -216,6 +237,134 @@ export default function StudioSidebar({
         <AccountMenu userName={userName} userEmail={userEmail} />
       </div>
     </aside>
+  );
+}
+
+/**
+ * Home or Projects.
+ *
+ * A pair rather than a list, and at the top rather than among the tools,
+ * because these are the two modes the application has. Chat is for a question
+ * that has no file behind it yet; a project is for work that does. Everything
+ * else in this pane belongs to one of them.
+ */
+function TopTab({
+  href,
+  icon: Icon,
+  active,
+  count,
+  children,
+}: {
+  href: string;
+  icon: typeof House;
+  active: boolean;
+  count?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[13px] transition-colors ${
+        active
+          ? "bg-white text-ink-900 shadow-sm ring-1 ring-ink-200"
+          : "text-ink-500 hover:bg-ink-100 hover:text-ink-900"
+      }`}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      {children}
+      {count !== undefined && (
+        <span className="font-mono text-[10.5px] tabular-nums opacity-50">{count}</span>
+      )}
+    </Link>
+  );
+}
+
+/**
+ * New.
+ *
+ * One button that means the obvious thing where you are standing, with the
+ * other still one click away. Splitting it into two permanent buttons would
+ * make the commonest action compete with itself, and hiding the second would
+ * strand somebody in Projects who wants to ask a question.
+ */
+function NewButton({ onProjects }: { onProjects: boolean }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const primary = onProjects
+    ? { label: "New project", href: "/studio/projects?new=1" }
+    : { label: "New chat", href: "/studio" };
+  const secondary = onProjects
+    ? { label: "New chat", href: "/studio", icon: MessageSquarePlus }
+    : { label: "New project", href: "/studio/projects?new=1", icon: FolderKanban };
+
+  const SecondaryIcon = secondary.icon;
+
+  return (
+    <div ref={ref} className="relative">
+      <div className="flex overflow-hidden rounded-md bg-ink-900">
+        <Link
+          href={primary.href}
+          className="flex flex-1 items-center gap-2 px-3 py-2 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" />
+          {primary.label}
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-label="Other things to create"
+          aria-expanded={open}
+          className="flex w-7 items-center justify-center border-l border-white/15 text-white transition-opacity hover:opacity-90"
+        >
+          <ChevronDown className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-md border border-ink-200 bg-white shadow-lg">
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              router.push(secondary.href);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-ink-700 transition-colors hover:bg-ink-50"
+          >
+            <SecondaryIcon className="h-3.5 w-3.5 shrink-0 text-ink-400" />
+            {secondary.label}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              router.push("/studio/clients/new");
+            }}
+            className="flex w-full items-center gap-2 border-t border-ink-100 px-3 py-2 text-left text-[13px] text-ink-700 transition-colors hover:bg-ink-50"
+          >
+            <Users className="h-3.5 w-3.5 shrink-0 text-ink-400" />
+            New client
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

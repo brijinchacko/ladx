@@ -187,6 +187,15 @@ export const projects = pgTable(
      * nothing joins on it. Shape and field registry live in lib/platform/brief.ts.
      */
     brief: jsonb("brief").$type<ProjectBrief>(),
+    /**
+     * When the setup wizard was finished or dismissed.
+     *
+     * Not derivable from whether the brief is empty: skipping the wizard is a
+     * decision, and a project page that re-opened it on every visit because the
+     * fields are still blank would be nagging rather than helping. Null means
+     * the wizard has never been closed, so it opens once.
+     */
+    onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

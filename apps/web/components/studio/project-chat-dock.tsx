@@ -1,6 +1,7 @@
 "use client";
 
 import { streamChatFromApi } from "@/lib/chat-stream";
+import { useComposer } from "@/lib/chat/use-composer";
 import { type ChatTurn, ChatWindow } from "@ladx/ui";
 import { GripVertical, Maximize2, MessageSquare, Minimize2, PanelRight, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -96,6 +97,7 @@ export default function ProjectChatDock({
   const [dragging, setDragging] = useState(false);
   const conversationIdRef = useRef<string | undefined>(undefined);
   const [notice, setNotice] = useState<string | null>(null);
+  const composer = useComposer();
 
   // Restored on the client: the server has no viewport to snap against.
   useEffect(() => {
@@ -240,19 +242,22 @@ export default function ProjectChatDock({
   /* ───────────────────────────── the thread ───────────────────────────── */
 
   const send = useCallback(
-    async (turns: ChatTurn[], signal: AbortSignal) =>
-      streamChatFromApi({
+    async (turns: ChatTurn[], signal: AbortSignal) => {
+      composer.clearAttachments();
+      return streamChatFromApi({
         messages: turns.map(({ role, content }) => ({ role, content })),
         conversationId: conversationIdRef.current,
         // This is what grounds the thread in the project.
         projectId,
+        model: composer.model,
         signal,
         onConversationId: (id) => {
           conversationIdRef.current = id;
         },
         onNotice: (n) => setNotice(n.message),
-      }),
-    [projectId],
+      });
+    },
+    [projectId, composer.model, composer.clearAttachments],
   );
 
   if (!ready) return null;
@@ -354,6 +359,12 @@ export default function ProjectChatDock({
           "What should the FAT cover?",
         ]}
         placeholder="Ask about this project…"
+        onAttach={composer.attach}
+        attachments={composer.attachments}
+        onRemoveAttachment={composer.removeAttachment}
+        attachAccept={composer.accept}
+        attaching={composer.attaching}
+        models={composer.models}
         onSend={send}
       />
 

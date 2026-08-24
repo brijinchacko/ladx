@@ -1,6 +1,7 @@
 "use client";
 
 import { streamChatFromApi } from "@/lib/chat-stream";
+import { useComposer } from "@/lib/chat/use-composer";
 import { type ChatTurn, ChatWindow } from "@ladx/ui";
 import { Info, X } from "lucide-react";
 import Link from "next/link";
@@ -34,6 +35,7 @@ export default function StudioChat({
   const conversationIdRef = useRef<string | undefined>(conversationId);
   const [notice, setNotice] = useState<{ message: string; model: string } | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const composer = useComposer();
 
   if (!hasProvider) {
     return <NoProvider />;
@@ -64,9 +66,31 @@ export default function StudioChat({
         </div>
       )}
 
+      {composer.attachError && (
+        <div className="flex items-start gap-2.5 border-b border-red-200 bg-red-50 px-5 py-2.5">
+          <p className="flex-1 text-[12.5px] leading-relaxed text-red-800">
+            {composer.attachError}
+          </p>
+          <button
+            type="button"
+            onClick={composer.dismissAttachError}
+            aria-label="Dismiss"
+            className="shrink-0 text-red-400 transition-colors hover:text-red-900"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       <ChatWindow
         className="min-h-0 flex-1"
         emptyTitle="What are you working on?"
+        onAttach={composer.attach}
+        attachments={composer.attachments}
+        onRemoveAttachment={composer.removeAttachment}
+        attachAccept={composer.accept}
+        attaching={composer.attaching}
+        models={composer.models}
         suggestions={[
           "Write a motor start/stop with seal-in",
           "Explain what a TON does when the rung goes false",
@@ -74,18 +98,23 @@ export default function StudioChat({
           "What documents does a small machine build need?",
         ]}
         initialMessages={initialMessages}
-        onSend={async (turns: ChatTurn[], signal) =>
-          streamChatFromApi({
+        onSend={async (turns: ChatTurn[], signal) => {
+          // The attached text is already baked into the turn being sent, so the
+          // chips can go now. Leaving them would attach the whole specification
+          // again to the next message.
+          composer.clearAttachments();
+          return streamChatFromApi({
             messages: turns.map(({ role, content }) => ({ role, content })),
             conversationId: conversationIdRef.current,
             projectId,
+            model: composer.model,
             signal,
             onConversationId: (id) => {
               conversationIdRef.current = id;
             },
             onNotice: (n) => setNotice(n),
-          })
-        }
+          });
+        }}
       />
     </div>
   );

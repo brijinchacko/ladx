@@ -171,11 +171,16 @@ export async function createProject(
 export async function updateProject(
   userId: string,
   id: string,
-  input: Partial<CreateProjectInput> & { phase?: PhaseId; brief?: ProjectBrief },
+  input: Partial<CreateProjectInput> & {
+    phase?: PhaseId;
+    brief?: ProjectBrief;
+    onboardedAt?: Date | null;
+  },
 ): Promise<boolean> {
   const patch: Record<string, unknown> = { updatedAt: new Date() };
   if (input.name !== undefined) patch.name = input.name;
   if (input.brief !== undefined) patch.brief = input.brief;
+  if (input.onboardedAt !== undefined) patch.onboardedAt = input.onboardedAt;
   if (input.code !== undefined) patch.code = input.code;
   if (input.description !== undefined) patch.description = input.description;
   if (input.site !== undefined) patch.site = input.site;

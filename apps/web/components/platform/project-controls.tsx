@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface ClientOption {
   id: string;
@@ -20,6 +20,7 @@ export function NewProjectForm({
   defaultClientId,
 }: { clients: ClientOption[]; defaultClientId?: string }) {
   const router = useRouter();
+  const params = useSearchParams();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
@@ -28,6 +29,12 @@ export function NewProjectForm({
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // The sidebar's New button links here with ?new=1 rather than duplicating the
+  // form, so there is one place a project is created from.
+  useEffect(() => {
+    if (params.get("new") === "1") setOpen(true);
+  }, [params]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();

@@ -1,12 +1,17 @@
 "use client";
 
+import {
+  DRAWING_TEMPLATES,
+  type DrawingTemplate,
+  TEMPLATE_SECTIONS,
+} from "@/lib/cad/drawing-templates";
 import { type CadSymbol, symbolsByFamily } from "@/lib/cad/symbols";
 import { SHEETS, type SheetSize } from "@/lib/cad/titleblock";
 import type { Layer } from "@/lib/cad/types";
 import { Eye, EyeOff, Lock, LockOpen, PanelRight, StickyNote } from "lucide-react";
 import { useState } from "react";
 
-type Tab = "schematic" | "panel" | "layers";
+type Tab = "sheets" | "schematic" | "panel" | "layers";
 
 /**
  * The rail beside the canvas.
@@ -24,6 +29,7 @@ export default function CadRail({
   onLayerFlag,
   onInsertSymbol,
   onInsertSheet,
+  onInsertTemplate,
 }: {
   layers: Layer[];
   activeLayer: string;
@@ -31,9 +37,10 @@ export default function CadRail({
   onLayerFlag: (name: string, flag: "visible" | "locked", value: boolean) => void;
   onInsertSymbol: (s: CadSymbol) => void;
   onInsertSheet: (s: SheetSize) => void;
+  onInsertTemplate: (t: DrawingTemplate) => void;
 }) {
   const [open, setOpen] = useState(true);
-  const [tab, setTab] = useState<Tab>("schematic");
+  const [tab, setTab] = useState<Tab>("sheets");
 
   if (!open) {
     return (
@@ -54,6 +61,7 @@ export default function CadRail({
       <div className="flex shrink-0 items-center gap-0.5 border-b border-ink-100 p-1.5">
         {(
           [
+            { id: "sheets", label: "Sheets" },
             { id: "schematic", label: "Schematic" },
             { id: "panel", label: "Panel" },
             { id: "layers", label: "Layers" },
@@ -81,7 +89,51 @@ export default function CadRail({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
-        {tab === "layers" ? (
+        {tab === "sheets" ? (
+          <>
+            <p className="mb-2 px-1 text-[11px] leading-snug text-ink-500">
+              A working sheet from the standard set, numbered and laid out, with its title block
+              filled from the project. Drawn to be corrected rather than admired.
+            </p>
+            {TEMPLATE_SECTIONS.map((section) => {
+              const items = DRAWING_TEMPLATES.filter((t) => t.section === section);
+              if (!items.length) return null;
+              return (
+                <div key={section} className="mb-3">
+                  <p className="mb-1 px-1 font-mono text-[9.5px] uppercase tracking-[0.12em] text-ink-400">
+                    {section}
+                  </p>
+                  <ul className="space-y-1">
+                    {items.map((t) => (
+                      <li key={t.id}>
+                        <button
+                          type="button"
+                          onClick={() => onInsertTemplate(t)}
+                          className="w-full rounded-md border border-ink-200 bg-white px-2 py-1.5 text-left transition-colors hover:border-ink-400"
+                        >
+                          <span className="flex items-baseline gap-2">
+                            <span className="shrink-0 rounded bg-ink-900 px-1 py-0.5 font-mono text-[9px] font-semibold text-white">
+                              {t.sheet}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink-900">
+                              {t.name}
+                            </span>
+                            <span className="shrink-0 font-mono text-[9px] text-ink-400">
+                              {t.sheetSize}
+                            </span>
+                          </span>
+                          <span className="mt-0.5 block text-[11px] leading-snug text-ink-500">
+                            {t.note}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </>
+        ) : tab === "layers" ? (
           <ul className="space-y-px">
             {layers.map((l) => (
               <li

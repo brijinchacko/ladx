@@ -68,6 +68,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     // from the project page and from the document a field was needed for, and a
     // replacing write would silently blank everything the other form did not send.
     ...("brief" in body ? { brief: mergeBrief(project.brief, body.brief) } : {}),
+    // Closing the setup wizard, however it was closed. Skipping is a decision
+    // and is recorded as one, so the wizard does not reopen on every visit.
+    ...(body.onboarded === true ? { onboardedAt: new Date() } : {}),
+    ...(body.onboarded === false ? { onboardedAt: null } : {}),
   });
   if (!ok) return Response.json({ error: "not found" }, { status: 404 });
   return Response.json({ ok: true });
