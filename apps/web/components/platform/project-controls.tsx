@@ -229,28 +229,3 @@ export function PhaseSelect({
     </select>
   );
 }
-
-/** Delete, split out so the workspace stays a server component. */
-export function DeleteProjectButton({ projectId }: { projectId: string }) {
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
-
-  async function remove() {
-    if (!window.confirm("Delete this project? This cannot be undone.")) return;
-    setBusy(true);
-    await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
-    router.push("/studio/projects");
-    router.refresh();
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={remove}
-      disabled={busy}
-      className="font-mono text-[12px] text-ink-400 transition-colors hover:text-red-700 disabled:opacity-50"
-    >
-      {busy ? "Deleting…" : "Delete"}
-    </button>
-  );
-}

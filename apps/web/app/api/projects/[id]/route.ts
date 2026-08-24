@@ -1,9 +1,11 @@
 // GET    /api/projects/:id, fetch a single project (must belong to user).
+// PATCH  /api/projects/:id, edit the engagement fields and the design basis.
 // DELETE /api/projects/:id, delete the row and the stored blob.
 
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { projects } from "@/lib/db/schema";
+import { mergeBrief } from "@/lib/platform/brief";
 import { getStorage } from "@/lib/storage";
 import { and, eq } from "drizzle-orm";
 
@@ -51,6 +53,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return Response.json({ error: "invalid request" }, { status: 400 });
 
+  const project = await findOwnedProject(authResult.user.id, id);
+  if (!project) return Response.json({ error: "not found" }, { status: 404 });
+
   const { updateProject } = await import("@/lib/platform/queries");
   const ok = await updateProject(authResult.user.id, id, {
     ...(typeof body.name === "string" ? { name: body.name.trim() } : {}),
@@ -59,6 +64,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     ...(typeof body.site === "string" ? { site: body.site } : {}),
     ...("clientId" in body ? { clientId: (body.clientId as string | null) ?? null } : {}),
     ...(typeof body.phase === "string" ? { phase: body.phase as never } : {}),
+    // Merged rather than replaced: the brief is answered a few fields at a time,
+    // from the project page and from the document a field was needed for, and a
+    // replacing write would silently blank everything the other form did not send.
+    ...("brief" in body ? { brief: mergeBrief(project.brief, body.brief) } : {}),
   });
   if (!ok) return Response.json({ error: "not found" }, { status: 404 });
   return Response.json({ ok: true });

@@ -227,6 +227,7 @@ function Wire({ live, grow, w }: { live: boolean; grow?: boolean; w?: number }) 
 }
 
 function ElementCell({
+  elId,
   type,
   tag,
   address,
@@ -242,6 +243,15 @@ function ElementCell({
   onDrive,
   driveHint,
 }: {
+  /**
+   * The element's own id, published to the DOM.
+   *
+   * The editor popover anchors to the instruction it is editing, and the only
+   * thing that can find it is the DOM. Threading a bounding rect through the
+   * five places that open the editor would couple every one of them to how the
+   * popover positions itself; a data attribute lets the popover ask.
+   */
+  elId: string;
   type: ElementType;
   tag: string;
   /** The terminal this tag is on, printed under the instruction as it is on
@@ -276,6 +286,7 @@ function ElementCell({
       role="button"
       tabIndex={0}
       title={help}
+      data-el-id={elId}
       /*
        * Every instruction on a rung can be picked up and put somewhere else.
        * Selecting still works because a click and a drag are different
@@ -620,6 +631,7 @@ function NodeView({ node, path, ctx }: { node: LadderNode; path: Path; ctx: Ctx 
   if (node.kind === "el") {
     return (
       <ElementCell
+        elId={node.id}
         type={node.type}
         tag={node.tag}
         detail={detailOf(node)}
@@ -962,6 +974,9 @@ export default function RungView({
   return (
     <div
       className="bg-white rounded"
+      // Published so the instruction picker can open beside the network it is
+      // adding to rather than in the middle of the screen.
+      data-rung-id={rung.id}
       style={{
         border: rungSelected ? "2px solid #2891FF" : "1px solid #C9D2DC",
         // Keep the box the same size selected or not, so selecting a network
@@ -1212,6 +1227,7 @@ export default function RungView({
             {rung.outputs.map((o) => (
               <span key={o.id} style={{ display: "flex", alignItems: "stretch", width: "100%" }}>
                 <ElementCell
+                  elId={o.id}
                   type={o.type}
                   tag={o.tag}
                   address={addressOf?.(o.tag)}

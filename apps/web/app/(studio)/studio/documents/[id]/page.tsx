@@ -1,9 +1,11 @@
+import AttachProject from "@/components/studio/attach-project";
 import DocumentEditor from "@/components/studio/document-editor";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { getTemplate } from "@/content/templates";
 import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents, projects } from "@/lib/db/schema";
+import { listProjects } from "@/lib/platform/queries";
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -85,7 +87,12 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
             >
               Back to project
             </Link>
-          ) : undefined
+          ) : (
+            <AttachProject
+              documentId={doc.id}
+              projects={(await listProjects(user.id)).map((p) => ({ id: p.id, name: p.name }))}
+            />
+          )
         }
       />
       <DocumentEditor

@@ -9,10 +9,12 @@ import { programRoutines } from "./types";
  * top-to-bottom, write the outputs. This does the same, and the fidelity that
  * matters for teaching lives in the details students actually get wrong:
  *
- *   OUTPUTS ARE WRITTEN, NOT READ, MID-SCAN. Every rung in one scan sees the
- *   tag values as they were at the start of that scan. That is why a coil on
- *   rung 5 does not affect a contact on rung 2 until the next scan, the single
- *   most common source of "but it should work" in a classroom.
+ *   SCAN ORDER IS THE LOGIC. Rungs run top to bottom against one live set of
+ *   values, so a coil reaches every rung BELOW it in the same scan and a rung
+ *   ABOVE it not until the next one, because that rung has already run. This is
+ *   the single most common source of "but it should work" in a classroom, and
+ *   it is also why a seal-in works: the branch that holds a motor on is reading
+ *   the coil its own rung drives, which is always last scan's value.
  *
  *   EDGES ARE PER INSTRUCTION, NOT PER TAG. A CTU counts once when its rung
  *   goes false-to-true, so a held-down button counts one, not thousands. Each

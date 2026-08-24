@@ -22,7 +22,7 @@ export default async function StudioDocumentsPage() {
     <>
       <WorkspaceHeader
         title="Documents"
-        subtitle={`${TEMPLATES.length} templates. Generate one filled from a project, or download a blank.`}
+        subtitle={`${TEMPLATES.length} templates. Open one here, then attach it to a project or start a new one.`}
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
@@ -69,8 +69,7 @@ export default async function StudioDocumentsPage() {
                 {items.map((t) => (
                   <li key={t.slug}>
                     <Link
-                      href={`/documents/${t.slug}`}
-                      target="_blank"
+                      href={`/studio/documents/t/${t.slug}`}
                       className="group flex h-full flex-col rounded-md border border-ink-200 bg-white p-3.5 transition-colors hover:border-ink-400"
                     >
                       <span className="mb-1.5 inline-block w-fit bg-ink-900 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-white">

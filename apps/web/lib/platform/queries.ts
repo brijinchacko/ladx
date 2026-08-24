@@ -7,6 +7,7 @@ import {
   companyProfiles,
   projects,
 } from "@/lib/db/schema";
+import type { ProjectBrief } from "@/lib/platform/brief";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { PhaseId } from "./lifecycle";
 
@@ -170,10 +171,11 @@ export async function createProject(
 export async function updateProject(
   userId: string,
   id: string,
-  input: Partial<CreateProjectInput> & { phase?: PhaseId },
+  input: Partial<CreateProjectInput> & { phase?: PhaseId; brief?: ProjectBrief },
 ): Promise<boolean> {
   const patch: Record<string, unknown> = { updatedAt: new Date() };
   if (input.name !== undefined) patch.name = input.name;
+  if (input.brief !== undefined) patch.brief = input.brief;
   if (input.code !== undefined) patch.code = input.code;
   if (input.description !== undefined) patch.description = input.description;
   if (input.site !== undefined) patch.site = input.site;

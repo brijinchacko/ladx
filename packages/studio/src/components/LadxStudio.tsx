@@ -55,6 +55,7 @@ import {
   type Path,
   addLeg,
   branchSpan,
+  dedupeRungIds,
   elNode,
   everyElement,
   extendBranch,
@@ -93,6 +94,7 @@ import MenuBar, { type Menu } from "./MenuBar";
 import MessageLog from "./MessageLog";
 import Panel, { Resizer } from "./Panel";
 import PanelDock from "./PanelDock";
+import Popover from "./Popover";
 import ProjectTree from "./ProjectTree";
 import RungView from "./RungView";
 import SimPanel from "./SimPanel";
@@ -117,6 +119,34 @@ import css from "./ladx.module.css";
 
 const LIVE = "#35B6BB";
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+/**
+ * Take a stored program's ids out of circulation, repairing any that clash.
+ *
+ * Two jobs, one walk, because they are the same problem seen from either end.
+ * The counter restarts at zero on every page load, so ids handed out after
+ * opening a saved project are the ones handed out while writing it; reserving
+ * stops that happening again. Programs written before the reservation existed
+ * already carry duplicates, so those are renumbered here rather than left to
+ * misbehave: the engine keys its per-instruction edge memory on the id, and a
+ * shared id makes two instructions share one one-shot.
+ */
+function reserveAndRepair(program: LadxProgram): LadxProgram {
+  const seen = new Set<string>();
+  const routines = programRoutines(program).map((routine) => ({
+    ...routine,
+    rungs: routine.rungs.map((rung) => dedupeRungIds(rung, seen)),
+  }));
+
+  // programRoutines migrates a legacy flat program into a single Main, so the
+  // repaired routines are written back the same way round.
+  const [main] = routines;
+  return {
+    ...program,
+    routines,
+    rungs: main ? main.rungs : (program.rungs ?? []),
+  };
+}
 
 type Exercise = {
   id: string;
@@ -605,12 +635,13 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
          */
         const raw: LadxProgram = stored.program;
         const p: LadxProgram = { ...raw, tags: assignMissingAddresses(raw.tags ?? []) };
-        setProgram(p);
+        const p2 = reserveAndRepair(p);
+        setProgram(p2);
         setName(stored.name);
-        programRef.current = p;
+        programRef.current = p2;
         // Seed timer/counter presets from the instructions before the first
         // scan: after this the tag owns the preset, so a MOV into .PRE sticks.
-        const fresh = seedPresets(p, resetTags(p.tags ?? []));
+        const fresh = seedPresets(p2, resetTags(p2.tags ?? []));
         setTags(fresh);
         tagsRef.current = fresh;
       } finally {
@@ -3967,7 +3998,12 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
       )}
 
       {picker && (
-        <Modal onClose={() => setPicker(null)} title="Add an instruction">
+        <Popover
+          anchorSelector={`[data-rung-id="${cssEscape(picker.rungId)}"]`}
+          onClose={() => setPicker(null)}
+          title="Add an instruction"
+          width={320}
+        >
           {(["Bit", "Timer/Counter", "Compare", "Move/Math"] as const).map((group) => {
             const items = INSTRUCTIONS.filter(
               (i) =>
@@ -4002,12 +4038,13 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
               </div>
             );
           })}
-        </Modal>
+        </Popover>
       )}
 
       {/* ── Element editor ──────────────────────────────────────── */}
       {editing && (
-        <Modal
+        <Popover
+          anchorSelector={`[data-el-id="${cssEscape(editing.id)}"]`}
           onClose={() => setEditing(null)}
           title={`${editing.type}, ${INSTRUCTION_BY_TYPE.get(editing.type)?.label ?? ""}`}
         >
@@ -4057,7 +4094,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
                   setEditing(next);
                   updateElement(next);
                 }}
-                placeholder="Start_PB, or T1.DN for a timer's done bit"
+                placeholder="Start_PB, or T1.DN"
                 className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white/10 text-[13px] font-mono text-text-primary"
               />
             </label>
@@ -4224,7 +4261,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
               </span>
               <input
                 list="ladx-tags"
-                placeholder="Count_1, or T1.PRE to set a timer's preset"
+                placeholder="Count_1, or T1.PRE"
                 value={editing.dest ?? ""}
                 onChange={(e) => {
                   const next = { ...editing, dest: e.target.value };
@@ -4249,7 +4286,7 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
           >
             Done
           </button>
-        </Modal>
+        </Popover>
       )}
 
       {/* ── Help and the tour ───────────────────────────────────────
@@ -4279,6 +4316,18 @@ export default function LadxStudio({ projectId, exercises = [], storage, onBack 
       />
     </div>
   );
+}
+
+/**
+ * Safe inside an attribute selector.
+ *
+ * Element ids are generated here, so they are tame in practice, but a selector
+ * built by concatenation is a habit worth not having. CSS.escape is missing in
+ * older runtimes and in server rendering, hence the fallback.
+ */
+function cssEscape(value: string): string {
+  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") return CSS.escape(value);
+  return value.replace(/["\\]/g, "\\$&");
 }
 
 function Modal({

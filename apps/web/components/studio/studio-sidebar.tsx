@@ -4,6 +4,7 @@ import AccountMenu from "@/components/studio/account-menu";
 import ChatHistory, { type HistoryItem } from "@/components/studio/chat-history";
 import { Logo } from "@ladx/ui";
 import {
+  Activity,
   ChevronsLeft,
   FileText,
   FolderKanban,
@@ -11,14 +12,17 @@ import {
   Grid2x2Check,
   Library,
   type MessageSquare,
+  MoreHorizontal,
   PanelLeft,
+  PencilRuler,
   Plus,
   Settings,
+  Trash2,
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 export type SidebarConversation = HistoryItem;
 
@@ -30,6 +34,8 @@ export interface SidebarProject {
 
 const TOOLS = [
   { href: "/studio/ladder", label: "Ladder", icon: Grid2x2Check },
+  { href: "/studio/monitor", label: "Monitor", icon: Activity },
+  { href: "/studio/cad", label: "CAD", icon: PencilRuler },
   { href: "/studio/convert", label: "Convert", icon: GitCompareArrows },
   { href: "/studio/documents", label: "Documents", icon: Library },
   { href: "/studio/knowledge", label: "Knowledge", icon: FileText },
@@ -65,6 +71,7 @@ export default function StudioSidebar({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [ready, setReady] = useState(false);
+  const [menuFor, setMenuFor] = useState<string | null>(null);
 
   // Restored on the client so the server render does not guess and flash.
   useEffect(() => {
@@ -138,9 +145,9 @@ export default function StudioSidebar({
     <aside className="flex w-64 shrink-0 flex-col border-r border-ink-100 bg-ink-50/40">
       {/* brand + collapse */}
       <div className="flex items-center justify-between px-4 py-3.5">
-        <Link href="/studio" className="flex items-center gap-2" aria-label="LADX Studio">
-          <Logo size={18} />
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-400">
+        <Link href="/studio" className="flex flex-col items-start gap-0.5" aria-label="LADX Studio">
+          <Logo size={17} />
+          <span className="pl-[1px] font-mono text-[9.5px] uppercase leading-none tracking-[0.34em] text-ink-400">
             Studio
           </span>
         </Link>
@@ -177,14 +184,14 @@ export default function StudioSidebar({
             Projects
           </Row>
           {projects.slice(0, 4).map((p) => (
-            <Row
+            <ProjectRow
               key={p.id}
-              href={`/studio/projects/${p.id}`}
+              project={p}
               active={pathname === `/studio/projects/${p.id}`}
-              indent
-            >
-              {p.name}
-            </Row>
+              menuOpen={menuFor === p.id}
+              onMenu={() => setMenuFor(menuFor === p.id ? null : p.id)}
+              onClose={() => setMenuFor(null)}
+            />
           ))}
           <Row href="/studio/clients" active={isActive("/studio/clients")} icon={Users}>
             Clients
@@ -257,5 +264,102 @@ function Row({
         </span>
       )}
     </Link>
+  );
+}
+
+/**
+ * A project in the sidebar, with the destructive action on it.
+ *
+ * Delete lives here rather than on the project page. Inside a project you are
+ * working: the phase selector, the deliverables and the documents are all one
+ * click apart, and a Delete sitting among them is a slip waiting to happen. In
+ * the sidebar you are choosing between projects, which is the moment where
+ * removing one is a thing you might actually mean.
+ */
+function ProjectRow({
+  project,
+  active,
+  menuOpen,
+  onMenu,
+  onClose,
+}: {
+  project: SidebarProject;
+  active: boolean;
+  menuOpen: boolean;
+  onMenu: () => void;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const ref = useRef<HTMLDivElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen, onClose]);
+
+  async function remove() {
+    if (
+      !window.confirm(
+        `Delete "${project.name}"? Its documents and drawings go with it. This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    onClose();
+    await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
+    // Standing on the page you just deleted would 404.
+    if (active) router.push("/studio/projects");
+    router.refresh();
+    setBusy(false);
+  }
+
+  return (
+    <div ref={ref} className="group relative">
+      <Link
+        href={`/studio/projects/${project.id}`}
+        className={`flex items-center rounded-md py-1.5 pl-8 pr-7 text-[13px] transition-colors ${
+          active ? "bg-ink-900 text-white" : "text-ink-700 hover:bg-ink-100"
+        } ${busy ? "opacity-50" : ""}`}
+      >
+        <span className="min-w-0 flex-1 truncate">{project.name}</span>
+      </Link>
+
+      <button
+        type="button"
+        onClick={onMenu}
+        aria-label={`Options for ${project.name}`}
+        className={`absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded transition-opacity ${
+          menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus:opacity-100"
+        } ${active ? "text-white hover:bg-white/15" : "text-ink-400 hover:bg-ink-200"}`}
+      >
+        <MoreHorizontal className="h-3.5 w-3.5" />
+      </button>
+
+      {menuOpen && (
+        <div className="absolute right-1 top-full z-30 mt-0.5 w-40 overflow-hidden rounded-md border border-ink-200 bg-white shadow-lg">
+          <button
+            type="button"
+            onClick={remove}
+            className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[12.5px] text-red-700 transition-colors hover:bg-ink-50"
+          >
+            <Trash2 className="h-3 w-3 shrink-0 opacity-60" />
+            Delete project
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

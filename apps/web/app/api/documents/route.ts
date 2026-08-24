@@ -5,7 +5,7 @@ import { fillTemplate, getTemplate } from "@/content/templates";
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents } from "@/lib/db/schema";
-import { autoFillValues } from "@/lib/platform/document";
+import { autoFillValues, withDesignBasis } from "@/lib/platform/document";
 import { getClient, getCompany, getProject } from "@/lib/platform/queries";
 import { and, desc, eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
@@ -98,7 +98,9 @@ export async function POST(req: Request) {
     if (template && body && project) {
       const company = await getCompany(auth.user.id);
       content = fillTemplate(
-        body,
+        // The design basis goes in before substitution, so any tokens inside it
+        // are filled the same way as the rest of the document.
+        withDesignBasis(body, template.slug, project.brief),
         autoFillValues({
           project,
           client:

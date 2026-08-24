@@ -1,5 +1,6 @@
 import { type DocTemplate, type Placeholder, fillTemplate } from "@/content/templates";
 import type { Client, CompanyProfile, Project } from "@/lib/db/schema";
+import { type ProjectBrief, designBasisSection } from "@/lib/platform/brief";
 
 /**
  * Turning a template into a finished, branded document.
@@ -46,6 +47,32 @@ export function autoFillValues(input: {
     REV: "0",
     DATE: isoDate(),
   };
+}
+
+/**
+ * Put the design basis into a generated document.
+ *
+ * Inserted immediately after the document control front matter, where a real
+ * controlled document carries it. Only the fields this particular document is
+ * written from, and only the ones that have been answered, so a project with an
+ * empty brief still produces exactly the document it produced before.
+ *
+ * Markdown only. The CSV files in a template are registers, and a prose block
+ * at the top of one would break every tool that opens it.
+ */
+export function withDesignBasis(
+  body: string,
+  slug: string,
+  brief: ProjectBrief | null | undefined,
+): string {
+  const section = designBasisSection(slug, brief);
+  if (!section) return body;
+
+  // The front matter produced by docHeader ends at its first horizontal rule.
+  const end = body.indexOf("\n---\n");
+  if (end === -1) return `${section}${body}`;
+  const at = end + "\n---\n".length;
+  return `${body.slice(0, at)}\n${section}${body.slice(at)}`;
 }
 
 function isoDate(): string {
@@ -228,7 +255,18 @@ function clientAddressLines(c: Client | null): string[] {
  * file works with nothing to fetch.
  */
 export function renderDocument(input: {
-  template: DocTemplate;
+  /**
+   * The template behind the document, when there is one.
+   *
+   * Null for a document that was not generated from a template: a test record
+   * from the Monitor, or anything written from scratch. Those still carry the
+   * letterhead and the project block, because the letterhead belongs to the
+   * project and the company, not to the template.
+   */
+  template: DocTemplate | null;
+  /** Used when there is no template to take them from. */
+  docTitle?: string;
+  docAbbr?: string;
   /** The template file to render (a template can have several). */
   fileBody: string;
   values: Partial<Record<Placeholder, string>>;
@@ -237,6 +275,8 @@ export function renderDocument(input: {
   project: Project;
 }): string {
   const { template, fileBody, values, company, client, project } = input;
+  const docTitle = template?.title ?? input.docTitle ?? "Document";
+  const docAbbr = template?.abbr ?? input.docAbbr ?? "DOC";
 
   const filled = fillTemplate(fileBody, values);
   const body = markdownToHtml(filled);
@@ -262,7 +302,7 @@ export function renderDocument(input: {
     ? `<img class="logo" src="${esc(company.logo)}" alt="${esc(companyName)}" />`
     : `<div class="logo-fallback">${esc(companyName || "LADX")}</div>`;
 
-  const title = `${template.title} (${template.abbr}) — ${project.name}`;
+  const title = `${docTitle} (${docAbbr}) — ${project.name}`;
 
   return `<!doctype html>
 <html lang="en">
@@ -370,7 +410,7 @@ export function renderDocument(input: {
     <div class="meta">
       <section>
         <h4>Document</h4>
-        <div class="v"><strong>${esc(template.title)}</strong>${esc(template.abbr)}</div>
+        <div class="v"><strong>${esc(docTitle)}</strong>${esc(docAbbr)}</div>
       </section>
       <section>
         <h4>Project</h4>
@@ -392,7 +432,7 @@ export function renderDocument(input: {
 
     <footer class="docfoot">
       <span>${esc(companyName)}</span>
-      <span>${esc(template.abbr)} · ${esc(project.name)}${project.code ? ` · ${esc(project.code)}` : ""}</span>
+      <span>${esc(docAbbr)} · ${esc(project.name)}${project.code ? ` · ${esc(project.code)}` : ""}</span>
     </footer>
   </div>
 </body>

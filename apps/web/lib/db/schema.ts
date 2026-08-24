@@ -6,6 +6,7 @@
 // - Per-user queries are common, so user_id columns are always indexed.
 // - audit_log is append-only and partitioned by month at scale (post-MVP).
 
+import type { ProjectBrief } from "@/lib/platform/brief";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -177,12 +178,58 @@ export const projects = pgTable(
     phase: projectPhaseEnum("phase").notNull().default("requirements"),
     /** Free-form site or plant location, printed on documents. */
     site: text("site"),
+    /**
+     * The design basis: goal, platform, power, safety, acceptance. Captured once
+     * on the project and read by every document it generates, so the hardware
+     * summary in the FDS cannot drift from the one in the BOM.
+     *
+     * jsonb rather than a column per field because the set is still settling and
+     * nothing joins on it. Shape and field registry live in lib/platform/brief.ts.
+     */
+    brief: jsonb("brief").$type<ProjectBrief>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     userIdx: index("projects_user_idx").on(t.userId),
     clientIdx: index("projects_client_idx").on(t.clientId),
+  }),
+);
+
+// ----- ladder programs -----
+//
+// One program per project, so the Ladder editor and the Monitor are working on
+// the same thing. Before this the editor only had a browser-local "scratch"
+// project, which meant a program could not belong to a job, could not be opened
+// on another machine, and could not be run against the project it was written
+// for.
+//
+// The program is jsonb rather than a parsed table of rungs. It is authored and
+// read as one document, nothing joins on a rung, and the shape is owned by
+// @ladx/studio, which is the thing entitled to change it.
+export const ladderPrograms = pgTable(
+  "ladder_programs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** Null is the user's unattached scratch program, of which there is one. */
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    name: text("name").notNull().default("Untitled program"),
+    /** LadxProgram from @ladx/studio. */
+    program: jsonb("program").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("ladder_programs_user_idx").on(t.userId),
+    // One program per project. Postgres treats NULLs as distinct in a unique
+    // index, so this constrains attached programs only; the single unattached
+    // scratch program per user is kept unique by the upsert in lib/db/ladder.ts
+    // rather than by the database. That is deliberate: NULLS NOT DISTINCT needs
+    // Postgres 15, and this schema should not carry a version floor for one row.
+    projectUnique: uniqueIndex("ladder_programs_project_unique").on(t.userId, t.projectId),
   }),
 );
 

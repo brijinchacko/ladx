@@ -9,7 +9,7 @@ import { fillTemplate } from "@/content/templates";
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents } from "@/lib/db/schema";
-import { autoFillValues, renderDocument } from "@/lib/platform/document";
+import { autoFillValues, renderDocument, withDesignBasis } from "@/lib/platform/document";
 import { getClient, getCompany, getProject } from "@/lib/platform/queries";
 import { renderDocx } from "@/lib/platform/render-docx";
 import { renderPdf } from "@/lib/platform/render-pdf";
@@ -60,33 +60,50 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   const template = getTemplate(saved?.templateSlug ?? slug);
-  if (!template) return NextResponse.json({ error: "unknown template" }, { status: 404 });
 
-  const file = template.files.find((f) => f.kind === "markdown");
-  if (!file && !saved) {
+  // A saved document need not have come from a template. A test record from the
+  // Monitor, or anything written from scratch, is still a document this project
+  // owns and must still export with the letterhead on it; refusing because
+  // there is no template behind it would make PDF and Word conditional on where
+  // the content happened to originate.
+  if (!template && !saved?.content?.trim()) {
+    return NextResponse.json({ error: "unknown template" }, { status: 404 });
+  }
+
+  const file = template?.files.find((f) => f.kind === "markdown");
+  if (template && !file && !saved) {
     return NextResponse.json(
       { error: "this template has no document body; download its files from the library" },
       { status: 409 },
     );
   }
 
+  // Untemplated documents take their abbreviation from the project's own
+  // numbering, so the document number still reads LX-2601-DOC-01 rather than
+  // being left blank.
+  const abbr = template?.abbr ?? "DOC";
+
   const values = autoFillValues({
     project,
     client,
     company,
     author: auth.user.displayName ?? auth.user.email.split("@")[0] ?? "",
-    templateAbbr: template.abbr,
+    templateAbbr: abbr,
   });
 
   // Saved content already has its values baked in from when it was created.
-  const markdown = saved?.content?.trim() ? saved.content : fillTemplate(file?.body ?? "", values);
-  const title = saved?.title ?? template.title;
-  const stem = `${project.name}-${template.abbr}`;
+  // A saved document is served as edited. A blank download is generated fresh,
+  // and picks up the design basis the same way a created document does.
+  const markdown = saved?.content?.trim()
+    ? saved.content
+    : fillTemplate(withDesignBasis(file?.body ?? "", template?.slug ?? "", project.brief), values);
+  const title = saved?.title ?? template?.title ?? "Document";
+  const stem = `${project.name}-${abbr}`;
 
   if (format === "pdf") {
     const buf = renderPdf({
       title,
-      abbr: template.abbr,
+      abbr,
       markdown,
       company,
       client,
@@ -104,7 +121,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (format === "docx") {
     const buf = await renderDocx({
       title,
-      abbr: template.abbr,
+      abbr,
       markdown,
       company,
       client,
@@ -130,7 +147,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   const html = renderDocument({
-    template,
+    template: template ?? null,
+    docTitle: title,
+    docAbbr: abbr,
     fileBody: markdown,
     // Already substituted above, so nothing left to fill.
     values: saved?.content?.trim() ? {} : values,

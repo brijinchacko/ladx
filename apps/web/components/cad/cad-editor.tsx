@@ -1,14 +1,36 @@
 "use client";
 
+import CadRail from "@/components/cad/cad-rail";
 import { readDxf, writeDxf } from "@/lib/cad/dxf";
-import { type Drawing, type Entity, type Point, drawingBounds, newId } from "@/lib/cad/types";
+import { drawingToPdf } from "@/lib/cad/pdf";
+import { drawEntity, hitTest, hitTestBox, translateEntity } from "@/lib/cad/render";
+import { type SnapHit, findSnap } from "@/lib/cad/snap";
+import type { CadSymbol } from "@/lib/cad/symbols";
+import {
+  BORDER_LAYER,
+  type SheetSize,
+  type TitleBlockFields,
+  buildTitleBlock,
+} from "@/lib/cad/titleblock";
+import {
+  type Drawing,
+  type Entity,
+  type Point,
+  drawingBounds,
+  formatLength,
+  newId,
+} from "@/lib/cad/types";
 import {
   Circle as CircleIcon,
+  Copy,
   Download,
+  FileText,
   Grid3x3,
+  Magnet,
   Minus,
   MousePointer2,
   Redo2,
+  Ruler,
   Save,
   Spline,
   Square,
@@ -21,16 +43,33 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-type Tool = "select" | "line" | "rect" | "circle" | "polyline" | "text";
+type Tool = "select" | "line" | "rect" | "circle" | "arc" | "polyline" | "text" | "dimension";
 
-const TOOLS: { id: Tool; label: string; icon: typeof Minus; key: string }[] = [
-  { id: "select", label: "Select", icon: MousePointer2, key: "V" },
+const TOOLS: { id: Tool; label: string; icon: typeof Minus; key: string; hint?: string }[] = [
+  {
+    id: "select",
+    label: "Select",
+    icon: MousePointer2,
+    key: "V",
+    hint: "drag to move, Alt to copy",
+  },
   { id: "line", label: "Line", icon: Minus, key: "L" },
   { id: "rect", label: "Rectangle", icon: Square, key: "R" },
   { id: "circle", label: "Circle", icon: CircleIcon, key: "C" },
+  { id: "arc", label: "Arc", icon: Spline, key: "A", hint: "centre, then start, then end" },
   { id: "polyline", label: "Polyline", icon: Spline, key: "P" },
   { id: "text", label: "Text", icon: TypeIcon, key: "T" },
+  {
+    id: "dimension",
+    label: "Dimension",
+    icon: Ruler,
+    key: "D",
+    hint: "two points, then the offset",
+  },
 ];
+
+/** How many clicks each tool takes before it produces something. */
+const CLICKS: Partial<Record<Tool, number>> = { line: 2, rect: 2, circle: 2, arc: 3, dimension: 3 };
 
 interface View {
   /** Drawing units per screen pixel. */
@@ -39,6 +78,12 @@ interface View {
   ox: number;
   oy: number;
 }
+
+type Drag =
+  | { kind: "none" }
+  | { kind: "pan"; from: Point }
+  | { kind: "marquee"; from: Point; to: Point }
+  | { kind: "move"; from: Point; to: Point; copy: boolean; base: Entity[] };
 
 /**
  * The CAD editor.
@@ -61,11 +106,14 @@ export default function CadEditor({
   initial,
   name: initialName,
   projectName,
+  titleFields,
 }: {
   drawingId: string;
   initial: Drawing;
   name: string;
   projectName?: string;
+  /** Project, client and company details, for the generated title block. */
+  titleFields?: Omit<TitleBlockFields, "drawingTitle">;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -75,7 +123,8 @@ export default function CadEditor({
   const [tool, setTool] = useState<Tool>("select");
   const [layer, setLayer] = useState(initial.layers[0]?.name ?? "0");
   const [view, setView] = useState<View>({ scale: 1, ox: 0, oy: 0 });
-  const [snap, setSnap] = useState(true);
+  const [gridSnap, setGridSnap] = useState(true);
+  const [objectSnap, setObjectSnap] = useState(true);
   const [grid] = useState(10);
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -84,6 +133,8 @@ export default function CadEditor({
   // In-progress geometry: the points clicked so far for the active tool.
   const [pending, setPending] = useState<Point[]>([]);
   const [cursor, setCursor] = useState<Point | null>(null);
+  const [snapHit, setSnapHit] = useState<SnapHit | null>(null);
+  const [drag, setDrag] = useState<Drag>({ kind: "none" });
 
   const [history, setHistory] = useState<Drawing[]>([initial]);
   const [historyAt, setHistoryAt] = useState(0);
@@ -125,10 +176,37 @@ export default function CadEditor({
     [view],
   );
 
-  const snapPoint = useCallback(
-    (p: Point): Point =>
-      snap ? { x: Math.round(p.x / grid) * grid, y: Math.round(p.y / grid) * grid } : p,
-    [snap, grid],
+  const layerOf = useCallback(
+    (n: string) => drawing.layers.find((l) => l.name === n),
+    [drawing.layers],
+  );
+
+  /**
+   * Where a click actually lands.
+   *
+   * Object snap wins over grid snap when it finds something, because the point
+   * of it is to land exactly on existing geometry, and rounding that to the
+   * nearest 10 mm afterwards would undo the whole thing.
+   */
+  const resolvePoint = useCallback(
+    (raw: Point, exclude?: Set<string>): { point: Point; hit: SnapHit | null } => {
+      if (objectSnap) {
+        const hit = findSnap(drawing, raw, view.scale * 10, {
+          layerVisible: (n) => layerOf(n)?.visible !== false,
+          exclude,
+          from: pending.length > 0 ? (pending[pending.length - 1] as Point) : null,
+        });
+        if (hit) return { point: hit.point, hit };
+      }
+      if (gridSnap) {
+        return {
+          point: { x: Math.round(raw.x / grid) * grid, y: Math.round(raw.y / grid) * grid },
+          hit: null,
+        };
+      }
+      return { point: raw, hit: null };
+    },
+    [objectSnap, gridSnap, grid, drawing, view.scale, layerOf, pending],
   );
 
   /* ── fit the drawing on first paint ── */
@@ -147,19 +225,23 @@ export default function CadEditor({
     const sx = (b.max.x - b.min.x || 100) / Math.max(w - pad * 2, 1);
     const sy = (b.max.y - b.min.y || 100) / Math.max(h - pad * 2, 1);
     const scale = Math.max(sx, sy) * 1.1 || 0.5;
-    setView({
-      scale,
-      ox: b.min.x - pad * scale,
-      oy: b.max.y + pad * scale,
-    });
+    setView({ scale, ox: b.min.x - pad * scale, oy: b.max.y + pad * scale });
   }, []);
 
   /* ── rendering ── */
 
-  const layerOf = useCallback(
-    (n: string) => drawing.layers.find((l) => l.name === n),
-    [drawing.layers],
-  );
+  /** What is on screen right now, including a move that has not been committed. */
+  const displayed = useMemo(() => {
+    if (drag.kind !== "move") return drawing.entities;
+    const dx = drag.to.x - drag.from.x;
+    const dy = drag.to.y - drag.from.y;
+    const moving = new Set(selected);
+    const shifted = drag.base.map((e) => translateEntity(e, dx, dy));
+    // A copy shows the original in place with the duplicate riding the pointer.
+    return drag.copy
+      ? [...drawing.entities, ...shifted]
+      : [...drawing.entities.filter((e) => !moving.has(e.id)), ...shifted];
+  }, [drawing.entities, drag, selected]);
 
   const paint = useCallback(() => {
     const canvas = canvasRef.current;
@@ -218,15 +300,15 @@ export default function CadEditor({
     ctx.lineTo(origin.x, h);
     ctx.stroke();
 
-    // Entities.
-    for (const e of drawing.entities) {
+    const screen = { toScreen, scale: view.scale };
+    for (const e of displayed) {
       const l = layerOf(e.layer);
       if (l && !l.visible) continue;
       const isSel = selected.includes(e.id);
       ctx.strokeStyle = isSel ? "#2C9A9E" : `#${l?.color ?? "0F1A24"}`;
       ctx.fillStyle = ctx.strokeStyle;
       ctx.lineWidth = isSel ? 2.5 : 1.4;
-      drawEntity(ctx, e, toScreen, view.scale);
+      drawEntity(ctx, e, screen);
     }
 
     // The shape being drawn right now, plus a rubber band to the cursor.
@@ -234,11 +316,49 @@ export default function CadEditor({
       ctx.strokeStyle = "#2C9A9E";
       ctx.setLineDash([4, 3]);
       ctx.lineWidth = 1.4;
+      ctx.fillStyle = "#2C9A9E";
       const preview = previewEntity(tool, pending, cursor, layer);
-      if (preview) drawEntity(ctx, preview, toScreen, view.scale);
+      if (preview) drawEntity(ctx, preview, screen);
       ctx.setLineDash([]);
     }
-  }, [drawing, view, selected, pending, cursor, tool, layer, grid, toScreen, toWorld, layerOf]);
+
+    // Marquee.
+    if (drag.kind === "marquee") {
+      const a = toScreen(drag.from);
+      const b = toScreen(drag.to);
+      ctx.strokeStyle = "#2C9A9E";
+      ctx.fillStyle = "rgba(44,154,158,0.08)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 3]);
+      const x = Math.min(a.x, b.x);
+      const y = Math.min(a.y, b.y);
+      ctx.fillRect(x, y, Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+      ctx.strokeRect(x, y, Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+      ctx.setLineDash([]);
+    }
+
+    // Snap marker: a square on the point that would be used.
+    if (snapHit) {
+      const s = toScreen(snapHit.point);
+      ctx.strokeStyle = "#B4531A";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(s.x - 4, s.y - 4, 8, 8);
+    }
+  }, [
+    displayed,
+    view,
+    selected,
+    pending,
+    cursor,
+    tool,
+    layer,
+    grid,
+    drag,
+    snapHit,
+    toScreen,
+    toWorld,
+    layerOf,
+  ]);
 
   useEffect(() => {
     paint();
@@ -252,15 +372,46 @@ export default function CadEditor({
 
   /* ── interaction ── */
 
-  const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const worldAt = (e: React.PointerEvent<HTMLCanvasElement>): Point => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const world = snapPoint(toWorld(e.clientX - rect.left, e.clientY - rect.top));
+    return toWorld(e.clientX - rect.left, e.clientY - rect.top);
+  };
 
-    if (tool === "select") {
-      const hit = hitTest(drawing, world, view.scale * 6, layerOf);
-      setSelected(hit ? [hit] : []);
+  const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const raw = worldAt(e);
+
+    // Middle button pans, from any tool.
+    if (e.button === 1) {
+      setDrag({ kind: "pan", from: raw });
+      e.currentTarget.setPointerCapture(e.pointerId);
       return;
     }
+    if (e.button !== 0) return;
+
+    if (tool === "select") {
+      const hit = hitTest(drawing, raw, view.scale * 6, layerOf);
+      if (hit) {
+        const next = e.shiftKey
+          ? selected.includes(hit)
+            ? selected.filter((id) => id !== hit)
+            : [...selected, hit]
+          : selected.includes(hit)
+            ? selected
+            : [hit];
+        setSelected(next);
+        // Grab whatever is selected so a drag moves the whole set.
+        const base = drawing.entities.filter((x) => next.includes(x.id));
+        const start = resolvePoint(raw, new Set(next)).point;
+        setDrag({ kind: "move", from: start, to: start, copy: e.altKey, base });
+      } else {
+        if (!e.shiftKey) setSelected([]);
+        setDrag({ kind: "marquee", from: raw, to: raw });
+      }
+      e.currentTarget.setPointerCapture(e.pointerId);
+      return;
+    }
+
+    const { point: world } = resolvePoint(raw);
 
     if (tool === "text") {
       const text = window.prompt("Text");
@@ -277,10 +428,11 @@ export default function CadEditor({
     }
 
     const next = [...pending, world];
+    const need = CLICKS[tool];
 
-    // Two-point tools complete on the second click; polyline keeps going until
-    // Enter or Escape.
-    if (tool !== "polyline" && next.length === 2) {
+    // Polyline keeps going until Enter or Escape; everything else completes on
+    // its own click count.
+    if (need && next.length === need) {
       const entity = makeEntity(tool, next, layer);
       if (entity) commit({ ...drawing, entities: [...drawing.entities, entity] });
       setPending([]);
@@ -290,17 +442,61 @@ export default function CadEditor({
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setCursor(snapPoint(toWorld(e.clientX - rect.left, e.clientY - rect.top)));
+    const raw = worldAt(e);
 
-    // Middle button or space-drag pans.
-    if (e.buttons === 4) {
+    if (drag.kind === "pan") {
       setView((v) => ({
         ...v,
         ox: v.ox - e.movementX * v.scale,
         oy: v.oy + e.movementY * v.scale,
       }));
+      return;
     }
+    if (drag.kind === "marquee") {
+      setDrag({ ...drag, to: raw });
+      setCursor(raw);
+      return;
+    }
+    if (drag.kind === "move") {
+      const { point, hit } = resolvePoint(raw, new Set(selected));
+      setSnapHit(hit);
+      setDrag({ ...drag, to: point, copy: e.altKey });
+      setCursor(point);
+      return;
+    }
+
+    const { point, hit } = resolvePoint(raw);
+    setSnapHit(tool === "select" ? null : hit);
+    setCursor(point);
+  };
+
+  const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (drag.kind === "marquee") {
+      const ids = hitTestBox(drawing, drag.from, drag.to, layerOf);
+      // A click with no movement is a deselect, not a select of nothing.
+      if (ids.length > 0) setSelected((s) => (e.shiftKey ? [...new Set([...s, ...ids])] : ids));
+    }
+
+    if (drag.kind === "move") {
+      const dx = drag.to.x - drag.from.x;
+      const dy = drag.to.y - drag.from.y;
+      if (dx !== 0 || dy !== 0) {
+        const shifted = drag.base.map((x) => {
+          const moved = translateEntity(x, dx, dy);
+          return drag.copy ? { ...moved, id: newId("c") } : moved;
+        });
+        const movingIds = new Set(drag.base.map((x) => x.id));
+        commit({
+          ...drawing,
+          entities: drag.copy
+            ? [...drawing.entities, ...shifted]
+            : [...drawing.entities.filter((x) => !movingIds.has(x.id)), ...shifted],
+        });
+        if (drag.copy) setSelected(shifted.map((x) => x.id));
+      }
+    }
+
+    setDrag({ kind: "none" });
   };
 
   const onWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
@@ -336,16 +532,106 @@ export default function CadEditor({
     setSelected([]);
   }, [selected, drawing, commit]);
 
+  /** Duplicate in place, offset by one grid square so it is visible. */
+  const duplicateSelected = useCallback(() => {
+    if (selected.length === 0) return;
+    const copies = drawing.entities
+      .filter((e) => selected.includes(e.id))
+      .map((e) => ({ ...translateEntity(e, grid, -grid), id: newId("c") }));
+    commit({ ...drawing, entities: [...drawing.entities, ...copies] });
+    setSelected(copies.map((c) => c.id));
+  }, [selected, drawing, commit, grid]);
+
+  /* ── library and sheet ── */
+
+  const insertSymbol = useCallback(
+    (sym: CadSymbol) => {
+      // Dropped at the middle of the view, then dragged into place, which beats
+      // asking for a click and leaving the user unsure what the tool is doing.
+      const wrap = wrapRef.current;
+      const at = wrap ? toWorld(wrap.clientWidth / 2, wrap.clientHeight / 2) : { x: 0, y: 0 };
+      const snapped = { x: Math.round(at.x / grid) * grid, y: Math.round(at.y / grid) * grid };
+      const parts = sym.build(snapped);
+      // Every symbol carries its own layer, and any it names must exist.
+      const missing = [...new Set(parts.map((p) => p.layer))].filter(
+        (n) => !drawing.layers.some((l) => l.name === n),
+      );
+      commit({
+        ...drawing,
+        layers: [
+          ...drawing.layers,
+          ...missing.map((n) => ({ name: n, color: "0F1A24", visible: true, locked: false })),
+        ],
+        entities: [...drawing.entities, ...parts],
+      });
+      setSelected(parts.map((p) => p.id));
+      setTool("select");
+      setStatus(`${sym.name} inserted. Drag it into place.`);
+      setTimeout(() => setStatus(null), 3000);
+    },
+    [drawing, commit, grid, toWorld],
+  );
+
+  const insertSheet = useCallback(
+    (sheet: SheetSize) => {
+      const parts = buildTitleBlock(sheet, {
+        drawingTitle: name,
+        date: new Date().toISOString().slice(0, 10),
+        ...titleFields,
+      });
+      const hasLayer = drawing.layers.some((l) => l.name === BORDER_LAYER);
+      commit({
+        ...drawing,
+        layers: hasLayer
+          ? drawing.layers
+          : [
+              ...drawing.layers,
+              { name: BORDER_LAYER, color: "4A5A68", visible: true, locked: false },
+            ],
+        // Existing geometry keeps its coordinates; the sheet is laid around the
+        // origin and the drawing is moved onto it by hand, because guessing
+        // where somebody wants their work on the page is worse than not.
+        entities: [...parts, ...drawing.entities],
+      });
+      setStatus(`${sheet.name} sheet and title block added.`);
+      setTimeout(() => setStatus(null), 4000);
+    },
+    [drawing, commit, name, titleFields],
+  );
+
+  const setLayerFlag = useCallback(
+    (layerName: string, flag: "visible" | "locked", value: boolean) => {
+      commit({
+        ...drawing,
+        layers: drawing.layers.map((l) => (l.name === layerName ? { ...l, [flag]: value } : l)),
+      });
+    },
+    [drawing, commit],
+  );
+
   /* ── keyboard ── */
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
       const t = ev.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
 
-      if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === "z") {
+      const mod = ev.metaKey || ev.ctrlKey;
+      if (mod && ev.key.toLowerCase() === "z") {
         ev.preventDefault();
         if (ev.shiftKey) redo();
         else undo();
+        return;
+      }
+      if (mod && ev.key.toLowerCase() === "d") {
+        ev.preventDefault();
+        duplicateSelected();
+        return;
+      }
+      if (mod && ev.key.toLowerCase() === "a") {
+        ev.preventDefault();
+        setSelected(
+          drawing.entities.filter((e) => layerOf(e.layer)?.locked !== true).map((e) => e.id),
+        );
         return;
       }
       if (ev.key === "Escape") {
@@ -362,6 +648,28 @@ export default function CadEditor({
         deleteSelected();
         return;
       }
+      // Nudge, which is how a drawing gets tidied.
+      const NUDGE: Record<string, [number, number]> = {
+        ArrowLeft: [-1, 0],
+        ArrowRight: [1, 0],
+        ArrowUp: [0, 1],
+        ArrowDown: [0, -1],
+      };
+      const dir = NUDGE[ev.key];
+      if (dir && selected.length > 0) {
+        ev.preventDefault();
+        const step = ev.shiftKey ? grid : 1;
+        const ids = new Set(selected);
+        commit({
+          ...drawing,
+          entities: drawing.entities.map((e) =>
+            ids.has(e.id)
+              ? translateEntity(e, (dir[0] as number) * step, (dir[1] as number) * step)
+              : e,
+          ),
+        });
+        return;
+      }
       const found = TOOLS.find((x) => x.key.toLowerCase() === ev.key.toLowerCase());
       if (found) {
         setTool(found.id);
@@ -370,7 +678,19 @@ export default function CadEditor({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [undo, redo, tool, finishPolyline, deleteSelected]);
+  }, [
+    undo,
+    redo,
+    tool,
+    finishPolyline,
+    deleteSelected,
+    duplicateSelected,
+    selected,
+    drawing,
+    commit,
+    grid,
+    layerOf,
+  ]);
 
   /* ── persistence and interchange ── */
 
@@ -403,20 +723,39 @@ export default function CadEditor({
     setTimeout(() => setStatus(null), 6000);
   };
 
-  const exportDxf = () => {
-    const blob = new Blob([writeDxf(drawing)], { type: "application/dxf" });
+  const download = (blob: Blob, ext: string) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${name.replace(/[^\w-]+/g, "-") || "drawing"}.dxf`;
+    a.download = `${name.replace(/[^\w-]+/g, "-") || "drawing"}.${ext}`;
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const exportDxf = () =>
+    download(new Blob([writeDxf(drawing)], { type: "application/dxf" }), "dxf");
+
+  const exportPdf = () =>
+    download(
+      drawingToPdf(drawing, {
+        title: name,
+        footer: [titleFields?.projectNumber, projectName].filter(Boolean).join("  ·  "),
+      }),
+      "pdf",
+    );
 
   const stats = useMemo(
     () => ({ entities: drawing.entities.length, layers: drawing.layers.length }),
     [drawing],
   );
+
+  const activeTool = TOOLS.find((t) => t.id === tool);
+  const measuring =
+    tool === "dimension" && pending.length >= 1 && cursor
+      ? formatLength(
+          Math.hypot(cursor.x - (pending[0] as Point).x, cursor.y - (pending[0] as Point).y),
+        )
+      : null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -425,7 +764,7 @@ export default function CadEditor({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-44 rounded-md border border-ink-200 bg-white px-2 py-1 text-[13px] outline-none focus:border-ink-500"
+          className="w-40 rounded-md border border-ink-200 bg-white px-2 py-1 text-[13px] outline-none focus:border-ink-500"
         />
 
         <div className="flex items-center gap-0.5 rounded-md border border-ink-200 bg-white p-0.5">
@@ -435,7 +774,7 @@ export default function CadEditor({
               <button
                 key={t.id}
                 type="button"
-                title={`${t.label} (${t.key})`}
+                title={`${t.label} (${t.key})${t.hint ? ` — ${t.hint}` : ""}`}
                 onClick={() => {
                   setTool(t.id);
                   setPending([]);
@@ -465,10 +804,10 @@ export default function CadEditor({
 
         <button
           type="button"
-          onClick={() => setSnap((s) => !s)}
+          onClick={() => setGridSnap((s) => !s)}
           title="Snap to grid"
           className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-[12px] transition-colors ${
-            snap
+            gridSnap
               ? "border-teal-400 bg-teal-50 text-teal-700"
               : "border-ink-200 bg-white text-ink-500"
           }`}
@@ -477,12 +816,37 @@ export default function CadEditor({
           {grid}mm
         </button>
 
+        <button
+          type="button"
+          onClick={() => setObjectSnap((s) => !s)}
+          title="Snap to existing geometry: endpoints, midpoints, centres"
+          className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-[12px] transition-colors ${
+            objectSnap
+              ? "border-teal-400 bg-teal-50 text-teal-700"
+              : "border-ink-200 bg-white text-ink-500"
+          }`}
+        >
+          <Magnet className="h-3.5 w-3.5" />
+          Object
+        </button>
+
         <div className="flex items-center gap-0.5">
-          <IconBtn title="Undo" onClick={undo} disabled={historyAt <= 0}>
+          <IconBtn title="Undo (Cmd+Z)" onClick={undo} disabled={historyAt <= 0}>
             <Undo2 className="h-3.5 w-3.5" />
           </IconBtn>
-          <IconBtn title="Redo" onClick={redo} disabled={historyAt >= history.length - 1}>
+          <IconBtn
+            title="Redo (Shift+Cmd+Z)"
+            onClick={redo}
+            disabled={historyAt >= history.length - 1}
+          >
             <Redo2 className="h-3.5 w-3.5" />
+          </IconBtn>
+          <IconBtn
+            title="Duplicate (Cmd+D)"
+            onClick={duplicateSelected}
+            disabled={selected.length === 0}
+          >
+            <Copy className="h-3.5 w-3.5" />
           </IconBtn>
           <IconBtn title="Delete" onClick={deleteSelected} disabled={selected.length === 0}>
             <Trash2 className="h-3.5 w-3.5" />
@@ -505,7 +869,7 @@ export default function CadEditor({
           {status && <span className="font-mono text-[11.5px] text-ink-500">{status}</span>}
           <label className="flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-ink-200 bg-white px-2.5 text-[12px] text-ink-600 transition-colors hover:border-ink-400">
             <Upload className="h-3.5 w-3.5" />
-            Import DXF
+            DXF
             <input
               type="file"
               accept=".dxf,application/dxf,text/plain"
@@ -520,10 +884,20 @@ export default function CadEditor({
           <button
             type="button"
             onClick={exportDxf}
+            title="Export DXF, for another CAD package"
             className="flex h-7 items-center gap-1.5 rounded-md border border-ink-200 bg-white px-2.5 text-[12px] text-ink-600 transition-colors hover:border-ink-400"
           >
             <Download className="h-3.5 w-3.5" />
-            Export DXF
+            DXF
+          </button>
+          <button
+            type="button"
+            onClick={exportPdf}
+            title="Export PDF, for a print or a handover pack"
+            className="flex h-7 items-center gap-1.5 rounded-md border border-ink-200 bg-white px-2.5 text-[12px] text-ink-600 transition-colors hover:border-ink-400"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            PDF
           </button>
           <button
             type="button"
@@ -537,38 +911,64 @@ export default function CadEditor({
         </div>
       </div>
 
-      {/* canvas */}
-      <div ref={wrapRef} className="relative min-h-0 flex-1 bg-white">
-        <canvas
-          ref={canvasRef}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onWheel={onWheel}
-          onDoubleClick={() => tool === "polyline" && finishPolyline(false)}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            if (tool === "polyline") finishPolyline(true);
-          }}
-          className={`h-full w-full ${tool === "select" ? "cursor-default" : "cursor-crosshair"}`}
-        />
+      <div className="flex min-h-0 flex-1">
+        {/* canvas */}
+        <div ref={wrapRef} className="relative min-h-0 flex-1 bg-white">
+          <canvas
+            ref={canvasRef}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={() => setSnapHit(null)}
+            onWheel={onWheel}
+            onDoubleClick={() => tool === "polyline" && finishPolyline(false)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              if (tool === "polyline") finishPolyline(true);
+            }}
+            className={`h-full w-full ${
+              drag.kind === "move"
+                ? "cursor-move"
+                : tool === "select"
+                  ? "cursor-default"
+                  : "cursor-crosshair"
+            }`}
+          />
 
-        {/* status strip */}
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-center gap-4 border-t border-ink-100 bg-white/90 px-3 py-1 font-mono text-[10.5px] text-ink-400">
-          <span>
-            {cursor ? `X ${cursor.x.toFixed(1)}  Y ${cursor.y.toFixed(1)}` : "move the pointer"}
-          </span>
-          <span>{(1 / view.scale).toFixed(2)}x</span>
-          <span>
-            {stats.entities} entities · {stats.layers} layers
-          </span>
-          {selected.length > 0 && <span className="text-teal-700">{selected.length} selected</span>}
-          {tool === "polyline" && pending.length > 0 && (
-            <span className="text-teal-700">
-              Enter to finish · right click to close · Esc to cancel
+          {/* status strip */}
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-center gap-4 border-t border-ink-100 bg-white/90 px-3 py-1 font-mono text-[10.5px] text-ink-400">
+            <span>
+              {cursor ? `X ${cursor.x.toFixed(1)}  Y ${cursor.y.toFixed(1)}` : "move the pointer"}
             </span>
-          )}
-          {projectName && <span className="ml-auto">{projectName}</span>}
+            <span>{(1 / view.scale).toFixed(2)}x</span>
+            <span>
+              {stats.entities} entities · {stats.layers} layers
+            </span>
+            {snapHit && <span className="text-[#B4531A]">{snapHit.kind}</span>}
+            {measuring && <span className="text-teal-700">{measuring} mm</span>}
+            {selected.length > 0 && (
+              <span className="text-teal-700">{selected.length} selected</span>
+            )}
+            {tool === "polyline" && pending.length > 0 && (
+              <span className="text-teal-700">
+                Enter to finish · right click to close · Esc to cancel
+              </span>
+            )}
+            {activeTool?.hint && pending.length === 0 && drag.kind === "none" && (
+              <span>{activeTool.hint}</span>
+            )}
+            {projectName && <span className="ml-auto">{projectName}</span>}
+          </div>
         </div>
+
+        <CadRail
+          layers={drawing.layers}
+          activeLayer={layer}
+          onActivateLayer={setLayer}
+          onLayerFlag={setLayerFlag}
+          onInsertSymbol={insertSymbol}
+          onInsertSheet={insertSheet}
+        />
       </div>
     </div>
   );
@@ -601,20 +1001,33 @@ function IconBtn({
 /* ── geometry helpers ── */
 
 function makeEntity(tool: Tool, pts: Point[], layer: string): Entity | null {
-  const [a, b] = pts as [Point, Point];
+  const [a, b, c] = pts as [Point, Point, Point?];
   switch (tool) {
     case "line":
       return { id: newId("l"), type: "line", layer, a, b };
     case "rect":
       return { id: newId("r"), type: "rect", layer, a, b };
     case "circle":
-      return {
-        id: newId("c"),
-        type: "circle",
-        layer,
-        c: a,
-        r: Math.hypot(b.x - a.x, b.y - a.y),
-      };
+      return { id: newId("c"), type: "circle", layer, c: a, r: Math.hypot(b.x - a.x, b.y - a.y) };
+    case "arc": {
+      // Centre, then a point setting the radius and the start angle, then the
+      // end angle. The end click only contributes its direction, so the arc
+      // cannot come out with two different radii.
+      if (!c) return null;
+      const r = Math.hypot(b.x - a.x, b.y - a.y);
+      const deg = (p: Point) => (Math.atan2(p.y - a.y, p.x - a.x) * 180) / Math.PI;
+      return { id: newId("a"), type: "arc", layer, c: a, r, start: deg(b), end: deg(c) };
+    }
+    case "dimension": {
+      if (!c) return null;
+      // The third click sets which side the dimension sits on and how far out,
+      // taken as the perpendicular distance from the measured line.
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const offset = ((c.x - a.x) * -dy + (c.y - a.y) * dx) / len;
+      return { id: newId("d"), type: "dimension", layer, a, b, offset, height: 3.5 };
+    }
     default:
       return null;
   }
@@ -626,140 +1039,13 @@ function previewEntity(tool: Tool, pts: Point[], cursor: Point, layer: string): 
   }
   const first = pts[0];
   if (!first) return null;
+
+  // Multi-click tools preview from what has been clicked plus the cursor.
+  if (tool === "arc" || tool === "dimension") {
+    if (pts.length === 1) {
+      return { id: "preview", type: "line", layer, a: first, b: cursor };
+    }
+    return makeEntity(tool, [...pts, cursor], layer);
+  }
   return makeEntity(tool, [first, cursor], layer);
-}
-
-function drawEntity(
-  ctx: CanvasRenderingContext2D,
-  e: Entity,
-  toScreen: (p: Point) => Point,
-  scale: number,
-) {
-  ctx.beginPath();
-  switch (e.type) {
-    case "line": {
-      const a = toScreen(e.a);
-      const b = toScreen(e.b);
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
-      break;
-    }
-    case "rect": {
-      const a = toScreen(e.a);
-      const b = toScreen(e.b);
-      ctx.rect(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.abs(b.x - a.x), Math.abs(b.y - a.y));
-      ctx.stroke();
-      break;
-    }
-    case "circle": {
-      const c = toScreen(e.c);
-      ctx.arc(c.x, c.y, Math.max(e.r / scale, 0.5), 0, Math.PI * 2);
-      ctx.stroke();
-      break;
-    }
-    case "arc": {
-      const c = toScreen(e.c);
-      // Canvas angles run clockwise with Y down; DXF runs counter-clockwise with
-      // Y up, so both angles are negated to land in the same place.
-      ctx.arc(
-        c.x,
-        c.y,
-        Math.max(e.r / scale, 0.5),
-        (-e.end * Math.PI) / 180,
-        (-e.start * Math.PI) / 180,
-      );
-      ctx.stroke();
-      break;
-    }
-    case "polyline": {
-      e.points.forEach((p, i) => {
-        const s = toScreen(p);
-        if (i === 0) ctx.moveTo(s.x, s.y);
-        else ctx.lineTo(s.x, s.y);
-      });
-      if (e.closed) ctx.closePath();
-      ctx.stroke();
-      break;
-    }
-    case "text": {
-      const s = toScreen(e.at);
-      const px = e.height / scale;
-      if (px < 3) break; // unreadable at this zoom, and expensive to draw
-      ctx.font = `${px}px ui-sans-serif, system-ui, sans-serif`;
-      ctx.fillText(e.text, s.x, s.y);
-      break;
-    }
-  }
-}
-
-/** Nearest entity within `tol` drawing units of `p`, or null. */
-function hitTest(
-  drawing: Drawing,
-  p: Point,
-  tol: number,
-  layerOf: (n: string) => { visible: boolean; locked: boolean } | undefined,
-): string | null {
-  let best: { id: string; d: number } | null = null;
-
-  const consider = (id: string, d: number) => {
-    if (d <= tol && (!best || d < best.d)) best = { id, d };
-  };
-
-  for (const e of drawing.entities) {
-    const l = layerOf(e.layer);
-    if (l && (!l.visible || l.locked)) continue;
-
-    switch (e.type) {
-      case "line":
-        consider(e.id, distToSegment(p, e.a, e.b));
-        break;
-      case "rect": {
-        const c = [
-          { x: e.a.x, y: e.a.y },
-          { x: e.b.x, y: e.a.y },
-          { x: e.b.x, y: e.b.y },
-          { x: e.a.x, y: e.b.y },
-        ];
-        let d = Number.POSITIVE_INFINITY;
-        for (let i = 0; i < 4; i++) {
-          d = Math.min(d, distToSegment(p, c[i] as Point, c[(i + 1) % 4] as Point));
-        }
-        consider(e.id, d);
-        break;
-      }
-      case "circle":
-      case "arc":
-        consider(e.id, Math.abs(Math.hypot(p.x - e.c.x, p.y - e.c.y) - e.r));
-        break;
-      case "polyline": {
-        let d = Number.POSITIVE_INFINITY;
-        for (let i = 0; i < e.points.length - 1; i++) {
-          d = Math.min(d, distToSegment(p, e.points[i] as Point, e.points[i + 1] as Point));
-        }
-        if (e.closed && e.points.length > 2) {
-          d = Math.min(
-            d,
-            distToSegment(p, e.points[e.points.length - 1] as Point, e.points[0] as Point),
-          );
-        }
-        consider(e.id, d);
-        break;
-      }
-      case "text":
-        consider(e.id, Math.hypot(p.x - e.at.x, p.y - e.at.y));
-        break;
-    }
-  }
-  return best ? (best as { id: string }).id : null;
-}
-
-function distToSegment(p: Point, a: Point, b: Point): number {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len2 = dx * dx + dy * dy;
-  if (len2 === 0) return Math.hypot(p.x - a.x, p.y - a.y);
-  let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
-  t = Math.max(0, Math.min(1, t));
-  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
 }

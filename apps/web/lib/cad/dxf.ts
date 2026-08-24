@@ -3,6 +3,7 @@ import {
   type Drawing,
   type Entity,
   type Point,
+  dimensionGeometry,
   emptyDrawing,
   newId,
 } from "./types";
@@ -75,7 +76,16 @@ export function readDxf(text: string): DxfReadResult {
     if (!current) return;
     const entity = buildEntity(current.type, current.codes);
     if (entity) drawing.entities.push(entity);
-    else if (!SUPPORTED.has(current.type) && current.type !== "SEQEND") {
+    else if (
+      // Only geometry can be "skipped". Records in the TABLES section are
+      // structure, and LAYER records in particular are read into drawing.layers
+      // a few lines below, so counting them here reported six layers dropped on
+      // an import that had in fact kept every one of them. A message whose only
+      // job is to say what was lost has to be right about it.
+      section === "ENTITIES" &&
+      !SUPPORTED.has(current.type) &&
+      current.type !== "SEQEND"
+    ) {
       skipped.set(current.type, (skipped.get(current.type) ?? 0) + 1);
     }
     current = null;
@@ -332,5 +342,42 @@ function entityToDxf(e: Entity): string {
         pair(40, e.height) +
         pair(1, e.text)
       );
+
+    // Exploded into the lines and text it is drawn from.
+    //
+    // DXF does have a DIMENSION entity, but it references a block for the
+    // graphics and a DIMSTYLE table for the appearance, and readers disagree
+    // about both, so a dimension written that way lands looking different in
+    // every package that opens it. Lines and text land identically everywhere.
+    // The cost is that the measurement stops being live once it leaves here,
+    // which is the correct trade for an interchange file.
+    case "dimension": {
+      const g = dimensionGeometry(e);
+      let s = "";
+      const seg = (a: Point, b: Point) =>
+        pair(0, "LINE") +
+        pair(8, e.layer) +
+        pair(10, a.x) +
+        pair(20, a.y) +
+        pair(30, 0) +
+        pair(11, b.x) +
+        pair(21, b.y) +
+        pair(31, 0);
+
+      for (const [a, b] of g.witness) s += seg(a, b);
+      s += seg(g.line[0], g.line[1]);
+      for (const [a, b] of g.arrows) s += seg(a, b);
+
+      s +=
+        pair(0, "TEXT") +
+        pair(8, e.layer) +
+        pair(10, g.text.at.x) +
+        pair(20, g.text.at.y) +
+        pair(30, 0) +
+        pair(40, e.height) +
+        pair(50, g.text.angle) +
+        pair(1, g.text.value);
+      return s;
+    }
   }
 }

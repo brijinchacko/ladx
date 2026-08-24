@@ -1,0 +1,1 @@
+ALTER TABLE "projects" ADD COLUMN "brief" jsonb;

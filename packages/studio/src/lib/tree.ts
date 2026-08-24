@@ -48,13 +48,39 @@ export type LadderNode = ElNode | SeriesNode | ParallelNode;
 export type Path = number[];
 
 let seq = 0;
+
+/**
+ * Ids already spoken for.
+ *
+ * The counter starts at zero on every page load, so a program loaded from
+ * storage arrives full of ids this module is about to hand out again: the very
+ * first element created after opening a saved project used to collide with the
+ * first element created when it was written. Two elements sharing an id is not
+ * cosmetic. Selection, editing and deletion all address elements by id, and the
+ * engine keys both its power map and its per-instruction edge memory on it, so
+ * a collision makes two instructions share one one-shot.
+ *
+ * Loaded ids are registered here and skipped.
+ */
+const issued = new Set<string>();
+
+/** Take the ids in a loaded program out of circulation. */
+export function reserveIds(ids: Iterable<string>): void {
+  for (const id of ids) if (id) issued.add(id);
+}
+
 /**
  * Ids are generated, never random, Math.random() during render is banned by
  * the lint rules here and would break any snapshot comparison.
  */
 export function nid(prefix = "n"): string {
-  seq += 1;
-  return `${prefix}${seq.toString(36)}${(seq * 2654435761) % 100000}`;
+  let candidate: string;
+  do {
+    seq += 1;
+    candidate = `${prefix}${seq.toString(36)}${(seq * 2654435761) % 100000}`;
+  } while (issued.has(candidate));
+  issued.add(candidate);
+  return candidate;
 }
 
 export const series = (children: LadderNode[] = []): SeriesNode => ({
@@ -552,4 +578,51 @@ export function unwrapBranch(root: LadderNode, parallelPath: Path): LadderNode {
   if (contents.length === 0) return removeAt(root, parallelPath);
 
   return normalise(replaceAt(root, parallelPath, series(contents)));
+}
+
+/**
+ * Give every element in a rung an id nothing else uses.
+ *
+ * Repair, not prevention. Programs written before ids were reserved across a
+ * page load already contain collisions on disk, and a fix that only stops new
+ * ones would leave those files quietly broken: the duplicate pair shares the
+ * engine's per-instruction edge memory, so a one-shot on one of them fires for
+ * the other, and clicking either selects whichever the renderer reached first.
+ *
+ * Runs on load and is a no-op for a healthy rung, so it costs nothing to leave
+ * in permanently. `seen` is threaded across rungs by the caller, because ids
+ * must be unique across the whole program rather than within one network.
+ *
+ * Only the tree and the outputs are renumbered. The flat `branches` list is a
+ * fallback read only when there is no tree, so renumbering it while a tree
+ * exists would break nothing and repair nothing.
+ */
+export function dedupeRungIds(rung: Rung, seen: Set<string>): Rung {
+  const fresh = (id: string, prefix: string): string => {
+    if (id && !seen.has(id)) {
+      seen.add(id);
+      // Also out of circulation globally, or nid() below would happily mint it
+      // again: the counter restarts at zero, and the first id it produces for
+      // prefix "e" is exactly the first id the previous session produced.
+      issued.add(id);
+      return id;
+    }
+    const next = nid(prefix);
+    seen.add(next);
+    return next;
+  };
+
+  const walk = (node: LadderNode): LadderNode => {
+    if (node.kind === "el") return { ...node, id: fresh(node.id, "e") };
+    return { ...node, id: fresh(node.id, node.kind[0] ?? "n"), children: node.children.map(walk) };
+  };
+
+  const id = fresh(rung.id, "r");
+  const logic = rung.logic ? (walk(rung.logic) as SeriesNode) : undefined;
+  const branches = logic
+    ? rung.branches
+    : rung.branches.map((b) => b.map((el) => ({ ...el, id: fresh(el.id, "e") })));
+  const outputs = rung.outputs.map((o) => ({ ...o, id: fresh(o.id, "o") }));
+
+  return { ...rung, id, ...(logic ? { logic } : {}), branches, outputs };
 }

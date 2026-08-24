@@ -1,5 +1,7 @@
 "use client";
 
+import { BriefPrompt } from "@/components/studio/project-brief";
+import type { BriefKey, ProjectBrief } from "@/lib/platform/brief";
 import { FileText, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,6 +15,11 @@ import { useState } from "react";
  * with this project's details already in it. After that, it is "Open", because
  * the copy is the document now and regenerating would throw away the edits.
  *
+ * Creating stops to ask when the design basis is missing something this
+ * particular document is written from. An FDS with no controller named in it is
+ * not a draft, it is a form; asking for the three or four facts at the moment
+ * they are needed is what makes the generated document worth opening.
+ *
  * The download links sit alongside so a finished document can be handed over
  * without opening it first.
  */
@@ -23,6 +30,7 @@ export default function DeliverableRow({
   abbr,
   summary,
   existingId,
+  missing,
 }: {
   projectId: string;
   slug: string;
@@ -30,13 +38,25 @@ export default function DeliverableRow({
   abbr: string;
   summary: string;
   existingId: string | null;
+  missing: BriefKey[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [asking, setAsking] = useState(false);
 
-  async function create() {
+  async function create(answers: ProjectBrief) {
     setBusy(true);
     try {
+      // Saved first, so the document generates with the answers already on the
+      // project rather than carrying a copy of them.
+      if (Object.keys(answers).length > 0) {
+        await fetch(`/api/projects/${projectId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ brief: answers }),
+        });
+      }
+
       const res = await fetch("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -44,6 +64,7 @@ export default function DeliverableRow({
       });
       if (!res.ok) return;
       const { id } = (await res.json()) as { id: string };
+      setAsking(false);
       router.push(`/studio/documents/${id}`);
       router.refresh();
     } finally {
@@ -51,8 +72,23 @@ export default function DeliverableRow({
     }
   }
 
+  function start() {
+    if (missing.length > 0) setAsking(true);
+    else void create({});
+  }
+
   return (
     <li className="flex flex-wrap items-center gap-3 rounded-md border border-ink-100 px-4 py-3">
+      {asking && (
+        <BriefPrompt
+          documentTitle={abbr}
+          keys={missing}
+          busy={busy}
+          onCancel={() => setAsking(false)}
+          onSubmit={create}
+        />
+      )}
+
       <span className="shrink-0 bg-ink-900 px-1.5 py-0.5 font-mono text-[10.5px] font-semibold text-white">
         {abbr}
       </span>
@@ -94,12 +130,17 @@ export default function DeliverableRow({
           <>
             <button
               type="button"
-              onClick={create}
+              onClick={start}
               disabled={busy}
+              title={
+                missing.length > 0
+                  ? `Asks for ${missing.length} detail${missing.length === 1 ? "" : "s"} first`
+                  : undefined
+              }
               className="flex items-center gap-1.5 rounded-md bg-ink-900 px-3 py-1.5 font-mono text-[11px] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {busy && <Loader2 className="h-3 w-3 animate-spin" />}
-              {busy ? "Creating" : "Create"}
+              {busy && !asking && <Loader2 className="h-3 w-3 animate-spin" />}
+              {busy && !asking ? "Creating" : "Create"}
             </button>
             {(["pdf", "docx"] as const).map((fmt) => (
               <a

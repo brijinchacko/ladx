@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   type LadderNode,
+  type SeriesNode,
   addLeg,
   branchEdgeOptions,
   branchSpan,
   countElements,
+  dedupeRungIds,
   elNode,
   everyElement,
   extendBranch,
@@ -12,6 +14,7 @@ import {
   insertAt,
   isAncestorPath,
   moveNode,
+  nid,
   nodeAt,
   normalise,
   parallel,
@@ -19,6 +22,7 @@ import {
   removeAt,
   removeById,
   replaceAt,
+  reserveIds,
   rungLogic,
   series,
   shrinkBranch,
@@ -26,6 +30,7 @@ import {
   unwrapBranch,
   updateElementById,
 } from "./tree";
+import type { Rung } from "./types";
 import type { Element } from "./types";
 
 /**
@@ -384,5 +389,89 @@ describe("the old flat shape", () => {
       "(X Y)",
     );
     expect(shape(rungLogic({ id: "r", branches: [[flat("A")]], outputs: [] }))).toBe("(A)");
+  });
+});
+
+describe("id reservation", () => {
+  it("never reissues an id a loaded program already uses", () => {
+    // The counter restarts at zero on every page load, so the ids handed out
+    // after opening a saved project are the same ones that were handed out
+    // while writing it. Two instructions sharing an id makes them share the
+    // engine's per-instruction edge memory, so one one-shot fires for both.
+    const first = nid("e");
+    reserveIds([first]);
+
+    const next = Array.from({ length: 50 }, () => nid("e"));
+    expect(next).not.toContain(first);
+    expect(new Set(next).size).toBe(next.length);
+  });
+
+  it("keeps handing out unique ids either way", () => {
+    const ids = Array.from({ length: 500 }, () => nid("x"));
+    expect(new Set(ids).size).toBe(500);
+  });
+});
+
+describe("repairing duplicate ids", () => {
+  const rungWith = (ids: string[]): Rung => ({
+    id: "r1",
+    branches: [],
+    logic: series(ids.map((id) => ({ ...elNode("XIC", "X"), id }))) as SeriesNode,
+    outputs: [{ id: ids[0] as string, type: "OTE", tag: "Y" }],
+  });
+
+  it("renumbers a collision and leaves the first occurrence alone", () => {
+    // The output deliberately reuses the first element's id, which is the shape
+    // a program written before ids were reserved actually has on disk.
+    const repaired = dedupeRungIds(rungWith(["dup", "other"]), new Set());
+    const treeIds = everyElement(repaired.logic as SeriesNode).map((e) => e.id);
+    const outId = repaired.outputs[0]?.id as string;
+
+    expect(treeIds[0]).toBe("dup");
+    expect(outId).not.toBe("dup");
+    expect(new Set([...treeIds, outId, repaired.id]).size).toBe(4);
+  });
+
+  it("leaves a healthy rung exactly as it was", () => {
+    const healthy: Rung = {
+      id: "r9",
+      branches: [],
+      logic: series([{ ...elNode("XIC", "A"), id: "a" }]) as SeriesNode,
+      outputs: [{ id: "b", type: "OTE", tag: "B" }],
+    };
+    expect(dedupeRungIds(healthy, new Set())).toEqual(healthy);
+  });
+
+  it("puts repaired ids beyond the reach of the counter", () => {
+    /*
+     * The failure this exists for. The id counter restarts at zero on every
+     * page load, so the ids it is about to hand out are precisely the ids the
+     * previous session handed out. A repair that only renumbers duplicates
+     * against a local set still mints a colliding id, because the generator
+     * has never heard of the ids it kept.
+     */
+    const repaired = dedupeRungIds(rungWith(["dup", "other"]), new Set());
+    const kept = [
+      repaired.id,
+      ...everyElement(repaired.logic as SeriesNode).map((e) => e.id),
+      repaired.outputs[0]?.id as string,
+    ];
+    const minted = Array.from({ length: 200 }, () => nid("e"));
+    for (const id of kept) expect(minted).not.toContain(id);
+  });
+
+  it("keeps ids unique across rungs, not just within one", () => {
+    const seen = new Set<string>();
+    const a = dedupeRungIds(rungWith(["x", "y"]), seen);
+    const b = dedupeRungIds(rungWith(["x", "y"]), seen);
+    const all = [
+      a.id,
+      b.id,
+      ...everyElement(a.logic as SeriesNode).map((e) => e.id),
+      ...everyElement(b.logic as SeriesNode).map((e) => e.id),
+      a.outputs[0]?.id as string,
+      b.outputs[0]?.id as string,
+    ];
+    expect(new Set(all).size).toBe(all.length);
   });
 });
