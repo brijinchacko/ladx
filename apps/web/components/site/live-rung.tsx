@@ -36,9 +36,16 @@ function buildProgram(): LadxProgram {
         address: "I0.0",
       },
       {
+        // Normally closed, and examined with XIO, so the rung conducts while
+        // the button is at rest and breaks the moment it is pressed.
+        //
+        // Worth knowing on a real machine: a stop button is wired through its
+        // NC contact and examined with XIC, so that a cut wire also stops it.
+        // Here the tag means "pressed", which is what a visitor clicking a
+        // button expects, and the caption says so.
         name: "Stop_PB",
         type: "BOOL",
-        value: 1,
+        value: 0,
         isInput: true,
         device: "PUSHBUTTON_NC",
         address: "I0.1",
@@ -85,7 +92,7 @@ function buildProgram(): LadxProgram {
                 },
               ],
             },
-            { kind: "el", id: "e_stop", type: "XIC", tag: "Stop_PB" },
+            { kind: "el", id: "e_stop", type: "XIO", tag: "Stop_PB" },
             { kind: "el", id: "e_guard", type: "XIC", tag: "Guard_OK" },
           ],
           // biome-ignore lint/suspicious/noExplicitAny: the tree type lives in the studio package
@@ -111,7 +118,7 @@ function buildProgram(): LadxProgram {
 /** The three switches a visitor can operate. */
 const INPUTS = [
   { tag: "Start_PB", label: "Start", hint: "momentary", momentary: true },
-  { tag: "Stop_PB", label: "Stop", hint: "wired NC", momentary: false },
+  { tag: "Stop_PB", label: "Stop", hint: "NC, press to stop", momentary: true },
   { tag: "Guard_OK", label: "Guard", hint: "closed = 1", momentary: false },
 ];
 
@@ -244,7 +251,13 @@ export function LiveRung() {
       </div>
 
       <div className="px-4 pt-4">
-        <LadderSvg power={power} rungPower={rungPower} />
+        <LadderSvg
+          power={power}
+          rungPower={rungPower}
+          onStart={() => pulse("Start_PB")}
+          onStop={() => pulse("Stop_PB")}
+          onGuard={() => toggle("Guard_OK")}
+        />
       </div>
 
       {/* The controls. This is the part that makes the claim testable.
@@ -358,9 +371,11 @@ export function LiveRung() {
         </div>
 
         <p className="border-t border-ink-100 px-4 py-3 text-[12.5px] leading-relaxed text-ink-500">
-          Hold <span className="font-mono text-ink-800">Start</span>. The conveyor latches through
-          its own contact and stays on when you let go. Now press{" "}
-          <span className="font-mono text-ink-800">Stop</span>, or open the guard.
+          Click the contacts on the rung, or the switches below. Press{" "}
+          <span className="font-mono text-ink-800">Start</span> and the conveyor latches through its
+          own contact and stays on when you let go.{" "}
+          <span className="font-mono text-ink-800">Stop</span> is normally closed, so it conducts at
+          rest and breaks the rung when pressed.
         </p>
       </div>
     </div>
@@ -372,12 +387,77 @@ export function LiveRung() {
 const INK = "currentColor";
 const LIVE = "rgb(var(--ladx-teal, 53 182 186))";
 
-function Contact({ x, y, label, on }: { x: number; y: number; label: string; on: boolean }) {
+/**
+ * One contact on the rung.
+ *
+ * Draws the instruction it actually is: XIC as a plain pair of bars, XIO with
+ * the diagonal through it. Until now every contact rendered identically, so a
+ * normally closed stop looked exactly like a normally open start, which is the
+ * one distinction a ladder drawing exists to make.
+ *
+ * When `onActivate` is given the contact becomes a real control: clickable,
+ * focusable, and operable from the keyboard. Reaching for the switch you can
+ * see is the obvious gesture, and it used to do nothing.
+ */
+function Contact({
+  x,
+  y,
+  label,
+  on,
+  nc,
+  onActivate,
+  title,
+}: {
+  x: number;
+  y: number;
+  label: string;
+  on: boolean;
+  /** Draw as normally closed, with the diagonal. */
+  nc?: boolean;
+  onActivate?: () => void;
+  title?: string;
+}) {
   const stroke = on ? LIVE : INK;
+  const interactive = Boolean(onActivate);
+
   return (
-    <g>
+    <g
+      onClick={onActivate}
+      onKeyDown={
+        onActivate
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onActivate();
+              }
+            }
+          : undefined
+      }
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? (title ?? label) : undefined}
+      className={
+        interactive ? "cursor-pointer outline-none [&:focus-visible>rect]:opacity-100" : undefined
+      }
+    >
+      {/* Hit area, and the focus ring. Generous, because the contact itself is
+          two thin lines and nobody can reliably click a 2px target. */}
+      {interactive && (
+        <rect
+          x={x - 16}
+          y={y - 24}
+          width={32}
+          height={44}
+          rx={3}
+          fill="transparent"
+          stroke={LIVE}
+          strokeWidth="1.5"
+          opacity="0"
+        />
+      )}
       <line x1={x - 8} y1={y - 10} x2={x - 8} y2={y + 10} stroke={stroke} strokeWidth="2" />
       <line x1={x + 8} y1={y - 10} x2={x + 8} y2={y + 10} stroke={stroke} strokeWidth="2" />
+      {nc && <line x1={x - 11} y1={y + 9} x2={x + 11} y2={y - 9} stroke={stroke} strokeWidth="2" />}
       <text
         x={x}
         y={y - 17}
@@ -438,7 +518,17 @@ function Coil({ x, y, label, on }: { x: number; y: number; label: string; on: bo
 function LadderSvg({
   power,
   rungPower,
-}: { power: Record<string, boolean>; rungPower: Record<string, boolean> }) {
+  onStart,
+  onStop,
+  onGuard,
+}: {
+  power: Record<string, boolean>;
+  rungPower: Record<string, boolean>;
+  /** Operating the switch you can see is the obvious gesture, so it works. */
+  onStart?: () => void;
+  onStop?: () => void;
+  onGuard?: () => void;
+}) {
   const lit = (id: string) => Boolean(power[id]);
   const wire = (on: boolean) => (on ? LIVE : INK);
   const w = (on: boolean) => (on ? 2 : 1.4);
@@ -482,7 +572,14 @@ function LadderSvg({
       <line x1="32" y1="70" x2="62" y2="70" stroke={LIVE} strokeWidth="2" />
       {/* upper leg: Start */}
       <line x1="62" y1="70" x2="84" y2="70" stroke={LIVE} strokeWidth="2" />
-      <Contact x={92} y={70} label="Start_PB" on={startOn} />
+      <Contact
+        x={92}
+        y={70}
+        label="Start_PB"
+        on={startOn}
+        onActivate={onStart}
+        title="Press the start button"
+      />
       <line
         x1="100"
         y1="70"
@@ -525,7 +622,15 @@ function LadderSvg({
         strokeWidth={w(junction)}
         opacity={dim(junction)}
       />
-      <Contact x={208} y={70} label="Stop_PB" on={stopOn} />
+      <Contact
+        x={208}
+        y={70}
+        label="Stop_PB"
+        on={stopOn}
+        nc
+        onActivate={onStop}
+        title="Press the stop button"
+      />
       <line
         x1="216"
         y1="70"
@@ -535,7 +640,14 @@ function LadderSvg({
         strokeWidth={w(stopOn)}
         opacity={dim(stopOn)}
       />
-      <Contact x={280} y={70} label="Guard_OK" on={guardOn} />
+      <Contact
+        x={280}
+        y={70}
+        label="Guard_OK"
+        on={guardOn}
+        onActivate={onGuard}
+        title="Open or close the guard"
+      />
       <line
         x1="288"
         y1="70"

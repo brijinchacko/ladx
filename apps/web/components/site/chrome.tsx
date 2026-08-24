@@ -1,5 +1,6 @@
 "use client";
 
+import HeaderAccount, { type HeaderUser } from "@/components/site/header-account";
 import { Logo } from "@ladx/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -27,14 +28,14 @@ export function SiteHeader() {
    * most visitors, and swap once the check returns. The slot keeps its size
    * either way, so nothing moves on the page.
    */
-  const [signedIn, setSignedIn] = useState(false);
+  const [user, setUser] = useState<HeaderUser | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!cancelled && d?.user) setSignedIn(true);
+        if (!cancelled && d?.user) setUser(d.user as HeaderUser);
       })
       .catch(() => {
         // Not signed in, or offline. The default is already correct.
@@ -72,13 +73,16 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          {signedIn ? (
-            <Link
-              href="/studio"
-              className="rounded-sm bg-ink-900 px-3.5 py-1.5 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
-            >
-              Open Studio
-            </Link>
+          {user ? (
+            <>
+              <Link
+                href="/studio"
+                className="hidden rounded-sm bg-ink-900 px-3.5 py-1.5 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90 sm:block"
+              >
+                Open Studio
+              </Link>
+              <HeaderAccount user={user} />
+            </>
           ) : (
             <>
               <Link
