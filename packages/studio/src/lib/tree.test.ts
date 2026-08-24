@@ -33,7 +33,7 @@ import type { Element } from "./types";
  *
  * Written before paying down the `noUncheckedIndexedAccess` debt recorded in
  * docs/adr/0001. Twenty-nine of the eighty-one errors were in this file, and
- * most of them sit on the indexed accesses that decide the SHAPE of a rung —
+ * most of them sit on the indexed accesses that decide the SHAPE of a rung ,
  * `children[0]` in normalise, `span[0]` in branchSpan, `legs[0]` in the branch
  * edge moves. Guarding an index is a one-line change that can silently pick a
  * different branch of an `if`, so the shapes are pinned here first.
@@ -43,7 +43,7 @@ import type { Element } from "./types";
  *
  *   (a b)     a series of a and b
  *   [a | b]   a parallel of legs a and b
- *   ()        an empty series — which is a wire, and passes power
+ *   ()        an empty series, which is a wire, and passes power
  */
 const shape = (n: LadderNode): string => {
   if (n.kind === "el") return n.tag || n.type;
@@ -134,7 +134,7 @@ describe("branchSpan", () => {
     expect(shape(branchSpan(chain(), [], 1, 1))).toBe("(A [(B) | ()] C)");
   });
 
-  it("branches across the whole chain — the classic seal-in", () => {
+  it("branches across the whole chain, the classic seal-in", () => {
     expect(shape(branchSpan(chain(), [], 0, 2))).toBe("([(A B C) | ()])");
   });
 
@@ -150,7 +150,7 @@ describe("branchSpan", () => {
     // span[0] is already a container, so it becomes the leg directly rather
     // than being wrapped in a series first. normalise then flattens the
     // parallel-inside-a-parallel, so branching an existing branch reads as
-    // adding a leg to it — which is what it means on the rung. This is the one
+    // adding a leg to it, which is what it means on the rung. This is the one
     // place the resulting shape depends on what `span[0]` IS.
     const root = series([el("A"), parallel([series([el("B")]), series([el("C")])])]);
     expect(shape(branchSpan(root, [], 1, 1))).toBe("(A [(B) | (C) | ()])");
@@ -216,7 +216,7 @@ describe("insert, remove, replace", () => {
 });
 
 describe("branch edges", () => {
-  //  (A [(B) | ()] C) — a branch around B, with A outside on the left.
+  //  (A [(B) | ()] C), a branch around B, with A outside on the left.
   const withBranch = () => branchSpan(series(els("A", "B", "C")), [], 1, 1);
 
   it("pulls the left neighbour into the first leg", () => {
@@ -365,7 +365,7 @@ describe("the old flat shape", () => {
 
   it("flattens a shape the old format cannot hold, and says so by doing it", () => {
     // A mid-rung branch has no flat representation. The shim keeps the
-    // elements in reading order and loses the shape — which is why the tree
+    // elements in reading order and loses the shape, which is why the tree
     // is the stored form.
     const root = series([el("A"), parallel([series([el("B")]), series([el("D")])]), el("C")]);
     expect(toBranches(root).map((b) => b.map((e) => e.tag))).toEqual([["A", "B", "D", "C"]]);

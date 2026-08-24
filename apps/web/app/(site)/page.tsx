@@ -13,7 +13,7 @@ export const metadata = {
 const PRODUCTS = [
   {
     slug: "studio",
-    name: "Studio",
+    name: "Ladder",
     line: "Draw a rung. Press run. Watch it conduct.",
     body: "A ladder editor with a scan-accurate simulator behind it: real output image, per-instruction edge memory, timers that count milliseconds rather than scans. It is the canvas the AI writes onto, and it works on its own with no account at all.",
     state: "live" as const,
@@ -23,28 +23,28 @@ const PRODUCTS = [
     name: "Chat",
     line: "Ask for logic. Get logic that compiles.",
     body: "Describe what the machine should do and watch the rungs appear on the canvas. Every answer passes a real IEC 61131-3 compiler before it reaches you, and when it fails the errors go back to the model instead of to you.",
-    state: "building" as const,
+    state: "live" as const,
   },
   {
     slug: "convert",
     name: "Convert",
     line: "Between platforms, and between languages.",
-    body: "Read an L5X, write SCL. Turn ladder into structured text, or back. Every conversion comes with a per-element report saying what moved cleanly, what changed meaning, and what needs a human: and both versions can be run side by side to prove they agree.",
-    state: "building" as const,
+    body: "Turn ladder into Structured Text, Siemens SCL, Rockwell neutral text or PLCopen XML. Every conversion comes with a report saying what moved cleanly, what changed meaning, and what a person still needs to check. It runs in your browser, so your program is never uploaded.",
+    state: "live" as const,
   },
   {
     slug: "docs",
     name: "Documents",
-    line: "The paperwork, from the code you already wrote.",
-    body: "Functional design specs, I/O schedules, control narratives, test protocols. Generated from the project rather than typed again, and exported to Word or PDF for the people who will never open your PLC.",
-    state: "planned" as const,
+    line: "The paperwork a project actually produces.",
+    body: "Seventeen working templates: URS, FDS, I/O list, BOM, cause and effect, FAT and SAT protocols, risk assessment, handover pack. Real documents with the tables and sign-off blocks already in them, filled from your project rather than typed again.",
+    state: "live" as const,
   },
   {
     slug: "knowledge",
     name: "Knowledge",
     line: "Your manuals, answering questions.",
-    body: "Drop in the drive manual, the machine spec, the site standard. Ask questions against them and get answers with the page they came from, scoped to one project and never mixed with anyone else's.",
-    state: "planned" as const,
+    body: "Drop in the drive manual, the machine spec, the site standard. Ask questions against them and get answers with the passage they came from, scoped to one project and never mixed with anyone else's.",
+    state: "live" as const,
   },
 ];
 

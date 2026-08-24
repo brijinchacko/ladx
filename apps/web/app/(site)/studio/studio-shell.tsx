@@ -249,14 +249,14 @@ function StudioBar({
         style={{ backgroundColor: "rgb(var(--ladx-teal))" }}
       />
       <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-500">
-        Studio
+        Ladder
       </span>
       {mayPersist === false ? (
         <button
           type="button"
           onClick={() => window.dispatchEvent(new Event("ladx:open-consent"))}
           className="hidden font-mono text-[11px] text-amber-700 underline-offset-2 hover:underline sm:inline"
-          title="Studio is not saving your work because functional storage is turned off"
+          title="Ladder is not saving your work because functional storage is turned off"
         >
           not saving, click to allow
         </button>

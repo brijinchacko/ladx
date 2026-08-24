@@ -1,59 +1,66 @@
-import { UploadButton } from "@/components/upload-button";
+import { NewProjectForm } from "@/components/platform/project-controls";
 import { requireUser } from "@/lib/auth/server";
-import { db } from "@/lib/db/client";
-import { projects } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { getPhase } from "@/lib/platform/lifecycle";
+import { listClients, listProjects } from "@/lib/platform/queries";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
   const user = await requireUser();
-  const rows = await db()
-    .select()
-    .from(projects)
-    .where(eq(projects.userId, user.id))
-    .orderBy(projects.createdAt);
+  const [projects, clients] = await Promise.all([listProjects(user.id), listClients(user.id)]);
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <header className="flex items-center justify-between mb-8">
+    <div className="mx-auto max-w-5xl p-8">
+      <header className="mb-8 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
-          <p className="text-ink-500">
-            Upload an L5X (Rockwell) or PLCopen TC6 .xml file. Drag-and-drop coming soon.
+          <h1 className="font-display text-3xl font-bold tracking-tight">Projects</h1>
+          <p className="mt-1 text-ink-500">
+            Every job, from requirements to handover. Each one generates its own documents.
           </p>
         </div>
-        <UploadButton />
+        <NewProjectForm clients={clients.map((c) => ({ id: c.id, name: c.name }))} />
       </header>
 
-      {rows.length === 0 ? (
-        <div className="border border-dashed border-ink-200 rounded-lg p-12 text-center text-ink-500">
-          No projects yet. Upload your first one to get started.
+      {projects.length === 0 ? (
+        <div className="rounded-sm border border-dashed border-ink-200 p-12 text-center">
+          <p className="text-ink-500">No projects yet.</p>
+          <p className="mt-1 text-[13.5px] text-ink-400">
+            Create one to start working through the lifecycle, from URS to handover.
+          </p>
         </div>
       ) : (
-        <ul className="divide-y divide-ink-100 border border-ink-100 rounded-lg overflow-hidden">
-          {rows.map((p) => (
-            <li key={p.id}>
-              <Link
-                href={`/projects/${p.id}`}
-                className="block px-5 py-4 hover:bg-ink-50 transition-colors"
-              >
-                <div className="flex items-center justify-between gap-4">
+        <ul className="divide-y divide-ink-100 overflow-hidden rounded-sm border border-ink-100">
+          {projects.map((p) => {
+            const phase = getPhase(p.phase);
+            return (
+              <li key={p.id}>
+                <Link
+                  href={`/projects/${p.id}`}
+                  className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-ink-50"
+                >
                   <div className="min-w-0">
-                    <p className="font-medium text-ink-900 truncate">{p.name}</p>
-                    <p className="text-xs text-ink-500">
-                      {p.vendor} · {p.routineCount} routines · {p.tagCount} tags
-                      {p.parseError ? " · parse error" : ""}
+                    <div className="flex items-center gap-2.5">
+                      <span className="truncate font-semibold text-ink-900">{p.name}</span>
+                      {p.code && (
+                        <span className="shrink-0 font-mono text-[12px] text-ink-400">
+                          {p.code}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 truncate text-[13px] text-ink-500">
+                      {p.clientName ?? "No client"}
+                      {p.site ? `  ·  ${p.site}` : ""}
                     </p>
                   </div>
-                  <p className="text-xs text-ink-400 shrink-0">
-                    {new Date(p.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </Link>
-            </li>
-          ))}
+                  <span className="shrink-0 rounded-sm border border-teal-300 bg-teal-50 px-2 py-0.5 font-mono text-[11px] text-teal-700">
+                    {phase.step ? `${phase.step}. ` : ""}
+                    {phase.name}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

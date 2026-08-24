@@ -1,27 +1,45 @@
+import CompanyForm from "@/components/platform/company-form";
 import { ProvidersPanel } from "@/components/providers-panel";
 import { requireUser } from "@/lib/auth/server";
+import { getCompany } from "@/lib/platform/queries";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Settings.
  *
- * There is no billing here and there will not be: inference runs on the user's
- * own provider key, so there is nothing for us to meter or charge for. What
- * that makes important instead is the providers panel, until a key is
- * connected, the AI half of LADX cannot do anything at all.
+ * Two things live here, in the order they matter on day one. The company
+ * profile is first because it is what makes generated documents yours: enter it
+ * once and it is on every FDS, FAT and handover pack. The providers panel is
+ * second because until a key is connected, the AI half of the platform cannot
+ * do anything. There is no billing, and there will not be: inference runs on
+ * the user's own key.
  */
 export default async function SettingsPage() {
   const user = await requireUser();
+  const company = await getCompany(user.id);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-10 p-8">
+    <div className="mx-auto max-w-3xl space-y-12 p-8">
       <header>
         <h1 className="mb-2 font-display text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-ink-500">Your account and the AI providers you have connected.</p>
+        <p className="text-ink-500">
+          Your company, the AI providers you have connected, and your account.
+        </p>
       </header>
 
       <section>
+        <div className="mb-5">
+          <h2 className="text-lg font-semibold text-ink-900">Company profile</h2>
+          <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-500">
+            Entered once, stamped onto every document the platform generates. The logo and details
+            become the letterhead on your FDS, FAT, SAT and handover documents.
+          </p>
+        </div>
+        <CompanyForm initial={company} />
+      </section>
+
+      <section className="border-t border-ink-100 pt-10">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-ink-900">AI providers</h2>
           <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-500">

@@ -139,7 +139,7 @@ describe("timers", () => {
  * Added alongside the tree's own characterisation tests (see tree.test.ts)
  * before paying down the ADR-0001 strictness debt. tree.ts decides the SHAPE of
  * a rung and the engine only folds over it, so a shape that changes by one
- * `children[0]` shows up here as logic that changes — which is the failure
+ * `children[0]` shows up here as logic that changes, which is the failure
  * worth catching.
  */
 describe("series and parallel", () => {
@@ -230,7 +230,7 @@ describe("series and parallel", () => {
     const pressed = scan(p, start(p, { Start: 1 }), {}, 20);
     expect(val(pressed.tags, "Motor")).toBe(1);
 
-    // Let go of Start — the seal-in leg holds it.
+    // Let go of Start, the seal-in leg holds it.
     const released = scan(
       p,
       pressed.tags.map((t) => (t.name === "Start" ? { ...t, value: 0 } : t)),
@@ -416,7 +416,7 @@ describe("reset and presets", () => {
     let tags = start(p, { Run: 1 });
     let edges: Record<string, boolean> = {};
     for (let i = 0; i < 5; i++) {
-      const s = scan(p, tags, edges, 400); // 2000 ms — past the box's 1000
+      const s = scan(p, tags, edges, 400); // 2000 ms, past the box's 1000
       tags = s.tags;
       edges = s.edges;
     }

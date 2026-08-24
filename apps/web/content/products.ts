@@ -26,10 +26,10 @@ export type Product = {
 export const PRODUCTS: Product[] = [
   {
     slug: "studio",
-    name: "Studio",
+    name: "Ladder",
     tagline: "Draw a rung. Press run. Watch it conduct.",
     state: "live",
-    open: { href: "/studio", label: "Open Studio" },
+    open: { href: "/studio", label: "Open Ladder" },
     summary:
       "A ladder editor with a scan-accurate simulator behind it. It is the canvas the AI writes onto, and it works entirely on its own with no account and no backend.",
     problem:
@@ -72,7 +72,7 @@ export const PRODUCTS: Product[] = [
     does: [
       {
         h: "It writes onto the canvas, not into a chat bubble",
-        p: "Answers arrive as rungs in Studio, editable, runnable, and yours. You can select a rung and ask what it does, or ask for a permissive to be added to it.",
+        p: "Answers arrive as rungs in the Ladder editor, editable, runnable, and yours. You can select a rung and ask what it does, or ask for a permissive to be added to it.",
       },
       {
         h: "Validated before display",

@@ -94,7 +94,7 @@ export function SiteFooter() {
     {
       title: "Product",
       links: [
-        { href: "/products/studio", label: "Studio" },
+        { href: "/products/studio", label: "Ladder" },
         { href: "/products/chat", label: "Chat" },
         { href: "/products/convert", label: "Convert" },
         { href: "/products/docs", label: "Documents" },

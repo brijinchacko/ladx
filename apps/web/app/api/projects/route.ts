@@ -36,6 +36,33 @@ export async function POST(req: Request) {
   const authResult = await getApiUser();
   if ("error" in authResult) return authResult.error;
 
+  // A JSON body creates a project as a client engagement, with no file yet.
+  // A multipart body is the original path: upload and parse a PLC file. One
+  // endpoint, because both produce a row in the same projects table.
+  const contentType = req.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    const body = (await req.json().catch(() => null)) as {
+      name?: string;
+      clientId?: string | null;
+      code?: string | null;
+      description?: string | null;
+      site?: string | null;
+    } | null;
+    const name = body?.name?.trim();
+    if (!name || name.length > 200) {
+      return Response.json({ error: "a project name is required" }, { status: 400 });
+    }
+    const { createProject } = await import("@/lib/platform/queries");
+    const { id } = await createProject(authResult.user.id, {
+      name,
+      clientId: body?.clientId ?? null,
+      code: body?.code?.trim() || null,
+      description: body?.description?.trim() || null,
+      site: body?.site?.trim() || null,
+    });
+    return Response.json({ id }, { status: 201 });
+  }
+
   let form: FormData;
   try {
     form = await req.formData();

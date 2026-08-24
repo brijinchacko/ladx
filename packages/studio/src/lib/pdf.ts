@@ -351,7 +351,7 @@ function drawNode(doc: jsPDF, node: LadderNode, x: number, y: number, cell: numb
   const lastLeg = legs[legs.length - 1];
   if (!firstLeg || !lastLeg) {
     // A branch with no legs at all. normalise() collapses those, so only a
-    // tree that never went through it can get here — draw the wire an empty
+    // tree that never went through it can get here, draw the wire an empty
     // series draws rather than failing the whole export.
     doc.setDrawColor(INK).setLineWidth(0.4);
     doc.line(x, y, x + cell, y);

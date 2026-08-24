@@ -5,7 +5,7 @@ import type { LadxProgram, Tag } from "./types";
 
 /**
  * The export is a drawing, so there is no useful assertion about what it looks
- * like here — only that it is produced. That is worth having anyway: every
+ * like here, only that it is produced. That is worth having anyway: every
  * rung shape goes through drawNode, and the failure mode being guarded against
  * is one bad shape throwing and taking the whole export with it, which is the
  * student's work not coming out.
@@ -50,7 +50,7 @@ describe("project export", () => {
           branches: [],
           outputs: [{ id: "o1", type: "OTE", tag: "Motor" }],
         },
-        // An empty condition side — a wire straight to the coil.
+        // An empty condition side, a wire straight to the coil.
         {
           id: "r2",
           logic: series([]),
@@ -65,7 +65,7 @@ describe("project export", () => {
           outputs: [{ id: "o3", type: "OTE", tag: "Motor" }],
         },
         // A branch with no legs at all. normalise() collapses these, so this
-        // only arrives from a stored tree that never went through it — and it
+        // only arrives from a stored tree that never went through it, and it
         // used to throw, which failed the export rather than the rung.
         {
           id: "r4",

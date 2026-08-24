@@ -2,7 +2,7 @@ import { SITE, jsonLd, softwareSchema } from "@/lib/seo/schema";
 import StudioShell from "./studio-shell";
 
 export const metadata = {
-  title: "Studio, the browser ladder logic editor and simulator",
+  title: "Ladder, the browser ladder logic editor and simulator",
   description:
     "Draw ladder logic and watch it run. A scan-accurate PLC simulator with a real output image, per-instruction edge memory and timers that count milliseconds. No account, runs in the browser.",
   alternates: { canonical: `${SITE.url}/studio` },

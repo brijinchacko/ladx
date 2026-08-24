@@ -50,6 +50,25 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
 
 export const messageRoleEnum = pgEnum("message_role", ["system", "user", "assistant"]);
 
+/**
+ * The phases a control system project moves through, in order.
+ *
+ * This is the standard integrator lifecycle: capture what the client needs,
+ * design how it works, build it, prove it on the bench, prove it on site, hand
+ * it over, then support it. Each phase has deliverables, which are the document
+ * templates the platform can generate with the project already filled in.
+ */
+export const projectPhaseEnum = pgEnum("project_phase", [
+  "requirements",
+  "design",
+  "development",
+  "factory_test",
+  "commissioning",
+  "handover",
+  "support",
+  "closed",
+]);
+
 export const authTokenKindEnum = pgEnum("auth_token_kind", [
   "password_reset",
   "magic_link",
@@ -127,9 +146,12 @@ export const projects = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    vendor: vendorKindEnum("vendor").notNull(),
-    r2Key: text("r2_key").notNull(),
-    sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(),
+    // A project can exist before any PLC file is uploaded to it, so these are
+    // nullable now. The upload path still fills them; a project created from the
+    // platform simply has no file yet.
+    vendor: vendorKindEnum("vendor"),
+    r2Key: text("r2_key"),
+    sizeBytes: bigint("size_bytes", { mode: "number" }),
     tagCount: integer("tag_count").notNull().default(0),
     routineCount: integer("routine_count").notNull().default(0),
     udtCount: integer("udt_count").notNull().default(0),
@@ -143,11 +165,24 @@ export const projects = pgTable(
       udts: string[];
       aois: string[];
     }>(),
+    // ----- engagement fields: the project as a client job, not just a file -----
+    // The client this project is for. Nullable, because a scratch project need
+    // not belong to anyone yet, and because every project that predates this
+    // column has no client.
+    clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
+    /** Project number, e.g. LX-2601. Used as the stem of every document number. */
+    code: text("code"),
+    description: text("description"),
+    /** Where in the lifecycle this project is. Drives the workflow view. */
+    phase: projectPhaseEnum("phase").notNull().default("requirements"),
+    /** Free-form site or plant location, printed on documents. */
+    site: text("site"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     userIdx: index("projects_user_idx").on(t.userId),
+    clientIdx: index("projects_client_idx").on(t.clientId),
   }),
 );
 
@@ -276,7 +311,6 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type AuthToken = typeof authTokens.$inferSelect;
-export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type Conversation = typeof conversations.$inferSelect;
@@ -462,3 +496,75 @@ export const knowledgeChunks = pgTable(
 
 export type KnowledgeDoc = typeof knowledgeDocs.$inferSelect;
 export type KnowledgeChunk = typeof knowledgeChunks.$inferSelect;
+
+// ----- company profile -----
+//
+// One per user. This is the letterhead: the name, logo and contact details that
+// appear on every document the platform generates. Storing it once and stamping
+// it onto documents is the whole point, an engineer should enter their company
+// details on the day they sign up and never type them into a document again.
+//
+// The logo is kept as a data URL in a text column rather than in object storage.
+// It is small (capped at ~1 MB on the way in), it has to be embedded inline in
+// generated HTML and PDF anyway, and there is no object store wired up on this
+// host. A 50 MB PLC file would never go here; a 40 KB PNG is fine.
+export const companyProfiles = pgTable("company_profiles", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  /** Data URL: "data:image/png;base64,...". Rendered on every document. */
+  logo: text("logo"),
+  addressLine1: text("address_line1"),
+  addressLine2: text("address_line2"),
+  city: text("city"),
+  region: text("region"),
+  postcode: text("postcode"),
+  country: text("country"),
+  phone: text("phone"),
+  email: text("email"),
+  website: text("website"),
+  /** Company registration number, printed on formal documents. */
+  registrationNumber: text("registration_number"),
+  vatNumber: text("vat_number"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ----- clients -----
+//
+// The people the work is for. A project belongs to a client, and the client's
+// details flow into every document that project generates, so they are entered
+// once here rather than on each document.
+export const clients = pgTable(
+  "clients",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    contactName: text("contact_name"),
+    contactEmail: text("contact_email"),
+    contactPhone: text("contact_phone"),
+    addressLine1: text("address_line1"),
+    addressLine2: text("address_line2"),
+    city: text("city"),
+    region: text("region"),
+    postcode: text("postcode"),
+    country: text("country"),
+    /** e.g. Food and beverage, Water, Automotive. Useful context on documents. */
+    industry: text("industry"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("clients_user_idx").on(t.userId),
+  }),
+);
+
+export type CompanyProfile = typeof companyProfiles.$inferSelect;
+export type Client = typeof clients.$inferSelect;
+export type NewClient = typeof clients.$inferInsert;
+export type Project = typeof projects.$inferSelect;

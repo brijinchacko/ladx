@@ -70,7 +70,7 @@ export function parseAddress(raw: string): ParsedAddress | null {
 
   // None of the three groups is optional, so a match has all of them. The
   // guards are what say that to the compiler; falling through to null keeps
-  // the promise the doc comment makes — unreadable in, null out.
+  // the promise the doc comment makes, unreadable in, null out.
   const [, bitArea, bitByte, bitIndex] = BIT_RE.exec(s) ?? [];
   if (bitArea !== undefined && bitByte !== undefined && bitIndex !== undefined) {
     return {

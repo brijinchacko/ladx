@@ -407,7 +407,7 @@ export function programRoutines(p: LadxProgram): Routine[] {
 }
 
 export function mainRoutine(p: LadxProgram): Routine {
-  // Never actually empty — programRoutines falls back to a Main built from the
-  // flat rungs — so the fallback here is the same routine, not a second one.
+  // Never actually empty, programRoutines falls back to a Main built from the
+  // flat rungs, so the fallback here is the same routine, not a second one.
   return programRoutines(p)[0] ?? flatRungsAsMain(p);
 }
