@@ -37,17 +37,42 @@ tight, build with the app stopped rather than alongside it.
 
 ## What this release changes
 
-Two schema migrations, both additive and backward compatible, so they are safe
-to apply **before** the new code goes live:
+Two schema migrations. Both are additive, so they are safe to apply **before**
+the new code goes live, and the previous release keeps running against them:
 
-- `0010_hesitant_warbird` — adds nullable `projects.brief` (jsonb). The design
-  basis. Old code ignores an unknown column.
-- `0011_windy_hydra` — adds the `ladder_programs` table. Nothing reads it yet on
-  the running version.
+- `0013_stiff_scarlet_witch` — `ALTER TYPE project_phase ADD VALUE 'summary'
+  BEFORE 'requirements'`. Existing rows keep the phase they had; nothing is
+  rewritten.
+- `0014_huge_morg` — adds `task_status` and the `project_tasks` table. Its
+  `phase` column defaults to `requirements`, not the value 0013 adds, so the two
+  are safe to apply together even though Postgres forbids using a new enum
+  value in the transaction that created it.
 
 Order matters in one direction only: the new code **requires** both. Deploying
-code before migrating would 500 every project page on the missing `brief`
-column. Migrate first.
+code first would 500 the project page, which now renders a Summary phase the old
+enum has no label for.
+
+Back the database up as well as the tree. `ALTER TYPE ... ADD VALUE` cannot be
+undone — there is no `DROP VALUE` — so a code rollback is fine but a schema
+rollback means restoring the dump:
+
+```bash
+ssh -i ~/.ssh/seekof_deploy root@72.62.230.223 'STAMP=$(date +%Y%m%d-%H%M%S); sudo -u postgres pg_dump -Fc ladx_ai > /root/ladx_ai-$STAMP.dump && ls -lh /root/ladx_ai-$STAMP.dump'
+```
+
+## Watch the memory before building
+
+The box sits near its ceiling; a build has started with as little as 2 GB
+available. Cap the build heap so node fails its own build rather than letting
+the kernel choose a victim among the neighbours:
+
+```bash
+NODE_ENV=production NODE_OPTIONS="--max-old-space-size=1536" pnpm build --filter=@ladx/web
+```
+
+That is enough for this app (it builds in about a minute) and leaves the other
+seventeen processes alone. Confirm afterwards with `dmesg -T | grep -i oom` that
+nothing was killed.
 
 ## Deploy
 
@@ -137,14 +162,26 @@ Signed-in surfaces need a session, so check them in a browser: a project page
 (the design basis panel should render, empty), `/studio/monitor`, and
 `/studio/cad`.
 
-Then confirm the neighbours are still up:
+Then confirm the neighbours are still up. Take the list *before* deploying and
+diff it after:
 
 ```bash
-pm2 list
+ssh -i ~/.ssh/seekof_deploy root@72.62.230.223 'pm2 jlist | python3 -c "
+import sys,json
+for p in json.load(sys.stdin):
+    print(p[\"name\"], p[\"pm2_env\"][\"status\"], p[\"pm2_env\"][\"restart_time\"])
+" | sort'
 ```
 
-Every process that was `online` before must still be `online`, with its restart
-count unchanged.
+Every process that was `online` before must still be `online`, and `ladx-web`
+should be the only restart count that moved.
+
+One known exception: **`edwartens-india` restarts itself constantly**, several
+times an hour, from a `findMany` TypeError in its own code. Its counter often
+moves during a deploy without the deploy having touched it. Before concluding
+otherwise, check that the same `Process 8 in a stopped status` line appears
+earlier in `/root/.pm2/pm2.log`, and that `dmesg -T | grep -i oom` is empty. Do
+not try to fix it; that app is off-limits.
 
 ## Rolling back
 
