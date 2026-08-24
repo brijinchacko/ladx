@@ -1,13 +1,14 @@
 "use client";
 
 import HeaderAccount, { type HeaderUser } from "@/components/site/header-account";
+import ProductsMenu, { ProductsMenuMobile } from "@/components/site/products-menu";
+import { GROUP_META, GROUP_ORDER, productsIn } from "@/content/products";
 import { Logo } from "@ladx/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const NAV = [
-  { href: "/products", label: "Products" },
   { href: "/resources", label: "Resources" },
   { href: "/forum", label: "Forum" },
   { href: "/help", label: "Help" },
@@ -56,6 +57,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">
+          <ProductsMenu active={pathname.startsWith("/products")} />
           {NAV.map((item) => {
             const active = pathname.startsWith(item.href);
             return (
@@ -116,6 +118,7 @@ export function SiteHeader() {
 
       {open && (
         <nav className="border-t border-ink-100 bg-white px-5 py-3 md:hidden">
+          <ProductsMenuMobile onNavigate={() => setOpen(false)} />
           {NAV.map((item) => (
             <Link
               key={item.href}
@@ -134,16 +137,12 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   const cols: { title: string; links: { href: string; label: string }[] }[] = [
-    {
-      title: "Product",
-      links: [
-        { href: "/products/studio", label: "Ladder" },
-        { href: "/products/chat", label: "Chat" },
-        { href: "/products/convert", label: "Convert" },
-        { href: "/products/docs", label: "Documents" },
-        { href: "/products/knowledge", label: "Knowledge" },
-      ],
-    },
+    // Generated from the product list rather than typed, because a hand-kept
+    // copy is how the footer ended up three tools behind the site.
+    ...GROUP_ORDER.map((g) => ({
+      title: GROUP_META[g].title,
+      links: productsIn(g).map((p) => ({ href: `/products/${p.slug}`, label: p.name })),
+    })),
     {
       title: "Learn",
       links: [
@@ -166,8 +165,8 @@ export function SiteFooter() {
   return (
     <footer data-site-chrome className="mt-24 border-t border-ink-100 bg-ink-50/60">
       <div className="mx-auto max-w-6xl px-5 py-14">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
-          <div>
+        <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1.5fr_repeat(5,1fr)]">
+          <div className="sm:col-span-2 md:col-span-3 lg:col-span-1">
             <Logo size={20} tone="light" />
             <p className="mt-3 max-w-xs text-[13.5px] leading-relaxed text-ink-500">
               The AI workbench for automation engineers. Vendor-neutral, validated before you see

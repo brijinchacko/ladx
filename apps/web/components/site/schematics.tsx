@@ -540,3 +540,265 @@ export function RungDivider({ className }: { className?: string }) {
     </svg>
   );
 }
+
+/**
+ * The lifecycle, and what each phase owes.
+ *
+ * Drawn as a single track with the deliverable count under each stop, because
+ * that is the honest shape of it: the phases are not equal in weight, and the
+ * one that carries eight documents should look heavier than the one that
+ * carries one. Summary sits off the numbering because it produces nothing.
+ */
+export function LifecycleFigure({ className }: { className?: string }) {
+  const stops = [
+    { n: "·", label: "Summary", owes: 0 },
+    { n: "1", label: "Requirements", owes: 1 },
+    { n: "2", label: "Design", owes: 8 },
+    { n: "3", label: "Development", owes: 2 },
+    { n: "4", label: "Factory test", owes: 1 },
+    { n: "5", label: "Commissioning", owes: 2 },
+    { n: "6", label: "Handover", owes: 2 },
+    { n: "7", label: "Support", owes: 1 },
+  ];
+  const x0 = 40;
+  const gap = 66;
+
+  return (
+    <svg
+      viewBox="0 0 560 150"
+      className={className}
+      role="img"
+      aria-label="The eight project phases on one track, each showing how many deliverables it owes"
+    >
+      <title>The lifecycle, and what each phase owes</title>
+
+      <line
+        x1={x0}
+        y1="58"
+        x2={x0 + gap * (stops.length - 1)}
+        y2="58"
+        stroke={INK}
+        strokeWidth="1.2"
+        opacity="0.3"
+      />
+
+      {stops.map((s, i) => {
+        const x = x0 + gap * i;
+        const here = i === 2; // the phase the project is in, for the filled marker
+        return (
+          <g key={s.label}>
+            {/* the bar above the track is the weight of the phase */}
+            {s.owes > 0 && (
+              <rect
+                x={x - 5}
+                y={46 - s.owes * 3.4}
+                width="10"
+                height={s.owes * 3.4}
+                fill={here ? TEAL : INK}
+                opacity={here ? "0.85" : "0.22"}
+                rx="1"
+              />
+            )}
+            <circle
+              cx={x}
+              cy="58"
+              r={here ? 5 : 3.5}
+              fill={here ? TEAL : "var(--ladx-paper, #fff)"}
+              stroke={here ? TEAL : INK}
+              strokeWidth="1.4"
+              opacity={here ? 1 : 0.55}
+            />
+            <text
+              x={x}
+              y="80"
+              textAnchor="middle"
+              fontSize="9.5"
+              fontFamily="ui-monospace, monospace"
+              fill={INK}
+              opacity="0.45"
+            >
+              {s.n}
+            </text>
+            <text
+              x={x}
+              y="96"
+              textAnchor="middle"
+              fontSize="9.5"
+              fill={INK}
+              opacity={here ? "0.95" : "0.6"}
+              fontWeight={here ? 600 : 400}
+            >
+              {s.label}
+            </text>
+            <text
+              x={x}
+              y="112"
+              textAnchor="middle"
+              fontSize="9"
+              fontFamily="ui-monospace, monospace"
+              fill={INK}
+              opacity="0.32"
+            >
+              {s.owes === 0 ? "—" : `${s.owes} doc${s.owes === 1 ? "" : "s"}`}
+            </text>
+          </g>
+        );
+      })}
+
+      <text
+        x={x0}
+        y="134"
+        fontSize="9"
+        fontFamily="ui-monospace, monospace"
+        fill={INK}
+        opacity="0.3"
+      >
+        bar height = deliverables the phase owes · filled = where the project is
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * An answer with the page it came from.
+ *
+ * The point of the picture is the line joining the two: the claim on the left
+ * is only worth anything because it is tied to a specific page of a specific
+ * document on the right, and that tie is the product.
+ */
+export function CitationFigure({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 560 200"
+      className={className}
+      role="img"
+      aria-label="An answer on the left is joined by a line to the manual page it was taken from on the right"
+    >
+      <title>Every answer carries the page behind it</title>
+
+      {/* the question */}
+      <text
+        x="20"
+        y="26"
+        fontSize="10"
+        fontFamily="ui-monospace, monospace"
+        fill={INK}
+        opacity="0.4"
+      >
+        “What is the maximum torque limit on the drive?”
+      </text>
+
+      {/* the answer card */}
+      <rect
+        x="20"
+        y="40"
+        width="250"
+        height="96"
+        rx="3"
+        fill="none"
+        stroke={INK}
+        strokeWidth="1.2"
+        opacity="0.45"
+      />
+      {[62, 78, 94].map((y, i) => (
+        <line
+          key={y}
+          x1="34"
+          y1={y}
+          x2={i === 2 ? 196 : 256}
+          y2={y}
+          stroke={INK}
+          strokeWidth="4"
+          opacity="0.14"
+          strokeLinecap="round"
+        />
+      ))}
+      <rect x="34" y="108" width="86" height="15" rx="2" fill={TEAL} opacity="0.16" />
+      <text x="41" y="119" fontSize="9" fontFamily="ui-monospace, monospace" fill={TEAL}>
+        VLT-FC302 p.184
+      </text>
+
+      {/* the tie */}
+      <path
+        d="M120 130 C 120 168, 330 168, 330 140"
+        fill="none"
+        stroke={TEAL}
+        strokeWidth="1.4"
+        strokeDasharray="3 3"
+      />
+
+      {/* the source page */}
+      <rect
+        x="300"
+        y="40"
+        width="120"
+        height="100"
+        rx="2"
+        fill="none"
+        stroke={INK}
+        strokeWidth="1.2"
+        opacity="0.45"
+      />
+      {[56, 66, 76, 96, 106, 116].map((y) => (
+        <line
+          key={y}
+          x1="310"
+          y1={y}
+          x2={y === 76 || y === 116 ? 380 : 410}
+          y2={y}
+          stroke={INK}
+          strokeWidth="2.4"
+          opacity="0.12"
+          strokeLinecap="round"
+        />
+      ))}
+      <rect x="310" y="83" width="100" height="9" fill={TEAL} opacity="0.22" />
+      <text
+        x="360"
+        y="156"
+        textAnchor="middle"
+        fontSize="9"
+        fontFamily="ui-monospace, monospace"
+        fill={INK}
+        opacity="0.35"
+      >
+        page 184
+      </text>
+
+      {/* the stack behind it, to say there are four hundred of these */}
+      <rect
+        x="440"
+        y="48"
+        width="94"
+        height="84"
+        rx="2"
+        fill="none"
+        stroke={INK}
+        strokeWidth="1"
+        opacity="0.16"
+      />
+      <rect
+        x="446"
+        y="54"
+        width="94"
+        height="84"
+        rx="2"
+        fill="none"
+        stroke={INK}
+        strokeWidth="1"
+        opacity="0.11"
+      />
+      <text
+        x="487"
+        y="156"
+        textAnchor="middle"
+        fontSize="9"
+        fontFamily="ui-monospace, monospace"
+        fill={INK}
+        opacity="0.3"
+      >
+        the other 400
+      </text>
+    </svg>
+  );
+}

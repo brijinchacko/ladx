@@ -1,11 +1,11 @@
 import { IrHub, ValidationLoop } from "@/components/site/schematics";
-import { PRODUCTS, STATE_META } from "@/content/products";
+import { GROUP_META, GROUP_ORDER, STATE_META, productsIn } from "@/content/products";
 import Link from "next/link";
 
 export const metadata = {
   title: "Products",
   description:
-    "Five tools that share one program: a ladder studio with a real simulator, validated AI code generation, cross-platform conversion, document generation and a project knowledge base.",
+    "Eight tools on one project: a ladder editor with a real simulator, validated AI code generation, CAD for the panel drawings, cross-platform conversion, a logic monitor, project and document generation, and a knowledge base over your own manuals.",
 };
 
 export default function ProductsPage() {
@@ -16,12 +16,13 @@ export default function ProductsPage() {
           Products
         </p>
         <h1 className="font-display text-[2.4rem] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink-900">
-          Five tools, one program
+          Eight tools, one project
         </h1>
         <p className="mt-5 text-[16px] leading-relaxed text-ink-600">
-          They are not separate applications that export to each other. Everything reads and writes
-          the same representation, so the rung you draw is the rung the AI edits, the rung that
-          converts to another platform, and the rung that ends up described in the functional spec.
+          They are not separate applications that export to each other. They sit on one project, so
+          the rung you draw is the rung the AI edits, the rung that converts to another platform,
+          the rung Monitor runs, and the rung described in the functional spec. Change the client
+          name once and it lands on every drawing title block and every document letterhead.
         </p>
       </header>
 
@@ -33,40 +34,51 @@ export default function ProductsPage() {
         </p>
       </div>
 
-      <ul className="space-y-px">
-        {PRODUCTS.map((p, i) => (
-          <li key={p.slug}>
-            <Link
-              href={`/products/${p.slug}`}
-              className="group grid gap-5 border-t border-ink-100 py-9 transition-colors last:border-b hover:bg-ink-50/60 sm:grid-cols-[auto_1fr_auto] sm:gap-8 sm:px-4"
-            >
-              <span className="font-mono text-[12px] tabular-nums text-ink-300">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <div className="max-w-2xl">
-                <div className="mb-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <h2 className="font-display text-[1.35rem] font-bold tracking-[-0.012em] text-ink-900">
-                    {p.name}
-                  </h2>
+      {GROUP_ORDER.map((g) => (
+        <section key={g} className="mb-14">
+          <div className="mb-1 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-ink-200 pb-2">
+            <h2 className="font-display text-[1.15rem] font-bold tracking-[-0.01em] text-ink-900">
+              {GROUP_META[g].title}
+            </h2>
+            <p className="text-[13.5px] text-ink-500">{GROUP_META[g].blurb}</p>
+            <span className="ml-auto font-mono text-[11px] tabular-nums text-ink-300">
+              {productsIn(g).length}
+            </span>
+          </div>
+
+          <ul className="space-y-px">
+            {productsIn(g).map((p) => (
+              <li key={p.slug}>
+                <Link
+                  href={`/products/${p.slug}`}
+                  className="group grid gap-5 border-b border-ink-100 py-7 transition-colors hover:bg-ink-50/60 sm:grid-cols-[1fr_auto] sm:gap-8 sm:px-4"
+                >
+                  <div className="max-w-2xl">
+                    <div className="mb-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <h3 className="font-display text-[1.3rem] font-bold tracking-[-0.012em] text-ink-900 group-hover:text-teal-700">
+                        {p.name}
+                      </h3>
+                      <span
+                        className={`rounded-sm border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] ${STATE_META[p.state].cls}`}
+                      >
+                        {STATE_META[p.state].label}
+                      </span>
+                    </div>
+                    <p className="mb-2 text-[15px] font-medium text-ink-700">{p.tagline}</p>
+                    <p className="text-[14.5px] leading-relaxed text-ink-500">{p.summary}</p>
+                  </div>
                   <span
-                    className={`rounded-sm border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] ${STATE_META[p.state].cls}`}
+                    aria-hidden="true"
+                    className="hidden self-center text-[14px] text-ink-300 transition-transform group-hover:translate-x-0.5 group-hover:text-ink-600 sm:block"
                   >
-                    {STATE_META[p.state].label}
+                    →
                   </span>
-                </div>
-                <p className="mb-2 text-[15px] font-medium text-ink-700">{p.tagline}</p>
-                <p className="text-[14.5px] leading-relaxed text-ink-500">{p.summary}</p>
-              </div>
-              <span
-                aria-hidden="true"
-                className="hidden self-center text-[14px] text-ink-300 transition-transform group-hover:translate-x-0.5 group-hover:text-ink-600 sm:block"
-              >
-                →
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
 
       <section className="mt-20 grid gap-10 border-t border-ink-100 pt-14 lg:grid-cols-[1fr_1.3fr] lg:items-center">
         <div>

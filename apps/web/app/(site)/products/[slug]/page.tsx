@@ -1,4 +1,12 @@
-import { IrHub, ScanCycle, SealInRung, ValidationLoop } from "@/components/site/schematics";
+import { AddressingFigure, AiLoopFigure, WiringFigure } from "@/components/site/figures";
+import {
+  CitationFigure,
+  IrHub,
+  LifecycleFigure,
+  ScanCycle,
+  SealInRung,
+  ValidationLoop,
+} from "@/components/site/schematics";
 import { PRODUCTS, STATE_META, getProduct } from "@/content/products";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -22,6 +30,11 @@ const FIGURES = {
   irHub: IrHub,
   validation: ValidationLoop,
   scan: ScanCycle,
+  wiring: WiringFigure,
+  aiLoop: AiLoopFigure,
+  addressing: AddressingFigure,
+  lifecycle: LifecycleFigure,
+  citation: CitationFigure,
 } as const;
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -67,6 +80,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
         <figure className="rounded-sm border border-ink-100 bg-white p-6 lg:justify-self-end">
           <Figure className="w-full text-ink-800" />
+          <figcaption className="mt-3 text-[12.5px] leading-relaxed text-ink-400">
+            {product.figureCaption}
+          </figcaption>
         </figure>
       </header>
 

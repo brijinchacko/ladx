@@ -1,6 +1,7 @@
 import { LiveRung } from "@/components/site/live-rung";
 import { IrHub, RungDivider, ScanCycle, ValidationLoop } from "@/components/site/schematics";
 import { CornerTicks, Eyebrow, GridField } from "@/components/site/squares";
+import { GROUP_META, GROUP_ORDER, PRODUCTS, STATE_META, productsIn } from "@/content/products";
 import { jsonLd, organizationSchema, softwareSchema, websiteSchema } from "@/lib/seo/schema";
 import Link from "next/link";
 
@@ -8,50 +9,6 @@ export const metadata = {
   title: "The AI workbench for automation engineers",
   description:
     "Draw ladder logic and watch it run. Generate PLC code that compiles before you see it. Move programs between Siemens, Rockwell and CODESYS. Bring your own AI key.",
-};
-
-const PRODUCTS = [
-  {
-    slug: "studio",
-    name: "Ladder",
-    line: "Draw a rung. Press run. Watch it conduct.",
-    body: "A ladder editor with a scan-accurate simulator behind it: real output image, per-instruction edge memory, timers that count milliseconds rather than scans. It is the canvas the AI writes onto, and it works on its own with no account at all.",
-    state: "live" as const,
-  },
-  {
-    slug: "chat",
-    name: "Chat",
-    line: "Ask for logic. Get logic that compiles.",
-    body: "Describe what the machine should do and watch the rungs appear on the canvas. Every answer passes a real IEC 61131-3 compiler before it reaches you, and when it fails the errors go back to the model instead of to you.",
-    state: "live" as const,
-  },
-  {
-    slug: "convert",
-    name: "Convert",
-    line: "Between platforms, and between languages.",
-    body: "Turn ladder into Structured Text, Siemens SCL, Rockwell neutral text or PLCopen XML. Every conversion comes with a report saying what moved cleanly, what changed meaning, and what a person still needs to check. It runs in your browser, so your program is never uploaded.",
-    state: "live" as const,
-  },
-  {
-    slug: "docs",
-    name: "Documents",
-    line: "The paperwork a project actually produces.",
-    body: "Seventeen working templates: URS, FDS, I/O list, BOM, cause and effect, FAT and SAT protocols, risk assessment, handover pack. Real documents with the tables and sign-off blocks already in them, filled from your project rather than typed again.",
-    state: "live" as const,
-  },
-  {
-    slug: "knowledge",
-    name: "Knowledge",
-    line: "Your manuals, answering questions.",
-    body: "Drop in the drive manual, the machine spec, the site standard. Ask questions against them and get answers with the passage they came from, scoped to one project and never mixed with anyone else's.",
-    state: "live" as const,
-  },
-];
-
-const STATE_LABEL = {
-  live: { text: "Available now", cls: "text-teal-700 border-teal-300 bg-teal-50" },
-  building: { text: "In build", cls: "text-ink-600 border-ink-200 bg-ink-50" },
-  planned: { text: "Planned", cls: "text-ink-400 border-ink-100 bg-white" },
 };
 
 export default function HomePage() {
@@ -200,49 +157,64 @@ export default function HomePage() {
         <header className="mb-12 max-w-2xl">
           <Eyebrow>What's in it</Eyebrow>
           <h2 className="font-display text-[1.75rem] font-bold leading-tight tracking-[-0.015em] text-ink-900">
-            Five tools that share one program
+            Eight tools that share one project
           </h2>
           <p className="mt-4 text-[15.5px] leading-relaxed text-ink-600">
             They are not separate apps that export to each other. They all read and write the same
             representation, so the rung you draw is the rung the AI edits, the rung that converts,
-            and the rung that ends up in the functional spec.
+            the rung Monitor runs, and the rung that ends up in the functional spec.
           </p>
         </header>
 
-        <ul className="divide-y divide-ink-100 border-y border-ink-100">
-          {PRODUCTS.map((p, i) => (
-            <li key={p.slug}>
-              <Link
-                href={`/products/${p.slug}`}
-                className="group grid gap-4 py-8 transition-colors hover:bg-ink-50/60 sm:grid-cols-[auto_1fr_auto] sm:items-baseline sm:gap-8 sm:px-4"
-              >
-                <span className="font-mono text-[12px] tabular-nums text-ink-300">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <div className="max-w-2xl">
-                  <div className="mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <h3 className="font-display text-[1.3rem] font-bold tracking-[-0.01em] text-ink-900">
-                      {p.name}
-                    </h3>
-                    <span
-                      className={`rounded-sm border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] ${STATE_LABEL[p.state].cls}`}
+        <div className="space-y-10">
+          {GROUP_ORDER.map((g) => (
+            <div key={g}>
+              <div className="mb-1 flex flex-wrap items-baseline gap-x-3 border-b border-ink-200 pb-2">
+                <h3 className="font-display text-[1.05rem] font-bold text-ink-900">
+                  {GROUP_META[g].title}
+                </h3>
+                <p className="text-[13px] text-ink-500">{GROUP_META[g].blurb}</p>
+              </div>
+              <ul className="divide-y divide-ink-100">
+                {productsIn(g).map((p) => (
+                  <li key={p.slug}>
+                    <Link
+                      href={`/products/${p.slug}`}
+                      className="group grid gap-4 py-6 transition-colors hover:bg-ink-50/60 sm:grid-cols-[1fr_auto] sm:items-baseline sm:gap-8 sm:px-4"
                     >
-                      {STATE_LABEL[p.state].text}
-                    </span>
-                  </div>
-                  <p className="mb-2 text-[15px] font-medium text-ink-700">{p.line}</p>
-                  <p className="text-[14.5px] leading-relaxed text-ink-500">{p.body}</p>
-                </div>
-                <span
-                  aria-hidden="true"
-                  className="hidden text-[14px] text-ink-300 transition-transform group-hover:translate-x-0.5 group-hover:text-ink-600 sm:block"
-                >
-                  →
-                </span>
-              </Link>
-            </li>
+                      <div className="max-w-2xl">
+                        <div className="mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <h4 className="font-display text-[1.2rem] font-bold tracking-[-0.01em] text-ink-900 group-hover:text-teal-700">
+                            {p.name}
+                          </h4>
+                          <span
+                            className={`rounded-sm border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] ${STATE_META[p.state].cls}`}
+                          >
+                            {STATE_META[p.state].label}
+                          </span>
+                        </div>
+                        <p className="mb-1.5 text-[14.5px] font-medium text-ink-700">{p.tagline}</p>
+                        <p className="text-[14px] leading-relaxed text-ink-500">{p.summary}</p>
+                      </div>
+                      <span
+                        aria-hidden="true"
+                        className="hidden text-[14px] text-ink-300 transition-transform group-hover:translate-x-0.5 group-hover:text-ink-600 sm:block"
+                      >
+                        →
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
+
+        <p className="mt-8 text-[14px] text-ink-500">
+          <Link href="/products" className="font-medium text-ink-800 hover:text-teal-700">
+            All {PRODUCTS.length} in detail →
+          </Link>
+        </p>
       </section>
 
       {/* ── The IR ────────────────────────────────────────────────────── */}
