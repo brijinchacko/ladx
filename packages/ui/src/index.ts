@@ -18,5 +18,7 @@ export {
   type ChatTurn,
   type ChatWindowProps,
 } from "./components/chat/chat-window";
+export { Markdown } from "./components/chat/markdown";
+export { Thinking, StreamCaret } from "./components/chat/thinking";
 export { CodeBlock, type CodeBlockProps } from "./components/code/code-block";
 export { cn } from "./lib/cn";

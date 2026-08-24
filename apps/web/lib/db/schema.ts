@@ -197,12 +197,24 @@ export const conversations = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
     title: text("title"),
+    /** Pinned conversations sort above the rest and survive the recent cutoff. */
+    pinned: boolean("pinned").notNull().default(false),
+    /**
+     * Set when the conversation has been shared.
+     *
+     * A random token rather than the row id: the id is used in authenticated
+     * URLs, and reusing it would mean anyone who saw a private URL could reach
+     * the public one. Nulling this revokes the link.
+     */
+    shareToken: text("share_token"),
+    sharedAt: timestamp("shared_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     userIdx: index("convo_user_idx").on(t.userId),
     projectIdx: index("convo_project_idx").on(t.projectId),
+    shareIdx: uniqueIndex("convo_share_idx").on(t.shareToken),
   }),
 );
 

@@ -1,6 +1,7 @@
 "use client";
 
 import AccountMenu from "@/components/studio/account-menu";
+import ChatHistory, { type HistoryItem } from "@/components/studio/chat-history";
 import { Logo } from "@ladx/ui";
 import {
   ChevronsLeft,
@@ -9,7 +10,7 @@ import {
   GitCompareArrows,
   Grid2x2Check,
   Library,
-  MessageSquare,
+  type MessageSquare,
   PanelLeft,
   Plus,
   Settings,
@@ -19,11 +20,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export interface SidebarConversation {
-  id: string;
-  title: string | null;
-  updatedAt: string;
-}
+export type SidebarConversation = HistoryItem;
 
 export interface SidebarProject {
   id: string;
@@ -169,22 +166,6 @@ export default function StudioSidebar({
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 pb-3">
-        {/* recent conversations */}
-        {conversations.length > 0 && (
-          <Section label="Recent">
-            {conversations.slice(0, 6).map((c) => (
-              <Row
-                key={c.id}
-                href={`/studio/c/${c.id}`}
-                active={pathname === `/studio/c/${c.id}`}
-                icon={MessageSquare}
-              >
-                {c.title?.trim() || "Untitled chat"}
-              </Row>
-            ))}
-          </Section>
-        )}
-
         {/* the work */}
         <Section label="Workspace">
           <Row
@@ -218,6 +199,9 @@ export default function StudioSidebar({
             </Row>
           ))}
         </Section>
+
+        {/* Conversation history, at the foot of the pane. */}
+        <ChatHistory items={conversations} />
       </div>
 
       {/* account: settings, the way back to the website, and sign out */}

@@ -121,3 +121,44 @@
   background: rgb(var(--ladx-ink) / 0.04);
   font-weight: 700;
 }
+
+/*
+ * Chat motion.
+ *
+ * Defined here rather than in the component because Tailwind's arbitrary
+ * animation syntax needs the keyframes to exist in the stylesheet. Both are
+ * suppressed under reduced motion: a caret that blinks and dots that pulse are
+ * decoration, and the thinking state is announced to assistive technology in
+ * words anyway.
+ */
+@keyframes ladx-think {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes ladx-caret {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="ladx-think"],
+  [class*="ladx-caret"] {
+    animation: none !important;
+    opacity: 0.6;
+  }
+}

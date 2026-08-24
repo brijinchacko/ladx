@@ -1,6 +1,8 @@
 import { DeleteProjectButton, PhaseSelect } from "@/components/platform/project-controls";
 import DeliverableRow from "@/components/studio/deliverable-row";
 import DocumentList from "@/components/studio/document-list";
+import PhaseNav from "@/components/studio/phase-nav";
+import ProjectChatDock from "@/components/studio/project-chat-dock";
 import ProjectDrawings from "@/components/studio/project-drawings";
 import { UploadButton } from "@/components/upload-button";
 import { requireUser } from "@/lib/auth/server";
@@ -31,9 +33,16 @@ const TOOL_LINK: Record<string, { href: string; label: string }> = {
  * company profile; and the tools for the phase are one click away. A person
  * running a real job works down this page.
  */
-export default async function ProjectWorkspace({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectWorkspace({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ phase?: string }>;
+}) {
   const user = await requireUser();
   const { id } = await params;
+  const { phase: phaseParam } = await searchParams;
   const project = await getProject(user.id, id);
   if (!project) notFound();
 
@@ -72,8 +81,13 @@ export default async function ProjectWorkspace({ params }: { params: Promise<{ i
     projectDocs.filter((d) => d.templateSlug).map((d) => [d.templateSlug as string, d.id]),
   );
 
-  const currentPhase = getPhase(project.phase);
-  const deliverables = deliverablesFor(project.phase);
+  // The phase being looked at, which is not necessarily the one the project is
+  // in: looking ahead at what the FAT needs should not move the project into it.
+  const viewingId = ACTIVE_PHASES.some((p) => p.id === phaseParam)
+    ? (phaseParam as typeof project.phase)
+    : project.phase;
+  const currentPhase = getPhase(viewingId);
+  const deliverables = deliverablesFor(viewingId);
   const companyReady = Boolean(company?.name);
 
   return (
@@ -119,37 +133,27 @@ export default async function ProjectWorkspace({ params }: { params: Promise<{ i
         </p>
       )}
 
-      {/* lifecycle stepper */}
-      <section className="mb-10">
+      {/* lifecycle: every phase reachable, with progress against each */}
+      <section className="mb-8">
         <h2 className="mb-3 font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-400">
           Lifecycle
         </h2>
-        <ol className="flex flex-wrap gap-1.5">
-          {ACTIVE_PHASES.map((p) => {
-            const active = p.id === project.phase;
-            const done = (p.step ?? 0) < (currentPhase.step ?? 0);
-            return (
-              <li key={p.id} className="flex-1">
-                <div
-                  className={`border-t-2 pt-2 ${
-                    active ? "border-teal-600" : done ? "border-ink-400" : "border-ink-200"
-                  }`}
-                >
-                  <span
-                    className={`block font-mono text-[10px] ${active ? "text-teal-700" : "text-ink-400"}`}
-                  >
-                    {p.step}
-                  </span>
-                  <span
-                    className={`block text-[12.5px] font-medium ${active ? "text-ink-900" : done ? "text-ink-600" : "text-ink-400"}`}
-                  >
-                    {p.name}
-                  </span>
-                </div>
-              </li>
-            );
+        <PhaseNav
+          projectId={project.id}
+          viewing={viewingId}
+          current={project.phase}
+          phases={ACTIVE_PHASES.map((p) => {
+            const items = deliverablesFor(p.id);
+            return {
+              id: p.id,
+              step: p.step,
+              name: p.name,
+              purpose: p.purpose,
+              deliverableCount: items.length,
+              startedCount: items.filter((d) => startedByTemplate.has(d.slug)).length,
+            };
           })}
-        </ol>
+        />
       </section>
 
       {/* current phase */}
@@ -270,6 +274,7 @@ export default async function ProjectWorkspace({ params }: { params: Promise<{ i
           {!project.r2Key && <UploadButton />}
         </div>
       </section>
+      <ProjectChatDock projectId={project.id} projectName={project.name} />
     </div>
   );
 }

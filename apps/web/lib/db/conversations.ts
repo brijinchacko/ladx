@@ -53,10 +53,13 @@ export async function listMessages(conversationId: string) {
 }
 
 export async function listUserConversations(userId: string, limit = 20) {
-  return db()
-    .select()
-    .from(conversations)
-    .where(eq(conversations.userId, userId))
-    .orderBy(desc(conversations.updatedAt))
-    .limit(limit);
+  return (
+    db()
+      .select()
+      .from(conversations)
+      .where(eq(conversations.userId, userId))
+      // Pinned first, then by recency. Matches how the sidebar groups them.
+      .orderBy(desc(conversations.pinned), desc(conversations.updatedAt))
+      .limit(limit)
+  );
 }

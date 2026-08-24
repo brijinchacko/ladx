@@ -66,6 +66,13 @@ export default function StudioChat({
 
       <ChatWindow
         className="min-h-0 flex-1"
+        emptyTitle="What are you working on?"
+        suggestions={[
+          "Write a motor start/stop with seal-in",
+          "Explain what a TON does when the rung goes false",
+          "Convert this rung to Structured Text",
+          "What documents does a small machine build need?",
+        ]}
         initialMessages={initialMessages}
         onSend={async (turns: ChatTurn[], signal) =>
           streamChatFromApi({

@@ -22,7 +22,7 @@ export default async function StudioLayout({ children }: { children: ReactNode }
   const user = await requireUser();
 
   const [conversations, projects] = await Promise.all([
-    listUserConversations(user.id, 8),
+    listUserConversations(user.id, 60),
     listProjects(user.id),
   ]);
 
@@ -32,6 +32,8 @@ export default async function StudioLayout({ children }: { children: ReactNode }
         conversations={conversations.map((c) => ({
           id: c.id,
           title: c.title,
+          pinned: c.pinned,
+          shareToken: c.shareToken,
           updatedAt: c.updatedAt.toISOString(),
         }))}
         projects={projects.slice(0, 6).map((p) => ({

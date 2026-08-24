@@ -7,9 +7,10 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { appendMessage, ensureConversation } from "@/lib/db/conversations";
 import { credentialsFor, preferredProvider } from "@/lib/db/provider-keys";
-import { projects } from "@/lib/db/schema";
-import { buildProjectSystemPrompt } from "@/lib/inference/project-prompt";
+import { cadDrawings, documents, projects } from "@/lib/db/schema";
+import { type ProjectContext, buildProjectSystemPrompt } from "@/lib/inference/project-prompt";
 import { ssEncode } from "@/lib/inference/stream";
+import { getClient, getCompany } from "@/lib/platform/queries";
 import { ProviderError, getProvider } from "@/lib/providers";
 import {
   freeTierNotice,
@@ -132,11 +133,13 @@ export async function POST(req: Request) {
   // Load the project (if scoped) so we can both verify ownership and
   // build the grounding system prompt.
   let project: Awaited<ReturnType<typeof loadProject>> = null;
+  let projectContext: ProjectContext | undefined;
   if (parsed.projectId) {
     project = await loadProject(user.id, parsed.projectId);
     if (!project) {
       return Response.json({ error: "project not found" }, { status: 404 });
     }
+    projectContext = await loadProjectContext(user.id, project);
   }
 
   let conversationId: string | undefined;
@@ -176,7 +179,7 @@ export async function POST(req: Request) {
 
         const messagesWithGrounding: ChatMessage[] = project
           ? [
-              { role: "system", content: buildProjectSystemPrompt(project) },
+              { role: "system", content: buildProjectSystemPrompt(project, projectContext) },
               ...parsed.messages.filter((m) => m.role !== "system"),
             ]
           : parsed.messages;
@@ -271,4 +274,39 @@ async function loadProject(userId: string, projectId: string) {
     .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/**
+ * Everything about the engagement, for grounding.
+ *
+ * Loaded alongside the project so the assistant can answer "what is left before
+ * handover" from the record rather than from general knowledge.
+ */
+async function loadProjectContext(
+  userId: string,
+  project: NonNullable<Awaited<ReturnType<typeof loadProject>>>,
+): Promise<ProjectContext> {
+  const [client, company, docs, drawings] = await Promise.all([
+    project.clientId ? getClient(userId, project.clientId) : Promise.resolve(null),
+    getCompany(userId),
+    db()
+      .select({
+        title: documents.title,
+        kind: documents.kind,
+        templateSlug: documents.templateSlug,
+      })
+      .from(documents)
+      .where(and(eq(documents.userId, userId), eq(documents.projectId, project.id))),
+    db()
+      .select({ name: cadDrawings.name })
+      .from(cadDrawings)
+      .where(and(eq(cadDrawings.userId, userId), eq(cadDrawings.projectId, project.id))),
+  ]);
+
+  return {
+    client,
+    company,
+    documents: docs,
+    drawings: drawings.map((d) => d.name),
+  };
 }
