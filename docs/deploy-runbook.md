@@ -12,7 +12,7 @@ and `systemctl restart nginx` would take the neighbours down with us.
 
 | Thing | Value |
 |---|---|
-| Host | `root@72.62.230.223`, key-only SSH |
+| Host | `root@72.62.230.223`, key-only SSH (`~/.ssh/seekof_deploy`) |
 | App root | `/var/www/ladx-ai` |
 | Process | PM2 `ladx-web`, fork mode, `next start -p 3020` |
 | Bind | `127.0.0.1:3020`, never exposed directly |
@@ -51,44 +51,72 @@ column. Migrate first.
 
 ## Deploy
 
+**The server is not a git checkout.** `/var/www/ladx-ai` is an rsync target
+owned by uid 501, with no `.git` in it. Deploying is a file sync from a local
+clone, so commit locally first and sync the working tree.
+
+Two paths on the server exist only there and must never be overwritten or
+deleted: `apps/web/.env.production`, which holds the database URL and the
+secrets, and `.next-build`, the running build output. Both are excluded below,
+and rsync protects excluded paths from `--delete`, so they survive.
+
+Back up first. There is no git history on the box to fall back to:
+
 ```bash
-ssh root@72.62.230.223
+ssh -i ~/.ssh/seekof_deploy root@72.62.230.223 'cd /var/www && STAMP=$(date +%Y%m%d-%H%M%S) && tar czf /root/ladx-ai-source-$STAMP.tar.gz --exclude=node_modules --exclude=.next-build --exclude=target ladx-ai && cp -a ladx-ai/apps/web/.next-build /root/ladx-next-build-$STAMP && echo $STAMP'
+```
+
+Dry run the sync and read what it would delete. Expect nothing:
+
+```bash
+rsync -azn --delete --out-format='%o %n' -e "ssh -i ~/.ssh/seekof_deploy" --exclude='.git/' --exclude='node_modules/' --exclude='.next/' --exclude='.next-build/' --exclude='target/' --exclude='.env' --exclude='.env.*' --exclude='.turbo/' --exclude='*.log' ./ root@72.62.230.223:/var/www/ladx-ai/ | grep '^del'
+```
+
+Then sync for real, dropping the `n` from `-azn`:
+
+```bash
+rsync -az --delete --stats -e "ssh -i ~/.ssh/seekof_deploy" --exclude='.git/' --exclude='node_modules/' --exclude='.next/' --exclude='.next-build/' --exclude='target/' --exclude='.env' --exclude='.env.*' --exclude='.turbo/' --exclude='*.log' ./ root@72.62.230.223:/var/www/ladx-ai/
+```
+
+The rest runs on the server. Node is under nvm and is not on the default PATH
+for a non-login shell, so every remote command has to put it there:
+
+```bash
+ssh -i ~/.ssh/seekof_deploy root@72.62.230.223
 ```
 
 ```bash
-cd /var/www/ladx-ai
-git fetch origin && git status --short
+export PATH="$HOME/.nvm/versions/node/v20.20.0/bin:$PATH"
+cd /var/www/ladx-ai && pnpm install --frozen-lockfile
 ```
 
-Expect a clean tree. If it is dirty, something was hand-edited on the server;
-find out what before continuing rather than discarding it.
+Migrate before building, because the new code requires the new schema while the
+old code is happily ignoring it. `drizzle-kit` reads the environment, not the
+`.env.production` file, so source it:
 
 ```bash
-git pull --ff-only origin main
-pnpm install --frozen-lockfile
+cd /var/www/ladx-ai/apps/web && set -a && . ./.env.production && set +a && pnpm db:migrate
 ```
 
-Migrate, then build, then reload:
-
-```bash
-cd /var/www/ladx-ai/apps/web
-pnpm db:migrate
-```
+`relation "__drizzle_migrations" already exists, skipping` in the output is
+normal and is followed by the success line.
 
 ```bash
-cd /var/www/ladx-ai && pnpm build --filter=@ladx/web
+cd /var/www/ladx-ai && NODE_ENV=production pnpm build --filter=@ladx/web
 ```
+
+Turbo prints `no output files found for task @ladx/web#build` at the end. That
+is a `turbo.json` `outputs` mismatch against the custom `distDir`, not a failed
+build; check the route table printed above it instead.
 
 ```bash
 pm2 reload ladx-web --update-env
 ```
 
-`reload` rather than `restart`: fork mode still drops connections briefly, but
-it re-reads the environment and leaves every other process untouched. Never
-`pm2 restart all`.
+`reload` rather than `restart`: it re-reads the environment and leaves every
+other process untouched. Never `pm2 restart all`.
 
-nginx only needs touching if `deploy/nginx-ladx.ai.conf` changed. It has not in
-this release. If it ever does:
+nginx only needs touching if `deploy/nginx-ladx.ai.conf` changed:
 
 ```bash
 nginx -t && systemctl reload nginx
@@ -121,16 +149,25 @@ count unchanged.
 ## Rolling back
 
 The migrations are additive, so the previous release runs fine against the new
-schema. That makes rollback a code-only operation:
+schema. That makes rollback a code-only operation, and with no git on the box it
+is done from the backup taken before the deploy:
 
 ```bash
-cd /var/www/ladx-ai
-git log --oneline -5
-git checkout <previous-sha>
-pnpm install --frozen-lockfile
-pnpm build --filter=@ladx/web
+ssh -i ~/.ssh/seekof_deploy root@72.62.230.223 'ls -t /root/ladx-ai-source-*.tar.gz | head -3 && ls -td /root/ladx-next-build-* | head -3'
+```
+
+The fastest route back is the saved build, which needs no rebuild at all:
+
+```bash
+export PATH="$HOME/.nvm/versions/node/v20.20.0/bin:$PATH"
+rm -rf /var/www/ladx-ai/apps/web/.next-build
+cp -a /root/ladx-next-build-<STAMP> /var/www/ladx-ai/apps/web/.next-build
 pm2 reload ladx-web --update-env
 ```
+
+Restore the source tarball as well if the source itself is the problem, then
+`pnpm install --frozen-lockfile` and rebuild. Alternatively re-sync from a local
+clone checked out at the previous commit, which is the same rsync as above.
 
 Do not roll the migrations back. Dropping `projects.brief` would destroy design
 basis data that the newer code wrote, and there is no reason to: an unused
