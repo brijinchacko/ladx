@@ -64,7 +64,7 @@ export const PRODUCTS: Product[] = [
     name: "Chat",
     tagline: "Ask for logic. Get logic that compiles.",
     state: "live",
-    open: { href: "/chat", label: "Open Chat" },
+    open: { href: "/studio", label: "Open Chat" },
     summary:
       "Describe what the machine should do and watch the rungs appear on the canvas. Every answer passes a real compiler before it reaches you, and failures go back to the model rather than to you.",
     problem:
@@ -163,7 +163,7 @@ export const PRODUCTS: Product[] = [
     name: "Knowledge",
     tagline: "Your manuals, answering questions.",
     state: "live",
-    open: { href: "/knowledge", label: "Open Knowledge" },
+    open: { href: "/studio/knowledge", label: "Open Knowledge" },
     summary:
       "Drop in the drive manual, the machine spec, the site standard. Ask questions against them and get answers with the page they came from.",
     problem:
