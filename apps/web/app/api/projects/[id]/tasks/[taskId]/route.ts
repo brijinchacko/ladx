@@ -4,6 +4,7 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { projectTasks } from "@/lib/db/schema";
+import { toISODate } from "@/lib/platform/gantt";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -26,7 +27,13 @@ const patchSchema = z.object({
   phase: z.enum(PHASES).optional(),
   status: z.enum(["todo", "doing", "blocked", "done"]).optional(),
   owner: z.string().max(120).nullish(),
-  dueOn: z.string().datetime().nullish(),
+  // Accepts a plain date as well as a full timestamp: the Gantt schedules in
+  // whole days and sends "2026-03-04", and requiring an instant there would
+  // force the client to invent a time and a timezone for it.
+  startsOn: z.union([z.string().datetime(), z.string().date()]).nullish(),
+  dueOn: z.union([z.string().datetime(), z.string().date()]).nullish(),
+  /** The task that must finish first, or null to clear it. */
+  dependsOn: z.string().uuid().nullish(),
   position: z.number().int().min(0).max(1_000_000).optional(),
 });
 
@@ -47,8 +54,22 @@ export async function PATCH(
   if (parsed.data.phase !== undefined) patch.phase = parsed.data.phase;
   if (parsed.data.owner !== undefined) patch.owner = parsed.data.owner ?? null;
   if (parsed.data.position !== undefined) patch.position = parsed.data.position;
+  // Stored as calendar dates, so they are never routed through a Date: doing
+  // that reinterprets "2026-09-17" as UTC midnight and can move it a day.
+  if (parsed.data.startsOn !== undefined) {
+    patch.startsOn = parsed.data.startsOn ? toISODate(parsed.data.startsOn) : null;
+  }
   if (parsed.data.dueOn !== undefined) {
-    patch.dueOn = parsed.data.dueOn ? new Date(parsed.data.dueOn) : null;
+    patch.dueOn = parsed.data.dueOn ? toISODate(parsed.data.dueOn) : null;
+  }
+  if (parsed.data.dependsOn !== undefined) {
+    // A task waiting for itself can never start, and the chart would draw a
+    // link from a bar to itself. Refuse it here rather than filtering it out
+    // at every read.
+    if (parsed.data.dependsOn === taskId) {
+      return NextResponse.json({ error: "a task cannot wait for itself" }, { status: 400 });
+    }
+    patch.dependsOn = parsed.data.dependsOn ?? null;
   }
   if (parsed.data.status !== undefined) {
     patch.status = parsed.data.status;

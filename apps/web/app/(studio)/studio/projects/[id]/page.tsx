@@ -166,7 +166,14 @@ export default async function ProjectWorkspace({
       />
 
       {/* The pane scrolls, not the page, so the sidebar and this header stay put. */}
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      {/* `relative` is load-bearing, not decoration. The upload inputs inside
+          are Tailwind `sr-only`, which is position:absolute, and with no
+          positioned ancestor they resolve against the initial containing block
+          instead of this scroller. Their static position sits deep in the
+          content, so they landed a thousand pixels down the document and
+          stretched the page itself: the whole shell scrolled and the sidebar
+          slid up out of view. */}
+      <div className="relative min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-5xl px-8 py-7">
           <nav className="mb-5 font-mono text-[11.5px] text-ink-400">
             <Link href="/studio/projects" className="hover:text-ink-700">
@@ -253,7 +260,7 @@ export default async function ProjectWorkspace({
                     phase: t.phase,
                     status: t.status,
                     owner: t.owner,
-                    dueOn: t.dueOn ? t.dueOn.toISOString() : null,
+                    dueOn: t.dueOn,
                     templateSlug: t.templateSlug,
                     position: t.position,
                   }),

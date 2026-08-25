@@ -5,6 +5,7 @@ import ChatHistory, { type HistoryItem } from "@/components/studio/chat-history"
 import { Logo } from "@ladx/ui";
 import {
   Activity,
+  CalendarRange,
   ChevronDown,
   ChevronsLeft,
   FileText,
@@ -109,6 +110,7 @@ export default function StudioSidebar({
         </Link>
         {[
           { href: "/studio/projects", label: "Projects", icon: FolderKanban },
+          { href: "/studio/planner", label: "Planner", icon: CalendarRange },
           { href: "/studio/clients", label: "Clients", icon: Users },
           ...TOOLS,
         ].map((item) => {
@@ -214,6 +216,9 @@ export default function StudioSidebar({
               No projects yet. New starts one.
             </p>
           )}
+          <Row href="/studio/planner" active={isActive("/studio/planner")} icon={CalendarRange}>
+            Planner
+          </Row>
           <Row href="/studio/clients" active={isActive("/studio/clients")} icon={Users}>
             Clients
           </Row>

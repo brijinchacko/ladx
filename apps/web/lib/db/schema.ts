@@ -11,6 +11,7 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  date,
   index,
   integer,
   jsonb,
@@ -238,7 +239,26 @@ export const projectTasks = pgTable(
     status: taskStatusEnum("status").notNull().default("todo"),
     /** Free text rather than a user id: most of these are somebody else's people. */
     owner: text("owner"),
-    dueOn: timestamp("due_on", { withTimezone: true }),
+    /**
+     * When the work starts and when it is due.
+     *
+     * `date`, not `timestamp`. A schedule date is a calendar date, not an
+     * instant: "the FDS is due on 17 September" is the same day in every
+     * office. Stored as timestamptz these were local midnight, which is 23:00
+     * the previous day in UTC, so a plan drafted in BST read back a day early
+     * and put two tasks on a Sunday. Held as strings so nothing ever converts
+     * them through a Date and a timezone on the way past.
+     */
+    startsOn: date("starts_on", { mode: "string" }),
+    dueOn: date("due_on", { mode: "string" }),
+    /**
+     * The task that must finish before this one starts.
+     *
+     * Self-referential and nullable, so most tasks have none. Set null on
+     * delete rather than cascading: removing a predecessor should orphan the
+     * link, never silently delete the work that depended on it.
+     */
+    dependsOn: uuid("depends_on"),
     /** The deliverable this task is for, when it is for one. */
     templateSlug: text("template_slug"),
     /** Manual ordering within a phase. */

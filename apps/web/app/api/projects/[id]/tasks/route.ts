@@ -4,6 +4,7 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { projectTasks } from "@/lib/db/schema";
+import { draftSchedule, toISODate } from "@/lib/platform/gantt";
 import { ACTIVE_PHASES, deliverablesFor } from "@/lib/platform/lifecycle";
 import { getProject } from "@/lib/platform/queries";
 import { and, asc, eq } from "drizzle-orm";
@@ -27,12 +28,17 @@ const createSchema = z.object({
   detail: z.string().max(2000).nullish(),
   phase: z.enum(PHASES).default("requirements"),
   owner: z.string().max(120).nullish(),
-  dueOn: z.string().datetime().nullish(),
+  startsOn: z.union([z.string().datetime(), z.string().date()]).nullish(),
+  dueOn: z.union([z.string().datetime(), z.string().date()]).nullish(),
   templateSlug: z.string().max(120).nullish(),
 });
 
 /** Build the whole plan from the lifecycle, for a project with none. */
-const seedSchema = z.object({ seed: z.literal(true) });
+const seedSchema = z.object({
+  seed: z.literal(true),
+  /** When the work begins. Defaults to today; rolled forward off a weekend. */
+  startOn: z.union([z.string().datetime(), z.string().date()]).optional(),
+});
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getApiUser();
@@ -84,8 +90,28 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         phase: phase.id,
         templateSlug: d.slug,
         position: position++,
+        startsOn: null as string | null,
+        dueOn: null as string | null,
       })),
     );
+
+    // Put the plan on the calendar rather than handing back a dated-nothing
+    // list. A Gantt of seventeen undated rows is a chart of nothing, and
+    // asking somebody to type thirty-four dates before they can see a shape is
+    // how a planner goes unused. Phases run in sequence on working days; every
+    // date is draggable the moment it lands.
+    const seedStart = seedSchema.safeParse(body).success
+      ? ((body as { startOn?: string }).startOn ?? new Date())
+      : new Date();
+    const draft = draftSchedule(
+      rows,
+      ACTIVE_PHASES.map((p) => p.id),
+      seedStart,
+    );
+    for (const [row, dates] of draft) {
+      row.startsOn = toISODate(dates.startsOn);
+      row.dueOn = toISODate(dates.dueOn);
+    }
     if (rows.length === 0) return NextResponse.json({ tasks: [] });
     const inserted = await db().insert(projectTasks).values(rows).returning();
     return NextResponse.json({ tasks: inserted }, { status: 201 });
@@ -103,7 +129,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       detail: parsed.data.detail ?? null,
       phase: parsed.data.phase,
       owner: parsed.data.owner ?? null,
-      dueOn: parsed.data.dueOn ? new Date(parsed.data.dueOn) : null,
+      startsOn: parsed.data.startsOn ? toISODate(parsed.data.startsOn) : null,
+      dueOn: parsed.data.dueOn ? toISODate(parsed.data.dueOn) : null,
       templateSlug: parsed.data.templateSlug ?? null,
       // New work goes to the end of its phase.
       position: 10_000,
