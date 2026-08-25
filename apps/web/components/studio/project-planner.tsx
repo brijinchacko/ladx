@@ -88,6 +88,31 @@ export default function ProjectPlanner({
   const [busy, setBusy] = useState<string | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "timeline">("list");
+  const [scheduling, setScheduling] = useState(false);
+
+  const undatedCount = tasks.filter((t) => !t.startsOn && !t.dueOn).length;
+
+  /**
+   * Put the undated part of an existing plan on the calendar.
+   *
+   * Seeding refuses once a plan exists, so a plan made before the seed started
+   * dating its work had no way onto the timeline except typing two dates per
+   * task. This lays the same working-day draft over only the tasks that have
+   * none, so hand-set dates survive.
+   */
+  async function scheduleUndated() {
+    setScheduling(true);
+    try {
+      await fetch(`/api/projects/${projectId}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ schedule: true }),
+      });
+      router.refresh();
+    } finally {
+      setScheduling(false);
+    }
+  }
   const [draft, setDraft] = useState("");
 
   const started = useMemo(() => new Set(startedSlugs), [startedSlugs]);
@@ -243,6 +268,26 @@ export default function ProjectPlanner({
           />
         </div>
       </header>
+
+      {view === "timeline" && undatedCount > 0 && (
+        <div className="flex flex-wrap items-center gap-3 border-b border-amber-200 bg-amber-50 px-5 py-2">
+          <span className="text-[12.5px] text-amber-900">
+            {undatedCount} task{undatedCount === 1 ? " has" : "s have"} no dates, so{" "}
+            {undatedCount === 1 ? "it is" : "they are"} not on the timeline.
+          </span>
+          <button
+            type="button"
+            disabled={scheduling}
+            onClick={scheduleUndated}
+            className="rounded-md bg-ink-900 px-3 py-1 text-[12.5px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {scheduling ? "Scheduling…" : "Lay them out on working days"}
+          </button>
+          <span className="text-[11.5px] text-amber-800/70">
+            A draft to drag into shape. Anything already dated is left alone.
+          </span>
+        </div>
+      )}
 
       {view === "timeline" && (
         <div className="border-b border-ink-100">
