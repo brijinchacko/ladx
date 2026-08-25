@@ -26,7 +26,7 @@ export default async function SettingsPage() {
         title="Settings"
         subtitle="Your company, the AI providers you have connected, and your account."
       />
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="relative min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl space-y-12 p-6">
           <section>
             <div className="mb-5">

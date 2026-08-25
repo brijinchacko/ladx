@@ -12,7 +12,7 @@ export default async function StudioKnowledgePage() {
         title="Knowledge"
         subtitle="Index your manuals and ask them questions, with the passage each answer came from."
       />
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">
+      <div className="relative min-h-0 flex-1 overflow-y-auto p-6">
         <KnowledgeClient />
       </div>
     </>

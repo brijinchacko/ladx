@@ -233,7 +233,10 @@ export default function ConvertWorkbench({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    // `relative` for the sr-only upload input further down: absolute with no
+    // positioned ancestor escapes to the initial containing block and stretches
+    // the document, which scrolls the whole Studio shell.
+    <div className="relative flex min-h-0 flex-1 flex-col">
       {unreadable.length > 0 && (
         <p className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900">
           {unreadable.length} saved program{unreadable.length === 1 ? "" : "s"} could not be read

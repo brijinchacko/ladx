@@ -103,7 +103,11 @@ export function Composer({
   };
 
   return (
-    <form onSubmit={submit} className="mx-auto w-full max-w-3xl">
+    // `relative` because the attach input below is sr-only, which is
+    // position:absolute. Without a positioned ancestor it resolves against the
+    // initial containing block, and in a long thread that puts a stray 1px box
+    // far down the page, stretching the document and scrolling the whole shell.
+    <form onSubmit={submit} className="relative mx-auto w-full max-w-3xl">
       <div
         onDragOver={
           onAttach
