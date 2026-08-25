@@ -8,6 +8,7 @@
 import { getApiUser } from "@/lib/auth/server";
 import { SYMBOLS } from "@/lib/cad/symbols";
 import type { Entity } from "@/lib/cad/types";
+import { auditInBackground } from "@/lib/db/audit";
 import { complete, firstJsonObject } from "@/lib/inference/complete";
 import { ProviderError } from "@/lib/providers";
 import { NextResponse } from "next/server";
@@ -209,6 +210,17 @@ export async function POST(req: Request) {
                 ? e.points
                 : [];
       return pts.every((p) => inRange(p.x) && inRange(p.y));
+    });
+
+    auditInBackground({
+      userId: auth.user.id,
+      actor: auth.user.email,
+      event: "cad_generated",
+      payload: {
+        model,
+        entities: entities.length,
+        dropped: reply.data.entities.length - entities.length,
+      },
     });
 
     return NextResponse.json({

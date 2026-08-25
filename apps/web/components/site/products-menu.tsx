@@ -7,7 +7,7 @@ import { useEffect, useId, useRef, useState } from "react";
 /**
  * The Products mega menu.
  *
- * Eight tools is past the point where a dropdown list is readable, so the menu
+ * Ten tools is past the point where a dropdown list is readable, so the menu
  * is the shape of the work instead: write the logic, draw it and prove it, ship
  * the project. Somebody who has never heard of LADX can read the three column
  * headings and know what the thing is, which a flat list of eight product names

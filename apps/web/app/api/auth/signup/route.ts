@@ -3,6 +3,7 @@
 
 import { hashPassword } from "@/lib/auth/password";
 import { createSession, setSessionCookie } from "@/lib/auth/session";
+import { writeAudit } from "@/lib/db/audit";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/client";
@@ -38,6 +39,13 @@ export async function POST(req: Request) {
 
     const session = await createSession(user.id);
     await setSessionCookie(session.id);
+
+    await writeAudit({
+      userId: user.id,
+      actor: user.email,
+      event: "account_created",
+      subjectId: user.id,
+    });
 
     // Fire-and-forget welcome email, failures don't block signup.
     const tpl = welcomeEmail({ displayName: user.displayName, appUrl: env.appUrl });

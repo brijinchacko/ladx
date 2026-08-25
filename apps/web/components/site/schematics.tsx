@@ -802,3 +802,352 @@ export function CitationFigure({ className }: { className?: string }) {
     </svg>
   );
 }
+
+/**
+ * One tag table, two things reading it.
+ *
+ * The whole argument for building the HMI here rather than in the vendor's
+ * tool, drawn rather than asserted: the ladder writes a tag, the screen reads
+ * the same tag by name, and there is no second table between them to fall out
+ * of step. The dashed box is what every other toolchain has and this one does
+ * not.
+ */
+export function TagBindingFigure({ className }: { className?: string }) {
+  const rows = [
+    { name: "Start", kind: "BOOL", used: "button" },
+    { name: "Motor", kind: "BOOL", used: "lamp" },
+    { name: "Level", kind: "INT", used: "bar" },
+    { name: "T1.ACC", kind: "TIMER", used: "trend" },
+  ];
+
+  return (
+    <svg
+      viewBox="0 0 560 210"
+      className={className}
+      role="img"
+      aria-label="A ladder program and an operator screen both reading one tag table, with no second table between them"
+    >
+      <title>One tag table, read from both sides</title>
+
+      <text
+        x="14"
+        y="16"
+        fontSize="9.5"
+        fill={INK}
+        opacity="0.5"
+        fontFamily="ui-monospace, monospace"
+      >
+        LADDER
+      </text>
+      <text x="228" y="16" fontSize="9.5" fill={TEAL} fontFamily="ui-monospace, monospace">
+        ONE TAG TABLE
+      </text>
+      <text
+        x="450"
+        y="16"
+        fontSize="9.5"
+        fill={INK}
+        opacity="0.5"
+        fontFamily="ui-monospace, monospace"
+      >
+        HMI SCREEN
+      </text>
+
+      {/* the controller side */}
+      <rect
+        x="14"
+        y="26"
+        width="150"
+        height="150"
+        rx="3"
+        fill="none"
+        stroke={INK}
+        strokeWidth="1"
+        opacity="0.3"
+      />
+      {rows.map((r, i) => (
+        <g key={`l-${r.name}`}>
+          <line
+            x1="30"
+            y1={54 + i * 32}
+            x2="52"
+            y2={54 + i * 32}
+            stroke={INK}
+            strokeWidth="1.2"
+            opacity="0.55"
+          />
+          <line
+            x1="40"
+            y1={47 + i * 32}
+            x2="40"
+            y2={61 + i * 32}
+            stroke={INK}
+            strokeWidth="1.2"
+            opacity="0.55"
+          />
+          <line
+            x1="46"
+            y1={47 + i * 32}
+            x2="46"
+            y2={61 + i * 32}
+            stroke={INK}
+            strokeWidth="1.2"
+            opacity="0.55"
+          />
+          <line
+            x1="52"
+            y1={54 + i * 32}
+            x2="120"
+            y2={54 + i * 32}
+            stroke={INK}
+            strokeWidth="1.2"
+            opacity="0.55"
+          />
+          <circle
+            cx="132"
+            cy={54 + i * 32}
+            r="7"
+            fill="none"
+            stroke={INK}
+            strokeWidth="1.2"
+            opacity="0.55"
+          />
+        </g>
+      ))}
+
+      {/* the shared table */}
+      <rect
+        x="204"
+        y="26"
+        width="152"
+        height="150"
+        rx="3"
+        fill="none"
+        stroke={TEAL}
+        strokeWidth="1.4"
+      />
+      {rows.map((r, i) => (
+        <g key={`t-${r.name}`}>
+          <text
+            x="216"
+            y={50 + i * 32}
+            fontSize="11"
+            fill={INK}
+            fontFamily="ui-monospace, monospace"
+            opacity="0.85"
+          >
+            {r.name}
+          </text>
+          <text
+            x="216"
+            y={62 + i * 32}
+            fontSize="8.5"
+            fill={INK}
+            opacity="0.4"
+            fontFamily="ui-monospace, monospace"
+          >
+            {r.kind}
+          </text>
+          <line
+            x1="164"
+            y1={54 + i * 32}
+            x2="204"
+            y2={54 + i * 32}
+            stroke={TEAL}
+            strokeWidth="1.2"
+          />
+          <line
+            x1="356"
+            y1={54 + i * 32}
+            x2="396"
+            y2={54 + i * 32}
+            stroke={TEAL}
+            strokeWidth="1.2"
+          />
+        </g>
+      ))}
+
+      {/* the operator side */}
+      <rect
+        x="396"
+        y="26"
+        width="150"
+        height="150"
+        rx="3"
+        fill="none"
+        stroke={INK}
+        strokeWidth="1"
+        opacity="0.3"
+      />
+      {rows.map((r, i) => (
+        <g key={`h-${r.name}`}>
+          {r.used === "button" && (
+            <rect x="414" y={44 + i * 32} width="48" height="20" rx="3" fill={INK} opacity="0.14" />
+          )}
+          {r.used === "lamp" && (
+            <circle cx="424" cy={54 + i * 32} r="9" fill={TEAL} opacity="0.75" />
+          )}
+          {r.used === "bar" && (
+            <>
+              <rect
+                x="414"
+                y={46 + i * 32}
+                width="70"
+                height="16"
+                rx="2"
+                fill={INK}
+                opacity="0.12"
+              />
+              <rect
+                x="414"
+                y={46 + i * 32}
+                width="44"
+                height="16"
+                rx="2"
+                fill={TEAL}
+                opacity="0.7"
+              />
+            </>
+          )}
+          {r.used === "trend" && (
+            <polyline
+              points={`414,${62 + i * 32} 428,${52 + i * 32} 442,${58 + i * 32} 456,${46 + i * 32} 484,${50 + i * 32}`}
+              fill="none"
+              stroke={TEAL}
+              strokeWidth="1.6"
+            />
+          )}
+          <text
+            x="492"
+            y={58 + i * 32}
+            fontSize="8.5"
+            fill={INK}
+            opacity="0.4"
+            fontFamily="ui-monospace, monospace"
+          >
+            {r.used}
+          </text>
+        </g>
+      ))}
+
+      <text x="14" y="198" fontSize="9" fill={INK} opacity="0.45">
+        No import step, no second table, and no way to bind to a tag the controller does not have.
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * A plan as bars against dates.
+ *
+ * The point of the figure is the arrow: a dependency is a fact the chart
+ * enforces, not a note somebody wrote in a cell. The vertical rule is today,
+ * which is the only reason a Gantt chart is worth looking at at all.
+ */
+export function GanttFigure({ className }: { className?: string }) {
+  const bars = [
+    { label: "URS", x: 30, w: 70, done: true },
+    { label: "FDS", x: 104, w: 96, done: true },
+    { label: "Software", x: 204, w: 130, done: false },
+    { label: "FAT", x: 338, w: 62, done: false },
+    { label: "SAT", x: 404, w: 78, late: true },
+  ];
+  const today = 300;
+
+  return (
+    <svg
+      viewBox="0 0 560 190"
+      className={className}
+      role="img"
+      aria-label="Five project tasks drawn as bars against a timeline, with dependency arrows and a marker for today"
+    >
+      <title>The plan, as bars against real dates</title>
+
+      <defs>
+        <marker
+          id="gantt-arrow"
+          viewBox="0 0 8 8"
+          refX="7"
+          refY="4"
+          markerWidth="5"
+          markerHeight="5"
+          orient="auto"
+        >
+          <path d="M 0 1 L 7 4 L 0 7 z" fill={INK} opacity="0.4" />
+        </marker>
+      </defs>
+
+      {[0, 1, 2, 3].map((m) => (
+        <g key={m}>
+          <line
+            x1={30 + m * 128}
+            y1="22"
+            x2={30 + m * 128}
+            y2="164"
+            stroke={INK}
+            strokeWidth="0.8"
+            opacity="0.14"
+          />
+          <text
+            x={34 + m * 128}
+            y="18"
+            fontSize="9"
+            fill={INK}
+            opacity="0.45"
+            fontFamily="ui-monospace, monospace"
+          >
+            {["MAR", "APR", "MAY", "JUN"][m]}
+          </text>
+        </g>
+      ))}
+
+      {bars.map((b, i) => {
+        const y = 36 + i * 26;
+        return (
+          <g key={b.label}>
+            <text x="0" y={y + 11} fontSize="10" fill={INK} opacity="0.7">
+              {b.label}
+            </text>
+            <rect
+              x={b.x}
+              y={y}
+              width={b.w}
+              height="14"
+              rx="2"
+              fill={b.late ? "#B4531A" : b.done ? INK : TEAL}
+              opacity={b.done ? 0.28 : b.late ? 0.8 : 0.8}
+            />
+            {/* Finish to start, drawn because the chart enforces it rather
+                than leaving it as a note in a cell. */}
+            {i > 0 &&
+              (() => {
+                const prev = bars[i - 1];
+                if (!prev) return null;
+                const fromX = prev.x + prev.w;
+                const fromY = y - 26 + 7;
+                return (
+                  <path
+                    d={`M ${fromX} ${fromY} L ${fromX + 6} ${fromY} L ${fromX + 6} ${y + 7} L ${b.x - 3} ${y + 7}`}
+                    fill="none"
+                    stroke={INK}
+                    strokeWidth="0.9"
+                    opacity="0.35"
+                    markerEnd="url(#gantt-arrow)"
+                  />
+                );
+              })()}
+          </g>
+        );
+      })}
+
+      <line x1={today} y1="22" x2={today} y2="168" stroke={TEAL} strokeWidth="1.4" />
+      <text x={today + 4} y="176" fontSize="9" fill={TEAL} fontFamily="ui-monospace, monospace">
+        TODAY
+      </text>
+
+      <text x="0" y="186" fontSize="9" fill={INK} opacity="0.45">
+        Drag a bar to move it. A task that depends on another cannot start before it ends.
+      </text>
+    </svg>
+  );
+}

@@ -5,7 +5,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Products",
   description:
-    "Eight tools on one project: a ladder editor with a real simulator, validated AI code generation, CAD for the panel drawings, cross-platform conversion, a logic monitor, project and document generation, and a knowledge base over your own manuals.",
+    "Ten tools on one project: a ladder editor with a real simulator, validated AI code generation, an HMI builder on the same tag table, CAD for the panel drawings, cross-platform conversion, a logic monitor, a Gantt planner, project and document generation, and a knowledge base over your own manuals.",
 };
 
 export default function ProductsPage() {
@@ -16,7 +16,7 @@ export default function ProductsPage() {
           Products
         </p>
         <h1 className="font-display text-[2.4rem] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink-900">
-          Eight tools, one project
+          Ten tools, one project
         </h1>
         <p className="mt-5 text-[16px] leading-relaxed text-ink-600">
           They are not separate applications that export to each other. They sit on one project, so

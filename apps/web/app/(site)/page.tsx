@@ -157,7 +157,7 @@ export default function HomePage() {
         <header className="mb-12 max-w-2xl">
           <Eyebrow>What's in it</Eyebrow>
           <h2 className="font-display text-[1.75rem] font-bold leading-tight tracking-[-0.015em] text-ink-900">
-            Eight tools that share one project
+            Ten tools that share one project
           </h2>
           <p className="mt-4 text-[15.5px] leading-relaxed text-ink-600">
             They are not separate apps that export to each other. They all read and write the same

@@ -17,6 +17,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   real,
   text,
   timestamp,
@@ -92,11 +93,109 @@ export const users = pgTable(
     email: text("email").notNull().unique(),
     passwordHash: text("password_hash").notNull(),
     displayName: text("display_name"),
+    /**
+     * "user" or "admin". A column rather than a list of addresses in the
+     * environment, so granting and revoking are ordinary database facts that
+     * survive a deploy and can be seen in a backup. Nothing reads this except
+     * requireAdmin; there is no tier or plan hiding in here.
+     */
+    role: text("role").notNull().default("user"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     emailIdx: index("users_email_idx").on(t.email),
+  }),
+);
+
+// ----- licences -----
+/**
+ * Desktop licence keys.
+ *
+ * The activation endpoint used to accept any string of eight characters and
+ * hand back a year of access, which was fine while the desktop build existed
+ * only on one laptop and stops being fine the moment an installer is sent to
+ * anybody. This table is what it checks instead.
+ *
+ * The key is stored hashed, not in the clear. A licence key is a credential:
+ * it is the only thing standing between a copy of the installer and a working
+ * copy of the product, and a database backup should not be a list of working
+ * keys. The prefix is kept separately so a key can be recognised in a support
+ * conversation without being reconstructed from it.
+ *
+ * `machineId` is written on first activation and compared afterwards, which is
+ * what makes a key one seat rather than a password everybody shares. It is a
+ * fingerprint the desktop computes; nothing here can turn it back into a
+ * machine.
+ */
+export const licences = pgTable(
+  "licences",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** bcrypt of the key. The plaintext is shown once, at issue, and never again. */
+    keyHash: text("key_hash").notNull(),
+    /** The first few characters, so a key can be identified without being known. */
+    prefix: text("prefix").notNull(),
+    /** Who it was issued to, in the words used on the invoice. */
+    issuedTo: text("issued_to").notNull(),
+    email: text("email"),
+    note: text("note"),
+    /** Null until first activation, then fixed: one key, one machine. */
+    machineId: text("machine_id"),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+    productVersion: text("product_version"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    /** Revoked keys stay in the table so the history survives. */
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    prefixIdx: index("licences_prefix_idx").on(t.prefix),
+  }),
+);
+
+// ----- site_hits, site_referrers -----
+/**
+ * How busy the site is, counted without following anybody.
+ *
+ * One row per day, path and signed-in flag, holding a number. There is no
+ * visitor id, no IP, no cookie and no session in here, and there is no way to
+ * put one in later without changing the primary key: the grain of the table is
+ * the privacy policy. That is deliberate. A counter that cannot identify
+ * anybody is not tracking, needs no consent banner, and still answers the only
+ * questions worth asking of it, which are what people read and whether that is
+ * going up.
+ *
+ * Written in batches from the middleware rather than a row per request, so a
+ * busy hour is a handful of statements instead of thousands.
+ */
+export const siteHits = pgTable(
+  "site_hits",
+  {
+    day: date("day").notNull(),
+    path: text("path").notNull(),
+    /** Whether the reader had a session. Two rows per path per day at most. */
+    authed: boolean("authed").notNull().default(false),
+    count: integer("count").notNull().default(0),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.day, t.path, t.authed] }),
+    dayIdx: index("site_hits_day_idx").on(t.day),
+  }),
+);
+
+/** Where readers came from, by host only. A host is not a person. */
+export const siteReferrers = pgTable(
+  "site_referrers",
+  {
+    day: date("day").notNull(),
+    host: text("host").notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.day, t.host] }),
+    dayIdx: index("site_referrers_day_idx").on(t.day),
   }),
 );
 

@@ -105,7 +105,7 @@ export const CATEGORIES: CategoryInfo[] = [
     name: "Analytics",
     required: false,
     summary:
-      "Anonymous usage statistics, so we can see which pages are worth keeping. Nothing is running today: this category exists so that if we ever add it, it is off until you say otherwise.",
+      "Third party analytics, the kind that follows a visitor between sites. Nothing of the sort is running, and this category exists so that if it ever is, it stays off until you say otherwise. Separately, and not covered by this switch, the server counts how many times each page was read: a number per page per day, with no cookie, no address and no visitor id, which is why it cannot be turned off and also why it cannot identify you.",
     items: [],
   },
 ];

@@ -8,6 +8,7 @@
 // not something this will do.
 
 import { getApiUser } from "@/lib/auth/server";
+import { auditInBackground } from "@/lib/db/audit";
 import { complete, firstJsonObject } from "@/lib/inference/complete";
 import { sealInWarnings } from "@/lib/ladder/seal-in";
 import { ProviderError } from "@/lib/providers";
@@ -241,6 +242,22 @@ export async function POST(req: Request) {
     // canvas, and hand the findings back rather than hiding them. An unknown
     // tag or a doubled coil is exactly what a model gets wrong.
     const problems = [...validate(program), ...sealInWarnings(program)];
+
+    // The facts, not the program. Which model, how much it wrote and whether
+    // the validator objected is what an auditor needs to reconstruct what
+    // happened; the rungs themselves are the user's and stay theirs.
+    auditInBackground({
+      userId: auth.user.id,
+      actor: auth.user.email,
+      event: "ladder_generated",
+      payload: {
+        model,
+        mode: parsed.data.mode,
+        rungs: program.rungs.length,
+        tags: program.tags.length,
+        problems: problems.length,
+      },
+    });
 
     return NextResponse.json({
       program,

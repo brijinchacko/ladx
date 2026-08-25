@@ -1,3 +1,4 @@
+import { auditInBackground } from "@/lib/db/audit";
 import { db } from "@/lib/db/client";
 import {
   type Client,
@@ -173,6 +174,13 @@ export async function createProject(
     })
     .returning({ id: projects.id });
   if (!row) throw new Error("project insert returned no row");
+  auditInBackground({
+    userId,
+    actor: userId,
+    event: "project_created",
+    subjectId: row.id,
+    payload: { hasClient: Boolean(clientId), scoped: input.deliverables !== undefined },
+  });
   return row;
 }
 
@@ -218,5 +226,10 @@ export async function deleteProject(userId: string, id: string): Promise<boolean
     .delete(projects)
     .where(and(eq(projects.id, id), eq(projects.userId, userId)))
     .returning({ id: projects.id });
+  // Recorded because a deletion is the event most worth being able to explain
+  // later, and the row it refers to is gone by the time anybody asks.
+  if (deleted.length > 0) {
+    auditInBackground({ userId, actor: userId, event: "project_deleted", subjectId: id });
+  }
   return deleted.length > 0;
 }

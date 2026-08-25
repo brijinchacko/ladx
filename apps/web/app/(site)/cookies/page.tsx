@@ -40,7 +40,8 @@ export default function CookiesPage() {
           {[
             "One cookie, ladx_session, so that signing in sticks.",
             "Your Studio project stays in your browser and is never uploaded.",
-            "No analytics is running today. If we add any, it stays off until you allow it.",
+            "Page views are counted on the server, as a number per page per day. No cookie, no address, no visitor id, so it cannot be traced to you.",
+            "No third party analytics. If we ever add any, it stays off until you allow it.",
             "Rejecting optional storage genuinely works. It also means Studio cannot save your work between visits.",
           ].map((line) => (
             <li

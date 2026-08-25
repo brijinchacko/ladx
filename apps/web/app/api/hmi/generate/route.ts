@@ -9,6 +9,7 @@
 // which reaches Ollama over IPC rather than HTTP, applies exactly the same one.
 
 import { getApiUser } from "@/lib/auth/server";
+import { auditInBackground } from "@/lib/db/audit";
 import { complete } from "@/lib/inference/complete";
 import { ProviderError } from "@/lib/providers";
 import {
@@ -121,6 +122,20 @@ export async function POST(req: Request) {
     if (!raw && lastError) throw lastError;
 
     const out = normaliseScreen(raw, ctx);
+
+    auditInBackground({
+      userId: auth.user.id,
+      actor: auth.user.email,
+      event: "hmi_screen_generated",
+      payload: {
+        model,
+        mode: ctx.mode,
+        widgets: out.widgets.length,
+        alarms: out.alarms.length,
+        problems: out.problems.length,
+      },
+    });
+
     return NextResponse.json({ ...out, model });
   } catch (err) {
     if (err instanceof ProviderError) {

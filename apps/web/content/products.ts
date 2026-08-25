@@ -47,7 +47,9 @@ export type FigureKey =
   | "aiLoop"
   | "addressing"
   | "lifecycle"
-  | "citation";
+  | "citation"
+  | "tagBinding"
+  | "gantt";
 
 export const GROUP_META: Record<ProductGroup, { title: string; blurb: string }> = {
   logic: { title: "Write the logic", blurb: "Draw it, ask for it, move it between platforms." },
@@ -222,6 +224,61 @@ export const PRODUCTS: Product[] = [
       "Field device, terminal, input card. The chain every I/O sheet in the set is drawing a slice of.",
   },
   {
+    slug: "hmi",
+    name: "HMI",
+    tagline: "The operator screens, on the same tags.",
+    state: "live",
+    group: "panel",
+    menuLine: "SCADA screens bound to the ladder's own tag table",
+    open: { href: "/studio/hmi", label: "Open HMI" },
+    summary:
+      "A SCADA and HMI builder that binds to the ladder program's tag table rather than a second one kept in step by hand. Pick the panel, draw the mimic, define the alarms, and press run: the same scan engine that drives the simulator drives the screen.",
+    problem:
+      "The HMI is built in a different tool, against a tag list exported the week before, by somebody who cannot run the logic. The screen and the program disagree, and the place that gets found out is site.",
+    does: [
+      {
+        h: "One tag table, not two",
+        p: "Screens bind to the controller's tags by name. There is no import step and no second list, so a screen cannot reference a tag the program renamed three weeks ago, and the tools that check the program check the screen too.",
+      },
+      {
+        h: "The panel first, because a panel does not reflow",
+        p: "Fourteen real panel sizes, from a 4 inch 480 by 272 up to a 21 inch 1920 by 1080, stated as resolutions rather than model numbers. A graphic drawn for a 15 inch and deployed to a 7 inch is cut off, not scaled, so the glass is the first decision.",
+      },
+      {
+        h: "Alarms to ISA-18.2",
+        p: "A real state machine: unacknowledged, acknowledged, returned but unacknowledged, shelved, suppressed, out of service. Deadband and on-delay so a value sitting on a limit does not chatter. Acknowledging never clears an active alarm, which is the rule most implementations get wrong.",
+      },
+      {
+        h: "Bulk alarms, on a tag table you already have",
+        p: "Pick forty analogue tags and get hi, hi-hi, lo and lo-lo limits as a percentage of span, with escalating priorities and a preview before anything is written. The alternative is defining them one at a time, which means most of them never get defined.",
+      },
+      {
+        h: "Eighty-seven symbols, and your own artwork",
+        p: "Vessels, pumps, valves, conveying, instruments and switchgear, in a flat ISA-101 style or a shaded realistic one. Any symbol can be replaced with your own SVG or photograph, sanitised on the way in, so the screen can show the actual machine.",
+      },
+      {
+        h: "It runs against the program",
+        p: "Press run and the ladder solves, the HMI writes land at the top of the scan the way a real controller reads them, the trends fill and the alarms evaluate. A start button on glass starts the motor in the logic. Nothing is mocked.",
+      },
+      {
+        h: "Screens from a description",
+        p: "Describe the screen and it is drawn against your real tag table, then checked: every binding resolved against the tags that exist, every rectangle clamped to the glass, and a warning if a stop button was written the wrong way round. Or lay the whole tag table out with no model at all.",
+      },
+      {
+        h: "Drawn for handover",
+        p: "The connection is configured and exported rather than dialled: OPC UA, Modbus TCP, EtherNet/IP or S7, with rack, slot, unit id, poll rate and word order recorded. Word order in particular is a commissioning day nobody enjoys.",
+      },
+    ],
+    limits: [
+      "It does not talk to plant equipment. The runtime is the simulator, which is what makes a screen testable at a desk; the driver settings are recorded for handover, not dialled.",
+      "It does not deploy to a panel. There is no download to a TP1500 or a PanelView, and an application is exported as its own document rather than as a vendor project file.",
+      "Scripting is a small expression language over tags, not a programming language. It has no property access, no functions of its own and no way to reach the page, which is deliberate.",
+    ],
+    figure: "tagBinding",
+    figureCaption:
+      "The ladder writes a tag, the screen reads the same tag by name. There is no second table between them to fall out of step.",
+  },
+  {
     slug: "monitor",
     name: "Monitor",
     tagline: "Run the logic and watch it move.",
@@ -295,12 +352,59 @@ export const PRODUCTS: Product[] = [
       },
     ],
     limits: [
-      "It is a project workspace, not a scheduler. There is no Gantt chart, no critical path and no resource levelling.",
+      "It is a project workspace. Scheduling lives next door in Planner, which does have a Gantt chart; neither does critical path or resource levelling.",
       "The plan tracks whether a deliverable exists, not whether it is any good. Reviewing is still a person's job.",
     ],
     figure: "lifecycle",
     figureCaption:
       "The eight phases, and the deliverables each one owes. The plan is generated from this rather than typed.",
+  },
+  {
+    slug: "planner",
+    name: "Planner",
+    tagline: "Every project on one timeline.",
+    state: "live",
+    group: "project",
+    menuLine: "A real Gantt chart across every job you have",
+    open: { href: "/studio/planner", label: "Open Planner" },
+    summary:
+      "A Gantt chart over every project at once, seeded from the deliverables each job actually owes. Drag a bar to move it, drag its edge to change how long it takes, and let a dependency stop a task starting before the one it waits on has finished.",
+    problem:
+      "The plan lives in a spreadsheet that nobody updates, or in a scheduling tool that knows nothing about the job. Both drift from the work within a fortnight, and the first anybody notices is when a date is missed.",
+    does: [
+      {
+        h: "Seeded from the scope, not from a blank page",
+        p: "The tasks come from the deliverables the project owes. Change the scope from programming only to a full lifecycle and the plan grows to match, without disturbing work already under way.",
+      },
+      {
+        h: "A chart you can actually edit",
+        p: "Drag a bar to reschedule it, drag either end to change its duration, and zoom between days, weeks and months. Weekends are shaded, today is marked, and dates are stored as dates rather than instants so a plan drafted in London reads the same in Chennai.",
+      },
+      {
+        h: "Dependencies that mean something",
+        p: "A task can wait on another. The chart draws the link, refuses a circular one, and flags a task scheduled to start before the thing it depends on has finished, rather than letting the two quietly disagree.",
+      },
+      {
+        h: "Scheduling for the undated",
+        p: "A new project has a plan and no dates. One action lays every undated task end to end across working days, which is a starting point to argue with rather than a blank column to fill in by hand.",
+      },
+      {
+        h: "In and out as CSV",
+        p: "Export the plan and open it in anything. Import one back, with quoted fields and real date validation, so a plan built in a spreadsheet can come in rather than being retyped.",
+      },
+      {
+        h: "Across every client at once",
+        p: "Filter by client or by project, or look at all of them together, which is the view that answers the question a small integrator actually has: what is happening in March.",
+      },
+    ],
+    limits: [
+      "No resource levelling and no critical path. It shows what is planned and what depends on what, not who is over-committed.",
+      "Duration is in working days, and the working calendar is Monday to Friday. Public holidays are not modelled.",
+      "It plans deliverables. Whether a deliverable is any good is still a person's job.",
+    ],
+    figure: "gantt",
+    figureCaption:
+      "Bars against real dates, with the dependency drawn because the chart enforces it, and a rule for today.",
   },
   {
     slug: "docs",

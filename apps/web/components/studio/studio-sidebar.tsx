@@ -22,6 +22,7 @@ import {
   PencilRuler,
   Plus,
   Settings,
+  ShieldCheck,
   Trash2,
   Users,
 } from "lucide-react";
@@ -68,11 +69,14 @@ export default function StudioSidebar({
   projects,
   userName,
   userEmail,
+  isAdmin = false,
 }: {
   conversations: SidebarConversation[];
   projects: SidebarProject[];
   userName: string | null;
   userEmail: string;
+  /** Shows the admin link. Absence of the link is not the access control. */
+  isAdmin?: boolean;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -115,6 +119,7 @@ export default function StudioSidebar({
           { href: "/studio/planner", label: "Planner", icon: CalendarRange },
           { href: "/studio/clients", label: "Clients", icon: Users },
           ...TOOLS,
+          ...(isAdmin ? [{ href: "/studio/admin", label: "Admin", icon: ShieldCheck }] : []),
         ].map((item) => {
           const Icon = item.icon;
           return (
@@ -234,6 +239,17 @@ export default function StudioSidebar({
             </Row>
           ))}
         </Section>
+
+        {/* Only shown to an administrator, and shown last: it is not a tool
+            and does not belong among them. The link being hidden is a
+            courtesy, not the guard; requireAdmin is the guard. */}
+        {isAdmin && (
+          <Section label="Site">
+            <Row href="/studio/admin" active={isActive("/studio/admin")} icon={ShieldCheck}>
+              Admin
+            </Row>
+          </Section>
+        )}
 
         {/* Conversation history, at the foot of the pane. */}
         <ChatHistory items={conversations} />

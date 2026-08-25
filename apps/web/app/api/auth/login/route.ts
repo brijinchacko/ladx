@@ -2,6 +2,7 @@
 
 import { verifyPassword } from "@/lib/auth/password";
 import { createSession, setSessionCookie } from "@/lib/auth/session";
+import { auditInBackground } from "@/lib/db/audit";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -39,11 +40,22 @@ export async function POST(req: Request) {
   const ok = await verifyPassword(password, user?.passwordHash ?? dummyHash);
 
   if (!user || !ok) {
+    // The failure is recorded as well as the success. A run of these against
+    // one address is the only thing in the log that shows an attack in
+    // progress, and it is worth nothing if only the successes are kept.
+    auditInBackground({
+      userId: user?.id ?? null,
+      actor: email.toLowerCase(),
+      event: "sign_in_failed",
+      payload: { reason: user ? "wrong_password" : "no_such_account" },
+    });
     return Response.json({ error: "invalid email or password" }, { status: 401 });
   }
 
   const session = await createSession(user.id);
   await setSessionCookie(session.id);
+
+  auditInBackground({ userId: user.id, actor: user.email, event: "sign_in" });
 
   return Response.json({
     id: user.id,

@@ -1,4 +1,5 @@
 import StudioSidebar from "@/components/studio/studio-sidebar";
+import { isAdmin } from "@/lib/auth/admin";
 import { requireUser } from "@/lib/auth/server";
 import { listUserConversations } from "@/lib/db/conversations";
 import { listProjects } from "@/lib/platform/queries";
@@ -43,6 +44,7 @@ export default async function StudioLayout({ children }: { children: ReactNode }
         }))}
         userName={user.displayName}
         userEmail={user.email}
+        isAdmin={isAdmin(user)}
       />
       {/* min-h-0 so a tool that scrolls internally does not push the page. */}
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">{children}</main>

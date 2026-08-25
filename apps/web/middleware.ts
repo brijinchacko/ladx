@@ -3,8 +3,10 @@
 // DB access. Edge runtime can't easily talk to Postgres, so we don't try.
 
 import { SESSION_COOKIE } from "@/lib/auth/cookie";
+import { normalisePath } from "@/lib/metrics/path";
+import { metricsTokenAsync } from "@/lib/metrics/token";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 
 /**
  * The routes that need an account.
@@ -40,6 +42,10 @@ const PUBLIC_API = [
   "/api/activation",
   "/api/contact",
   "/api/indexnow",
+  // Posted by the middleware above, authenticated by a derived token rather
+  // than a session. Listed here so the session check does not reject it before
+  // the route can run.
+  "/api/metrics/ingest",
   // The document template library is deliberately account free, so its download
   // endpoint has to be too. Gating it would make the most linkable pages on the
   // site useless to the people who find them.
@@ -53,7 +59,113 @@ function needsAuth(pathname: string): boolean {
   return PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-export function middleware(req: NextRequest) {
+/* ────────────────────────── the page counter ────────────────────────── */
+
+/**
+ * Counts held in memory and flushed in batches.
+ *
+ * A row per request would be thousands of statements in a busy hour to answer
+ * a question that only needs a daily total, on a box that has fifteen other
+ * applications on it. So the count is kept here and posted once every few
+ * hundred requests or once a minute, whichever comes first, which makes the
+ * cost of counting about one extra request per page of reading.
+ *
+ * Module scope survives between requests in the same process. If the process
+ * restarts mid-buffer the pending counts are lost, which is the right trade: a
+ * counter is not worth a write on the hot path to protect.
+ *
+ * Nothing in this buffer identifies anybody. The key is a page name and a
+ * boolean, and there is nowhere in it to put a session, an address or an id.
+ */
+const buffer = new Map<string, number>();
+const referrers = new Map<string, number>();
+let lastFlush = Date.now();
+let flushing = false;
+
+const FLUSH_EVERY_MS = 30_000;
+const FLUSH_AT_KEYS = 200;
+/** A hard ceiling, so a pathological crawler cannot grow this without bound. */
+const MAX_KEYS = 2_000;
+
+function bump(map: Map<string, number>, key: string) {
+  if (map.size >= MAX_KEYS && !map.has(key)) return;
+  map.set(key, (map.get(key) ?? 0) + 1);
+}
+
+/**
+ * The host somebody arrived from, if it was not this site.
+ *
+ * The host and nothing else. A full referring URL can carry a search term or a
+ * name in its query, and there is no version of that which belongs in a table
+ * this application keeps forever.
+ */
+function referrerHost(raw: string | null, self: string): string | null {
+  if (!raw) return null;
+  try {
+    const host = new URL(raw).hostname.toLowerCase();
+    if (!host || host === self.toLowerCase()) return null;
+    return host.length <= 253 ? host : null;
+  } catch {
+    return null;
+  }
+}
+
+function maybeFlush(req: NextRequest, event: NextFetchEvent) {
+  const now = Date.now();
+  const due = buffer.size >= FLUSH_AT_KEYS || now - lastFlush >= FLUSH_EVERY_MS;
+  if (!due || flushing || buffer.size === 0) return;
+
+  const hits = Object.fromEntries(buffer);
+  const refs = Object.fromEntries(referrers);
+  buffer.clear();
+  referrers.clear();
+  lastFlush = now;
+  flushing = true;
+
+  const secret = process.env.LADX_SECRETS_KEY;
+  if (!secret) {
+    // Counting is off rather than open. The Traffic page says so.
+    flushing = false;
+    return;
+  }
+
+  const url = new URL("/api/metrics/ingest", req.nextUrl.origin);
+  event.waitUntil(
+    metricsTokenAsync(secret)
+      .then((token) =>
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-ladx-metrics": token },
+          body: JSON.stringify({ hits, referrers: refs }),
+        }),
+      )
+      .catch(() => {
+        // The batch is gone either way. Losing a minute of counts is not worth
+        // holding a retry queue in the request path.
+      })
+      .finally(() => {
+        flushing = false;
+      }),
+  );
+}
+
+function count(req: NextRequest, event: NextFetchEvent) {
+  if (req.method !== "GET") return;
+  const page = normalisePath(req.nextUrl.pathname);
+  if (!page) return;
+
+  const authed = req.cookies.has(SESSION_COOKIE) ? "1" : "0";
+  bump(buffer, `${page} ${authed}`);
+
+  const host = referrerHost(req.headers.get("referer"), req.nextUrl.hostname);
+  if (host) bump(referrers, host);
+
+  maybeFlush(req, event);
+}
+
+export function middleware(req: NextRequest, event: NextFetchEvent) {
+  count(req, event);
+
   const { pathname } = req.nextUrl;
   if (!needsAuth(pathname)) return NextResponse.next();
 

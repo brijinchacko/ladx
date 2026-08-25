@@ -1,10 +1,12 @@
 import { AddressingFigure, AiLoopFigure, WiringFigure } from "@/components/site/figures";
 import {
   CitationFigure,
+  GanttFigure,
   IrHub,
   LifecycleFigure,
   ScanCycle,
   SealInRung,
+  TagBindingFigure,
   ValidationLoop,
 } from "@/components/site/schematics";
 import { PRODUCTS, STATE_META, getProduct } from "@/content/products";
@@ -35,6 +37,8 @@ const FIGURES = {
   addressing: AddressingFigure,
   lifecycle: LifecycleFigure,
   citation: CitationFigure,
+  tagBinding: TagBindingFigure,
+  gantt: GanttFigure,
 } as const;
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
