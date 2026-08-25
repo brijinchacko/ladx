@@ -260,6 +260,8 @@ export default async function ProjectWorkspace({
                     phase: t.phase,
                     status: t.status,
                     owner: t.owner,
+                    startsOn: t.startsOn,
+                    dependsOn: t.dependsOn,
                     dueOn: t.dueOn,
                     templateSlug: t.templateSlug,
                     position: t.position,

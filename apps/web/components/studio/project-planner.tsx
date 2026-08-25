@@ -1,5 +1,6 @@
 "use client";
 
+import GanttChart from "@/components/studio/gantt-chart";
 import { ACTIVE_PHASES } from "@/lib/platform/lifecycle";
 import {
   CalendarDays,
@@ -25,7 +26,9 @@ export interface PlannerTask {
   phase: string;
   status: TaskStatus;
   owner: string | null;
+  startsOn: string | null;
   dueOn: string | null;
+  dependsOn: string | null;
   templateSlug: string | null;
   position: number;
 }
@@ -54,6 +57,21 @@ const ORDER: TaskStatus[] = ["todo", "doing", "blocked", "done"];
  * ticked by hand whether or not a document exists, because plenty of the work
  * on a real job produces no document at all.
  */
+/**
+ * Past its date, decided on calendar days.
+ *
+ * yyyy-mm-dd strings compare correctly with `<`, and doing it that way avoids
+ * routing a calendar date through a Date, which parses it as UTC midnight. A
+ * task due today would otherwise turn red at 01:00 BST on the morning it is
+ * due, which is not what "overdue" means to anybody.
+ */
+function isOverdue(dueOn: string | null, status: string): boolean {
+  if (!dueOn || status === "done") return false;
+  const n = new Date();
+  const today = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+  return dueOn.slice(0, 10) < today;
+}
+
 export default function ProjectPlanner({
   projectId,
   tasks,
@@ -69,6 +87,7 @@ export default function ProjectPlanner({
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
+  const [view, setView] = useState<"list" | "timeline">("list");
   const [draft, setDraft] = useState("");
 
   const started = useMemo(() => new Set(startedSlugs), [startedSlugs]);
@@ -84,9 +103,7 @@ export default function ProjectPlanner({
   }, [tasks]);
 
   const done = tasks.filter((t) => t.status === "done").length;
-  const overdue = tasks.filter(
-    (t) => t.status !== "done" && t.dueOn && new Date(t.dueOn) < new Date(),
-  ).length;
+  const overdue = tasks.filter((t) => isOverdue(t.dueOn, t.status)).length;
 
   async function patch(id: string, body: Record<string, unknown>) {
     setBusy(id);
@@ -175,6 +192,21 @@ export default function ProjectPlanner({
     );
   }
 
+  const ganttGroups = ACTIVE_PHASES.map((phase) => ({
+    key: phase.id,
+    label: phase.name,
+    tasks: (byPhase.get(phase.id) ?? []).map((t) => ({
+      id: t.id,
+      title: t.title,
+      phase: t.phase,
+      status: t.status,
+      startsOn: t.startsOn,
+      dueOn: t.dueOn,
+      dependsOn: t.dependsOn,
+      owner: t.owner,
+    })),
+  })).filter((g) => g.tasks.length > 0);
+
   return (
     <section className="rounded-md border border-ink-200 bg-white">
       <header className="flex flex-wrap items-center gap-4 border-b border-ink-100 bg-ink-50/60 px-5 py-3.5">
@@ -186,6 +218,24 @@ export default function ProjectPlanner({
             {overdue > 0 ? `, ${overdue} past its date` : ""}.
           </p>
         </div>
+
+        {/* Two readings of one plan: the list is what is left, the timeline is
+            when it happens. Both edit the same rows. */}
+        <div className="flex shrink-0 overflow-hidden rounded-md border border-ink-200">
+          {(["list", "timeline"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setView(v)}
+              className={`px-2.5 py-1 text-[12px] capitalize transition-colors ${
+                view === v ? "bg-ink-900 text-white" : "bg-white text-ink-600 hover:bg-ink-50"
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+
         <div className="h-1 w-32 shrink-0 overflow-hidden rounded-full bg-ink-200">
           <div
             className="h-full rounded-full bg-teal-600 transition-all"
@@ -194,7 +244,22 @@ export default function ProjectPlanner({
         </div>
       </header>
 
-      <div className="divide-y divide-ink-100">
+      {view === "timeline" && (
+        <div className="border-b border-ink-100">
+          {ganttGroups.length > 0 ? (
+            <GanttChart
+              groups={ganttGroups}
+              zoom="week"
+              onReschedule={(id, startsOn, dueOn) => patch(id, { startsOn, dueOn })}
+              onLink={(id, dependsOn) => patch(id, { dependsOn })}
+            />
+          ) : (
+            <p className="px-5 py-6 text-[13px] text-ink-500">Nothing to draw yet.</p>
+          )}
+        </div>
+      )}
+
+      <div className={view === "timeline" ? "hidden" : "divide-y divide-ink-100"}>
         {ACTIVE_PHASES.map((phase) => {
           const items = (byPhase.get(phase.id) ?? []).slice().sort((a, b) => {
             const s = ORDER.indexOf(a.status) - ORDER.indexOf(b.status);
@@ -304,7 +369,7 @@ function TaskRow({
   const [owner, setOwner] = useState(task.owner ?? "");
   const spec = STATUS[task.status];
   const Icon = spec.icon;
-  const overdue = task.status !== "done" && task.dueOn && new Date(task.dueOn) < new Date();
+  const overdue = isOverdue(task.dueOn, task.status);
 
   return (
     <li className="group flex flex-wrap items-center gap-2 rounded-md px-1.5 py-1 hover:bg-ink-50">
