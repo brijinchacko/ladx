@@ -1,5 +1,6 @@
 import { ArticleFigure } from "@/components/site/figures";
 import { POSTS, getPost, sortedPosts } from "@/content/posts";
+import { ctaFor } from "@/lib/seo/article-cta";
 import { SITE, articleSchema, breadcrumbSchema, faqSchema, jsonLd } from "@/lib/seo/schema";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -145,6 +146,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const post = getPost(slug);
   if (!post) notFound();
 
+  const cta = ctaFor(post.topic);
+
   const others = sortedPosts()
     .filter((p) => p.slug !== post.slug)
     .slice(0, 3);
@@ -246,20 +249,21 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </section>
         ) : null}
 
+        {/*
+          Chosen by topic. Every article used to offer the ladder editor,
+          including the ones about alarm rationalisation and GAMP 5, which is
+          an offer that does not follow from what was just read. It also meant
+          a hundred articles linked to one page and told a search engine
+          nothing about which of them were about what.
+        */}
         <aside className="mt-14 rounded-sm border border-ink-200 bg-ink-50/60 p-6">
-          <h2 className="mb-2 font-display text-[1.1rem] font-bold text-ink-900">
-            Try it rather than read about it
-          </h2>
-          <p className="mb-4 text-[15px] leading-relaxed text-ink-600">
-            The Studio simulator keeps the output image, remembers edges per instruction and counts
-            timers in milliseconds, so the behaviour described above is the behaviour you get. It
-            runs in the browser with no account.
-          </p>
+          <h2 className="mb-2 font-display text-[1.1rem] font-bold text-ink-900">{cta.heading}</h2>
+          <p className="mb-4 text-[15px] leading-relaxed text-ink-600">{cta.body}</p>
           <Link
-            href="/ladder"
+            href={cta.href}
             className="inline-block rounded-sm bg-ink-900 px-4 py-2 text-[14px] font-semibold text-white hover:opacity-90"
           >
-            Open Studio
+            {cta.label}
           </Link>
         </aside>
       </div>

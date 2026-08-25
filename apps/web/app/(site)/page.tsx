@@ -2,13 +2,17 @@ import { LiveRung } from "@/components/site/live-rung";
 import { IrHub, RungDivider, ScanCycle, ValidationLoop } from "@/components/site/schematics";
 import { CornerTicks, Eyebrow, GridField } from "@/components/site/squares";
 import { GROUP_META, GROUP_ORDER, PRODUCTS, STATE_META, productsIn } from "@/content/products";
-import { jsonLd, organizationSchema, softwareSchema, websiteSchema } from "@/lib/seo/schema";
+import { SITE, jsonLd, organizationSchema, softwareSchema, websiteSchema } from "@/lib/seo/schema";
 import Link from "next/link";
 
 export const metadata = {
+  // The root had no canonical, so ladx.ai and ladx.ai/ and any parameterised
+  // variant were three addresses for one page as far as a crawler is
+  // concerned. Cheapest possible fix for the most linked page on the site.
+  alternates: { canonical: SITE.url },
   title: "The AI workbench for automation engineers",
   description:
-    "Draw ladder logic and watch it run. Generate PLC code that compiles before you see it. Move programs between Siemens, Rockwell and CODESYS. Bring your own AI key.",
+    "Draw ladder logic and watch it run. Generate PLC code that compiles before you see it. Write it out as Structured Text, SCL, Rockwell neutral text or PLCopen XML. Bring your own AI key.",
 };
 
 export default function HomePage() {

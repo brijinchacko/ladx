@@ -1,7 +1,7 @@
 import { ArticleFigure } from "@/components/site/figures";
 import { Eyebrow } from "@/components/site/squares";
 import { POSTS, TOPICS, sortedPosts } from "@/content/posts";
-import { SITE } from "@/lib/seo/schema";
+import { SITE, breadcrumbSchema, itemListSchema, jsonLd } from "@/lib/seo/schema";
 import Link from "next/link";
 
 export const metadata = {
@@ -26,6 +26,41 @@ export default function ResourcesPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-16">
+      {/*
+        A hundred and one articles and nothing telling a retrieval system that
+        this page is the index of them. The ItemList carries the twenty most
+        recent rather than all of them, because a list of a hundred entries in
+        a script tag is weight without meaning; the sitemap is where the full
+        set belongs.
+      */}
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD has no other insertion point.
+        dangerouslySetInnerHTML={jsonLd(
+          itemListSchema({
+            url: "/resources",
+            name: "Writing for people who program machines",
+            items: sortedPosts()
+              .slice(0, 20)
+              .map((p) => ({
+                name: p.title,
+                description: p.summary,
+                path: `/resources/${p.slug}`,
+              })),
+          }),
+        )}
+      />
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD has no other insertion point.
+        dangerouslySetInnerHTML={jsonLd(
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Resources", path: "/resources" },
+          ]),
+        )}
+      />
+
       <header className="mb-12 max-w-2xl">
         <Eyebrow>Resources</Eyebrow>
         <h1 className="font-display text-[2.4rem] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink-900">

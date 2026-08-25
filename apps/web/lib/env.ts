@@ -38,6 +38,15 @@ export const env = {
   appUrl: optional("NEXT_PUBLIC_APP_URL") ?? "http://localhost:3000",
   posthogKey: optional("NEXT_PUBLIC_POSTHOG_KEY"),
 
+  /**
+   * IndexNow ownership proof. Published at /indexnow.txt, deliberately.
+   *
+   * Not a secret: the protocol works by the submitted key matching a key the
+   * site publishes. See app/api/indexnow/route.ts for why the submission
+   * endpoint is authorised by something else entirely.
+   */
+  indexNowKey: optional("INDEXNOW_KEY"),
+
   // Asserts; call from API routes that need a specific service.
   requireDatabaseUrl: () => required("DATABASE_URL"),
   requireOpenRouter: () => required("OPENROUTER_API_KEY"),

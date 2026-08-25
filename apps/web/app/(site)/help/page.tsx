@@ -1,7 +1,9 @@
 import { ContactForm } from "@/components/site/contact-form";
+import { SITE, breadcrumbSchema, faqSchema, jsonLd } from "@/lib/seo/schema";
 import Link from "next/link";
 
 export const metadata = {
+  alternates: { canonical: `${SITE.url}/help` },
   title: "Help & contact",
   description:
     "Ask a technical question, report something broken, or talk to us about running LADX on an air-gapped network.",
@@ -18,15 +20,15 @@ const FAQ = [
   },
   {
     q: "Is my PLC code used to train anything?",
-    a: "No. Imported programs are trade secrets and are treated that way: encrypted at rest, scoped to your project, never used for training, and deletable in one action. When the desktop application ships it will run fully offline, which is the strongest version of that answer.",
+    a: "No. Programs are trade secrets and are treated that way: encrypted at rest, scoped to your project, never used for training, and deletable in one action. Anything AI goes to the provider whose key you connected and nowhere else. The desktop build runs a local model and makes no outbound call at all, which is the strongest version of that answer; it is built and not yet distributed as an installer.",
   },
   {
     q: "Can it write to a live controller?",
     a: "No, and that will not change. LADX generates and verifies code; downloading it to a machine is a deliberate act by an engineer with the right tools and the right authority. Nothing here bypasses that.",
   },
   {
-    q: "Which file formats can it read?",
-    a: "Today: Rockwell L5X, PLCopen XML (which covers the CODESYS family: ABB, WAGO, Festo, Lenze and others), Beckhoff TcPOU, and Structured Text sources. Next: Rockwell ACD directly, Siemens SimaticML, Schneider XEF, Mitsubishi and Omron exports.",
+    q: "Which file formats can it write?",
+    a: "IEC 61131-3 Structured Text, Siemens SCL, Rockwell neutral text and PLCopen XML, each with a report of what converted cleanly and what did not. Reading a vendor project file back in is not built yet: Convert opens LADX's own export, and importing an L5X or a TIA archive is the next substantial thing on the list.",
   },
   {
     q: "We run an air-gapped OT network. Does that work?",
@@ -41,6 +43,26 @@ const FAQ = [
 export default function HelpPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-16">
+      {/*
+        The questions were already on the page and were invisible to anything
+        assembling an answer. FAQPage is the type answer engines lift most
+        readily, and these are the questions people genuinely arrive with.
+      */}
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD has no other insertion point.
+        dangerouslySetInnerHTML={jsonLd(faqSchema(FAQ, "/help"))}
+      />
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD has no other insertion point.
+        dangerouslySetInnerHTML={jsonLd(
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Help", path: "/help" },
+          ]),
+        )}
+      />
       <header className="mb-14 max-w-2xl">
         <p className="mb-3 font-mono text-[11.5px] font-semibold uppercase tracking-[0.18em] text-ink-400">
           Help

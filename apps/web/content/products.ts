@@ -26,6 +26,29 @@ export type Product = {
   does: { h: string; p: string }[];
   /** Honest limits. Every product has them; hiding them costs more than it saves. */
   limits: string[];
+  /**
+   * The direct answer, in two or three sentences, rendered near the top.
+   *
+   * Retrieval systems select passages, not pages, and the passage they take is
+   * usually the one nearest the top that answers the question outright. A
+   * product page whose first three paragraphs are positioning gets summarised
+   * from somebody else's page instead.
+   */
+  answer: string;
+  /**
+   * The question somebody types before they know this exists.
+   *
+   * Not the product name. Nobody searches for a tool they have not heard of;
+   * they search for the problem.
+   */
+  intent: string;
+  /**
+   * Self-contained question and answer pairs, shown on the page and emitted as
+   * FAQPage schema. Answers written to stand alone at roughly 40 to 60 words.
+   */
+  faq: { q: string; a: string }[];
+  /** ISO date. Freshness is a measured input to AI citation. */
+  updated: string;
   figure: FigureKey;
   /** Why that figure is on that page. Without this a schematic is decoration. */
   figureCaption: string;
@@ -98,6 +121,24 @@ export const PRODUCTS: Product[] = [
       "There is no retentive timer. TON and TOF only; an RTO has to be built from a counter or a latch.",
       "Ladder only. Structured Text is read and written by Convert but not drawn here.",
     ],
+    intent: "Is there a free online ladder logic editor with a real PLC simulator?",
+    answer:
+      "LADX Ladder is a browser based ladder logic editor with a scan accurate simulator behind it. It models the output image, holds edge memory per instruction, and runs timers on elapsed milliseconds rather than scan counts, so a rung behaves the way it would on a controller. It needs no account, no licence and no installation.",
+    updated: "2026-08-25",
+    faq: [
+      {
+        q: "Is LADX Ladder free to use?",
+        a: "Yes. The ladder editor and its simulator run entirely in the browser with no account, no licence and no server. Anything that uses a model needs a provider key you supply yourself, because LADX holds no shared inference key and does no metering.",
+      },
+      {
+        q: "Does the simulator behave like a real PLC?",
+        a: "It keeps an output image, so a coil written on rung twelve reaches rung thirteen in the same scan and rung four only on the next one. Edge memory is held per instruction, so a held button counts once. Timers count elapsed milliseconds, not scans. Most teaching simulators do none of these.",
+      },
+      {
+        q: "Which instructions does it support?",
+        a: "Twenty three: XIC, XIO, OTE, OTL, OTU, ONS, TON, TOF, CTU, CTD, RES, the six comparisons, MOV and the four arithmetic blocks, and JSR. Timer and counter members are addressable, so a contact can examine T1.DN and a bar can read T1.ACC.",
+      },
+    ],
     figure: "sealIn",
     figureCaption:
       "A seal-in rung. The pattern every start/stop circuit is built from, and the one the simulator is easiest to check against.",
@@ -137,6 +178,24 @@ export const PRODUCTS: Product[] = [
       "A compiler proves code is valid, not that it is correct. Simulation helps; it is not a safety case.",
       "Free models are rate-limited by the provider, not by us. The queue you occasionally hit is theirs.",
     ],
+    intent: "Can AI write PLC ladder logic that actually works?",
+    answer:
+      "It can, if something checks it before you see it. LADX generates ladder from a description and then runs a real IEC 61131-3 compiler and the editor's own validator over the result, sending the errors back to the model rather than to you. What arrives on the canvas has already been refused once if it was wrong.",
+    updated: "2026-08-25",
+    faq: [
+      {
+        q: "Why does ChatGPT get ladder logic wrong?",
+        a: "Because nothing checks it. A model asked for a seal-in will often write a latch leg containing only the motor contact, which latches the motor on and leaves the stop button doing nothing. It looks right and it is a defect. The fix is not a better prompt, it is a compiler in the loop.",
+      },
+      {
+        q: "Which AI models can LADX use?",
+        a: "Any of them, through your own key: OpenRouter, Anthropic, OpenAI, or any OpenAI compatible endpoint. Because generated code is validated before it is shown, a small free model is usually good enough, which is the practical point of validating rather than trusting.",
+      },
+      {
+        q: "Does my code get sent anywhere?",
+        a: "The prompt and the program go to the provider whose key you connected, and nowhere else. LADX stores no shared key and trains on nothing. The desktop build makes no outbound call at all and runs its model locally.",
+      },
+    ],
     figure: "aiLoop",
     figureCaption:
       "Generation is a loop rather than a single shot. That is what makes a small free model good enough to be useful.",
@@ -150,7 +209,7 @@ export const PRODUCTS: Product[] = [
     menuLine: "Ladder to ST, SCL, neutral text or PLCopen XML",
     open: { href: "/convert", label: "Open Convert" },
     summary:
-      "Read a program in, write it out as Structured Text, Siemens SCL, Rockwell neutral text or PLCopen XML. Every conversion comes with a report of what moved cleanly and what did not, and it all runs in your browser.",
+      "Take a program you have drawn or saved and write it out as IEC 61131-3 Structured Text, Siemens SCL, Rockwell neutral text or PLCopen XML. Every conversion comes with a report of what moved cleanly and what did not, and it all runs in your browser without uploading anything.",
     problem:
       "Cross-vendor migration has no automated path at all, and same-vendor tools leave markers everywhere. Either way somebody reads every rung, and on a large program that is the whole schedule.",
     does: [
@@ -175,6 +234,24 @@ export const PRODUCTS: Product[] = [
       "Bridged rungs, where a wire crosses between parallel branches, have no series/parallel form. They are refused and preserved rather than approximated.",
       "Anything unmapped stays as an annotated placeholder. It is never dropped, and never silently reinterpreted.",
       "Whole-project formats like .ACD and .ap1x need the desktop bridge and your own licensed IDE.",
+    ],
+    intent: "How do I convert a PLC program between Siemens, Rockwell and Structured Text?",
+    answer:
+      "LADX Convert reads a ladder program into one intermediate representation and writes it out as IEC 61131-3 Structured Text, Siemens SCL, Rockwell neutral text or PLCopen XML. Every conversion comes with a report saying what moved cleanly and what did not, and it runs in the browser without uploading anything.",
+    updated: "2026-08-25",
+    faq: [
+      {
+        q: "Can you convert Siemens to Allen Bradley automatically?",
+        a: "Logic converts; the things around it usually do not. Instruction behaviour, addressing conventions, timer semantics and data types differ enough that a fully automatic conversion is not honest. LADX converts what converts and reports the rest rather than producing something that compiles and behaves differently.",
+      },
+      {
+        q: "What is PLCopen XML and why use it?",
+        a: "A vendor neutral XML format defined by PLCopen for exchanging IEC 61131-3 programs. It is the closest thing this industry has to a portable file, and it is the shape of the intermediate representation LADX holds ladder in, so adding an output format is one writer rather than a converter per pair of platforms.",
+      },
+      {
+        q: "Is my program uploaded when I convert it?",
+        a: "No. Conversion runs in your browser. The program does not leave the machine, which matters when the program belongs to a client and the site's policy says it does not go to a cloud service.",
+      },
     ],
     figure: "irHub",
     figureCaption:
@@ -218,6 +295,24 @@ export const PRODUCTS: Product[] = [
       "DXF R12 ASCII is the interchange format. A DWG has to be exported to DXF from whatever wrote it.",
       "Two-dimensional only. There is no 3D modelling and none is planned.",
       "It draws what you tell it. It does not check that a breaker is rated for the load.",
+    ],
+    intent: "Is there CAD software for control panel and PLC schematic drawings?",
+    answer:
+      "LADX CAD is a drafting tool that opens on a finished sheet rather than an empty one. Eleven working templates numbered the way a control package is read, from cover and index through power distribution, PLC digital and analogue cards, safety and the panel general arrangement, with typed commands, object snap, dimensions and DXF in both directions.",
+    updated: "2026-08-25",
+    faq: [
+      {
+        q: "Can I import and export DXF?",
+        a: "Export works today. Import is on the plan, and it matters because it is what lets a panel builder start from the drawing they already have rather than redrawing it.",
+      },
+      {
+        q: "What drawing templates are included?",
+        a: "Eleven: cover sheet, drawing index, symbol legend, power distribution, control supply, PLC digital inputs, PLC digital outputs, PLC analogue, safety circuit, panel general arrangement and terminal schedule. They are numbered in the order a control package is read.",
+      },
+      {
+        q: "Does it work with the PLC tag table?",
+        a: "Not yet, and it is the single most valuable thing to add. The tags exist, the I/O drawing templates exist, and the line between them is currently drawn by hand.",
+      },
     ],
     figure: "wiring",
     figureCaption:
@@ -274,6 +369,24 @@ export const PRODUCTS: Product[] = [
       "It does not deploy to a panel. There is no download to a TP1500 or a PanelView, and an application is exported as its own document rather than as a vendor project file.",
       "Scripting is a small expression language over tags, not a programming language. It has no property access, no functions of its own and no way to reach the page, which is deliberate.",
     ],
+    intent: "Is there an HMI or SCADA builder that uses the PLC's own tag table?",
+    answer:
+      "LADX HMI binds screens directly to the ladder program's tag table rather than a second list kept in step by hand, so a screen cannot reference a tag the program renamed. Pick the panel size, draw the mimic from eighty seven symbols, define alarms to ISA-18.2, and press run: the same scan engine that drives the simulator drives the screen.",
+    updated: "2026-08-25",
+    faq: [
+      {
+        q: "Can I design an HMI screen without the PLC hardware?",
+        a: "Yes, and that is the point of it. The runtime is the ladder simulator, so a start button on glass starts the motor in the logic, the trend fills and the alarms evaluate, all at a desk with no controller and no panel present.",
+      },
+      {
+        q: "Does LADX HMI support ISA-18.2 alarms?",
+        a: "It implements the state machine: unacknowledged, acknowledged, returned but unacknowledged, shelved, suppressed and out of service, with deadband, on delay and shelving that expires. Acknowledging never clears an active alarm, which is the rule most implementations get wrong.",
+      },
+      {
+        q: "Can it deploy to a Siemens or Allen Bradley panel?",
+        a: "No. It designs, proves and documents the screens, and the connection settings are recorded for handover rather than dialled. Export to a panel runtime is the next thing on its list, and the product page says so rather than implying otherwise.",
+      },
+    ],
     figure: "tagBinding",
     figureCaption:
       "The ladder writes a tag, the screen reads the same tag by name. There is no second table between them to fall out of step.",
@@ -312,6 +425,24 @@ export const PRODUCTS: Product[] = [
       "It never connects to a controller. It is a simulation of your logic, not a view of a running plant.",
       "It proves the logic does what the logic says. It cannot know the encoder is wired backwards.",
       "A passing run here is evidence for a FAT, not a substitute for one.",
+    ],
+    intent: "How can I test PLC logic before the panel is built?",
+    answer:
+      "LADX Monitor runs any program you have saved at scan speed, lets you force inputs and watch every tag change, and records what happened. It is a bench test you can do before anybody books the panel shop, using the same scan engine the ladder editor simulates with rather than a separate model of it.",
+    updated: "2026-08-25",
+    faq: [
+      {
+        q: "Can I test PLC logic without a PLC?",
+        a: "Yes. Monitor runs the program on a scan accurate engine, so timers, edges and the output image behave as they would on a controller. It will not find a wiring fault or a wrong device, and it will find the logic errors, which are most of what gets found at a FAT.",
+      },
+      {
+        q: "Can I force inputs like an online PLC session?",
+        a: "Yes. Inputs are forceable and buttons spring back the way a real one does, so a momentary press is momentary. Every force and its effect is recorded in a sequence log, which is what makes a test repeatable rather than a memory.",
+      },
+      {
+        q: "Can the test be saved as a record?",
+        a: "Yes. A run can be saved against the project, which turns a bench test into something that can be attached to a factory acceptance test rather than described in a meeting.",
+      },
     ],
     figure: "scan",
     figureCaption:
@@ -354,6 +485,25 @@ export const PRODUCTS: Product[] = [
     limits: [
       "It is a project workspace. Scheduling lives next door in Planner, which does have a Gantt chart; neither does critical path or resource levelling.",
       "The plan tracks whether a deliverable exists, not whether it is any good. Reviewing is still a person's job.",
+    ],
+    intent:
+      "How do I keep a control system project's design basis, drawings and documents together?",
+    answer:
+      "A LADX project holds the design basis, the drawings, the programs and the documents, and knows which phase of the job it is in. Twenty two design questions are answered once and flow into every document, and the plan is generated from the deliverables the project actually owes rather than typed into a blank page.",
+    updated: "2026-08-25",
+    faq: [
+      {
+        q: "What is a project design basis?",
+        a: "The facts a project runs on: goal and scope, control platform, electrical and environmental conditions, safety requirements, operation and performance, compliance, and acceptance criteria. Written once, they stop every document restating them slightly differently.",
+      },
+      {
+        q: "Can I limit a project to programming only?",
+        a: "Yes. A project carries the set of deliverables it owes, and the presets run from programming only, three documents, to a full lifecycle of seventeen. Handing somebody writing logic a plan containing a bill of materials is noise they delete seventeen times.",
+      },
+      {
+        q: "Does changing the client name update the documents?",
+        a: "Yes. The client and site sit on the project and flow to every letterhead, title block and document number, so it is changed once rather than found in fifteen files.",
+      },
     ],
     figure: "lifecycle",
     figureCaption:
@@ -402,6 +552,24 @@ export const PRODUCTS: Product[] = [
       "Duration is in working days, and the working calendar is Monday to Friday. Public holidays are not modelled.",
       "It plans deliverables. Whether a deliverable is any good is still a person's job.",
     ],
+    intent: "Is there a Gantt chart that knows what an automation project actually owes?",
+    answer:
+      "LADX Planner draws every project on one timeline, seeded from the deliverables each job owes rather than from a blank page. Drag a bar to reschedule it, drag an edge to change its duration, and a dependency stops a task starting before the one it waits on has finished. Dates are stored as dates, so a plan drafted in London reads the same in Chennai.",
+    updated: "2026-08-25",
+    faq: [
+      {
+        q: "How is this different from a general project planner?",
+        a: "The tasks come from the deliverables the project owes, which the system already knows. Widen the scope from programming only to a full lifecycle and the plan grows to match, without disturbing work already under way. A general planner starts empty and stays whatever somebody last typed.",
+      },
+      {
+        q: "Can I import and export the plan?",
+        a: "Both, as CSV, with quoted fields and real date validation. A plan built in a spreadsheet can come in rather than being retyped, and the plan can go out to anyone who wants it in Excel.",
+      },
+      {
+        q: "Does it do resource levelling or critical path?",
+        a: "No. It shows what is planned and what depends on what. Resource levelling and critical path are not implemented and the page says so rather than implying otherwise.",
+      },
+    ],
     figure: "gantt",
     figureCaption:
       "Bars against real dates, with the dependency drawn because the chart enforces it, and a rule for today.",
@@ -440,6 +608,24 @@ export const PRODUCTS: Product[] = [
       "Generated documents need reviewing. They are a first draft that is right about the facts, not a finished submission.",
       "The templates follow common practice, not any one client's house standard. Expect to adapt sections.",
     ],
+    intent: "Where can I get automation project document templates that are already filled in?",
+    answer:
+      "LADX Documents holds seventeen working templates across specification, design, registers, safety, testing and handover, with the tables and sign-off blocks already in them. They fill from your project, so the client name, the site, the document number and the tag list arrive already correct rather than being typed a second time.",
+    updated: "2026-08-25",
+    faq: [
+      {
+        q: "What documents does an automation project need?",
+        a: "Commonly seventeen: URS, FDS, control narrative, software design specification, I/O list, bill of materials, cable schedule, cause and effect matrix, alarm and trip schedule, alarm rationalisation record, risk assessment, FAT, commissioning checklist, SAT, handover certificate, O and M manual, and change control.",
+      },
+      {
+        q: "Are the templates free to download?",
+        a: "Yes, and without an account. Fill in a few fields and the template downloads with them substituted; leave them blank and it downloads with square bracket placeholders. It is the template library, not a lead capture form.",
+      },
+      {
+        q: "Do the documents update when the project changes?",
+        a: "The I/O list comes from the tags, the narrative from the rungs and their comments, and the letterhead from the project and the client, so regenerating produces the current version. Change tracking between regenerations is on the plan.",
+      },
+    ],
     figure: "addressing",
     figureCaption:
       "An I/O schedule is generated from addresses like this one. That is why it does not need typing a second time.",
@@ -473,6 +659,24 @@ export const PRODUCTS: Product[] = [
     limits: [
       "It retrieves and quotes. It does not verify that the manual is the current revision; that is still on you.",
       "A scanned manual with no text layer is a picture. It needs a PDF with real text in it.",
+    ],
+    intent: "Can I ask questions of my own PLC and drive manuals?",
+    answer:
+      "LADX Knowledge indexes documents you upload, drive manuals, machine specifications, site standards, and answers questions using only passages from them, with the page each answer came from. Anything not in the documents comes back as not in the documents rather than as a plausible invention.",
+    updated: "2026-08-25",
+    faq: [
+      {
+        q: "How is this different from asking ChatGPT about a manual?",
+        a: "It answers only from passages retrieved out of your documents, and shows which passages it used. A general model asked about a specific drive parameter will produce a confident number from nowhere in particular, and there is no way to tell from the answer which kind you got.",
+      },
+      {
+        q: "What happens if the answer is not in my documents?",
+        a: "It says so. That is the behaviour worth having: a retrieval system that pads a gap with general knowledge is more dangerous than one that refuses, because the refusal is visible and the padding is not.",
+      },
+      {
+        q: "What file types can I upload?",
+        a: "Text and PDF today. Extraction from PDFs with heavy tables loses some structure, which matters because tables are where parameter values live, and improving it is on the plan.",
+      },
     ],
     figure: "citation",
     figureCaption:

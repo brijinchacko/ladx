@@ -8,10 +8,13 @@
 // The protocol is deliberately simple: publish a key file at the site root,
 // then POST a list of URLs. Yandex and Seznam honour the same submission.
 
+import { createHash, timingSafeEqual } from "node:crypto";
 import { POSTS } from "@/content/posts";
 import { PRODUCTS } from "@/content/products";
 import { TEMPLATES } from "@/content/templates";
+import { env } from "@/lib/env";
 import { CATEGORIES as FORUM_CATEGORIES } from "@/lib/forum/categories";
+import { INDEXNOW_LABEL } from "@/lib/seo/indexnow";
 import { SITE } from "@/lib/seo/schema";
 
 const ENDPOINT = "https://api.indexnow.org/IndexNow";
@@ -35,15 +38,31 @@ function allUrls(): string[] {
 }
 
 export async function POST(req: Request) {
-  const key = process.env.INDEXNOW_KEY;
+  const key = env.indexNowKey;
   if (!key) {
     return Response.json({ error: "INDEXNOW_KEY is not set" }, { status: 503 });
   }
 
-  // Only we may trigger a submission: an open endpoint would let anyone spend
-  // the site's crawl budget and look, from Bing's side, like us doing it.
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${key}`) {
+  /*
+   * Authorised by a token derived from the server's own secret, not by the
+   * IndexNow key.
+   *
+   * This used to compare the bearer against INDEXNOW_KEY, which cannot work:
+   * the IndexNow key is published at /indexnow.txt on purpose, because that is
+   * how the protocol proves ownership. Using the published value as the bearer
+   * meant anybody who read the key file could trigger submissions, spend the
+   * crawl budget and, from Bing's side, look exactly like us doing it.
+   */
+  const secret = env.secretsKey;
+  if (!secret) {
+    return Response.json({ error: "server not configured" }, { status: 503 });
+  }
+  const expected = createHash("sha256").update(`${INDEXNOW_LABEL}${secret}`).digest("hex");
+  const given = (req.headers.get("authorization") ?? "").replace(/^Bearer /, "");
+  if (
+    given.length !== expected.length ||
+    !timingSafeEqual(Buffer.from(given), Buffer.from(expected))
+  ) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -62,7 +81,8 @@ export async function POST(req: Request) {
     body: JSON.stringify({
       host,
       key,
-      keyLocation: `${SITE.url}/${key}.txt`,
+      // A fixed path Next can actually serve. See app/indexnow.txt/route.ts.
+      keyLocation: `${SITE.url}/indexnow.txt`,
       urlList,
     }),
   });

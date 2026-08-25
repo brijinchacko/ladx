@@ -21,7 +21,7 @@ export async function GET() {
     "",
     `> ${SITE.description}`,
     "",
-    "LADX is vendor-neutral: it reads and writes Rockwell, Siemens, Beckhoff and CODESYS formats through one intermediate representation based on PLCopen TC6. Generated PLC code is compiled and statically checked before it is shown, and the ladder simulator models the output image, per-instruction edge memory and elapsed-time timers.",
+    "LADX is vendor-neutral: ladder is held in one intermediate representation based on PLCopen TC6, and written out as IEC 61131-3 Structured Text, Siemens SCL, Rockwell neutral text or PLCopen XML. Reading a vendor project file back in is not built yet. Generated PLC code is compiled and statically checked before it is shown, and the ladder simulator models the output image, per-instruction edge memory and elapsed-time timers.",
     "",
     "## Products",
     "",

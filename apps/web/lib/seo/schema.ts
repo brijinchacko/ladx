@@ -48,6 +48,16 @@ export function organizationSchema() {
     url: SITE.url,
     logo: { "@type": "ImageObject", url: abs(SITE.logo), width: 512, height: 512 },
     description: SITE.description,
+    /*
+     * What this organisation is about, as things rather than keywords.
+     *
+     * The list grew when the writing did. An entity that is recognised for
+     * ladder logic and nothing else does not get cited on a functional safety
+     * question, however good the article is, so the subjects the site actually
+     * covers in depth are declared here. Every one of these has at least three
+     * substantial articles behind it; a term with nothing behind it is a claim
+     * rather than a signal.
+     */
     knowsAbout: [
       "Programmable logic controllers",
       "Ladder logic",
@@ -56,8 +66,35 @@ export function organizationSchema() {
       "Industrial automation",
       "PLC programming",
       "SCADA",
+      "Human machine interface",
       "PLCopen",
+      "Functional safety",
+      "ISO 13849",
+      "ISA-101",
+      "ISA-18.2 alarm management",
+      "ISA-88 batch control",
+      "Industrial networking",
+      "OPC UA",
+      "Variable frequency drives",
+      "Control panel design",
+      "Process instrumentation",
+      "GAMP 5",
     ],
+    /*
+     * Where the people are, and who it is for.
+     *
+     * Not a local business, so no address schema and no local pack to compete
+     * in. What these do carry is the geographic and audience context an answer
+     * engine uses when a question has a country in it, and the honest answer
+     * is that the software is used anywhere and the company is in one place.
+     */
+    areaServed: { "@type": "Place", name: "Worldwide" },
+    foundingLocation: { "@type": "Place", name: "United Kingdom" },
+    audience: {
+      "@type": "Audience",
+      audienceType: "Automation engineers, control system integrators, machine builders",
+    },
+    sameAs: [] as string[],
   };
 }
 
@@ -165,6 +202,94 @@ export function faqSchema(items: QA[], pageUrl: string) {
       "@type": "Question",
       name: item.q,
       acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  };
+}
+
+/* ───────────────────────────── products ───────────────────────────── */
+
+export interface ProductSchemaInput {
+  slug: string;
+  name: string;
+  tagline: string;
+  summary: string;
+  /** The direct answer, which is also what a retrieval system quotes. */
+  answer: string;
+  /** Section headings from the page, which make a credible feature list. */
+  features: string[];
+  updated: string;
+  /** Where it opens, when it opens somewhere. */
+  href?: string;
+}
+
+/**
+ * One tool, as a SoftwareApplication.
+ *
+ * Per product rather than one for the whole suite. Ten tools described by a
+ * single record is a record that describes none of them, and the question a
+ * person asks an answer engine is about one tool: is there a browser ladder
+ * editor, is there an HMI builder that binds to the PLC tags.
+ *
+ * `offers` at zero is accurate and load bearing. There is no billing layer, no
+ * metering and no paywall, and an omitted price reads to a retrieval system as
+ * an unknown rather than as free.
+ */
+export function productSchema(p: ProductSchemaInput) {
+  const url = `${SITE.url}/products/${p.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "@id": `${url}#software`,
+    name: `LADX ${p.name}`,
+    alternateName: p.name,
+    headline: p.tagline,
+    applicationCategory: "DeveloperApplication",
+    applicationSubCategory: "Industrial automation and PLC engineering",
+    operatingSystem: "Web browser",
+    url,
+    description: p.answer,
+    abstract: p.summary,
+    softwareVersion: "2026.8",
+    dateModified: p.updated,
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+    },
+    featureList: p.features,
+    isPartOf: { "@id": `${SITE.url}/#website` },
+    publisher: { "@id": `${SITE.url}/#organization` },
+    inLanguage: "en",
+    ...(p.href ? { installUrl: abs(p.href) } : {}),
+  };
+}
+
+/**
+ * The product index, as an ordered list.
+ *
+ * An ItemList tells a retrieval system that this page enumerates things and
+ * what they are, which is what turns "what tools does LADX have" into a list
+ * rather than a paragraph somebody has to parse.
+ */
+export function itemListSchema(input: {
+  url: string;
+  name: string;
+  items: { name: string; description: string; path: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${abs(input.url)}#list`,
+    name: input.name,
+    numberOfItems: input.items.length,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    itemListElement: input.items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      description: item.description,
+      url: abs(item.path),
     })),
   };
 }

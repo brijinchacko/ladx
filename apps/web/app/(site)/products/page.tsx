@@ -1,8 +1,10 @@
 import { IrHub, ValidationLoop } from "@/components/site/schematics";
-import { GROUP_META, GROUP_ORDER, STATE_META, productsIn } from "@/content/products";
+import { GROUP_META, GROUP_ORDER, PRODUCTS, STATE_META, productsIn } from "@/content/products";
+import { SITE, breadcrumbSchema, itemListSchema, jsonLd } from "@/lib/seo/schema";
 import Link from "next/link";
 
 export const metadata = {
+  alternates: { canonical: `${SITE.url}/products` },
   title: "Products",
   description:
     "Ten tools on one project: a ladder editor with a real simulator, validated AI code generation, an HMI builder on the same tag table, CAD for the panel drawings, cross-platform conversion, a logic monitor, a Gantt planner, project and document generation, and a knowledge base over your own manuals.",
@@ -11,6 +13,37 @@ export const metadata = {
 export default function ProductsPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-16">
+      {/*
+        An ItemList, because this page enumerates things and a retrieval system
+        asked "what tools does LADX have" should get the list rather than have
+        to parse it out of prose.
+      */}
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD has no other insertion point.
+        dangerouslySetInnerHTML={jsonLd(
+          itemListSchema({
+            url: "/products",
+            name: "LADX tools for automation engineers",
+            items: PRODUCTS.map((p) => ({
+              name: p.name,
+              description: p.tagline,
+              path: `/products/${p.slug}`,
+            })),
+          }),
+        )}
+      />
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD has no other insertion point.
+        dangerouslySetInnerHTML={jsonLd(
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Products", path: "/products" },
+          ]),
+        )}
+      />
+
       <header className="mb-14 max-w-2xl">
         <p className="mb-3 font-mono text-[11.5px] font-semibold uppercase tracking-[0.18em] text-ink-400">
           Products
@@ -29,8 +62,9 @@ export default function ProductsPage() {
       <div className="mb-16 rounded-sm border border-ink-100 bg-white p-7">
         <IrHub className="w-full text-ink-800" />
         <p className="mt-4 text-center text-[13px] text-ink-400">
-          Every format is read into one representation and written back out of it, which is why
-          adding a vendor gives every other vendor a new destination.
+          One intermediate representation, written out to every format, which is why adding a vendor
+          gives every other vendor a new destination. Reading a vendor project back in is the half
+          that is not built yet.
         </p>
       </div>
 

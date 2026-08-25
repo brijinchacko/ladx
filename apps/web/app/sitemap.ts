@@ -17,11 +17,38 @@ import type { MetadataRoute } from "next";
  * measurably more AI citations, and a sitemap that claims everything changed
  * today teaches a crawler to ignore the field.
  */
+/**
+ * The newest date among a set of ISO dates, or undefined if there are none.
+ *
+ * An index page's lastModified is the newest thing it lists. That is both true
+ * and useful: /resources genuinely changes when an article is added, and
+ * claiming otherwise on either side, never changing or changing daily, teaches
+ * a crawler to disregard the field.
+ */
+function newest(dates: (string | undefined)[]): Date | undefined {
+  const real = dates.filter((d): d is string => Boolean(d)).sort();
+  const last = real[real.length - 1];
+  return last ? new Date(last) : undefined;
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
+  const newestPost = newest(POSTS.map((p) => p.updated ?? p.published));
+  const newestProduct = newest(PRODUCTS.map((p) => p.updated));
+
   const staticPages: MetadataRoute.Sitemap = [
-    { url: SITE.url, changeFrequency: "weekly", priority: 1 },
-    { url: `${SITE.url}/products`, changeFrequency: "monthly", priority: 0.9 },
-    { url: `${SITE.url}/resources`, changeFrequency: "weekly", priority: 0.9 },
+    { url: SITE.url, lastModified: newestProduct, changeFrequency: "weekly", priority: 1 },
+    {
+      url: `${SITE.url}/products`,
+      lastModified: newestProduct,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: `${SITE.url}/resources`,
+      lastModified: newestPost,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
     { url: `${SITE.url}/ladder`, changeFrequency: "monthly", priority: 0.9 },
     // The template library is the strongest thing here for search: an engineer
     // looking for a FAT protocol wants a file, and these pages hand them one.
@@ -46,8 +73,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const productPages: MetadataRoute.Sitemap = PRODUCTS.map((p) => ({
     url: `${SITE.url}/products/${p.slug}`,
+    lastModified: new Date(p.updated),
     changeFrequency: "monthly",
-    priority: 0.8,
+    // The tools are what somebody is looking for when they are ready to use
+    // something, so they outrank the writing that brought them here.
+    priority: 0.9,
   }));
 
   const postPages: MetadataRoute.Sitemap = POSTS.map((p) => ({
