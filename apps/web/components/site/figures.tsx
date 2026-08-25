@@ -1200,6 +1200,394 @@ export function AlarmFigure({ className }: { className?: string }) {
   );
 }
 
+/**
+ * A safety function, drawn as the chain it actually is.
+ *
+ * The point people miss when they ask "is my machine SIL 2": the rating
+ * belongs to the whole chain from sensor to actuator, not to the safety relay
+ * in the middle of it. A PL d logic block behind a single-channel switch is a
+ * single-channel safety function.
+ */
+export function SafetyChainFigure({ className }: { className?: string }) {
+  const links = [
+    { label: "Sensor", sub: "guard switch" },
+    { label: "Logic", sub: "relay or safety PLC" },
+    { label: "Actuator", sub: "contactor" },
+  ];
+  return (
+    <svg
+      viewBox="0 0 560 170"
+      className={className}
+      role="img"
+      aria-label="A safety function drawn as three links in a chain, sensor to logic to actuator, with the rating applying to the whole chain"
+    >
+      <title>The safety chain, and where the rating applies</title>
+      {links.map((l, i) => {
+        const x = 40 + i * 172;
+        return (
+          <g key={l.label}>
+            <rect
+              x={x}
+              y="46"
+              width="132"
+              height="52"
+              rx="4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              opacity="0.55"
+            />
+            <text x={x + 66} y="70" fontSize="13" textAnchor="middle" fill="currentColor">
+              {l.label}
+            </text>
+            <text
+              x={x + 66}
+              y="85"
+              fontSize="9.5"
+              textAnchor="middle"
+              fill="currentColor"
+              opacity="0.45"
+              fontFamily="ui-monospace, monospace"
+            >
+              {l.sub}
+            </text>
+            {/* two channels, because one channel is the thing that caps the rating */}
+            {i < links.length - 1 && (
+              <>
+                <line
+                  x1={x + 132}
+                  y1="60"
+                  x2={x + 172}
+                  y2="60"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  opacity="0.5"
+                />
+                <line
+                  x1={x + 132}
+                  y1="84"
+                  x2={x + 172}
+                  y2="84"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  opacity="0.5"
+                />
+              </>
+            )}
+          </g>
+        );
+      })}
+      <line
+        x1="40"
+        y1="122"
+        x2="516"
+        y2="122"
+        stroke="rgb(var(--ladx-teal, 53 182 186))"
+        strokeWidth="1.4"
+      />
+      <text
+        x="278"
+        y="140"
+        fontSize="10.5"
+        textAnchor="middle"
+        fill="rgb(var(--ladx-teal, 53 182 186))"
+        fontFamily="ui-monospace, monospace"
+      >
+        THE RATING APPLIES TO ALL OF THIS, NOT TO ONE BOX
+      </text>
+      <text
+        x="40"
+        y="30"
+        fontSize="9.5"
+        fill="currentColor"
+        opacity="0.45"
+        fontFamily="ui-monospace, monospace"
+      >
+        ONE SAFETY FUNCTION
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * An operator screen, laid out the way ISA-101 asks for.
+ *
+ * Grey everywhere and colour in one place. The figure is the argument: on a
+ * screen where nothing is coloured until it is wrong, the one coloured thing
+ * is found without looking for it.
+ */
+export function HmiLayoutFigure({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 560 210"
+      className={className}
+      role="img"
+      aria-label="An operator screen with a quiet grey mimic and a single coloured alarm, showing colour reserved for deviation"
+    >
+      <title>A quiet screen, with colour reserved for what is wrong</title>
+      <rect x="20" y="20" width="520" height="152" rx="3" fill="currentColor" opacity="0.045" />
+      <rect
+        x="20"
+        y="20"
+        width="520"
+        height="152"
+        rx="3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        opacity="0.3"
+      />
+
+      {/* the alarm banner, always at the top and never covered */}
+      <rect x="28" y="28" width="504" height="20" rx="2" fill="#B4531A" opacity="0.85" />
+      <text x="36" y="42" fontSize="10" fill="#fff" fontFamily="ui-monospace, monospace">
+        HI HI TANK 2 LEVEL 92% UNACKNOWLEDGED
+      </text>
+
+      {/* pipework and vessels, deliberately flat and grey */}
+      <rect
+        x="44"
+        y="70"
+        width="70"
+        height="76"
+        rx="3"
+        fill="currentColor"
+        opacity="0.14"
+        stroke="currentColor"
+        strokeWidth="1"
+      />
+      <rect x="44" y="112" width="70" height="34" rx="3" fill="currentColor" opacity="0.22" />
+      <text
+        x="79"
+        y="160"
+        fontSize="9"
+        textAnchor="middle"
+        fill="currentColor"
+        opacity="0.5"
+        fontFamily="ui-monospace, monospace"
+      >
+        TANK 1
+      </text>
+
+      <rect
+        x="180"
+        y="70"
+        width="70"
+        height="76"
+        rx="3"
+        fill="currentColor"
+        opacity="0.14"
+        stroke="#B4531A"
+        strokeWidth="1.6"
+      />
+      <rect x="180" y="76" width="70" height="70" rx="3" fill="#B4531A" opacity="0.5" />
+      <text
+        x="215"
+        y="160"
+        fontSize="9"
+        textAnchor="middle"
+        fill="#B4531A"
+        fontFamily="ui-monospace, monospace"
+      >
+        TANK 2
+      </text>
+
+      <line
+        x1="114"
+        y1="108"
+        x2="180"
+        y2="108"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        opacity="0.28"
+      />
+      <line
+        x1="250"
+        y1="108"
+        x2="330"
+        y2="108"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        opacity="0.28"
+      />
+      <circle
+        cx="330"
+        cy="108"
+        r="14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        opacity="0.4"
+      />
+      <text
+        x="330"
+        y="112"
+        fontSize="9"
+        textAnchor="middle"
+        fill="currentColor"
+        opacity="0.5"
+        fontFamily="ui-monospace, monospace"
+      >
+        P1
+      </text>
+
+      {/* numbers, right aligned and monospaced, the way numbers are read */}
+      {[
+        ["FLOW", "412 l/min"],
+        ["TEMP", "64.2 C"],
+        ["RUN", "18:42"],
+      ].map(([k, v], i) => (
+        <g key={k}>
+          <text
+            x="392"
+            y={82 + i * 22}
+            fontSize="9"
+            fill="currentColor"
+            opacity="0.45"
+            fontFamily="ui-monospace, monospace"
+          >
+            {k}
+          </text>
+          <text
+            x="524"
+            y={82 + i * 22}
+            fontSize="11"
+            textAnchor="end"
+            fill="currentColor"
+            opacity="0.8"
+            fontFamily="ui-monospace, monospace"
+          >
+            {v}
+          </text>
+        </g>
+      ))}
+
+      <text x="20" y="196" fontSize="9" fill="currentColor" opacity="0.45">
+        Everything healthy is grey. The only coloured thing on the glass is the thing that is wrong.
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * A drive, its motor and its feedback, as a loop.
+ *
+ * Drawn because the commonest drive question is really about which loop is
+ * closed: open loop volts per hertz, sensorless vector, or closed loop with an
+ * encoder. The difference is a single line on this diagram.
+ */
+export function DriveLoopFigure({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 560 180"
+      className={className}
+      role="img"
+      aria-label="A variable speed drive feeding a motor, with an encoder feedback path drawn as the line that distinguishes closed loop control"
+    >
+      <title>The drive loop, and the line that closes it</title>
+
+      {[
+        { x: 30, w: 96, label: "Setpoint", sub: "from the PLC" },
+        { x: 166, w: 118, label: "Drive", sub: "V/f, vector" },
+        { x: 324, w: 96, label: "Motor", sub: "3 phase" },
+        { x: 460, w: 76, label: "Load", sub: "" },
+      ].map((b) => (
+        <g key={b.label}>
+          <rect
+            x={b.x}
+            y="40"
+            width={b.w}
+            height="48"
+            rx="4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            opacity="0.55"
+          />
+          <text x={b.x + b.w / 2} y="62" fontSize="12" textAnchor="middle" fill="currentColor">
+            {b.label}
+          </text>
+          {b.sub && (
+            <text
+              x={b.x + b.w / 2}
+              y="76"
+              fontSize="9"
+              textAnchor="middle"
+              fill="currentColor"
+              opacity="0.45"
+              fontFamily="ui-monospace, monospace"
+            >
+              {b.sub}
+            </text>
+          )}
+        </g>
+      ))}
+
+      {[126, 284, 420].map((x) => (
+        <line
+          key={x}
+          x1={x}
+          y1="64"
+          x2={x + 40}
+          y2="64"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          opacity="0.5"
+        />
+      ))}
+
+      {/* the feedback path: the whole difference between the three control modes */}
+      <circle
+        cx="372"
+        cy="120"
+        r="13"
+        fill="none"
+        stroke="rgb(var(--ladx-teal, 53 182 186))"
+        strokeWidth="1.4"
+      />
+      <text
+        x="372"
+        y="124"
+        fontSize="9"
+        textAnchor="middle"
+        fill="rgb(var(--ladx-teal, 53 182 186))"
+        fontFamily="ui-monospace, monospace"
+      >
+        ENC
+      </text>
+      <line
+        x1="372"
+        y1="88"
+        x2="372"
+        y2="107"
+        stroke="rgb(var(--ladx-teal, 53 182 186))"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M 359 120 L 225 120 L 225 88"
+        fill="none"
+        stroke="rgb(var(--ladx-teal, 53 182 186))"
+        strokeWidth="1.4"
+        strokeDasharray="4 3"
+      />
+      <text
+        x="238"
+        y="136"
+        fontSize="9.5"
+        fill="rgb(var(--ladx-teal, 53 182 186))"
+        fontFamily="ui-monospace, monospace"
+      >
+        CLOSED LOOP ONLY
+      </text>
+
+      <text x="30" y="166" fontSize="9" fill="currentColor" opacity="0.45">
+        Without the dashed line the drive is guessing at speed from current and voltage. That is the
+        whole difference between sensorless vector and closed loop.
+      </text>
+    </svg>
+  );
+}
+
 const MAP = {
   scan: ScanCycle,
   outputImage: OutputImageFigure,
@@ -1217,6 +1605,9 @@ const MAP = {
   alarm: AlarmFigure,
   migration: MigrationFigure,
   aiLoop: AiLoopFigure,
+  safetyChain: SafetyChainFigure,
+  hmiLayout: HmiLayoutFigure,
+  driveLoop: DriveLoopFigure,
 } as const;
 
 export type FigureKey = keyof typeof MAP;

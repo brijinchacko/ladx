@@ -32,10 +32,12 @@ export default function ResourcesPage() {
           Writing for people who program machines
         </h1>
         <p className="mt-5 text-[16px] leading-relaxed text-ink-600">
-          Half of this is the fundamentals: scan cycles, timers, analog scaling, addressing. Those
-          are the questions that actually get asked, every week, forever. The other half is what AI
-          is and is not doing in this industry, written by people who have to make it work rather
-          than sell it.
+          The fundamentals first: scan cycles, timers, analog scaling, addressing. Those are the
+          questions that get asked every week, forever. Then the ground where the answers online get
+          thinner, which is where most of a working week actually goes: functional safety, operator
+          screens, drives, fieldbus, instrumentation, panel building and the regulated industries.
+          And what AI is and is not doing in this trade, written by people who have to make it work
+          rather than sell it.
         </p>
         <p className="mt-3 font-mono text-[12.5px] text-ink-400">
           {all.length} articles across {topics.length} topics
@@ -100,18 +102,32 @@ export default function ResourcesPage() {
             <ul className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
               {posts.map((post) => (
                 <li key={post.slug}>
-                  <Link href={`/resources/${post.slug}`} className="group block">
-                    <figure className="mb-4 border border-ink-100 bg-white p-4 transition-colors group-hover:border-ink-300">
-                      <ArticleFigure name={post.figure} className="h-28 w-full text-ink-800" />
-                    </figure>
+                  {/*
+                    No figure on the cards. Each one used to inline its whole
+                    schematic at 112 pixels tall, which is below the size any
+                    of them can be read at, and a hundred of them made this
+                    page 2.6 MB. A diagram too small to read is decoration, and
+                    decoration that costs two and a half megabytes on the page
+                    most likely to be somebody's first is a bad trade. The
+                    figure is still on the lead article above, where it is
+                    large enough to be worth looking at, and on the article
+                    itself.
+                  */}
+                  <Link
+                    href={`/resources/${post.slug}`}
+                    className="group block border-l-2 border-ink-100 pl-4 transition-colors hover:border-teal-500"
+                  >
                     <h3 className="font-display text-[1.05rem] font-bold leading-snug tracking-[-0.01em] text-ink-900 group-hover:text-teal-700">
                       {post.title}
                     </h3>
                     <p className="mt-2 text-[13.5px] leading-relaxed text-ink-500">
                       {post.summary}
                     </p>
+                    <p className="mt-2.5 font-mono text-[11px] leading-snug text-ink-400">
+                      {post.intent}
+                    </p>
                     <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-300">
-                      {post.minutes} min
+                      {post.minutes} min read
                     </p>
                   </Link>
                 </li>

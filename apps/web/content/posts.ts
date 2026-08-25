@@ -1,4 +1,5 @@
 import type { FigureKey } from "@/components/site/figures";
+import { MORE_POSTS } from "@/content/posts-more";
 
 /**
  * Articles.
@@ -22,7 +23,13 @@ export type Topic =
   | "Languages"
   | "Networking"
   | "AI"
-  | "Practice";
+  | "Practice"
+  | "Safety"
+  | "HMI & SCADA"
+  | "Drives & Motion"
+  | "Instrumentation"
+  | "Panel & Electrical"
+  | "Compliance";
 
 export type Post = {
   slug: string;
@@ -61,7 +68,13 @@ export type Post = {
   body: string[];
 };
 
-export const POSTS: Post[] = [
+/**
+ * The first set: fundamentals, instructions, platforms and the AI argument.
+ *
+ * Split from the second set only because one file of a hundred articles is a
+ * file nobody opens. `POSTS` below is what everything else reads.
+ */
+const CORE_POSTS: Post[] = [
   {
     slug: "plc-scan-cycle-explained",
     title: "What actually happens in one PLC scan",
@@ -2023,6 +2036,23 @@ export const POSTS: Post[] = [
   },
 ];
 
+/**
+ * Everything, in one list.
+ *
+ * Order here is irrelevant: every reader of POSTS sorts by date. Slugs are
+ * checked for collisions at module load rather than left to be discovered as
+ * two articles quietly sharing a URL.
+ */
+export const POSTS: Post[] = [...CORE_POSTS, ...MORE_POSTS];
+
+const seen = new Set<string>();
+for (const post of POSTS) {
+  if (seen.has(post.slug)) {
+    throw new Error(`Two articles share the slug "${post.slug}". One of them has no URL.`);
+  }
+  seen.add(post.slug);
+}
+
 export const TOPICS = [
   "All",
   "Fundamentals",
@@ -2032,6 +2062,12 @@ export const TOPICS = [
   "Migration",
   "Languages",
   "Networking",
+  "Safety",
+  "HMI & SCADA",
+  "Drives & Motion",
+  "Instrumentation",
+  "Panel & Electrical",
+  "Compliance",
   "AI",
   "Practice",
 ] as const;
