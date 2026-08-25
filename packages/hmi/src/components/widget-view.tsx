@@ -1,11 +1,11 @@
 "use client";
 
-import type { EvalContext } from "@/lib/hmi/expression";
-import { resolveBool, resolveNumber } from "@/lib/hmi/runtime";
-import { fitSvg } from "@/lib/hmi/svg-import";
-import { SymbolView } from "@/lib/hmi/symbols";
-import type { Widget } from "@/lib/hmi/types";
 import type { ReactNode } from "react";
+import type { EvalContext } from "../lib/expression";
+import { resolveBool, resolveNumber } from "../lib/runtime";
+import { fitSvg } from "../lib/svg-import";
+import { SymbolView } from "../lib/symbols";
+import type { Widget } from "../lib/types";
 
 /**
  * One widget, drawn.

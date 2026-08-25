@@ -1,4 +1,4 @@
-import type { ScreenSize } from "@/lib/hmi/types";
+import type { ScreenSize } from "./types";
 
 /**
  * The screen to draw for.

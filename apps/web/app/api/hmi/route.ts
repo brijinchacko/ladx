@@ -4,9 +4,9 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { hmiProjects } from "@/lib/db/schema";
-import { sanitiseSize } from "@/lib/hmi/panels";
-import { emptyDoc } from "@/lib/hmi/types";
 import { getProject } from "@/lib/platform/queries";
+import { sanitiseSize } from "@ladx/hmi";
+import { emptyDoc } from "@ladx/hmi";
 import { desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";

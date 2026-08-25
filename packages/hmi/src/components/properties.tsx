@@ -1,12 +1,12 @@
 "use client";
 
-import ColourField from "@/components/hmi/colour-field";
-import { sanitiseSvg } from "@/lib/hmi/svg-import";
-import { allSymbols, isRealistic } from "@/lib/hmi/symbols";
-import type { LineStyle, Screen, TextStyle, Widget } from "@/lib/hmi/types";
 import type { Tag } from "@ladx/studio";
 import { ImagePlus, Trash2, X } from "lucide-react";
 import { useRef, useState } from "react";
+import { sanitiseSvg } from "../lib/svg-import";
+import { allSymbols, isRealistic } from "../lib/symbols";
+import type { LineStyle, Screen, TextStyle, Widget } from "../lib/types";
+import ColourField from "./colour-field";
 
 /**
  * Everything about the selected object.

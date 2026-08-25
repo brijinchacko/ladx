@@ -1,6 +1,6 @@
-import { type EvalContext, evaluate } from "@/lib/hmi/expression";
-import type { Binding, HmiTag, TagRef } from "@/lib/hmi/types";
 import type { Tag } from "@ladx/studio";
+import { type EvalContext, evaluate } from "./expression";
+import type { Binding, HmiTag, TagRef } from "./types";
 
 /**
  * What the screen can see.

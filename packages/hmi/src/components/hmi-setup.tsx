@@ -1,8 +1,11 @@
 "use client";
 
-import { type BulkOptions, DEFAULT_BULK, buildBulkAlarms } from "@/lib/hmi/alarm-bulk";
-import { PANEL_PRESETS, sanitiseSize } from "@/lib/hmi/panels";
-import { getSymbol } from "@/lib/hmi/symbols";
+import type { Tag } from "@ladx/studio";
+import { Layers, Plus, Trash2, X } from "lucide-react";
+import { useState } from "react";
+import { type BulkOptions, DEFAULT_BULK, buildBulkAlarms } from "../lib/alarm-bulk";
+import { PANEL_PRESETS, sanitiseSize } from "../lib/panels";
+import { getSymbol } from "../lib/symbols";
 import type {
   AlarmCondition,
   AlarmDef,
@@ -12,10 +15,7 @@ import type {
   Protocol,
   Screen,
   TrendDef,
-} from "@/lib/hmi/types";
-import type { Tag } from "@ladx/studio";
-import { Layers, Plus, Trash2, X } from "lucide-react";
-import { useState } from "react";
+} from "../lib/types";
 
 /**
  * Everything about the application that is not a drawing.

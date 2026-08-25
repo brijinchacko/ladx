@@ -1,13 +1,25 @@
 "use client";
 
 import { Logo } from "@ladx/ui";
-import { Folder, MessageSquare, Settings } from "lucide-react";
+import {
+  Activity,
+  Folder,
+  GitCompareArrows,
+  Grid2x2Check,
+  MessageSquare,
+  MonitorCog,
+  Settings,
+} from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 const nav = [
   { href: "/", label: "Home", icon: Folder },
   { href: "/chat", label: "Chat", icon: MessageSquare },
+  { href: "/ladder", label: "Ladder", icon: Grid2x2Check },
+  { href: "/monitor", label: "Monitor", icon: Activity },
+  { href: "/hmi", label: "HMI", icon: MonitorCog },
+  { href: "/convert", label: "Convert", icon: GitCompareArrows },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

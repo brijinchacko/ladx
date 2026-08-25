@@ -58,6 +58,14 @@ pub fn run() {
             commands::conversations::list_messages,
             commands::conversations::append_message,
             commands::conversations::delete_conversation,
+            commands::designs::ladder_load,
+            commands::designs::ladder_save,
+            commands::designs::ladder_list,
+            commands::designs::hmi_list,
+            commands::designs::hmi_get,
+            commands::designs::hmi_create,
+            commands::designs::hmi_save,
+            commands::designs::hmi_delete,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

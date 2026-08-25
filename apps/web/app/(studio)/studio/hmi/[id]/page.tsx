@@ -1,9 +1,9 @@
-import HmiEditor from "@/components/hmi/hmi-editor";
+import HmiEditorClient from "@/components/studio/hmi-editor-client";
 import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { hmiProjects, ladderPrograms } from "@/lib/db/schema";
-import { type HmiDoc, emptyDoc } from "@/lib/hmi/types";
 import { getProject } from "@/lib/platform/queries";
+import { type HmiDoc, emptyDoc } from "@ladx/hmi";
 import type { LadxProgram } from "@ladx/studio";
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
@@ -48,7 +48,7 @@ export default async function HmiEditorPage({ params }: { params: Promise<{ id: 
     doc && Array.isArray(doc.screens) && doc.screens.length > 0 ? doc : emptyDoc(row.name);
 
   return (
-    <HmiEditor
+    <HmiEditorClient
       id={row.id}
       initialDoc={safe}
       initialName={row.name}

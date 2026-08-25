@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@ladx/design-system": "workspace:*",
+    "@ladx/hmi": "workspace:*",
+    "@ladx/studio": "workspace:*",
     "@ladx/types": "workspace:*",
     "@ladx/ui": "workspace:*",
     "@tauri-apps/api": "^2.0.3",

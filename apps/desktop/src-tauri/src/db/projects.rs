@@ -61,8 +61,11 @@ impl ProjectsDb {
             ON projects (parsed_at DESC);
             "#,
         )?;
-        // Conversations + messages live in the same DB.
+        // Conversations, messages, ladder programs and HMI applications all
+        // live in the same DB: one file to back up, and one lock to reason
+        // about.
         super::conversations::apply_schema(&conn)?;
+        super::designs::apply_schema(&conn)?;
         Ok(Self {
             conn: Mutex::new(conn),
         })

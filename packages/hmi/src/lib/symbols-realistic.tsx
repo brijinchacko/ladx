@@ -1,5 +1,5 @@
-import type { SymbolProps } from "@/lib/hmi/symbols";
 import type { ReactNode } from "react";
+import type { SymbolProps } from "./symbols";
 
 /**
  * The realistic style.

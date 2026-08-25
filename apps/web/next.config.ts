@@ -11,7 +11,13 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   reactStrictMode: true,
   distDir: process.env.NODE_ENV === "production" ? ".next-build" : ".next",
-  transpilePackages: ["@ladx/ui", "@ladx/studio", "@ladx/design-system", "@ladx/types"],
+  transpilePackages: [
+    "@ladx/hmi",
+    "@ladx/ui",
+    "@ladx/studio",
+    "@ladx/design-system",
+    "@ladx/types",
+  ],
 
   /**
    * The application moved under one /studio prefix.

@@ -1,7 +1,5 @@
 "use client";
 
-import { type Layout, PANELS, type PanelId, clamp, isMoved, panel } from "@/lib/hmi/panels-layout";
-import type { HmiDoc } from "@/lib/hmi/types";
 import {
   Bell,
   ChevronDown,
@@ -13,6 +11,8 @@ import {
   X,
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type Layout, PANELS, type PanelId, clamp, isMoved, panel } from "../lib/panels-layout";
+import type { HmiDoc } from "../lib/types";
 
 /* ─────────────────────────────── menu bar ─────────────────────────────── */
 

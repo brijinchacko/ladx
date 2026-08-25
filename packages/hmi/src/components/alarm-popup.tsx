@@ -1,6 +1,6 @@
 "use client";
 
-import { PRIORITY_TONE } from "@/components/hmi/widget-view";
+import { PRIORITY_TONE } from "./widget-view";
 
 /**
  * The alarm popup, inside the panel.

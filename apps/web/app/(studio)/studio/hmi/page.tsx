@@ -1,10 +1,11 @@
-import HmiHome, { type HmiRow } from "@/components/hmi/hmi-home";
+import HmiHomeClient from "@/components/studio/hmi-home-client";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { hmiProjects } from "@/lib/db/schema";
-import type { HmiDoc } from "@/lib/hmi/types";
 import { listProjects } from "@/lib/platform/queries";
+import type { HmiRow } from "@ladx/hmi";
+import type { HmiDoc } from "@ladx/hmi";
 import { desc, eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ export default async function HmiPage({
         title="HMI"
         subtitle="Operator screens, bound to the same tags the ladder runs on."
       />
-      <HmiHome
+      <HmiHomeClient
         applications={applications}
         projects={projects.map((p) => ({ id: p.id, name: p.name }))}
         defaultProjectId={wanted && nameOf.has(wanted) ? wanted : null}

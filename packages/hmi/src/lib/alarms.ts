@@ -1,4 +1,4 @@
-import type { AlarmDef, AlarmPriority } from "@/lib/hmi/types";
+import type { AlarmDef, AlarmPriority } from "./types";
 
 /**
  * The alarm state machine from ISA-18.2, and the evaluation that drives it.

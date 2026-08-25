@@ -1,6 +1,6 @@
-import { EXTRA_SYMBOLS } from "@/lib/hmi/symbols-extra";
-import { drawRealistic, hasRealistic } from "@/lib/hmi/symbols-realistic";
 import { type ReactNode, useId } from "react";
+import { EXTRA_SYMBOLS } from "./symbols-extra";
+import { drawRealistic, hasRealistic } from "./symbols-realistic";
 
 /**
  * The symbol library.

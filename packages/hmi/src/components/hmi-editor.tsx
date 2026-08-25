@@ -1,16 +1,8 @@
 "use client";
-import AlarmPopup from "@/components/hmi/alarm-popup";
-import {
-  ContextMenu,
-  type Menu,
-  MenuBar,
-  Panel,
-  PanelDock,
-  ProjectTree,
-} from "@/components/hmi/hmi-chrome";
-import HmiSetup from "@/components/hmi/hmi-setup";
-import Properties from "@/components/hmi/properties";
-import WidgetView, { type LiveData } from "@/components/hmi/widget-view";
+import { type LadxProgram, type Tag, scan } from "@ladx/studio";
+import { Bell, Loader2, Maximize2, Play, Plus, Save, Square } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   type AlarmRuntime,
   acknowledge,
@@ -20,7 +12,7 @@ import {
   priorityRank,
   sortForSummary,
   stepAlarm,
-} from "@/lib/hmi/alarms";
+} from "../lib/alarms";
 import {
   type History,
   emptyHistory,
@@ -30,8 +22,8 @@ import {
   push as histPush,
   redo as histRedo,
   undo as histUndo,
-} from "@/lib/hmi/history";
-import { PANEL_GROUPS, PANEL_PRESETS, presetFor } from "@/lib/hmi/panels";
+} from "../lib/history";
+import { PANEL_GROUPS, PANEL_PRESETS, presetFor } from "../lib/panels";
 import {
   DEFAULT_LAYOUT,
   type Layout,
@@ -39,7 +31,7 @@ import {
   type PanelId,
   loadLayout,
   saveLayout,
-} from "@/lib/hmi/panels-layout";
+} from "../lib/panels-layout";
 import {
   type TagSpace,
   TrendBuffer,
@@ -48,14 +40,15 @@ import {
   makeContext,
   resolveNumber,
   writeTag,
-} from "@/lib/hmi/runtime";
-import { sanitiseSvg } from "@/lib/hmi/svg-import";
-import { SYMBOL_CATEGORIES, searchSymbols, symbolsIn } from "@/lib/hmi/symbols";
-import type { Action, AlarmDef, AlarmPriority, HmiDoc, Widget, WidgetKind } from "@/lib/hmi/types";
-import { type LadxProgram, type Tag, scan } from "@ladx/studio";
-import { Bell, Loader2, Maximize2, Play, Plus, Save, Square } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+} from "../lib/runtime";
+import { sanitiseSvg } from "../lib/svg-import";
+import { SYMBOL_CATEGORIES, searchSymbols, symbolsIn } from "../lib/symbols";
+import type { Action, AlarmDef, AlarmPriority, HmiDoc, Widget, WidgetKind } from "../lib/types";
+import AlarmPopup from "./alarm-popup";
+import { ContextMenu, type Menu, MenuBar, Panel, PanelDock, ProjectTree } from "./hmi-chrome";
+import HmiSetup from "./hmi-setup";
+import Properties from "./properties";
+import WidgetView, { type LiveData } from "./widget-view";
 
 /**
  * The HMI builder.
@@ -80,6 +73,20 @@ interface Rect {
   h: number;
 }
 
+/**
+ * Where an application is stored.
+ *
+ * A prop rather than a call, because the two surfaces keep it in completely
+ * different places: the web PUTs it at an API route, the desktop writes it to
+ * local SQLite through Tauri and is forbidden from making an HTTP call at all.
+ * Returns whether it landed, so the editor knows when to stop showing dirty.
+ */
+export type SaveApplication = (input: {
+  id: string;
+  name: string;
+  doc: HmiDoc;
+}) => Promise<boolean>;
+
 export interface HmiEditorProps {
   id: string;
   initialDoc: HmiDoc;
@@ -87,6 +94,9 @@ export interface HmiEditorProps {
   /** The project's ladder program, which is where the PLC tags come from. */
   program: LadxProgram | null;
   projectName: string | null;
+  onSave: SaveApplication;
+  /** Where File > Close goes. The two surfaces mount the list at different paths. */
+  closeHref?: string;
 }
 
 export default function HmiEditor({
@@ -95,6 +105,8 @@ export default function HmiEditor({
   initialName,
   program,
   projectName,
+  onSave,
+  closeHref = "/studio/hmi",
 }: HmiEditorProps) {
   /**
    * The document, held as an undo stack.
@@ -733,12 +745,7 @@ export default function HmiEditor({
   async function save() {
     setSaving(true);
     try {
-      const res = await fetch(`/api/hmi/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, doc }),
-      });
-      if (res.ok) setDirty(false);
+      if (await onSave({ id, name, doc })) setDirty(false);
     } finally {
       setSaving(false);
     }
@@ -889,7 +896,7 @@ export default function HmiEditor({
         { label: "Import JSON…", onSelect: () => docRef.current?.click() },
         { label: "Import symbol (SVG)…", onSelect: () => svgRef.current?.click() },
         { label: "", separator: true },
-        { label: "Close", onSelect: () => router.push("/studio/hmi") },
+        { label: "Close", onSelect: () => router.push(closeHref) },
       ],
     },
     {

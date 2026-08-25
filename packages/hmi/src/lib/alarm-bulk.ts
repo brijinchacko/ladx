@@ -1,5 +1,5 @@
-import type { AlarmCondition, AlarmDef, AlarmPriority } from "@/lib/hmi/types";
 import type { Tag } from "@ladx/studio";
+import type { AlarmCondition, AlarmDef, AlarmPriority } from "./types";
 
 /**
  * Making alarms in bulk.

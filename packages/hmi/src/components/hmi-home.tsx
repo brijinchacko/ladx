@@ -1,10 +1,10 @@
 "use client";
 
-import { PANEL_GROUPS, PANEL_PRESETS, type PanelPreset } from "@/lib/hmi/panels";
 import { Clock, Loader2, MonitorCog } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { PANEL_GROUPS, PANEL_PRESETS, type PanelPreset } from "../lib/panels";
 
 export interface HmiRow {
   id: string;
@@ -24,14 +24,27 @@ export interface HmiRow {
  * discovered has to be moved. So the size is picked here, with the resolution
  * stated plainly rather than hidden behind a model number.
  */
+/** Create an application and return its id, or null if it could not be made. */
+export type CreateApplication = (input: {
+  name: string;
+  projectId: string | null;
+  width: number;
+  height: number;
+}) => Promise<string | null>;
+
 export default function HmiHome({
   applications,
   projects,
   defaultProjectId,
+  onCreate,
+  hrefFor = (id) => `/studio/hmi/${id}`,
 }: {
   applications: HmiRow[];
   projects: { id: string; name: string }[];
   defaultProjectId?: string | null;
+  onCreate: CreateApplication;
+  /** Where an application opens. The desktop uses a query, being a static export. */
+  hrefFor?: (id: string) => string;
 }) {
   const router = useRouter();
   const [projectId, setProjectId] = useState(defaultProjectId ?? projects[0]?.id ?? "");
@@ -41,19 +54,14 @@ export default function HmiHome({
   async function create(preset: PanelPreset) {
     setBusy(preset.id);
     try {
-      const res = await fetch("/api/hmi", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim() || `${preset.label} application`,
-          projectId: projectId || null,
-          width: preset.size.width,
-          height: preset.size.height,
-        }),
+      const id = await onCreate({
+        name: name.trim() || `${preset.label} application`,
+        projectId: projectId || null,
+        width: preset.size.width,
+        height: preset.size.height,
       });
-      if (!res.ok) return;
-      const { id } = (await res.json()) as { id: string };
-      router.push(`/studio/hmi/${id}`);
+      if (!id) return;
+      router.push(hrefFor(id));
       router.refresh();
     } finally {
       setBusy(null);
@@ -101,7 +109,7 @@ export default function HmiHome({
               {applications.map((a) => (
                 <li key={a.id}>
                   <Link
-                    href={`/studio/hmi/${a.id}`}
+                    href={hrefFor(a.id)}
                     className="group flex h-full flex-col rounded-md border border-ink-200 bg-white p-3 transition-colors hover:border-ink-400"
                   >
                     <span className="truncate text-[13.5px] font-medium text-ink-900 group-hover:text-teal-700">

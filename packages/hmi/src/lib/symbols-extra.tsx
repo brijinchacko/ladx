@@ -1,4 +1,4 @@
-import type { SymbolDef, SymbolProps } from "@/lib/hmi/symbols";
+import type { SymbolDef, SymbolProps } from "./symbols";
 
 /**
  * The rest of the library.

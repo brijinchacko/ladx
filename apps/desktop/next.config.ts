@@ -6,7 +6,13 @@ const config: NextConfig = {
   output: "export",
   reactStrictMode: true,
   images: { unoptimized: true },
-  transpilePackages: ["@ladx/ui", "@ladx/design-system", "@ladx/types"],
+  transpilePackages: [
+    "@ladx/hmi",
+    "@ladx/studio",
+    "@ladx/ui",
+    "@ladx/design-system",
+    "@ladx/types",
+  ],
 };
 
 export default config;
