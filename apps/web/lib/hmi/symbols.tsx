@@ -1,5 +1,6 @@
 import { EXTRA_SYMBOLS } from "@/lib/hmi/symbols-extra";
-import type { ReactNode } from "react";
+import { drawRealistic, hasRealistic } from "@/lib/hmi/symbols-realistic";
+import { type ReactNode, useId } from "react";
 
 /**
  * The symbol library.
@@ -690,14 +691,38 @@ export function searchSymbols(query: string): SymbolDef[] {
  * pixels and a designer who stretches a tank to fit a mimic wants it stretched,
  * not letterboxed inside its own frame.
  */
+/** Which drawing of a piece of equipment to use. */
+export type SymbolStyle = "schematic" | "realistic";
+
+/** Whether this symbol has a realistic drawing, so the UI can offer the choice. */
+export function isRealistic(id: string): boolean {
+  return hasRealistic(id);
+}
+
 export function SymbolView({
   id,
   width,
   height,
+  style = "schematic",
   ...props
-}: SymbolProps & { id: string; width: number; height: number }) {
+}: SymbolProps & {
+  id: string;
+  width: number;
+  height: number;
+  style?: SymbolStyle;
+}) {
   const def = BY_ID.get(id);
+  // Every gradient inside is keyed on this. Two tanks on one screen with the
+  // same gradient id would both take whichever definition rendered last, so
+  // one of them silently shades wrong.
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   if (!def) return null;
+
+  // Falls back rather than drawing nothing: most of the library is schematic
+  // only, and a missing realistic drawing must not leave a hole on the panel.
+  const body =
+    style === "realistic" && hasRealistic(id) ? drawRealistic(id, props, uid) : def.draw(props);
+
   return (
     <svg
       viewBox="0 0 100 100"
@@ -707,7 +732,7 @@ export function SymbolView({
       role="img"
       aria-label={def.name}
     >
-      {def.draw(props)}
+      {body}
     </svg>
   );
 }

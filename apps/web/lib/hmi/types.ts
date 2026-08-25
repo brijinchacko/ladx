@@ -294,6 +294,15 @@ export interface HmiDoc {
   name: string;
   /** The panel this was drawn for, so a new screen inherits it. */
   defaultSize: ScreenSize;
+  /**
+   * How equipment is drawn.
+   *
+   * Schematic is the ISA-101 answer and the default: flat and grey, so colour
+   * means deviation. Realistic suits an equipment or overview screen, where
+   * recognising the machine matters more than spotting an alarm. Per document,
+   * overridable per object.
+   */
+  symbolStyle?: "schematic" | "realistic";
   screens: Screen[];
   /** The screen shown on start. Falls back to the first. */
   homeSlug?: string;

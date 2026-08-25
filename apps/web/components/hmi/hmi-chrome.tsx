@@ -432,3 +432,92 @@ export function ProjectTree({
     </div>
   );
 }
+
+/* ─────────────────────────── context menu ─────────────────────────── */
+
+export interface CtxItem {
+  label?: string;
+  shortcut?: string;
+  disabled?: boolean;
+  sep?: boolean;
+  onSelect?: () => void;
+}
+
+/**
+ * The right-click menu.
+ *
+ * Flipped back inside the window when it would open off the edge, which is
+ * what happens every time somebody right-clicks an object near the bottom of a
+ * panel: a menu that opens below the fold is a menu nobody can use.
+ */
+export function ContextMenu({
+  at,
+  items,
+  onClose,
+}: {
+  at: { x: number; y: number };
+  items: CtxItem[];
+  hasSelection?: boolean;
+  canPaste?: boolean;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ x: at.x, y: at.y });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setPos({
+      x: Math.min(at.x, window.innerWidth - r.width - 8),
+      y: Math.min(at.y, window.innerHeight - r.height - 8),
+    });
+  }, [at.x, at.y]);
+
+  useEffect(() => {
+    const close = () => onClose();
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    // Captured, so a click anywhere dismisses it before that click does
+    // anything else.
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      style={{ left: pos.x, top: pos.y }}
+      className="fixed z-[60] min-w-[190px] border border-ink-200 bg-white py-1 shadow-xl"
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      {items.map((it, i) =>
+        it.sep ? (
+          <div
+            key={`after-${items[i - 1]?.label ?? "top"}`}
+            className="my-1 border-t border-ink-100"
+          />
+        ) : (
+          <button
+            key={it.label}
+            type="button"
+            disabled={it.disabled}
+            onClick={() => {
+              onClose();
+              it.onSelect?.();
+            }}
+            className="flex w-full items-center gap-4 px-3 py-1 text-left text-[12.5px] text-ink-700 transition-colors hover:bg-ink-50 disabled:opacity-35 disabled:hover:bg-transparent"
+          >
+            <span className="flex-1">{it.label}</span>
+            {it.shortcut && (
+              <span className="font-mono text-[10.5px] text-ink-400">{it.shortcut}</span>
+            )}
+          </button>
+        ),
+      )}
+    </div>
+  );
+}

@@ -1,5 +1,13 @@
 "use client";
-import { type Menu, MenuBar, Panel, PanelDock, ProjectTree } from "@/components/hmi/hmi-chrome";
+import ColourField from "@/components/hmi/colour-field";
+import {
+  ContextMenu,
+  type Menu,
+  MenuBar,
+  Panel,
+  PanelDock,
+  ProjectTree,
+} from "@/components/hmi/hmi-chrome";
 import HmiSetup from "@/components/hmi/hmi-setup";
 import WidgetView, { type LiveData } from "@/components/hmi/widget-view";
 import {
@@ -86,6 +94,22 @@ export default function HmiEditor({
   const [focus, setFocus] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
   const [importNote, setImportNote] = useState<string | null>(null);
+  /**
+   * Where the right-click menu is and what it is about.
+   *
+   * `x`/`y` are viewport pixels for placing the menu; `px`/`py` are panel
+   * coordinates, kept so Paste lands where the pointer was rather than where
+   * the last copy happened to be.
+   */
+  const [ctxMenu, setCtxMenu] = useState<{
+    x: number;
+    y: number;
+    id: string | null;
+    px?: number;
+    py?: number;
+  } | null>(null);
+  /** The clipboard, in memory. A copied widget survives switching screens. */
+  const clipboard = useRef<Widget | null>(null);
   const [setupTab, setSetupTab] = useState<"screen" | "tags" | "alarms" | "trends" | "connection">(
     "alarms",
   );
@@ -274,6 +298,27 @@ export default function HmiEditor({
 
   const scale = zoom === "fit" ? fitScale : zoom;
 
+  /**
+   * Step through the zoom levels.
+   *
+   * From "fit" the first step starts at whatever fit currently is, so zooming
+   * in from a fitted view does not jump to 100% and lose the place.
+   */
+  const STEPS = [0.25, 0.35, 0.5, 0.75, 1, 1.5, 2, 3];
+  const nudgeZoom = useCallback(
+    (dir: 1 | -1) => {
+      setZoom((z) => {
+        const cur = z === "fit" ? fitScale : z;
+        const next =
+          dir > 0
+            ? STEPS.find((v) => v > cur + 0.001)
+            : [...STEPS].reverse().find((v) => v < cur - 0.001);
+        return next ?? cur;
+      });
+    },
+    [fitScale],
+  );
+
   /* ── editing ── */
 
   const update = useCallback((fn: (d: HmiDoc) => HmiDoc) => {
@@ -367,6 +412,41 @@ export default function HmiEditor({
       });
     },
     [selected, screenId, update],
+  );
+
+  const copySelected = useCallback(() => {
+    const w = screen?.widgets.find((x) => x.id === selected);
+    if (w) clipboard.current = structuredClone(w);
+  }, [screen, selected]);
+
+  /**
+   * Paste onto the current screen.
+   *
+   * Offset from the original, and given a fresh id: pasting an object with the
+   * id it was copied from would make two widgets that the selection, the
+   * property pane and the renderer all treat as the same one.
+   */
+  const paste = useCallback(
+    (at?: { x: number; y: number }) => {
+      const src = clipboard.current;
+      if (!src) return;
+      const nid = `w${Math.random().toString(36).slice(2, 9)}`;
+      update((d) => {
+        const sc = d.screens.find((x) => x.id === screenId);
+        sc?.widgets.push({
+          ...structuredClone(src),
+          id: nid,
+          rect: {
+            ...src.rect,
+            x: at ? Math.round(at.x / GRID) * GRID : src.rect.x + GRID * 2,
+            y: at ? Math.round(at.y / GRID) * GRID : src.rect.y + GRID * 2,
+          },
+        });
+        return d;
+      });
+      setSelected(nid);
+    },
+    [screenId, update],
   );
 
   const addScreen = useCallback(() => {
@@ -595,6 +675,33 @@ export default function HmiEditor({
         void save();
       }
       if (e.key === "Escape" && focus) setFocus(false);
+      const mod = e.metaKey || e.ctrlKey;
+      // Ignored while typing, or Cmd+C in a tag name would copy the widget.
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement)?.tagName ?? "");
+      if (mod && !typing) {
+        if (e.key === "c") copySelected();
+        if (e.key === "v") paste();
+        if (e.key === "d") {
+          e.preventDefault();
+          duplicateSelected();
+        }
+        if (e.key === "x") {
+          copySelected();
+          deleteSelected();
+        }
+        if (e.key === "=" || e.key === "+") {
+          e.preventDefault();
+          nudgeZoom(1);
+        }
+        if (e.key === "-") {
+          e.preventDefault();
+          nudgeZoom(-1);
+        }
+        if (e.key === "0") {
+          e.preventDefault();
+          setZoom("fit");
+        }
+      }
       if (e.key === "Delete" && selected && !running) {
         update((d) => {
           const sc = d.screens.find((s) => s.id === screenId);
@@ -696,6 +803,17 @@ export default function HmiEditor({
         { label: "Fit", onSelect: () => setZoom("fit"), checked: zoom === "fit" },
         { label: "100%", onSelect: () => setZoom(1), checked: zoom === 1 },
         { label: "Full screen", onSelect: () => setFocus((f) => !f), checked: focus },
+        { label: "", separator: true },
+        {
+          label: "Schematic symbols",
+          checked: (doc.symbolStyle ?? "schematic") === "schematic",
+          onSelect: () => update((d) => ({ ...d, symbolStyle: "schematic" })),
+        },
+        {
+          label: "Realistic symbols",
+          checked: doc.symbolStyle === "realistic",
+          onSelect: () => update((d) => ({ ...d, symbolStyle: "realistic" })),
+        },
         { label: "", separator: true },
         {
           label: "Reset layout",
@@ -820,6 +938,22 @@ export default function HmiEditor({
           >
             Setup
           </button>
+          <button
+            type="button"
+            onClick={() => nudgeZoom(-1)}
+            title="Zoom out"
+            className="rounded-md border border-ink-200 bg-white px-1.5 py-1 text-[12px] text-ink-700 hover:border-ink-400"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            onClick={() => nudgeZoom(1)}
+            title="Zoom in"
+            className="rounded-md border border-ink-200 bg-white px-1.5 py-1 text-[12px] text-ink-700 hover:border-ink-400"
+          >
+            +
+          </button>
           <select
             value={zoom === "fit" ? "fit" : String(zoom)}
             onChange={(e) => setZoom(e.target.value === "fit" ? "fit" : Number(e.target.value))}
@@ -827,10 +961,11 @@ export default function HmiEditor({
             className="rounded-md border border-ink-200 bg-white px-1.5 py-1 text-[11.5px] outline-none"
           >
             <option value="fit">Fit · {Math.round(fitScale * 100)}%</option>
-            <option value="0.5">50%</option>
-            <option value="0.75">75%</option>
-            <option value="1">100%</option>
-            <option value="1.5">150%</option>
+            {STEPS.map((v) => (
+              <option key={v} value={String(v)}>
+                {Math.round(v * 100)}%
+              </option>
+            ))}
           </select>
           <button
             type="button"
@@ -873,7 +1008,17 @@ export default function HmiEditor({
 
         {/* centre: the panel, with properties docked under it */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <div ref={stageRef} className="min-h-0 flex-1 overflow-auto bg-ink-100/50 p-6">
+          <div
+            ref={stageRef}
+            onWheel={(e) => {
+              // Only with a modifier: a plain wheel must still scroll the stage,
+              // which is what somebody panning a large panel expects.
+              if (!e.ctrlKey && !e.metaKey) return;
+              e.preventDefault();
+              nudgeZoom(e.deltaY < 0 ? 1 : -1);
+            }}
+            className="min-h-0 flex-1 overflow-auto bg-ink-100/50 p-6"
+          >
             <div
               style={{
                 width: screen.size.width * scale,
@@ -886,6 +1031,19 @@ export default function HmiEditor({
                 onPointerMove={onDrag}
                 onPointerUp={endDrag}
                 onPointerLeave={endDrag}
+                onContextMenu={(e) => {
+                  if (running) return;
+                  e.preventDefault();
+                  const box = canvasRef.current?.getBoundingClientRect();
+                  setSelected(null);
+                  setCtxMenu({
+                    x: e.clientX,
+                    y: e.clientY,
+                    id: null,
+                    px: box ? (e.clientX - box.left) / scaleRef.current : undefined,
+                    py: box ? (e.clientY - box.top) / scaleRef.current : undefined,
+                  });
+                }}
                 style={{
                   width: screen.size.width,
                   height: screen.size.height,
@@ -913,6 +1071,12 @@ export default function HmiEditor({
                       {!running && (
                         <div
                           onPointerDown={(e) => startDrag(e, w)}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSelected(w.id);
+                            setCtxMenu({ x: e.clientX, y: e.clientY, id: w.id });
+                          }}
                           style={{
                             position: "absolute",
                             left: w.rect.x,
@@ -929,6 +1093,7 @@ export default function HmiEditor({
                           widget={w}
                           ctx={ctx}
                           live={running}
+                          defaultStyle={doc.symbolStyle ?? "schematic"}
                           data={liveData(w)}
                           onPress={() => fire(w.onPress)}
                           onRelease={() => fire(w.onRelease)}
@@ -1065,6 +1230,55 @@ export default function HmiEditor({
         </p>
       )}
 
+      {ctxMenu && !running && (
+        <ContextMenu
+          at={ctxMenu}
+          hasSelection={Boolean(ctxMenu.id)}
+          canPaste={Boolean(clipboard.current)}
+          onClose={() => setCtxMenu(null)}
+          items={
+            ctxMenu.id
+              ? [
+                  {
+                    label: "Cut",
+                    shortcut: "Cmd X",
+                    onSelect: () => {
+                      copySelected();
+                      deleteSelected();
+                    },
+                  },
+                  { label: "Copy", shortcut: "Cmd C", onSelect: copySelected },
+                  { label: "Duplicate", shortcut: "Cmd D", onSelect: duplicateSelected },
+                  { label: "Delete", shortcut: "Del", onSelect: deleteSelected },
+                  { sep: true },
+                  { label: "Bring to front", onSelect: () => reorder("front") },
+                  { label: "Send to back", onSelect: () => reorder("back") },
+                  { sep: true },
+                  {
+                    label: layout.properties.open ? "Properties" : "Show properties",
+                    onSelect: () => setPanel("properties", { open: true }),
+                  },
+                ]
+              : [
+                  {
+                    label: "Paste",
+                    shortcut: "Cmd V",
+                    disabled: !clipboard.current,
+                    onSelect: () =>
+                      paste(
+                        ctxMenu.px !== undefined && ctxMenu.py !== undefined
+                          ? { x: ctxMenu.px, y: ctxMenu.py }
+                          : undefined,
+                      ),
+                  },
+                  { sep: true },
+                  { label: "Screen settings…", onSelect: () => openSetup("screen") },
+                  { label: "Fit to window", onSelect: () => setZoom("fit") },
+                ]
+          }
+        />
+      )}
+
       <PanelDock
         layout={layout}
         onOpen={(id) => setPanel(id, { open: true })}
@@ -1178,6 +1392,47 @@ function Tools({
 }) {
   const [q, setQ] = useState("");
   const hits = q.trim() ? searchSymbols(q) : null;
+  /**
+   * Which categories are open.
+   *
+   * Twelve categories at once is a wall. Objects and the first two are open to
+   * start, and the choice is remembered, because somebody drawing a conveyor
+   * line does not want to reopen Conveying every time they come back.
+   */
+  /**
+   * Which categories are open.
+   *
+   * Twelve at once is a wall, so a few start open and the choice is
+   * remembered. Restored in an effect rather than seeded from localStorage in
+   * the initialiser: storage does not exist while the server renders, and
+   * seeding from it makes the first client render disagree with the HTML,
+   * which React reports as a hydration failure and then throws the tree away.
+   */
+  const [openCats, setOpenCats] = useState<Record<string, boolean>>({
+    Objects: true,
+    Vessels: true,
+    "Pumps and fans": true,
+  });
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("ladx.hmi.tools.v1");
+      if (raw) setOpenCats(JSON.parse(raw) as Record<string, boolean>);
+    } catch {
+      // A remembered preference is not worth an error in front of somebody.
+    }
+  }, []);
+
+  const toggleCat = (c: string) =>
+    setOpenCats((o) => {
+      const next = { ...o, [c]: !o[c] };
+      try {
+        window.localStorage.setItem("ladx.hmi.tools.v1", JSON.stringify(next));
+      } catch {
+        // as above
+      }
+      return next;
+    });
 
   return (
     <div className="space-y-3 p-2">
@@ -1221,6 +1476,25 @@ function Tools({
         className="w-full rounded-sm border border-ink-200 px-2 py-1 text-[12px] outline-none placeholder:text-ink-300 focus:border-ink-500"
       />
 
+      <div className="flex items-center gap-2 text-[11px]">
+        <button
+          type="button"
+          onClick={() =>
+            setOpenCats(Object.fromEntries(["Objects", ...SYMBOL_CATEGORIES].map((c) => [c, true])))
+          }
+          className="text-ink-500 hover:text-teal-700"
+        >
+          Expand all
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpenCats({})}
+          className="text-ink-500 hover:text-teal-700"
+        >
+          Collapse all
+        </button>
+      </div>
+
       {hits ? (
         <div>
           <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
@@ -1242,51 +1516,83 @@ function Tools({
         </div>
       ) : (
         <>
-          <div>
-            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
-              Objects
-            </p>
-            <div className="grid grid-cols-2 gap-1">
-              {BASIC.map((b) => (
-                <button
-                  key={b.kind}
-                  type="button"
-                  onClick={() => onAdd(b.kind)}
-                  className="rounded-sm border border-ink-200 bg-white px-1.5 py-1 text-left text-[11.5px] text-ink-700 transition-colors hover:border-teal-500"
-                >
-                  {b.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <Category
+            name="Objects"
+            count={BASIC.length}
+            open={openCats.Objects !== false}
+            onToggle={() => toggleCat("Objects")}
+          >
+            {BASIC.map((b) => (
+              <button
+                key={b.kind}
+                type="button"
+                onClick={() => onAdd(b.kind)}
+                className="rounded-sm border border-ink-200 bg-white px-1.5 py-1 text-left text-[11.5px] text-ink-700 transition-colors hover:border-teal-500"
+              >
+                {b.label}
+              </button>
+            ))}
+          </Category>
 
           {SYMBOL_CATEGORIES.map((cat) => {
             const items = symbolsIn(cat);
             if (items.length === 0) return null;
             return (
-              <div key={cat}>
-                <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
-                  {cat}
-                  <span className="ml-1 tabular-nums text-ink-300">{items.length}</span>
-                </p>
-                <div className="grid grid-cols-2 gap-1">
-                  {items.map((sym) => (
-                    <button
-                      key={sym.id}
-                      type="button"
-                      onClick={() => onAdd("symbol", sym.id)}
-                      title={sym.name}
-                      className="truncate rounded-sm border border-ink-200 bg-white px-1.5 py-1 text-left text-[11.5px] text-ink-700 transition-colors hover:border-teal-500"
-                    >
-                      {sym.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <Category
+                key={cat}
+                name={cat}
+                count={items.length}
+                open={Boolean(openCats[cat])}
+                onToggle={() => toggleCat(cat)}
+              >
+                {items.map((sym) => (
+                  <button
+                    key={sym.id}
+                    type="button"
+                    onClick={() => onAdd("symbol", sym.id)}
+                    title={sym.name}
+                    className="truncate rounded-sm border border-ink-200 bg-white px-1.5 py-1 text-left text-[11.5px] text-ink-700 transition-colors hover:border-teal-500"
+                  >
+                    {sym.name}
+                  </button>
+                ))}
+              </Category>
             );
           })}
         </>
       )}
+    </div>
+  );
+}
+
+/** One collapsible group in the tools pane. */
+function Category({
+  name,
+  count,
+  open,
+  onToggle,
+  children,
+}: {
+  name: string;
+  count: number;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center gap-1 py-0.5 text-left"
+      >
+        <span className="w-3 shrink-0 font-mono text-[9px] text-ink-400">{open ? "▾" : "▸"}</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
+          {name}
+        </span>
+        <span className="ml-auto font-mono text-[9.5px] tabular-nums text-ink-300">{count}</span>
+      </button>
+      {open && <div className="mb-1 grid grid-cols-2 gap-1">{children}</div>}
     </div>
   );
 }
@@ -1497,20 +1803,19 @@ function Properties({
         </Row>
       )}
 
-      <Row label="Colours">
-        <input
-          type="color"
+      <div className="grid grid-cols-2 gap-2">
+        <ColourField
+          label="Fill"
           value={w.fill ?? "#D8DCDF"}
-          onChange={(e) => onChange({ fill: e.target.value })}
-          className="h-6 w-10"
+          onChange={(c) => onChange({ fill: c })}
+          allowNone
         />
-        <input
-          type="color"
+        <ColourField
+          label="Line"
           value={w.stroke ?? "#3A4550"}
-          onChange={(e) => onChange({ stroke: e.target.value })}
-          className="h-6 w-10"
+          onChange={(c) => onChange({ stroke: c })}
         />
-      </Row>
+      </div>
 
       {(w.kind === "bar" || w.kind === "gauge" || w.kind === "symbol" || w.kind === "numeric") && (
         <Row label="Range">
@@ -1665,16 +1970,17 @@ function Properties({
           className={`${numBox} w-full font-mono`}
         />
         {w.animations?.[0] && (
-          <input
-            type="color"
-            value={w.animations[0].fill ?? "#B4531A"}
-            onChange={(e) => {
-              const first = w.animations?.[0];
-              if (!first) return;
-              onChange({ animations: [{ ...first, fill: e.target.value }] });
-            }}
-            className="mt-1 h-6 w-10"
-          />
+          <div className="mt-1">
+            <ColourField
+              label="Then this colour"
+              value={w.animations[0].fill ?? "#B4531A"}
+              onChange={(c) => {
+                const first = w.animations?.[0];
+                if (!first) return;
+                onChange({ animations: [{ ...first, fill: c }] });
+              }}
+            />
+          </div>
         )}
         <p className="mt-1 text-[11px] leading-snug text-ink-400">
           ISA-101: grey at rest, colour only when something has deviated.

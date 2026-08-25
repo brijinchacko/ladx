@@ -41,6 +41,8 @@ export interface WidgetViewProps {
   ctx: EvalContext;
   live: boolean;
   data?: LiveData;
+  /** The document's style. A widget can override it for one object. */
+  defaultStyle?: "schematic" | "realistic";
   onPress?: () => void;
   onRelease?: () => void;
   /** Reported so the editor can show which widget has a bad binding. */
@@ -82,6 +84,7 @@ export default function WidgetView({
   ctx,
   live,
   data,
+  defaultStyle = "schematic",
   onPress,
   onRelease,
 }: WidgetViewProps) {
@@ -356,6 +359,7 @@ export default function WidgetView({
         return (
           <SymbolView
             id={w.symbol ?? "tank"}
+            style={(w.config?.style as "schematic" | "realistic") ?? defaultStyle}
             width={width}
             height={height}
             fill={fill}
