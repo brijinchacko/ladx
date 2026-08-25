@@ -162,3 +162,14 @@
     opacity: 0.6;
   }
 }
+
+/* The alarm ticker. Scrolled by CSS rather than a timer: driving it from the
+   scan loop would re-render the whole screen every frame. */
+@keyframes ladx-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}

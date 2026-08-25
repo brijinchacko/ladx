@@ -1,5 +1,6 @@
 "use client";
 
+import { type BulkOptions, DEFAULT_BULK, buildBulkAlarms } from "@/lib/hmi/alarm-bulk";
 import { PANEL_PRESETS, sanitiseSize } from "@/lib/hmi/panels";
 import { getSymbol } from "@/lib/hmi/symbols";
 import type {
@@ -13,7 +14,7 @@ import type {
   TrendDef,
 } from "@/lib/hmi/types";
 import type { Tag } from "@ladx/studio";
-import { Plus, Trash2, X } from "lucide-react";
+import { Layers, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
 /**
@@ -413,6 +414,8 @@ function AlarmsTab({
         Alarms are defined on tags, which is how Ignition and FactoryTalk do it and for the same
         reason: a list kept beside the tag table drifts from it.
       </p>
+
+      <BulkAlarms doc={doc} plcTags={plcTags} onChange={onChange} />
 
       <button
         type="button"
@@ -932,3 +935,290 @@ function Field({
 }
 
 export { getSymbol };
+
+/* ─────────────────────────── bulk alarms ─────────────────────────── */
+
+/**
+ * Make alarms for many tags at once.
+ *
+ * A plant has hundreds and they are overwhelmingly the same few shapes. Doing
+ * them one at a time is how an alarm system ends up half-built, with the last
+ * forty tags never done. Previewed before it commits, because a bulk operation
+ * you cannot see the result of is one people are right to be afraid of.
+ */
+function BulkAlarms({
+  doc,
+  plcTags,
+  onChange,
+}: { doc: HmiDoc; plcTags: Tag[]; onChange: (fn: (d: HmiDoc) => HmiDoc) => void }) {
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [opts, setOpts] = useState<BulkOptions>(DEFAULT_BULK);
+
+  const tags = plcTags.filter((t) => t.type === "BOOL" || t.type === "INT");
+  const chosen = tags.filter((t) => picked.has(t.name));
+  const preview = buildBulkAlarms(chosen, opts, doc.alarms);
+
+  const toggle = (name: string) =>
+    setPicked((p) => {
+      const n = new Set(p);
+      if (n.has(name)) n.delete(name);
+      else n.add(name);
+      return n;
+    });
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className={`${addBtn} mb-2`}>
+        <Layers className="h-3 w-3" />
+        Make alarms in bulk
+      </button>
+    );
+  }
+
+  return (
+    <div className="mb-3 rounded-md border border-teal-300 bg-teal-50/30 p-3">
+      <div className="mb-2 flex items-center gap-2">
+        <h4 className="font-display text-[13px] font-bold text-ink-900">Bulk alarms</h4>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="ml-auto text-ink-400 hover:text-ink-900"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <div className="mb-1 flex items-center gap-2">
+            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
+              Tags · {picked.size} of {tags.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPicked(new Set(tags.map((t) => t.name)))}
+              className="text-[11px] text-ink-600 hover:text-teal-700"
+            >
+              All
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPicked(new Set(tags.filter((t) => t.type === "INT").map((t) => t.name)))
+              }
+              className="text-[11px] text-ink-600 hover:text-teal-700"
+            >
+              Analogue
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPicked(new Set(tags.filter((t) => t.type === "BOOL").map((t) => t.name)))
+              }
+              className="text-[11px] text-ink-600 hover:text-teal-700"
+            >
+              Digital
+            </button>
+            <button
+              type="button"
+              onClick={() => setPicked(new Set())}
+              className="text-[11px] text-ink-600 hover:text-teal-700"
+            >
+              None
+            </button>
+          </div>
+          <div className="max-h-40 overflow-y-auto rounded-sm border border-ink-200 bg-white">
+            {tags.map((t) => (
+              <label
+                key={t.name}
+                className="flex cursor-pointer items-center gap-1.5 px-1.5 py-0.5 text-[11.5px] hover:bg-ink-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={picked.has(t.name)}
+                  onChange={() => toggle(t.name)}
+                  className="h-3 w-3"
+                />
+                <span className="min-w-0 flex-1 truncate text-ink-700">{t.name}</span>
+                <span className="font-mono text-[9.5px] text-ink-400">{t.type}</span>
+              </label>
+            ))}
+            {tags.length === 0 && (
+              <p className="p-2 text-[11.5px] text-ink-400">No ladder tags on this project yet.</p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
+            Conditions
+          </span>
+          <div className="mb-2 flex flex-wrap gap-1">
+            {CONDITIONS.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() =>
+                  setOpts((o) => ({
+                    ...o,
+                    conditions: o.conditions.includes(c.id)
+                      ? o.conditions.filter((x) => x !== c.id)
+                      : [...o.conditions, c.id],
+                  }))
+                }
+                className={`rounded-sm border px-1.5 py-0.5 text-[11px] transition-colors ${
+                  opts.conditions.includes(c.id)
+                    ? "border-teal-500 bg-teal-50 text-teal-800"
+                    : "border-ink-200 bg-white text-ink-500"
+                }`}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Priority">
+              <select
+                value={opts.priority}
+                onChange={(e) =>
+                  setOpts((o) => ({ ...o, priority: e.target.value as AlarmPriority }))
+                }
+                className={box}
+              >
+                {PRIORITIES.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Range">
+              <div className="flex gap-1">
+                <input
+                  type="number"
+                  value={opts.rangeMin}
+                  onChange={(e) => setOpts((o) => ({ ...o, rangeMin: Number(e.target.value) }))}
+                  className={box}
+                />
+                <input
+                  type="number"
+                  value={opts.rangeMax}
+                  onChange={(e) => setOpts((o) => ({ ...o, rangeMax: Number(e.target.value) }))}
+                  className={box}
+                />
+              </div>
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-4 gap-1.5">
+            {(
+              [
+                ["hihiPercent", "HH %"],
+                ["hiPercent", "H %"],
+                ["loPercent", "L %"],
+                ["loloPercent", "LL %"],
+              ] as const
+            ).map(([k, label]) => (
+              <Field key={k} label={label}>
+                <input
+                  type="number"
+                  value={opts[k]}
+                  onChange={(e) => setOpts((o) => ({ ...o, [k]: Number(e.target.value) }))}
+                  className={box}
+                />
+              </Field>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Deadband %">
+              <input
+                type="number"
+                value={opts.deadbandPercent}
+                onChange={(e) =>
+                  setOpts((o) => ({ ...o, deadbandPercent: Number(e.target.value) }))
+                }
+                className={box}
+              />
+            </Field>
+            <Field label="On delay, s">
+              <input
+                type="number"
+                value={opts.onDelay}
+                onChange={(e) => setOpts((o) => ({ ...o, onDelay: Number(e.target.value) }))}
+                className={box}
+              />
+            </Field>
+          </div>
+
+          <label className="mt-1 flex items-center gap-1.5 text-[11.5px] text-ink-600">
+            <input
+              type="checkbox"
+              checked={opts.escalateOuter}
+              onChange={(e) => setOpts((o) => ({ ...o, escalateOuter: e.target.checked }))}
+              className="h-3 w-3"
+            />
+            Outer limits one priority higher
+          </label>
+          <label className="flex items-center gap-1.5 text-[11.5px] text-ink-600">
+            <input
+              type="checkbox"
+              checked={opts.trueIsAlarm}
+              onChange={(e) => setOpts((o) => ({ ...o, trueIsAlarm: e.target.checked }))}
+              className="h-3 w-3"
+            />
+            Digital alarms on 1 (off means on 0)
+          </label>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-teal-200 pt-2">
+        <span className="text-[12.5px] text-ink-700">
+          Will make <strong>{preview.alarms.length}</strong> alarm
+          {preview.alarms.length === 1 ? "" : "s"}
+          {preview.skipped.length > 0 && `, skipping ${preview.skipped.length}`}.
+        </span>
+        <button
+          type="button"
+          disabled={preview.alarms.length === 0}
+          onClick={() => {
+            onChange((d) => ({ ...d, alarms: [...d.alarms, ...preview.alarms] }));
+            setPicked(new Set());
+            setOpen(false);
+          }}
+          className="rounded-md bg-ink-900 px-3 py-1 text-[12.5px] font-medium text-white disabled:opacity-40"
+        >
+          Create them
+        </button>
+      </div>
+
+      {preview.alarms.length > 0 && (
+        <ul className="mt-2 max-h-28 overflow-y-auto text-[11.5px] text-ink-600">
+          {preview.alarms.slice(0, 40).map((a) => (
+            <li key={a.id} className="truncate">
+              {a.message}
+              {a.setpoint !== undefined && (
+                <span className="font-mono text-ink-400"> @ {a.setpoint}</span>
+              )}
+              <span className="ml-1 font-mono text-[9.5px] uppercase text-ink-400">
+                {a.priority}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {preview.skipped.length > 0 && (
+        <p className="mt-1 text-[11px] text-ink-400">
+          Skipped:{" "}
+          {preview.skipped
+            .slice(0, 3)
+            .map((s) => `${s.tag} (${s.reason})`)
+            .join(", ")}
+          {preview.skipped.length > 3 && ` and ${preview.skipped.length - 3} more`}.
+        </p>
+      )}
+    </div>
+  );
+}

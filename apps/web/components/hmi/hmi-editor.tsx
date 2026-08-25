@@ -1,5 +1,5 @@
 "use client";
-import ColourField from "@/components/hmi/colour-field";
+import AlarmPopup from "@/components/hmi/alarm-popup";
 import {
   ContextMenu,
   type Menu,
@@ -9,6 +9,7 @@ import {
   ProjectTree,
 } from "@/components/hmi/hmi-chrome";
 import HmiSetup from "@/components/hmi/hmi-setup";
+import Properties from "@/components/hmi/properties";
 import WidgetView, { type LiveData } from "@/components/hmi/widget-view";
 import {
   type AlarmRuntime,
@@ -16,6 +17,7 @@ import {
   isOutstanding,
   needsAck,
   newRuntime,
+  priorityRank,
   sortForSummary,
   stepAlarm,
 } from "@/lib/hmi/alarms";
@@ -39,9 +41,9 @@ import {
 } from "@/lib/hmi/runtime";
 import { sanitiseSvg } from "@/lib/hmi/svg-import";
 import { SYMBOL_CATEGORIES, searchSymbols, symbolsIn } from "@/lib/hmi/symbols";
-import type { Action, AlarmDef, HmiDoc, Screen, Widget, WidgetKind } from "@/lib/hmi/types";
+import type { Action, AlarmDef, AlarmPriority, HmiDoc, Widget, WidgetKind } from "@/lib/hmi/types";
 import { type LadxProgram, type Tag, scan } from "@ladx/studio";
-import { Bell, Loader2, Maximize2, Play, Plus, Save, Square, Trash2 } from "lucide-react";
+import { Bell, Loader2, Maximize2, Play, Plus, Save, Square } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -94,6 +96,14 @@ export default function HmiEditor({
   const [focus, setFocus] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
   const [importNote, setImportNote] = useState<string | null>(null);
+  /**
+   * Popups the operator has closed.
+   *
+   * Closing dismisses the dialog, not the alarm: it stays outstanding in the
+   * summary. Cleared when the alarm goes back to normal, so the same condition
+   * recurring pops again rather than being silently suppressed forever.
+   */
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   /**
    * Where the right-click menu is and what it is about.
    *
@@ -728,6 +738,23 @@ export default function HmiEditor({
   );
   const unacked = outstanding.filter((r) => needsAck(r.runtime.state)).length;
 
+  const popupPriorities = doc.popupPriorities ?? ["critical"];
+  const popped = outstanding.filter(
+    (r) =>
+      needsAck(r.runtime.state) &&
+      popupPriorities.includes(r.def.priority) &&
+      !dismissed.has(r.def.id),
+  );
+
+  useEffect(() => {
+    // A dismissal only lasts as long as the alarm does.
+    const live = new Set(outstanding.map((r) => r.def.id));
+    setDismissed((d) => {
+      const next = new Set([...d].filter((id) => live.has(id)));
+      return next.size === d.size ? d : next;
+    });
+  }, [outstanding]);
+
   /**
    * What a data widget needs, chosen by which one it is.
    *
@@ -742,9 +769,22 @@ export default function HmiEditor({
       if (!def) return undefined;
       return { samples: trendsRef.current.get(def.id)?.toArray() ?? [] };
     }
-    if (w.kind === "alarmSummary" || w.kind === "alarmHistory") {
+    if (
+      w.kind === "alarmSummary" ||
+      w.kind === "alarmHistory" ||
+      w.kind === "alarmBanner" ||
+      w.kind === "alarmBadge" ||
+      w.kind === "alarmMarquee"
+    ) {
+      // Each alarm widget filters independently: a banner set to critical
+      // only and a summary showing everything are the normal arrangement.
+      const filter = (w.config?.filter as string) ?? "outstanding";
+      const floor = priorityRank((w.config?.minPriority as AlarmPriority) ?? "journal");
+      const rows = outstanding
+        .filter((r) => (filter === "unacked" ? needsAck(r.runtime.state) : true))
+        .filter((r) => priorityRank(r.def.priority) <= floor);
       return {
-        alarms: outstanding.map((r) => ({
+        alarms: rows.map((r) => ({
           id: r.def.id,
           message: r.def.message,
           priority: r.def.priority,
@@ -1145,6 +1185,38 @@ export default function HmiEditor({
                       )}
                     </div>
                   ))}
+
+                {running && (
+                  <AlarmPopup
+                    alarms={popped.map((r) => ({
+                      id: r.def.id,
+                      message: r.def.message,
+                      priority: r.def.priority,
+                      state: r.runtime.state,
+                      needsAck: needsAck(r.runtime.state),
+                      raisedAt: r.runtime.raisedAt,
+                      response: r.def.response,
+                    }))}
+                    width={screen.size.width}
+                    // Cleared under the topmost banner on this screen, so the
+                    // dialog never covers the one thing that must stay visible.
+                    bannerInset={Math.max(
+                      0,
+                      ...screen.widgets
+                        .filter((x) => x.kind === "alarmBanner")
+                        .map((x) => x.rect.y + x.rect.h),
+                    )}
+                    onAck={(id) => {
+                      const now = Date.now();
+                      const next = { ...alarmRef.current };
+                      const rt = next[id];
+                      if (rt) next[id] = acknowledge(rt, now);
+                      alarmRef.current = next;
+                      setAlarmState(next);
+                    }}
+                    onClose={(id) => setDismissed((d) => new Set(d).add(id))}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -1166,8 +1238,9 @@ export default function HmiEditor({
                   <Properties
                     widget={sel}
                     plc={liveTags}
-                    hmi={doc.tags}
+                    hmiTags={doc.tags}
                     screens={doc.screens}
+                    trends={doc.trends}
                     onChange={(patch) => patchWidget(sel.id, patch)}
                     onDelete={() => {
                       update((d) => {
@@ -1341,7 +1414,10 @@ const BASIC: { kind: WidgetKind; label: string }[] = [
   { kind: "button", label: "Button" },
   { kind: "toggle", label: "Toggle" },
   { kind: "trend", label: "Trend" },
-  { kind: "alarmSummary", label: "Alarms" },
+  { kind: "alarmSummary", label: "Alarm list" },
+  { kind: "alarmBanner", label: "Alarm banner" },
+  { kind: "alarmBadge", label: "Alarm count" },
+  { kind: "alarmMarquee", label: "Alarm ticker" },
 ];
 
 function defaultSize(kind: WidgetKind): { w: number; h: number } {
@@ -1357,6 +1433,12 @@ function defaultSize(kind: WidgetKind): { w: number; h: number } {
     case "alarmSummary":
     case "alarmHistory":
       return { w: 320, h: 120 };
+    case "alarmBanner":
+      return { w: 400, h: 30 };
+    case "alarmBadge":
+      return { w: 64, h: 48 };
+    case "alarmMarquee":
+      return { w: 360, h: 26 };
     case "text":
       return { w: 120, h: 24 };
     case "numeric":
@@ -1747,245 +1829,6 @@ function AlarmList({
           ))}
         </ul>
       )}
-    </div>
-  );
-}
-
-function Properties({
-  widget: w,
-  plc,
-  hmi,
-  screens,
-  onChange,
-  onDelete,
-}: {
-  widget: Widget;
-  plc: Tag[];
-  hmi: HmiDoc["tags"];
-  screens: Screen[];
-  onChange: (patch: Partial<Widget>) => void;
-  onDelete: () => void;
-}) {
-  const tagNames = [...plc.map((t) => t.name), ...hmi.map((t) => t.name)];
-  return (
-    <div className="space-y-3">
-      <div className="flex items-baseline gap-2">
-        <h3 className="font-display text-[13px] font-bold text-ink-900">{w.kind}</h3>
-        <button
-          type="button"
-          onClick={onDelete}
-          title="Delete"
-          className="ml-auto text-ink-300 hover:text-red-700"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      <Row label="Position">
-        {(["x", "y", "w", "h"] as const).map((k) => (
-          <input
-            key={k}
-            type="number"
-            value={w.rect[k]}
-            onChange={(e) => onChange({ rect: { ...w.rect, [k]: Number(e.target.value) || 0 } })}
-            className={numBox}
-          />
-        ))}
-      </Row>
-
-      {(w.kind === "text" || w.kind === "button" || w.kind === "toggle" || w.kind === "symbol") && (
-        <Row label={w.kind === "symbol" ? "Label" : "Caption"}>
-          <input
-            value={w.text ?? ""}
-            onChange={(e) => onChange({ text: e.target.value })}
-            className={`${numBox} w-full`}
-          />
-        </Row>
-      )}
-
-      <div className="grid grid-cols-2 gap-2">
-        <ColourField
-          label="Fill"
-          value={w.fill ?? "#D8DCDF"}
-          onChange={(c) => onChange({ fill: c })}
-          allowNone
-        />
-        <ColourField
-          label="Line"
-          value={w.stroke ?? "#3A4550"}
-          onChange={(c) => onChange({ stroke: c })}
-        />
-      </div>
-
-      {(w.kind === "bar" || w.kind === "gauge" || w.kind === "symbol" || w.kind === "numeric") && (
-        <Row label="Range">
-          <input
-            type="number"
-            value={w.min ?? 0}
-            onChange={(e) => onChange({ min: Number(e.target.value) })}
-            className={numBox}
-          />
-          <input
-            type="number"
-            value={w.max ?? 100}
-            onChange={(e) => onChange({ max: Number(e.target.value) })}
-            className={numBox}
-          />
-          <input
-            type="number"
-            value={w.decimals ?? 0}
-            title="Decimal places"
-            onChange={(e) => onChange({ decimals: Number(e.target.value) })}
-            className={numBox}
-          />
-        </Row>
-      )}
-
-      <div>
-        <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
-          Value
-        </span>
-        <select
-          value={w.value?.kind === "plc" ? w.value.tag : w.value?.kind === "expr" ? "__expr" : ""}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (!v) onChange({ value: undefined });
-            else if (v === "__expr") onChange({ value: { kind: "expr", source: "{Tag} > 0" } });
-            else onChange({ value: { kind: "plc", tag: v } });
-          }}
-          className={`${numBox} w-full`}
-        >
-          <option value="">not bound</option>
-          {tagNames.map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-          <option value="__expr">expression…</option>
-        </select>
-        {w.value?.kind === "expr" && (
-          <input
-            value={w.value.source}
-            onChange={(e) => onChange({ value: { kind: "expr", source: e.target.value } })}
-            placeholder="{Level} > 80"
-            className={`${numBox} mt-1 w-full font-mono`}
-          />
-        )}
-      </div>
-
-      {(w.kind === "button" || w.kind === "toggle") && (
-        <div>
-          <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
-            On press
-          </span>
-          <select
-            value={(w.onPress?.[0] as { target?: { tag: string } })?.target?.tag ?? ""}
-            onChange={(e) => {
-              const tag = e.target.value;
-              if (!tag) return onChange({ onPress: [], onRelease: [] });
-              // Momentary by default, which is what a physical pushbutton is.
-              onChange({
-                onPress: [
-                  {
-                    kind: "setTag",
-                    target: { source: "plc", tag },
-                    value: { kind: "const", value: 1 },
-                  },
-                ],
-                onRelease:
-                  w.kind === "button"
-                    ? [
-                        {
-                          kind: "setTag",
-                          target: { source: "plc", tag },
-                          value: { kind: "const", value: 0 },
-                        },
-                      ]
-                    : [],
-              });
-            }}
-            className={`${numBox} w-full`}
-          >
-            <option value="">does nothing</option>
-            {plc.map((t) => (
-              <option key={t.name} value={t.name}>
-                write {t.name}
-              </option>
-            ))}
-          </select>
-          <p className="mt-1 text-[11px] leading-snug text-ink-400">
-            {w.kind === "button"
-              ? "Momentary: 1 while held, 0 on release, like a pushbutton."
-              : "Maintained: stays where you put it."}
-          </p>
-        </div>
-      )}
-
-      {screens.length > 1 && (
-        <div>
-          <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
-            Navigate to
-          </span>
-          <select
-            value={
-              (w.onPress?.find((a) => a.kind === "goToScreen") as { slug?: string })?.slug ?? ""
-            }
-            onChange={(e) =>
-              onChange({
-                onPress: e.target.value ? [{ kind: "goToScreen", slug: e.target.value }] : [],
-              })
-            }
-            className={`${numBox} w-full`}
-          >
-            <option value="">no</option>
-            {screens.map((s) => (
-              <option key={s.id} value={s.slug}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      <div>
-        <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
-          Colour when
-        </span>
-        <input
-          value={(w.animations?.[0]?.when as { source?: string })?.source ?? ""}
-          onChange={(e) =>
-            onChange({
-              animations: e.target.value
-                ? [
-                    {
-                      id: "a1",
-                      when: { kind: "expr", source: e.target.value },
-                      fill: w.animations?.[0]?.fill ?? "#B4531A",
-                    },
-                  ]
-                : [],
-            })
-          }
-          placeholder="{Level} > 80"
-          className={`${numBox} w-full font-mono`}
-        />
-        {w.animations?.[0] && (
-          <div className="mt-1">
-            <ColourField
-              label="Then this colour"
-              value={w.animations[0].fill ?? "#B4531A"}
-              onChange={(c) => {
-                const first = w.animations?.[0];
-                if (!first) return;
-                onChange({ animations: [{ ...first, fill: c }] });
-              }}
-            />
-          </div>
-        )}
-        <p className="mt-1 text-[11px] leading-snug text-ink-400">
-          ISA-101: grey at rest, colour only when something has deviated.
-        </p>
-      </div>
     </div>
   );
 }

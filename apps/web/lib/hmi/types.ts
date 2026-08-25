@@ -96,6 +96,12 @@ export type WidgetKind =
   | "trend"
   | "alarmSummary"
   | "alarmHistory"
+  /** The strip that shows the highest-priority unacknowledged alarm. */
+  | "alarmBanner"
+  /** A count, for a navigation bar. */
+  | "alarmBadge"
+  /** A scrolling one-line ticker, for a wall display. */
+  | "alarmMarquee"
   // library
   | "symbol";
 
@@ -125,6 +131,26 @@ export interface Animation {
   hidden?: boolean;
 }
 
+/** How a border is drawn. Dashed reads as "not real yet" on a mimic. */
+export type LineStyle = "solid" | "dashed" | "dotted";
+
+export interface TextStyle {
+  /** A stack, so a panel without the exact face still reads. */
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: number;
+  italic?: boolean;
+  underline?: boolean;
+  /** Horizontal, and vertical, because a caption in a tall box needs both. */
+  align?: "left" | "center" | "right";
+  valign?: "top" | "middle" | "bottom";
+  letterSpacing?: number;
+  lineHeight?: number;
+  /** Upper case is common on panels and should not mean retyping the text. */
+  transform?: "none" | "uppercase" | "lowercase";
+  wrap?: boolean;
+}
+
 export interface Widget {
   id: string;
   kind: WidgetKind;
@@ -134,14 +160,44 @@ export interface Widget {
   /** Higher draws later. Explicit rather than array order so grouping is safe. */
   z?: number;
   name?: string;
+  /**
+   * Locked objects cannot be dragged or resized.
+   *
+   * A mimic has a background layer of pipework nobody wants to nudge while
+   * placing a valve on top of it.
+   */
+  locked?: boolean;
+  /** Hidden at design time only, for working on what is underneath. */
+  designHidden?: boolean;
 
   /* appearance, all optional and kind-dependent */
   fill?: string;
+  /** A second colour turns the fill into a gradient. */
+  fillTo?: string;
+  gradientAngle?: number;
   stroke?: string;
   strokeWidth?: number;
+  lineStyle?: LineStyle;
+  /** Corner rounding in pixels. */
+  radius?: number;
+  /** 0..1. Applied to the whole object, over any animation. */
+  opacity?: number;
+  /** A drop shadow, which is what lifts a control off a mimic. */
+  shadow?: boolean;
+  /** Text appearance, for anything that draws a caption or a number. */
+  text_?: TextStyle;
   fontSize?: number;
   /** Symbol id from lib/hmi/symbols.ts, for kind "symbol". */
   symbol?: string;
+  /**
+   * A picture standing in for the symbol.
+   *
+   * Either an inline sanitised SVG or a data: URI for a raster. Carried on the
+   * widget so an application takes its own artwork between installs, and it
+   * wins over `symbol`, so any built-in drawing can be replaced by the real
+   * photograph or vendor drawing of the actual machine.
+   */
+  image?: { kind: "svg"; svg: string } | { kind: "raster"; src: string; alt?: string };
   /** Fixed caption, or the format for a numeric. */
   text?: string;
   /** Decimal places for a numeric or a gauge readout. */
@@ -309,6 +365,14 @@ export interface HmiDoc {
   /** Tags the HMI owns. PLC tags come from the ladder program. */
   tags: HmiTag[];
   alarms: AlarmDef[];
+  /**
+   * Which priorities interrupt with a popup.
+   *
+   * Critical only by default. A popup for every event is how an operator
+   * learns to dismiss without reading, which is worse than no popup at all,
+   * so widening this is a decision somebody has to make on purpose.
+   */
+  popupPriorities?: AlarmPriority[];
   trends: TrendDef[];
   connection: Connection;
 }
@@ -334,6 +398,7 @@ export function emptyDoc(
     homeSlug: "overview",
     tags: [],
     alarms: [],
+    popupPriorities: ["critical"],
     trends: [],
     connection: { protocol: "simulated", pollMs: 250, timeoutMs: 3000 },
   };

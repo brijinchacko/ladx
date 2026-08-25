@@ -51,6 +51,23 @@ export interface WidgetViewProps {
 
 const INK = "#3A4550";
 
+/**
+ * How a priority looks.
+ *
+ * A glyph as well as a colour, because ISA-101 says not to rely on colour
+ * alone and roughly one operator in twelve cannot separate red from green.
+ */
+export const PRIORITY_TONE: Record<
+  string,
+  { bg: string; line: string; ink: string; glyph: string }
+> = {
+  critical: { bg: "#F6D3CB", line: "#8E2A12", ink: "#4A1408", glyph: "\u25B2\u25B2" },
+  high: { bg: "#F7DFC9", line: "#B4531A", ink: "#5A2A0D", glyph: "\u25B2" },
+  medium: { bg: "#F6EBCB", line: "#9A7B1A", ink: "#4C3C0A", glyph: "\u25C6" },
+  low: { bg: "#E4EAF0", line: "#4A6480", ink: "#26374A", glyph: "\u25CF" },
+  journal: { bg: "#EDEFF1", line: "#7A8894", ink: "#4A5A68", glyph: "\u00b7" },
+};
+
 /** Base appearance with every matching animation applied over it, in order. */
 function appearance(w: Widget, ctx: EvalContext, live: boolean) {
   let fill = w.fill ?? "#D8DCDF";
@@ -68,6 +85,49 @@ function appearance(w: Widget, ctx: EvalContext, live: boolean) {
     }
   }
   return { fill, stroke, opacity, hidden };
+}
+
+/** Border, corners, shadow and gradient, shared by every box-like widget. */
+function boxStyle(w: Widget, fill: string, stroke: string, sw: number): React.CSSProperties {
+  const dash = w.lineStyle === "dashed" ? "dashed" : w.lineStyle === "dotted" ? "dotted" : "solid";
+  return {
+    background: w.fillTo
+      ? `linear-gradient(${w.gradientAngle ?? 180}deg, ${fill}, ${w.fillTo})`
+      : fill,
+    border: sw > 0 ? `${sw}px ${dash} ${stroke}` : undefined,
+    borderRadius: w.radius ?? 2,
+    boxShadow: w.shadow ? "0 2px 6px rgba(15,26,36,0.28)" : undefined,
+    boxSizing: "border-box",
+  };
+}
+
+/**
+ * Type, as a panel sets it.
+ *
+ * A stack rather than one face: a graphic drawn against a font the panel does
+ * not have falls back to something, and choosing what it falls back to is
+ * better than letting the browser pick.
+ */
+function textStyle(w: Widget, colour: string): React.CSSProperties {
+  const t = w.text_ ?? {};
+  return {
+    color: colour,
+    fontFamily: t.fontFamily ?? "ui-sans-serif, system-ui, sans-serif",
+    fontSize: t.fontSize ?? w.fontSize ?? 14,
+    fontWeight: t.fontWeight ?? 400,
+    fontStyle: t.italic ? "italic" : "normal",
+    textDecoration: t.underline ? "underline" : "none",
+    letterSpacing: t.letterSpacing ? `${t.letterSpacing}px` : undefined,
+    lineHeight: t.lineHeight ?? 1.2,
+    textTransform: t.transform ?? "none",
+    textAlign: t.align ?? "left",
+    whiteSpace: t.wrap === false ? "nowrap" : "pre-wrap",
+    display: "flex",
+    justifyContent:
+      t.align === "center" ? "center" : t.align === "right" ? "flex-end" : "flex-start",
+    alignItems: t.valign === "top" ? "flex-start" : t.valign === "bottom" ? "flex-end" : "center",
+    overflow: "hidden",
+  };
 }
 
 /** A number formatted the way a panel shows it, or dashes when it cannot be read. */
@@ -98,29 +158,11 @@ export default function WidgetView({
   const box: ReactNode = (() => {
     switch (w.kind) {
       case "rect":
-        return (
-          <div
-            style={{
-              width,
-              height,
-              background: fill,
-              border: `${sw}px solid ${stroke}`,
-              borderRadius: 2,
-            }}
-          />
-        );
+        return <div style={{ width, height, ...boxStyle(w, fill, stroke, sw) }} />;
 
       case "ellipse":
         return (
-          <div
-            style={{
-              width,
-              height,
-              background: fill,
-              border: `${sw}px solid ${stroke}`,
-              borderRadius: "50%",
-            }}
-          />
+          <div style={{ width, height, ...boxStyle(w, fill, stroke, sw), borderRadius: "50%" }} />
         );
 
       case "line":
@@ -147,22 +189,7 @@ export default function WidgetView({
       }
 
       case "text":
-        return (
-          <span
-            style={{
-              width,
-              height,
-              color: stroke,
-              fontSize: font,
-              display: "flex",
-              alignItems: "center",
-              whiteSpace: "pre-wrap",
-              lineHeight: 1.2,
-            }}
-          >
-            {w.text ?? "Text"}
-          </span>
-        );
+        return <span style={{ width, height, ...textStyle(w, stroke) }}>{w.text ?? "Text"}</span>;
 
       case "numeric": {
         const n = live ? resolveNumber(w.value, ctx) : 0;
@@ -171,14 +198,15 @@ export default function WidgetView({
             style={{
               width,
               height,
-              color: stroke,
-              background: fill,
-              border: `${sw}px solid ${stroke}`,
-              fontSize: font,
-              fontFamily: "ui-monospace, monospace",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
+              ...boxStyle(w, fill, stroke, sw),
+              ...textStyle(w, stroke),
+              fontFamily: w.text_?.fontFamily ?? "ui-monospace, monospace",
+              justifyContent:
+                w.text_?.align === "left"
+                  ? "flex-start"
+                  : w.text_?.align === "center"
+                    ? "center"
+                    : "flex-end",
               padding: "0 6px",
               fontVariantNumeric: "tabular-nums",
             }}
@@ -340,6 +368,28 @@ export default function WidgetView({
       }
 
       case "symbol": {
+        // A picture the user supplied wins over everything: it is the actual
+        // machine rather than a drawing of its category.
+        if (w.image?.kind === "raster") {
+          return (
+            <img
+              src={w.image.src}
+              alt={w.image.alt ?? w.name ?? "symbol"}
+              width={width}
+              height={height}
+              style={{ width, height, objectFit: "fill", borderRadius: w.radius ?? 0 }}
+            />
+          );
+        }
+        if (w.image?.kind === "svg") {
+          return (
+            <div
+              style={{ width, height, overflow: "hidden" }}
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitised on import by lib/hmi/svg-import against an allow-list, with 24 tests over hostile files; painting an arbitrary vector drawing has no other route.
+              dangerouslySetInnerHTML={{ __html: fitSvg(w.image.svg, width, height) }}
+            />
+          );
+        }
         // An imported drawing wins over a library id: it is this widget's own
         // artwork, carried in the document so it survives moving machines.
         const custom = w.config?.svg as string | undefined;
@@ -474,6 +524,134 @@ export default function WidgetView({
         );
       }
 
+      case "alarmBanner": {
+        /**
+         * The banner.
+         *
+         * One alarm: the highest-priority unacknowledged one, which is what
+         * the standard asks for and what an operator can actually read while
+         * doing something else. The summary is where several go. Quiet and
+         * grey when nothing is outstanding, because a banner that always looks
+         * urgent is a banner people stop seeing.
+         */
+        const rows = data?.alarms ?? [];
+        const top = rows.find((a) => a.needsAck) ?? rows[0];
+        const tone = top ? (PRIORITY_TONE[top.priority] ?? PRIORITY_TONE.medium) : null;
+        return (
+          <div
+            style={{
+              width,
+              height,
+              ...boxStyle(w, top && tone ? tone.bg : fill, top && tone ? tone.line : stroke, sw),
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "0 10px",
+              color: top && tone ? tone.ink : stroke,
+              fontSize: w.text_?.fontSize ?? font,
+              fontFamily: w.text_?.fontFamily ?? "ui-sans-serif, system-ui",
+            }}
+          >
+            {top ? (
+              <>
+                {/* Shape as well as colour: ISA-101 does not rely on colour
+                    alone, and about one operator in twelve cannot separate
+                    red from green. */}
+                <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 700 }}>
+                  {tone?.glyph}
+                </span>
+                <span style={{ fontFamily: "ui-monospace, monospace", opacity: 0.75 }}>
+                  {top.raisedAt ? new Date(top.raisedAt).toLocaleTimeString("en-GB") : "--:--:--"}
+                </span>
+                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", whiteSpace: "nowrap" }}>
+                  {top.message}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "ui-monospace, monospace",
+                    fontSize: Math.max(9, font - 3),
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {top.needsAck ? "UNACK" : top.state}
+                </span>
+                {rows.length > 1 && (
+                  <span style={{ fontFamily: "ui-monospace, monospace", opacity: 0.7 }}>
+                    +{rows.length - 1}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span style={{ opacity: 0.55 }}>{live ? "No alarms" : "Alarm banner"}</span>
+            )}
+          </div>
+        );
+      }
+
+      case "alarmBadge": {
+        const rows = data?.alarms ?? [];
+        const unacked = rows.filter((a) => a.needsAck).length;
+        const tone = unacked > 0 ? PRIORITY_TONE.critical : null;
+        return (
+          <div
+            style={{
+              width,
+              height,
+              ...boxStyle(w, tone ? tone.bg : fill, tone ? tone.line : stroke, sw),
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              color: tone ? tone.ink : stroke,
+            }}
+          >
+            <span style={{ fontSize: Math.max(14, font * 1.6), fontWeight: 700, lineHeight: 1 }}>
+              {live ? rows.length : 0}
+            </span>
+            <span
+              style={{ fontSize: Math.max(8, font - 5), opacity: 0.75, letterSpacing: "0.08em" }}
+            >
+              {unacked > 0 ? `${unacked} UNACK` : "ALARMS"}
+            </span>
+          </div>
+        );
+      }
+
+      case "alarmMarquee": {
+        const rows = data?.alarms ?? [];
+        const text = rows.length
+          ? rows.map((a) => `${a.needsAck ? "!" : "\u00b7"} ${a.message}`).join("     ")
+          : live
+            ? "No alarms"
+            : "Alarm ticker";
+        return (
+          <div
+            style={{
+              width,
+              height,
+              ...boxStyle(w, fill, stroke, sw),
+              display: "flex",
+              alignItems: "center",
+              overflow: "hidden",
+              color: stroke,
+              fontSize: w.text_?.fontSize ?? font,
+            }}
+          >
+            {/* Scrolled by CSS rather than a timer: a ticker driven from the
+                scan loop would re-render the whole screen every frame. */}
+            <span
+              style={{
+                whiteSpace: "nowrap",
+                paddingLeft: "100%",
+                animation: live && rows.length ? "ladx-marquee 18s linear infinite" : undefined,
+              }}
+            >
+              {text}
+            </span>
+          </div>
+        );
+      }
+
       case "alarmSummary":
       case "alarmHistory": {
         const rows = data?.alarms ?? [];
@@ -565,7 +743,7 @@ export default function WidgetView({
         top: w.rect.y,
         width,
         height,
-        opacity,
+        opacity: opacity * (w.opacity ?? 1),
         transform: w.rotation ? `rotate(${w.rotation}deg)` : undefined,
         transformOrigin: "center",
       }}
