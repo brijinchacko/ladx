@@ -1,0 +1,931 @@
+"use client";
+
+import { PANEL_PRESETS, sanitiseSize } from "@/lib/hmi/panels";
+import { getSymbol } from "@/lib/hmi/symbols";
+import type {
+  AlarmCondition,
+  AlarmDef,
+  AlarmPriority,
+  Connection,
+  HmiDoc,
+  Protocol,
+  Screen,
+  TrendDef,
+} from "@/lib/hmi/types";
+import type { Tag } from "@ladx/studio";
+import { Plus, Trash2, X } from "lucide-react";
+import { useState } from "react";
+
+/**
+ * Everything about the application that is not a drawing.
+ *
+ * The tags it owns, the alarms defined on tags, the trends, the connection,
+ * and the screens themselves. In a drawer rather than the properties pane
+ * because these are documents in their own right: an alarm has eight fields
+ * and a response instruction, and squeezing that into a 280 pixel column is
+ * how alarm configuration ends up done badly.
+ */
+
+type Tab = "screen" | "tags" | "alarms" | "trends" | "connection";
+
+const CONDITIONS: { id: AlarmCondition; label: string; needsSetpoint: boolean; hint: string }[] = [
+  { id: "digital", label: "Digital", needsSetpoint: false, hint: "Trips on a bit." },
+  { id: "hi", label: "High", needsSetpoint: true, hint: "Trips at or above the limit." },
+  { id: "hihi", label: "High high", needsSetpoint: true, hint: "The second, more urgent limit." },
+  { id: "lo", label: "Low", needsSetpoint: true, hint: "Trips at or below the limit." },
+  { id: "lolo", label: "Low low", needsSetpoint: true, hint: "The second, more urgent limit." },
+  {
+    id: "deviation",
+    label: "Deviation",
+    needsSetpoint: true,
+    hint: "Trips on magnitude, either direction.",
+  },
+  {
+    id: "roc",
+    label: "Rate of change",
+    needsSetpoint: true,
+    hint: "Trips on how fast it is moving.",
+  },
+];
+
+/**
+ * Four priorities and a journal level.
+ *
+ * EEMUA 191 and ISA-18.2 both warn that more than about four is a distinction
+ * an operator cannot make under load. "Journal" is the honest name for
+ * recorded but not an alarm, which is where most of what people want to alarm
+ * on actually belongs.
+ */
+const PRIORITIES: { id: AlarmPriority; label: string; hint: string }[] = [
+  { id: "critical", label: "Critical", hint: "Act now or something is damaged or hurt." },
+  { id: "high", label: "High", hint: "Act within minutes." },
+  { id: "medium", label: "Medium", hint: "Act this shift." },
+  { id: "low", label: "Low", hint: "Note it." },
+  { id: "journal", label: "Journal", hint: "Recorded, never announced." },
+];
+
+const PROTOCOLS: { id: Protocol; label: string; hint: string }[] = [
+  {
+    id: "simulated",
+    label: "Simulated",
+    hint: "Driven by this project's ladder program. What Run uses, and the only one that moves.",
+  },
+  { id: "opcua", label: "OPC UA", hint: "Vendor-neutral. An endpoint URL and a security policy." },
+  {
+    id: "modbus-tcp",
+    label: "Modbus TCP",
+    hint: "Registers, a unit id, and a word order you must state.",
+  },
+  { id: "ethernet-ip", label: "EtherNet/IP", hint: "Rockwell. Tag-based, addressed by CIP path." },
+  { id: "s7", label: "S7 comms", hint: "Siemens. Rack and slot, data blocks." },
+];
+
+export default function HmiSetup({
+  doc,
+  plcTags,
+  screenId,
+  onChange,
+  onClose,
+}: {
+  doc: HmiDoc;
+  plcTags: Tag[];
+  screenId: string;
+  onChange: (fn: (d: HmiDoc) => HmiDoc) => void;
+  onClose: () => void;
+}) {
+  const [tab, setTab] = useState<Tab>("alarms");
+  const screen = doc.screens.find((s) => s.id === screenId) ?? doc.screens[0];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-ink-900/30"
+      onClick={onClose}
+      onKeyDown={undefined}
+    >
+      <div
+        className="flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        <header className="flex shrink-0 items-center gap-3 border-b border-ink-100 px-4 py-3">
+          <h2 className="font-display text-[15px] font-bold text-ink-900">Setup</h2>
+          <nav className="ml-2 flex gap-0.5">
+            {(["screen", "tags", "alarms", "trends", "connection"] as Tab[]).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`rounded-sm px-2 py-1 text-[12.5px] capitalize transition-colors ${
+                  tab === t ? "bg-ink-900 text-white" : "text-ink-600 hover:bg-ink-50"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </nav>
+          <button
+            type="button"
+            onClick={onClose}
+            className="ml-auto text-ink-400 hover:text-ink-900"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </header>
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          {tab === "screen" && screen && (
+            <ScreenTab screen={screen} doc={doc} onChange={onChange} />
+          )}
+          {tab === "tags" && <TagsTab doc={doc} onChange={onChange} />}
+          {tab === "alarms" && <AlarmsTab doc={doc} plcTags={plcTags} onChange={onChange} />}
+          {tab === "trends" && <TrendsTab doc={doc} plcTags={plcTags} onChange={onChange} />}
+          {tab === "connection" && <ConnectionTab conn={doc.connection} onChange={onChange} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────── screen ─────────────────────────────── */
+
+function ScreenTab({
+  screen,
+  doc,
+  onChange,
+}: { screen: Screen; doc: HmiDoc; onChange: (fn: (d: HmiDoc) => HmiDoc) => void }) {
+  const patch = (p: Partial<Screen>) =>
+    onChange((d) => {
+      const s = d.screens.find((x) => x.id === screen.id);
+      if (s) Object.assign(s, p);
+      return d;
+    });
+
+  return (
+    <div className="space-y-4">
+      <Field label="Name">
+        <input
+          value={screen.name}
+          onChange={(e) => patch({ name: e.target.value })}
+          className={box}
+        />
+      </Field>
+      <Field label="Slug" hint="What a navigation button names.">
+        <input
+          value={screen.slug}
+          onChange={(e) =>
+            patch({ slug: e.target.value.replace(/[^a-z0-9-]/gi, "-").toLowerCase() })
+          }
+          className={box}
+        />
+      </Field>
+
+      <Field label="Size" hint="Changing this does not move what is already drawn.">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="number"
+            value={screen.size.width}
+            onChange={(e) =>
+              patch({ size: sanitiseSize({ ...screen.size, width: Number(e.target.value) }) })
+            }
+            className={`${box} w-24`}
+          />
+          <span className="text-ink-400">×</span>
+          <input
+            type="number"
+            value={screen.size.height}
+            onChange={(e) =>
+              patch({ size: sanitiseSize({ ...screen.size, height: Number(e.target.value) }) })
+            }
+            className={`${box} w-24`}
+          />
+          <select
+            value=""
+            onChange={(e) => {
+              const p = PANEL_PRESETS.find((x) => x.id === e.target.value);
+              if (p) patch({ size: p.size });
+            }}
+            className={`${box} w-auto`}
+          >
+            <option value="">from a panel…</option>
+            {PANEL_PRESETS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label} · {p.size.width}×{p.size.height}
+              </option>
+            ))}
+          </select>
+        </div>
+      </Field>
+
+      <Field label="Background" hint="ISA-101 asks for a quiet ground so deviation stands out.">
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={screen.background}
+            onChange={(e) => patch({ background: e.target.value })}
+            className="h-7 w-12"
+          />
+          {["#E8EAEC", "#DDE1E4", "#F2F4F5", "#2B3138"].map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => patch({ background: c })}
+              style={{ background: c }}
+              className="h-7 w-7 rounded-sm border border-ink-300"
+              aria-label={`Use ${c}`}
+            />
+          ))}
+        </div>
+      </Field>
+
+      <Field label="Home screen" hint="What the panel opens on.">
+        <select
+          value={doc.homeSlug ?? ""}
+          onChange={(e) => onChange((d) => ({ ...d, homeSlug: e.target.value }))}
+          className={box}
+        >
+          {doc.screens.map((s) => (
+            <option key={s.id} value={s.slug}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      {doc.screens.length > 1 && (
+        <button
+          type="button"
+          onClick={() =>
+            onChange((d) => ({ ...d, screens: d.screens.filter((s) => s.id !== screen.id) }))
+          }
+          className="flex items-center gap-1.5 text-[12.5px] text-red-700 hover:underline"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Delete this screen and its {screen.widgets.length} objects
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────── tags ─────────────────────────────── */
+
+function TagsTab({
+  doc,
+  onChange,
+}: { doc: HmiDoc; onChange: (fn: (d: HmiDoc) => HmiDoc) => void }) {
+  return (
+    <div>
+      <p className="mb-3 text-[12.5px] leading-relaxed text-ink-500">
+        The HMI's own tags: setpoint buffers, screen state, recipe selection. Controller tags are
+        not listed here because the HMI does not own them, it binds to the ladder program's table by
+        name.
+      </p>
+
+      <button
+        type="button"
+        onClick={() =>
+          onChange((d) => {
+            d.tags.push({ name: `Tag_${d.tags.length + 1}`, type: "INT", value: 0 });
+            return d;
+          })
+        }
+        className={addBtn}
+      >
+        <Plus className="h-3 w-3" />
+        Add a tag
+      </button>
+
+      {doc.tags.length === 0 ? (
+        <p className="mt-3 text-[12.5px] text-ink-400">None yet.</p>
+      ) : (
+        <table className="mt-3 w-full text-[12.5px]">
+          <thead>
+            <tr className="text-left font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
+              <th className="pb-1">Name</th>
+              <th className="pb-1">Type</th>
+              <th className="pb-1">Initial</th>
+              <th className="pb-1">Comment</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {doc.tags.map((t, i) => (
+              <tr key={t.name} className="border-t border-ink-100">
+                <td className="py-1 pr-1">
+                  <input
+                    value={t.name}
+                    onChange={(e) =>
+                      onChange((d) => {
+                        const x = d.tags[i];
+                        // Names are identifiers: a tag with a space in it
+                        // cannot be written in a binding expression.
+                        if (x) x.name = e.target.value.replace(/[^\w]/g, "_");
+                        return d;
+                      })
+                    }
+                    className={`${box} font-mono`}
+                  />
+                </td>
+                <td className="py-1 pr-1">
+                  <select
+                    value={t.type}
+                    onChange={(e) =>
+                      onChange((d) => {
+                        const x = d.tags[i];
+                        if (x) x.type = e.target.value as typeof t.type;
+                        return d;
+                      })
+                    }
+                    className={box}
+                  >
+                    <option>BOOL</option>
+                    <option>INT</option>
+                  </select>
+                </td>
+                <td className="py-1 pr-1">
+                  <input
+                    type="number"
+                    value={t.value}
+                    onChange={(e) =>
+                      onChange((d) => {
+                        const x = d.tags[i];
+                        if (x) x.value = Number(e.target.value) || 0;
+                        return d;
+                      })
+                    }
+                    className={`${box} w-16`}
+                  />
+                </td>
+                <td className="py-1 pr-1">
+                  <input
+                    value={t.comment ?? ""}
+                    onChange={(e) =>
+                      onChange((d) => {
+                        const x = d.tags[i];
+                        if (x) x.comment = e.target.value;
+                        return d;
+                      })
+                    }
+                    className={box}
+                  />
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onChange((d) => ({ ...d, tags: d.tags.filter((_, j) => j !== i) }))
+                    }
+                    className="text-ink-300 hover:text-red-700"
+                    aria-label={`Delete ${t.name}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────── alarms ─────────────────────────────── */
+
+function AlarmsTab({
+  doc,
+  plcTags,
+  onChange,
+}: { doc: HmiDoc; plcTags: Tag[]; onChange: (fn: (d: HmiDoc) => HmiDoc) => void }) {
+  const patch = (i: number, p: Partial<AlarmDef>) =>
+    onChange((d) => {
+      const a = d.alarms[i];
+      if (a) Object.assign(a, p);
+      return d;
+    });
+
+  return (
+    <div>
+      <p className="mb-3 text-[12.5px] leading-relaxed text-ink-500">
+        Alarms are defined on tags, which is how Ignition and FactoryTalk do it and for the same
+        reason: a list kept beside the tag table drifts from it.
+      </p>
+
+      <button
+        type="button"
+        onClick={() =>
+          onChange((d) => {
+            d.alarms.push({
+              id: `al${Math.random().toString(36).slice(2, 8)}`,
+              target: { source: "plc", tag: plcTags[0]?.name ?? "" },
+              condition: "digital",
+              priority: "medium",
+              message: "New alarm",
+              enabled: true,
+            });
+            return d;
+          })
+        }
+        className={addBtn}
+      >
+        <Plus className="h-3 w-3" />
+        Add an alarm
+      </button>
+
+      <div className="mt-3 space-y-3">
+        {doc.alarms.map((a, i) => {
+          const cond = CONDITIONS.find((c) => c.id === a.condition);
+          return (
+            <div key={a.id} className="rounded-md border border-ink-200 p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  value={a.message}
+                  onChange={(e) => patch(i, { message: e.target.value })}
+                  placeholder="What the operator sees"
+                  className={`${box} min-w-0 flex-1`}
+                />
+                <label className="flex items-center gap-1 text-[12px] text-ink-600">
+                  <input
+                    type="checkbox"
+                    checked={a.enabled}
+                    onChange={(e) => patch(i, { enabled: e.target.checked })}
+                  />
+                  on
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange((d) => ({ ...d, alarms: d.alarms.filter((_, j) => j !== i) }))
+                  }
+                  className="text-ink-300 hover:text-red-700"
+                  aria-label="Delete alarm"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                <Field label="Tag">
+                  <select
+                    value={`${a.target.source}:${a.target.tag}`}
+                    onChange={(e) => {
+                      const [source, tag] = e.target.value.split(":");
+                      patch(i, { target: { source: source as "plc" | "hmi", tag: tag ?? "" } });
+                    }}
+                    className={box}
+                  >
+                    {plcTags.map((t) => (
+                      <option key={t.name} value={`plc:${t.name}`}>
+                        {t.name}
+                      </option>
+                    ))}
+                    {doc.tags.map((t) => (
+                      <option key={t.name} value={`hmi:${t.name}`}>
+                        {t.name} (HMI)
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="Condition">
+                  <select
+                    value={a.condition}
+                    onChange={(e) => patch(i, { condition: e.target.value as AlarmCondition })}
+                    className={box}
+                  >
+                    {CONDITIONS.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="Priority">
+                  <select
+                    value={a.priority}
+                    onChange={(e) => patch(i, { priority: e.target.value as AlarmPriority })}
+                    className={box}
+                  >
+                    {PRIORITIES.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                {cond?.needsSetpoint ? (
+                  <>
+                    <Field label="Limit">
+                      <input
+                        type="number"
+                        value={a.setpoint ?? 0}
+                        onChange={(e) => patch(i, { setpoint: Number(e.target.value) })}
+                        className={box}
+                      />
+                    </Field>
+                    <Field label="Deadband" hint="Stops it chattering on the limit.">
+                      <input
+                        type="number"
+                        value={a.deadband ?? 0}
+                        onChange={(e) => patch(i, { deadband: Number(e.target.value) })}
+                        className={box}
+                      />
+                    </Field>
+                  </>
+                ) : (
+                  <Field label="Alarms when">
+                    <select
+                      value={a.trueIsAlarm === false ? "0" : "1"}
+                      onChange={(e) => patch(i, { trueIsAlarm: e.target.value === "1" })}
+                      className={box}
+                    >
+                      <option value="1">the bit is 1</option>
+                      <option value="0">the bit is 0</option>
+                    </select>
+                  </Field>
+                )}
+
+                <Field label="On delay" hint="Seconds it must hold.">
+                  <input
+                    type="number"
+                    value={a.onDelay ?? 0}
+                    onChange={(e) => patch(i, { onDelay: Number(e.target.value) })}
+                    className={box}
+                  />
+                </Field>
+              </div>
+
+              <Field label="Response" hint="ISA-18.2 asks what the operator should actually do.">
+                <input
+                  value={a.response ?? ""}
+                  onChange={(e) => patch(i, { response: e.target.value })}
+                  placeholder="Close the inlet valve and check the level transmitter."
+                  className={box}
+                />
+              </Field>
+
+              <p className="mt-1 text-[11.5px] text-ink-400">
+                {cond?.hint} {PRIORITIES.find((p) => p.id === a.priority)?.hint}
+              </p>
+            </div>
+          );
+        })}
+        {doc.alarms.length === 0 && <p className="text-[12.5px] text-ink-400">None yet.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────── trends ─────────────────────────────── */
+
+function TrendsTab({
+  doc,
+  plcTags,
+  onChange,
+}: { doc: HmiDoc; plcTags: Tag[]; onChange: (fn: (d: HmiDoc) => HmiDoc) => void }) {
+  const patch = (i: number, p: Partial<TrendDef>) =>
+    onChange((d) => {
+      const t = d.trends[i];
+      if (t) Object.assign(t, p);
+      return d;
+    });
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() =>
+          onChange((d) => {
+            d.trends.push({
+              id: `tr${Math.random().toString(36).slice(2, 8)}`,
+              name: `Trend ${d.trends.length + 1}`,
+              pens: [],
+              span: 300,
+              interval: 1000,
+            });
+            return d;
+          })
+        }
+        className={addBtn}
+      >
+        <Plus className="h-3 w-3" />
+        Add a trend
+      </button>
+
+      <div className="mt-3 space-y-3">
+        {doc.trends.map((tr, i) => (
+          <div key={tr.id} className="rounded-md border border-ink-200 p-3">
+            <div className="flex items-center gap-2">
+              <input
+                value={tr.name}
+                onChange={(e) => patch(i, { name: e.target.value })}
+                className={`${box} flex-1`}
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  onChange((d) => ({ ...d, trends: d.trends.filter((_, j) => j !== i) }))
+                }
+                className="text-ink-300 hover:text-red-700"
+                aria-label="Delete trend"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <Field label="Span" hint="Seconds of history held.">
+                <input
+                  type="number"
+                  value={tr.span}
+                  onChange={(e) => patch(i, { span: Number(e.target.value) || 60 })}
+                  className={box}
+                />
+              </Field>
+              <Field label="Interval" hint="Milliseconds between samples.">
+                <input
+                  type="number"
+                  value={tr.interval}
+                  onChange={(e) => patch(i, { interval: Number(e.target.value) || 1000 })}
+                  className={box}
+                />
+              </Field>
+            </div>
+
+            <p className="mt-1 text-[11.5px] text-ink-400">
+              {Math.ceil((tr.span * 1000) / Math.max(50, tr.interval))} samples held. Sampling
+              faster than the eye can use costs memory and buys nothing.
+            </p>
+
+            <div className="mt-2">
+              <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
+                Pens
+              </span>
+              {tr.pens.map((pen, pi) => (
+                <div key={pen.id} className="mb-1 flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={pen.colour}
+                    onChange={(e) =>
+                      onChange((d) => {
+                        const p = d.trends[i]?.pens[pi];
+                        if (p) p.colour = e.target.value;
+                        return d;
+                      })
+                    }
+                    className="h-6 w-9"
+                  />
+                  <select
+                    value={pen.target.tag}
+                    onChange={(e) =>
+                      onChange((d) => {
+                        const p = d.trends[i]?.pens[pi];
+                        if (p) p.target = { source: "plc", tag: e.target.value };
+                        return d;
+                      })
+                    }
+                    className={`${box} flex-1`}
+                  >
+                    {plcTags.map((t) => (
+                      <option key={t.name} value={t.name}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onChange((d) => {
+                        const t = d.trends[i];
+                        if (t) t.pens = t.pens.filter((_, j) => j !== pi);
+                        return d;
+                      })
+                    }
+                    className="text-ink-300 hover:text-red-700"
+                    aria-label="Remove pen"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  onChange((d) => {
+                    const t = d.trends[i];
+                    if (t)
+                      t.pens.push({
+                        id: `p${Math.random().toString(36).slice(2, 7)}`,
+                        target: { source: "plc", tag: plcTags[0]?.name ?? "" },
+                        colour: ["#3FBFB5", "#B4531A", "#3A4550", "#7A8894"][
+                          t.pens.length % 4
+                        ] as string,
+                      });
+                    return d;
+                  })
+                }
+                className="text-[12px] text-ink-600 hover:text-teal-700"
+              >
+                + pen
+              </button>
+            </div>
+          </div>
+        ))}
+        {doc.trends.length === 0 && <p className="text-[12.5px] text-ink-400">None yet.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── connection ─────────────────────────── */
+
+function ConnectionTab({
+  conn,
+  onChange,
+}: { conn: Connection; onChange: (fn: (d: HmiDoc) => HmiDoc) => void }) {
+  const patch = (p: Partial<Connection>) =>
+    onChange((d) => ({ ...d, connection: { ...d.connection, ...p } }));
+  const proto = PROTOCOLS.find((p) => p.id === conn.protocol);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-[12.5px] leading-relaxed text-ink-500">
+        Configured and exported, never dialled. LADX does not open sockets to plant equipment: Run
+        is driven by this project's ladder program, which is what makes a screen testable at a desk.
+        These settings exist because the design has to be recorded and handed over, and because a
+        screen built against the wrong word order is a commissioning day nobody enjoys.
+      </p>
+
+      <Field label="Protocol">
+        <select
+          value={conn.protocol}
+          onChange={(e) => {
+            // The protocol's defaults are written, not just displayed.
+            // Showing 502 in a port field that stores nothing means an
+            // exported connection is missing the port that the person
+            // configuring it believed they had set.
+            const next = e.target.value as Protocol;
+            patch({
+              protocol: next,
+              port: defaultPort(next) || undefined,
+              ...(next === "s7" ? { rack: conn.rack ?? 0, slot: conn.slot ?? 1 } : {}),
+              ...(next === "modbus-tcp"
+                ? { unitId: conn.unitId ?? 1, wordOrder: conn.wordOrder ?? "big" }
+                : {}),
+              ...(next === "ethernet-ip" ? { path: conn.path ?? "1,0" } : {}),
+            });
+          }}
+          className={box}
+        >
+          {PROTOCOLS.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <p className="-mt-2 text-[11.5px] text-ink-400">{proto?.hint}</p>
+
+      {conn.protocol !== "simulated" && (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Endpoint">
+              <input
+                value={conn.endpoint ?? ""}
+                onChange={(e) => patch({ endpoint: e.target.value })}
+                placeholder={conn.protocol === "opcua" ? "opc.tcp://10.0.0.5:4840" : "10.0.0.5"}
+                className={box}
+              />
+            </Field>
+            <Field label="Port">
+              <input
+                type="number"
+                value={conn.port ?? defaultPort(conn.protocol)}
+                onChange={(e) => patch({ port: Number(e.target.value) })}
+                className={box}
+              />
+            </Field>
+          </div>
+
+          {conn.protocol === "s7" && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Rack">
+                <input
+                  type="number"
+                  value={conn.rack ?? 0}
+                  onChange={(e) => patch({ rack: Number(e.target.value) })}
+                  className={box}
+                />
+              </Field>
+              <Field label="Slot" hint="1 on an S7-1200/1500, 2 on most S7-300/400.">
+                <input
+                  type="number"
+                  value={conn.slot ?? 1}
+                  onChange={(e) => patch({ slot: Number(e.target.value) })}
+                  className={box}
+                />
+              </Field>
+            </div>
+          )}
+
+          {conn.protocol === "modbus-tcp" && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Unit id">
+                <input
+                  type="number"
+                  value={conn.unitId ?? 1}
+                  onChange={(e) => patch({ unitId: Number(e.target.value) })}
+                  className={box}
+                />
+              </Field>
+              <Field
+                label="Word order"
+                hint="Modbus carries no types, so this has to be stated rather than guessed."
+              >
+                <select
+                  value={conn.wordOrder ?? "big"}
+                  onChange={(e) => patch({ wordOrder: e.target.value as "big" | "little" })}
+                  className={box}
+                >
+                  <option value="big">Big endian (high word first)</option>
+                  <option value="little">Little endian (low word first)</option>
+                </select>
+              </Field>
+            </div>
+          )}
+
+          {conn.protocol === "ethernet-ip" && (
+            <Field label="CIP path" hint="Backplane, slot. 1,0 reaches a controller in slot 0.">
+              <input
+                value={conn.path ?? "1,0"}
+                onChange={(e) => patch({ path: e.target.value })}
+                className={box}
+              />
+            </Field>
+          )}
+        </>
+      )}
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Poll" hint="Milliseconds between reads.">
+          <input
+            type="number"
+            value={conn.pollMs}
+            onChange={(e) => patch({ pollMs: Number(e.target.value) || 250 })}
+            className={box}
+          />
+        </Field>
+        <Field label="Timeout" hint="Before a read is called failed.">
+          <input
+            type="number"
+            value={conn.timeoutMs}
+            onChange={(e) => patch({ timeoutMs: Number(e.target.value) || 3000 })}
+            className={box}
+          />
+        </Field>
+      </div>
+    </div>
+  );
+}
+
+function defaultPort(p: Protocol): number {
+  switch (p) {
+    case "opcua":
+      return 4840;
+    case "modbus-tcp":
+      return 502;
+    case "ethernet-ip":
+      return 44818;
+    case "s7":
+      return 102;
+    default:
+      return 0;
+  }
+}
+
+/* ─────────────────────────────── bits ─────────────────────────────── */
+
+const box =
+  "w-full rounded-sm border border-ink-200 bg-white px-2 py-1 text-[12.5px] outline-none focus:border-ink-500";
+const addBtn =
+  "flex items-center gap-1.5 rounded-md border border-ink-200 bg-white px-2.5 py-1 text-[12.5px] text-ink-700 transition-colors hover:border-teal-500";
+
+function Field({
+  label,
+  hint,
+  children,
+}: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="mt-2">
+      <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
+        {label}
+      </span>
+      {children}
+      {hint && <span className="mt-0.5 block text-[11px] leading-snug text-ink-400">{hint}</span>}
+    </div>
+  );
+}
+
+export { getSymbol };

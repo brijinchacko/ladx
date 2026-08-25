@@ -1,5 +1,6 @@
 "use client";
 
+import HmiSetup from "@/components/hmi/hmi-setup";
 import WidgetView, { type LiveData } from "@/components/hmi/widget-view";
 import {
   type AlarmRuntime,
@@ -38,6 +39,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const GRID = 8;
 
+/** The eight resize grips, named the way a CSS cursor is. */
+type Handle = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
+const HANDLES: Handle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+
+interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export interface HmiEditorProps {
   id: string;
   initialDoc: HmiDoc;
@@ -62,6 +74,7 @@ export default function HmiEditor({
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [focus, setFocus] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
   const [tab, setTab] = useState<"palette" | "screens" | "tags" | "alarms">("palette");
   /**
    * Zoom.
@@ -273,11 +286,19 @@ export default function HmiEditor({
   const canvasRef = useRef<HTMLDivElement>(null);
   const scaleRef = useRef(1);
   scaleRef.current = scale;
-  const dragRef = useRef<{ id: string; dx: number; dy: number } | null>(null);
+  const dragRef = useRef<{
+    id: string;
+    dx: number;
+    dy: number;
+    /** Null for a move; a corner for a resize. */
+    handle: Handle | null;
+    start: Rect;
+  } | null>(null);
 
-  function startDrag(e: React.PointerEvent, w: Widget) {
+  function startDrag(e: React.PointerEvent, w: Widget, handle: Handle | null = null) {
     if (running) return;
     e.preventDefault();
+    e.stopPropagation();
     setSelected(w.id);
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -286,6 +307,8 @@ export default function HmiEditor({
     // drag at the wrong speed.
     dragRef.current = {
       id: w.id,
+      handle,
+      start: { ...w.rect },
       dx: (e.clientX - rect.left) / scaleRef.current - w.rect.x,
       dy: (e.clientY - rect.top) / scaleRef.current - w.rect.y,
     };
@@ -298,15 +321,46 @@ export default function HmiEditor({
     if (!d || !rect || !screen) return;
     // Snapped to the grid, and clamped inside the panel: a widget dragged off
     // the edge of a fixed-size screen is gone on the real hardware.
-    const x = Math.round(((e.clientX - rect.left) / scaleRef.current - d.dx) / GRID) * GRID;
-    const y = Math.round(((e.clientY - rect.top) / scaleRef.current - d.dy) / GRID) * GRID;
-    const w = screen.widgets.find((x2) => x2.id === d.id);
-    if (!w) return;
+    const px = (e.clientX - rect.left) / scaleRef.current;
+    const py = (e.clientY - rect.top) / scaleRef.current;
+    const snap = (n: number) => Math.round(n / GRID) * GRID;
+
+    if (!d.handle) {
+      const x = snap(px - d.dx);
+      const y = snap(py - d.dy);
+      patchWidget(d.id, {
+        rect: {
+          ...d.start,
+          x: Math.max(0, Math.min(x, screen.size.width - d.start.w)),
+          y: Math.max(0, Math.min(y, screen.size.height - d.start.h)),
+        },
+      });
+      return;
+    }
+
+    // Resizing from a corner. Each edge is clamped so it cannot cross the
+    // opposite one, which would otherwise flip the box inside out.
+    const s0 = d.start;
+    let { x, y, w: bw, h: bh } = s0;
+    const MIN = GRID * 2;
+    if (d.handle.includes("e")) bw = Math.max(MIN, snap(px) - s0.x);
+    if (d.handle.includes("s")) bh = Math.max(MIN, snap(py) - s0.y);
+    if (d.handle.includes("w")) {
+      const right = s0.x + s0.w;
+      x = Math.min(snap(px), right - MIN);
+      bw = right - x;
+    }
+    if (d.handle.includes("n")) {
+      const bottom = s0.y + s0.h;
+      y = Math.min(snap(py), bottom - MIN);
+      bh = bottom - y;
+    }
     patchWidget(d.id, {
       rect: {
-        ...w.rect,
-        x: Math.max(0, Math.min(x, screen.size.width - w.rect.w)),
-        y: Math.max(0, Math.min(y, screen.size.height - w.rect.h)),
+        x: Math.max(0, x),
+        y: Math.max(0, y),
+        w: Math.min(bw, screen.size.width - Math.max(0, x)),
+        h: Math.min(bh, screen.size.height - Math.max(0, y)),
       },
     });
   }
@@ -494,6 +548,13 @@ export default function HmiEditor({
               {plcTags.length} PLC tags · {projectName}
             </span>
           )}
+          <button
+            type="button"
+            onClick={() => setSetupOpen(true)}
+            className="rounded-md border border-ink-200 bg-white px-2.5 py-1 text-[12.5px] text-ink-700 transition-colors hover:border-ink-400"
+          >
+            Setup
+          </button>
           <select
             value={zoom === "fit" ? "fit" : String(zoom)}
             onChange={(e) => setZoom(e.target.value === "fit" ? "fit" : Number(e.target.value))}
@@ -625,17 +686,48 @@ export default function HmiEditor({
                       />
                     </div>
                     {!running && selected === w.id && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: w.rect.x - 2,
-                          top: w.rect.y - 2,
-                          width: w.rect.w + 4,
-                          height: w.rect.h + 4,
-                          border: "1.5px solid #3FBFB5",
-                          pointerEvents: "none",
-                        }}
-                      />
+                      <>
+                        {HANDLES.map((h) => (
+                          <div
+                            key={h}
+                            onPointerDown={(e) => startDrag(e, w, h)}
+                            style={{
+                              position: "absolute",
+                              left:
+                                w.rect.x +
+                                (h.includes("w")
+                                  ? -4
+                                  : h.includes("e")
+                                    ? w.rect.w - 4
+                                    : w.rect.w / 2 - 4),
+                              top:
+                                w.rect.y +
+                                (h.includes("n")
+                                  ? -4
+                                  : h.includes("s")
+                                    ? w.rect.h - 4
+                                    : w.rect.h / 2 - 4),
+                              width: 8,
+                              height: 8,
+                              background: "#fff",
+                              border: "1.5px solid #3FBFB5",
+                              zIndex: 4,
+                              cursor: `${h}-resize`,
+                            }}
+                          />
+                        ))}
+                        <div
+                          style={{
+                            position: "absolute",
+                            left: w.rect.x - 2,
+                            top: w.rect.y - 2,
+                            width: w.rect.w + 4,
+                            height: w.rect.h + 4,
+                            border: "1.5px solid #3FBFB5",
+                            pointerEvents: "none",
+                          }}
+                        />
+                      </>
                     )}
                   </div>
                 ))}
@@ -668,6 +760,16 @@ export default function HmiEditor({
           )}
         </aside>
       </div>
+
+      {setupOpen && (
+        <HmiSetup
+          doc={doc}
+          plcTags={liveTags}
+          screenId={screenId}
+          onChange={update}
+          onClose={() => setSetupOpen(false)}
+        />
+      )}
     </div>
   );
 }
