@@ -1,3 +1,4 @@
+import { EXTRA_SYMBOLS } from "@/lib/hmi/symbols-extra";
 import type { ReactNode } from "react";
 
 /**
@@ -22,10 +23,14 @@ export type SymbolCategory =
   | "Vessels"
   | "Pumps and fans"
   | "Valves"
+  | "Mixers"
   | "Motors and drives"
   | "Conveying"
+  | "Separation"
   | "Heat transfer"
+  | "HVAC"
   | "Instruments"
+  | "Pipe"
   | "Electrical";
 
 export interface SymbolDef {
@@ -632,29 +637,50 @@ const SYMBOLS: SymbolDef[] = [
   },
 ];
 
+/** Ordered the way a process runs, not alphabetically: it is a palette to scan. */
 export const SYMBOL_CATEGORIES: SymbolCategory[] = [
   "Vessels",
   "Pumps and fans",
   "Valves",
+  "Pipe",
+  "Mixers",
   "Motors and drives",
   "Conveying",
+  "Separation",
   "Heat transfer",
+  "HVAC",
   "Instruments",
   "Electrical",
 ];
 
-const BY_ID = new Map(SYMBOLS.map((s) => [s.id, s]));
+/**
+ * The whole library: the core set above plus the rest, which lives in its own
+ * file only because a hundred drawings in one is unreadable.
+ */
+const ALL: SymbolDef[] = [...SYMBOLS, ...EXTRA_SYMBOLS];
+
+const BY_ID = new Map(ALL.map((s) => [s.id, s]));
 
 export function getSymbol(id: string): SymbolDef | undefined {
   return BY_ID.get(id);
 }
 
 export function symbolsIn(category: SymbolCategory): SymbolDef[] {
-  return SYMBOLS.filter((s) => s.category === category);
+  return ALL.filter((s) => s.category === category);
 }
 
 export function allSymbols(): SymbolDef[] {
-  return SYMBOLS;
+  return ALL;
+}
+
+/** Name or category match, for the palette's search box. */
+export function searchSymbols(query: string): SymbolDef[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return ALL;
+  return ALL.filter(
+    (s) =>
+      s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q) || s.id.includes(q),
+  );
 }
 
 /**

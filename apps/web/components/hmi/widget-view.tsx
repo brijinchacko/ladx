@@ -2,6 +2,7 @@
 
 import type { EvalContext } from "@/lib/hmi/expression";
 import { resolveBool, resolveNumber } from "@/lib/hmi/runtime";
+import { fitSvg } from "@/lib/hmi/svg-import";
 import { SymbolView } from "@/lib/hmi/symbols";
 import type { Widget } from "@/lib/hmi/types";
 import type { ReactNode } from "react";
@@ -336,6 +337,18 @@ export default function WidgetView({
       }
 
       case "symbol": {
+        // An imported drawing wins over a library id: it is this widget's own
+        // artwork, carried in the document so it survives moving machines.
+        const custom = w.config?.svg as string | undefined;
+        if (custom) {
+          return (
+            <div
+              style={{ width, height, overflow: "hidden" }}
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitised on import by lib/hmi/svg-import against an allow-list, with 24 tests over hostile files; painting an arbitrary vector drawing has no other route.
+              dangerouslySetInnerHTML={{ __html: fitSvg(custom, width, height) }}
+            />
+          );
+        }
         const lv = live ? resolveNumber(w.value, ctx) : 0.6;
         const lo = w.min ?? 0;
         const hi = w.max ?? 100;

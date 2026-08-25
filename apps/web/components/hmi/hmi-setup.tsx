@@ -84,16 +84,19 @@ export default function HmiSetup({
   doc,
   plcTags,
   screenId,
+  initialTab = "alarms",
   onChange,
   onClose,
 }: {
   doc: HmiDoc;
   plcTags: Tag[];
   screenId: string;
+  /** Which tab to land on, so clicking Alarms in the tree opens Alarms. */
+  initialTab?: Tab;
   onChange: (fn: (d: HmiDoc) => HmiDoc) => void;
   onClose: () => void;
 }) {
-  const [tab, setTab] = useState<Tab>("alarms");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const screen = doc.screens.find((s) => s.id === screenId) ?? doc.screens[0];
 
   return (

@@ -10,4 +10,11 @@ export default defineConfig({
   resolve: {
     alias: { "@": resolve(__dirname, ".") },
   },
+  test: {
+    // Node by default, because almost everything under test is pure. A file
+    // that genuinely needs a DOM asks for one with a
+    // `@vitest-environment jsdom` comment at the top, which keeps the fast
+    // path fast rather than booting a DOM for 400 arithmetic tests.
+    environment: "node",
+  },
 });

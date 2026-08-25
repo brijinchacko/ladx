@@ -1,5 +1,5 @@
 "use client";
-
+import { type Menu, MenuBar, Panel, PanelDock, ProjectTree } from "@/components/hmi/hmi-chrome";
 import HmiSetup from "@/components/hmi/hmi-setup";
 import WidgetView, { type LiveData } from "@/components/hmi/widget-view";
 import {
@@ -13,6 +13,14 @@ import {
 } from "@/lib/hmi/alarms";
 import { PANEL_GROUPS, PANEL_PRESETS, presetFor } from "@/lib/hmi/panels";
 import {
+  DEFAULT_LAYOUT,
+  type Layout,
+  PANELS as PANELS_FOR_MENU,
+  type PanelId,
+  loadLayout,
+  saveLayout,
+} from "@/lib/hmi/panels-layout";
+import {
   type TagSpace,
   TrendBuffer,
   buildTagSpace,
@@ -21,10 +29,12 @@ import {
   resolveNumber,
   writeTag,
 } from "@/lib/hmi/runtime";
-import { SYMBOL_CATEGORIES, symbolsIn } from "@/lib/hmi/symbols";
-import type { Action, HmiDoc, Screen, Widget, WidgetKind } from "@/lib/hmi/types";
+import { sanitiseSvg } from "@/lib/hmi/svg-import";
+import { SYMBOL_CATEGORIES, searchSymbols, symbolsIn } from "@/lib/hmi/symbols";
+import type { Action, AlarmDef, HmiDoc, Screen, Widget, WidgetKind } from "@/lib/hmi/types";
 import { type LadxProgram, type Tag, scan } from "@ladx/studio";
 import { Bell, Loader2, Maximize2, Play, Plus, Save, Square, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /**
@@ -75,6 +85,34 @@ export default function HmiEditor({
   const [dirty, setDirty] = useState(false);
   const [focus, setFocus] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
+  const [importNote, setImportNote] = useState<string | null>(null);
+  const [setupTab, setSetupTab] = useState<"screen" | "tags" | "alarms" | "trends" | "connection">(
+    "alarms",
+  );
+
+  /**
+   * The pane layout, restored on mount rather than in the initial state.
+   *
+   * localStorage is not available while the server renders, and seeding state
+   * from it directly makes the first client render disagree with the HTML,
+   * which React reports as a hydration mismatch and then throws away.
+   */
+  const [layout, setLayout] = useState<Layout>(DEFAULT_LAYOUT);
+  useEffect(() => setLayout(loadLayout()), []);
+  const setPanel = useCallback((id: PanelId, next: Partial<Layout[PanelId]>) => {
+    setLayout((l) => {
+      const out = { ...l, [id]: { ...l[id], ...next } };
+      saveLayout(out);
+      return out;
+    });
+  }, []);
+  const router = useRouter();
+  const svgRef = useRef<HTMLInputElement>(null);
+
+  const openSetup = useCallback((tab: typeof setupTab) => {
+    setSetupTab(tab);
+    setSetupOpen(true);
+  }, []);
   const [tab, setTab] = useState<"palette" | "screens" | "tags" | "alarms">("palette");
   /**
    * Zoom.
@@ -280,6 +318,130 @@ export default function HmiEditor({
     },
     [update, screenId],
   );
+
+  const deleteSelected = useCallback(() => {
+    if (!selected) return;
+    update((d) => {
+      const sc = d.screens.find((x) => x.id === screenId);
+      if (sc) sc.widgets = sc.widgets.filter((w) => w.id !== selected);
+      return d;
+    });
+    setSelected(null);
+  }, [selected, screenId, update]);
+
+  /** Offset from the original, so the copy is visible rather than exactly under it. */
+  const duplicateSelected = useCallback(() => {
+    if (!selected) return;
+    const nid = `w${Math.random().toString(36).slice(2, 9)}`;
+    update((d) => {
+      const sc = d.screens.find((x) => x.id === screenId);
+      const w = sc?.widgets.find((x) => x.id === selected);
+      if (sc && w) {
+        sc.widgets.push({
+          ...structuredClone(w),
+          id: nid,
+          rect: { ...w.rect, x: w.rect.x + GRID * 2, y: w.rect.y + GRID * 2 },
+        });
+      }
+      return d;
+    });
+    setSelected(nid);
+  }, [selected, screenId, update]);
+
+  /**
+   * Move the selection through the stack.
+   *
+   * z is explicit rather than array order, so a widget can be raised without
+   * disturbing anything else's relative order.
+   */
+  const reorder = useCallback(
+    (where: "front" | "back") => {
+      if (!selected) return;
+      update((d) => {
+        const sc = d.screens.find((x) => x.id === screenId);
+        const w = sc?.widgets.find((x) => x.id === selected);
+        if (!sc || !w) return d;
+        const zs = sc.widgets.map((x) => x.z ?? 0);
+        w.z = where === "front" ? Math.max(...zs) + 1 : Math.min(...zs) - 1;
+        return d;
+      });
+    },
+    [selected, screenId, update],
+  );
+
+  const addScreen = useCallback(() => {
+    const id2 = `s${Math.random().toString(36).slice(2, 8)}`;
+    update((d) => {
+      const n = d.screens.length + 1;
+      d.screens.push({
+        id: id2,
+        name: `Screen ${n}`,
+        slug: `screen-${n}`,
+        size: d.defaultSize,
+        background: "#E8EAEC",
+        widgets: [],
+      });
+      return d;
+    });
+    setScreenId(id2);
+  }, [update]);
+
+  /**
+   * Bring in an SVG as a symbol.
+   *
+   * This is the escape hatch for the commercial libraries. Symbol Factory and
+   * the rest are per-machine products that cannot be bundled into an HMI
+   * somebody sells, so LADX ships its own drawings; anyone who has licensed
+   * one of those sets exports SVG from it and imports it here, which keeps the
+   * licence where it belongs, with them.
+   *
+   * Stored on the widget rather than in a global library, so an application
+   * carries its own artwork and does not break when it moves machines.
+   */
+  const importSvg = useCallback(
+    async (file: File) => {
+      const { svg, error, removed } = sanitiseSvg(await file.text());
+      if (error || !svg) {
+        setImportNote(error ?? "Could not read that SVG.");
+        return;
+      }
+      const wid = `w${Math.random().toString(36).slice(2, 9)}`;
+      update((d) => {
+        const sc = d.screens.find((x) => x.id === screenId);
+        sc?.widgets.push({
+          id: wid,
+          kind: "symbol",
+          name: file.name.replace(/\.svg$/i, ""),
+          rect: { x: 40, y: 40, w: 96, h: 96 },
+          fill: "#D8DCDF",
+          stroke: "#3A4550",
+          strokeWidth: 1.5,
+          // Carried on the widget rather than in a global library, so an
+          // application takes its own artwork with it between installs.
+          config: { svg },
+        });
+        return d;
+      });
+      setSelected(wid);
+      setImportNote(
+        removed.length > 0
+          ? `Imported ${file.name}, with ${removed.length} thing${removed.length === 1 ? "" : "s"} stripped: ${removed.slice(0, 4).join(", ")}.`
+          : `Imported ${file.name}.`,
+      );
+    },
+    [screenId, update],
+  );
+
+  /** The document as a file, so an application can be moved between installs. */
+  const exportJson = useCallback(() => {
+    const blob = new Blob([JSON.stringify({ name, doc }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${name.replace(/[^\w-]+/g, "-").toLowerCase()}.hmi.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [name, doc]);
 
   /* ── dragging on the canvas ── */
 
@@ -488,11 +650,114 @@ export default function HmiEditor({
     return undefined;
   };
 
+  /**
+   * The menu bar.
+   *
+   * Rebuilt each render rather than memoised: every item closes over the
+   * document, the selection and the layout, and a dependency list over that is
+   * a list somebody gets wrong, with a menu item quietly acting on a screen
+   * from three edits ago as the failure mode.
+   */
+  const menus: Menu[] = [
+    {
+      label: "File",
+      items: [
+        { label: "Save", shortcut: "Cmd S", onSelect: () => void save(), disabled: !dirty },
+        { label: "Export JSON", onSelect: exportJson, separator: false },
+        { label: "Import symbol (SVG)…", onSelect: () => svgRef.current?.click() },
+        { label: "", separator: true },
+        { label: "Close", onSelect: () => router.push("/studio/hmi") },
+      ],
+    },
+    {
+      label: "Edit",
+      items: [
+        {
+          label: "Duplicate",
+          shortcut: "Cmd D",
+          disabled: !selected,
+          onSelect: duplicateSelected,
+        },
+        { label: "Delete", shortcut: "Del", disabled: !selected, onSelect: deleteSelected },
+        { label: "", separator: true },
+        { label: "Bring to front", disabled: !selected, onSelect: () => reorder("front") },
+        { label: "Send to back", disabled: !selected, onSelect: () => reorder("back") },
+      ],
+    },
+    {
+      label: "View",
+      items: [
+        ...PANELS_FOR_MENU.map((p) => ({
+          label: p.title,
+          checked: layout[p.id].open,
+          onSelect: () => setPanel(p.id, { open: !layout[p.id].open }),
+        })),
+        { label: "", separator: true },
+        { label: "Fit", onSelect: () => setZoom("fit"), checked: zoom === "fit" },
+        { label: "100%", onSelect: () => setZoom(1), checked: zoom === 1 },
+        { label: "Full screen", onSelect: () => setFocus((f) => !f), checked: focus },
+        { label: "", separator: true },
+        {
+          label: "Reset layout",
+          onSelect: () => {
+            setLayout(DEFAULT_LAYOUT);
+            saveLayout(DEFAULT_LAYOUT);
+          },
+        },
+      ],
+    },
+    {
+      label: "Insert",
+      items: BASIC.map((b) => ({ label: b.label, onSelect: () => addWidget(b.kind) })),
+    },
+    {
+      label: "Screen",
+      items: [
+        { label: "New screen", onSelect: addScreen },
+        { label: "Screen settings…", onSelect: () => openSetup("screen") },
+        { label: "", separator: true },
+        ...doc.screens.map((sc) => ({
+          label: sc.name,
+          checked: sc.id === screenId,
+          onSelect: () => setScreenId(sc.id),
+        })),
+      ],
+    },
+    {
+      label: "Configure",
+      items: [
+        { label: "Tags…", onSelect: () => openSetup("tags") },
+        { label: "Alarms…", onSelect: () => openSetup("alarms") },
+        { label: "Trends…", onSelect: () => openSetup("trends") },
+        { label: "Connection…", onSelect: () => openSetup("connection") },
+      ],
+    },
+    {
+      label: "Run",
+      items: [
+        {
+          label: running ? "Stop" : "Start",
+          disabled: !program,
+          onSelect: () => setRunning((r) => !r),
+        },
+        {
+          label: "Acknowledge all alarms",
+          disabled: !running,
+          onSelect: () => fire([{ kind: "ackAll" }]),
+        },
+      ],
+    },
+  ];
+
   if (!screen)
     return <p className="p-6 text-[13px] text-ink-500">This application has no screens.</p>;
 
   return (
-    <div className={`flex min-h-0 flex-1 flex-col ${focus ? "fixed inset-0 z-50 bg-white" : ""}`}>
+    <div
+      className={`relative flex min-h-0 flex-1 flex-col ${focus ? "fixed inset-0 z-50 bg-white" : ""}`}
+    >
+      <MenuBar menus={menus} />
+
       {/* toolbar */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-2">
         <input
@@ -588,184 +853,233 @@ export default function HmiEditor({
       </div>
 
       <div className="flex min-h-0 flex-1">
-        {/* left: palette, screens, tags, alarms */}
-        <aside className="flex w-60 shrink-0 flex-col border-r border-ink-100">
-          <div className="flex shrink-0 border-b border-ink-100">
-            {(["palette", "screens", "tags", "alarms"] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTab(t)}
-                className={`flex-1 py-1.5 text-[11.5px] capitalize transition-colors ${
-                  tab === t
-                    ? "border-b-2 border-teal-600 text-ink-900"
-                    : "text-ink-400 hover:text-ink-700"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto p-2">
-            {tab === "palette" && <Palette onAdd={addWidget} />}
-            {tab === "screens" && (
-              <ScreenList doc={doc} current={screenId} onSelect={setScreenId} onChange={update} />
-            )}
-            {tab === "tags" && <TagList plc={liveTags} hmi={doc.tags} space={space} />}
-            {tab === "alarms" && (
-              <AlarmList
-                rows={outstanding}
-                onAck={() => fire([{ kind: "ackAll" }])}
-                running={running}
-              />
-            )}
-          </div>
-        </aside>
-
-        {/* centre: the panel */}
-        <div ref={stageRef} className="min-h-0 flex-1 overflow-auto bg-ink-100/50 p-6">
-          <div
-            style={{
-              width: screen.size.width * scale,
-              height: screen.size.height * scale,
-              margin: "0 auto",
-            }}
+        {layout.tree.open && (
+          <Panel
+            id="tree"
+            layout={layout}
+            onResize={(size) => setPanel("tree", { size })}
+            onClose={() => setPanel("tree", { open: false })}
           >
+            <ProjectTree
+              doc={doc}
+              appName={name}
+              screenId={screenId}
+              plcTagCount={plcTags.length}
+              onSelectScreen={setScreenId}
+              onOpenSetup={openSetup}
+            />
+          </Panel>
+        )}
+
+        {/* centre: the panel, with properties docked under it */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div ref={stageRef} className="min-h-0 flex-1 overflow-auto bg-ink-100/50 p-6">
             <div
-              ref={canvasRef}
-              onPointerMove={onDrag}
-              onPointerUp={endDrag}
-              onPointerLeave={endDrag}
               style={{
-                width: screen.size.width,
-                height: screen.size.height,
-                background: screen.background,
-                position: "relative",
-                boxShadow: "0 2px 18px rgba(15,26,36,0.18)",
-                // A real panel bezel, so the drawing area is unmistakably the
-                // glass rather than an infinite canvas.
-                outline: "6px solid #2B3138",
-                transform: `scale(${scale})`,
-                transformOrigin: "top left",
+                width: screen.size.width * scale,
+                height: screen.size.height * scale,
+                margin: "0 auto",
               }}
             >
-              {!running && <GridOverlay w={screen.size.width} h={screen.size.height} />}
-              {[...screen.widgets]
-                .sort((a, b) => (a.z ?? 0) - (b.z ?? 0))
-                .map((w) => (
-                  <div key={w.id}>
-                    {/* The grab handle is the widget's own box. It used to be
+              <div
+                ref={canvasRef}
+                onPointerMove={onDrag}
+                onPointerUp={endDrag}
+                onPointerLeave={endDrag}
+                style={{
+                  width: screen.size.width,
+                  height: screen.size.height,
+                  background: screen.background,
+                  position: "relative",
+                  boxShadow: "0 2px 18px rgba(15,26,36,0.18)",
+                  // A real panel bezel, so the drawing area is unmistakably the
+                  // glass rather than an infinite canvas.
+                  outline: "6px solid #2B3138",
+                  transform: `scale(${scale})`,
+                  transformOrigin: "top left",
+                }}
+              >
+                {!running && <GridOverlay w={screen.size.width} h={screen.size.height} />}
+                {[...screen.widgets]
+                  .sort((a, b) => (a.z ?? 0) - (b.z ?? 0))
+                  .map((w) => (
+                    <div key={w.id}>
+                      {/* The grab handle is the widget's own box. It used to be
                         inset:0, which covers the whole panel, so a click
                         anywhere selected whichever widget happened to render
                         last rather than the one under the pointer. In run mode
                         it steps aside entirely so the control beneath takes
                         the press. */}
-                    {!running && (
-                      <div
-                        onPointerDown={(e) => startDrag(e, w)}
-                        style={{
-                          position: "absolute",
-                          left: w.rect.x,
-                          top: w.rect.y,
-                          width: w.rect.w,
-                          height: w.rect.h,
-                          zIndex: 2,
-                          cursor: "move",
-                        }}
-                      />
-                    )}
-                    <div>
-                      <WidgetView
-                        widget={w}
-                        ctx={ctx}
-                        live={running}
-                        data={liveData(w)}
-                        onPress={() => fire(w.onPress)}
-                        onRelease={() => fire(w.onRelease)}
-                      />
-                    </div>
-                    {!running && selected === w.id && (
-                      <>
-                        {HANDLES.map((h) => (
-                          <div
-                            key={h}
-                            onPointerDown={(e) => startDrag(e, w, h)}
-                            style={{
-                              position: "absolute",
-                              left:
-                                w.rect.x +
-                                (h.includes("w")
-                                  ? -4
-                                  : h.includes("e")
-                                    ? w.rect.w - 4
-                                    : w.rect.w / 2 - 4),
-                              top:
-                                w.rect.y +
-                                (h.includes("n")
-                                  ? -4
-                                  : h.includes("s")
-                                    ? w.rect.h - 4
-                                    : w.rect.h / 2 - 4),
-                              width: 8,
-                              height: 8,
-                              background: "#fff",
-                              border: "1.5px solid #3FBFB5",
-                              zIndex: 4,
-                              cursor: `${h}-resize`,
-                            }}
-                          />
-                        ))}
+                      {!running && (
                         <div
+                          onPointerDown={(e) => startDrag(e, w)}
                           style={{
                             position: "absolute",
-                            left: w.rect.x - 2,
-                            top: w.rect.y - 2,
-                            width: w.rect.w + 4,
-                            height: w.rect.h + 4,
-                            border: "1.5px solid #3FBFB5",
-                            pointerEvents: "none",
+                            left: w.rect.x,
+                            top: w.rect.y,
+                            width: w.rect.w,
+                            height: w.rect.h,
+                            zIndex: 2,
+                            cursor: "move",
                           }}
                         />
-                      </>
-                    )}
-                  </div>
-                ))}
+                      )}
+                      <div>
+                        <WidgetView
+                          widget={w}
+                          ctx={ctx}
+                          live={running}
+                          data={liveData(w)}
+                          onPress={() => fire(w.onPress)}
+                          onRelease={() => fire(w.onRelease)}
+                        />
+                      </div>
+                      {!running && selected === w.id && (
+                        <>
+                          {HANDLES.map((h) => (
+                            <div
+                              key={h}
+                              onPointerDown={(e) => startDrag(e, w, h)}
+                              style={{
+                                position: "absolute",
+                                left:
+                                  w.rect.x +
+                                  (h.includes("w")
+                                    ? -4
+                                    : h.includes("e")
+                                      ? w.rect.w - 4
+                                      : w.rect.w / 2 - 4),
+                                top:
+                                  w.rect.y +
+                                  (h.includes("n")
+                                    ? -4
+                                    : h.includes("s")
+                                      ? w.rect.h - 4
+                                      : w.rect.h / 2 - 4),
+                                width: 8,
+                                height: 8,
+                                background: "#fff",
+                                border: "1.5px solid #3FBFB5",
+                                zIndex: 4,
+                                cursor: `${h}-resize`,
+                              }}
+                            />
+                          ))}
+                          <div
+                            style={{
+                              position: "absolute",
+                              left: w.rect.x - 2,
+                              top: w.rect.y - 2,
+                              width: w.rect.w + 4,
+                              height: w.rect.h + 4,
+                              border: "1.5px solid #3FBFB5",
+                              pointerEvents: "none",
+                            }}
+                          />
+                        </>
+                      )}
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
+
+          {layout.properties.open && (
+            <Panel
+              id="properties"
+              layout={layout}
+              onResize={(size) => setPanel("properties", { size })}
+              onClose={() => setPanel("properties", { open: false })}
+              actions={
+                sel ? (
+                  <span className="font-mono text-[10px] text-ink-400">{sel.name ?? sel.kind}</span>
+                ) : null
+              }
+            >
+              {sel ? (
+                <div className="p-3">
+                  <Properties
+                    widget={sel}
+                    plc={liveTags}
+                    hmi={doc.tags}
+                    screens={doc.screens}
+                    onChange={(patch) => patchWidget(sel.id, patch)}
+                    onDelete={() => {
+                      update((d) => {
+                        const sc = d.screens.find((s) => s.id === screenId);
+                        if (sc) sc.widgets = sc.widgets.filter((w) => w.id !== sel.id);
+                        return d;
+                      });
+                      setSelected(null);
+                    }}
+                  />
+                </div>
+              ) : (
+                <p className="p-3 text-[12.5px] leading-relaxed text-ink-400">
+                  Nothing selected. Pick an object on the panel, or add one from Tools.
+                </p>
+              )}
+            </Panel>
+          )}
         </div>
 
-        {/* right: properties */}
-        <aside className="w-72 shrink-0 overflow-y-auto border-l border-ink-100 p-3">
-          {sel ? (
-            <Properties
-              widget={sel}
-              plc={liveTags}
-              hmi={doc.tags}
-              screens={doc.screens}
-              onChange={(patch) => patchWidget(sel.id, patch)}
-              onDelete={() => {
-                update((d) => {
-                  const sc = d.screens.find((s) => s.id === screenId);
-                  if (sc) sc.widgets = sc.widgets.filter((w) => w.id !== sel.id);
-                  return d;
-                });
-                setSelected(null);
-              }}
+        {layout.tools.open && (
+          <Panel
+            id="tools"
+            layout={layout}
+            onResize={(size) => setPanel("tools", { size })}
+            onClose={() => setPanel("tools", { open: false })}
+          >
+            <Tools
+              onAdd={addWidget}
+              running={running}
+              outstanding={outstanding}
+              onAck={() => fire([{ kind: "ackAll" }])}
             />
-          ) : (
-            <p className="text-[12.5px] leading-relaxed text-ink-400">
-              Nothing selected. Pick an object on the panel, or add one from the palette.
-            </p>
-          )}
-        </aside>
+          </Panel>
+        )}
       </div>
+
+      <input
+        ref={svgRef}
+        type="file"
+        accept=".svg,image/svg+xml"
+        className="sr-only"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void importSvg(f);
+          e.target.value = "";
+        }}
+      />
+
+      {importNote && (
+        <p className="flex shrink-0 items-center gap-3 border-t border-ink-100 bg-ink-50/60 px-3 py-1 text-[12px] text-ink-600">
+          {importNote}
+          <button
+            type="button"
+            onClick={() => setImportNote(null)}
+            className="ml-auto text-ink-400 hover:text-ink-900"
+          >
+            Dismiss
+          </button>
+        </p>
+      )}
+
+      <PanelDock
+        layout={layout}
+        onOpen={(id) => setPanel(id, { open: true })}
+        onReset={() => {
+          setLayout(DEFAULT_LAYOUT);
+          saveLayout(DEFAULT_LAYOUT);
+        }}
+      />
 
       {setupOpen && (
         <HmiSetup
           doc={doc}
           plcTags={liveTags}
           screenId={screenId}
+          initialTab={setupTab}
           onChange={update}
           onClose={() => setSetupOpen(false)}
         />
@@ -843,47 +1157,136 @@ function defaultSize(kind: WidgetKind): { w: number; h: number } {
   }
 }
 
-function Palette({ onAdd }: { onAdd: (k: WidgetKind, symbol?: string) => void }) {
-  return (
-    <div className="space-y-3">
-      <div>
-        <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
-          Objects
-        </p>
-        <div className="grid grid-cols-2 gap-1">
-          {BASIC.map((b) => (
-            <button
-              key={b.kind}
-              type="button"
-              onClick={() => onAdd(b.kind)}
-              className="rounded-sm border border-ink-200 bg-white px-1.5 py-1 text-left text-[11.5px] text-ink-700 transition-colors hover:border-teal-500"
-            >
-              {b.label}
-            </button>
-          ))}
-        </div>
-      </div>
+/**
+ * The tools pane: objects, then the symbol library by category.
+ *
+ * Search sits at the top because eighty-seven symbols across twelve categories
+ * is past the point where scanning is faster than typing. When the running
+ * screen has alarms, the summary comes first: what is wrong outranks what you
+ * might draw next.
+ */
+function Tools({
+  onAdd,
+  running,
+  outstanding,
+  onAck,
+}: {
+  onAdd: (k: WidgetKind, symbol?: string) => void;
+  running: boolean;
+  outstanding: { def: AlarmDef; runtime: AlarmRuntime }[];
+  onAck: () => void;
+}) {
+  const [q, setQ] = useState("");
+  const hits = q.trim() ? searchSymbols(q) : null;
 
-      {SYMBOL_CATEGORIES.map((cat) => (
-        <div key={cat}>
+  return (
+    <div className="space-y-3 p-2">
+      {running && (
+        <div className="rounded-sm border border-ink-200 p-1.5">
+          <div className="mb-1 flex items-center gap-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
+              Alarms
+            </span>
+            <button
+              type="button"
+              onClick={onAck}
+              className="ml-auto text-[11px] text-ink-600 hover:text-teal-700"
+            >
+              Ack all
+            </button>
+          </div>
+          {outstanding.length === 0 ? (
+            <p className="text-[11px] text-ink-400">Nothing outstanding.</p>
+          ) : (
+            <ul className="space-y-0.5">
+              {outstanding.slice(0, 6).map((r) => (
+                <li
+                  key={r.def.id}
+                  className={`truncate rounded-sm px-1 py-0.5 text-[11px] ${
+                    needsAck(r.runtime.state) ? "bg-[#B4531A]/12 text-ink-900" : "text-ink-500"
+                  }`}
+                >
+                  {r.def.message}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Search symbols"
+        className="w-full rounded-sm border border-ink-200 px-2 py-1 text-[12px] outline-none placeholder:text-ink-300 focus:border-ink-500"
+      />
+
+      {hits ? (
+        <div>
           <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
-            {cat}
+            {hits.length} match{hits.length === 1 ? "" : "es"}
           </p>
           <div className="grid grid-cols-2 gap-1">
-            {symbolsIn(cat).map((s) => (
+            {hits.map((sym) => (
               <button
-                key={s.id}
+                key={sym.id}
                 type="button"
-                onClick={() => onAdd("symbol", s.id)}
-                title={s.name}
+                onClick={() => onAdd("symbol", sym.id)}
+                title={`${sym.name} · ${sym.category}`}
                 className="truncate rounded-sm border border-ink-200 bg-white px-1.5 py-1 text-left text-[11.5px] text-ink-700 transition-colors hover:border-teal-500"
               >
-                {s.name}
+                {sym.name}
               </button>
             ))}
           </div>
         </div>
-      ))}
+      ) : (
+        <>
+          <div>
+            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
+              Objects
+            </p>
+            <div className="grid grid-cols-2 gap-1">
+              {BASIC.map((b) => (
+                <button
+                  key={b.kind}
+                  type="button"
+                  onClick={() => onAdd(b.kind)}
+                  className="rounded-sm border border-ink-200 bg-white px-1.5 py-1 text-left text-[11.5px] text-ink-700 transition-colors hover:border-teal-500"
+                >
+                  {b.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {SYMBOL_CATEGORIES.map((cat) => {
+            const items = symbolsIn(cat);
+            if (items.length === 0) return null;
+            return (
+              <div key={cat}>
+                <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
+                  {cat}
+                  <span className="ml-1 tabular-nums text-ink-300">{items.length}</span>
+                </p>
+                <div className="grid grid-cols-2 gap-1">
+                  {items.map((sym) => (
+                    <button
+                      key={sym.id}
+                      type="button"
+                      onClick={() => onAdd("symbol", sym.id)}
+                      title={sym.name}
+                      className="truncate rounded-sm border border-ink-200 bg-white px-1.5 py-1 text-left text-[11.5px] text-ink-700 transition-colors hover:border-teal-500"
+                    >
+                      {sym.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </>
+      )}
     </div>
   );
 }
