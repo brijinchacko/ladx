@@ -129,7 +129,22 @@ function maybeFlush(req: NextRequest, event: NextFetchEvent) {
     return;
   }
 
-  const url = new URL("/api/metrics/ingest", req.nextUrl.origin);
+  /*
+   * Loopback, plain HTTP, on this process's own port.
+   *
+   * Not `req.nextUrl.origin`, which is wrong behind a reverse proxy in a way
+   * that fails silently. nginx sends X-Forwarded-Proto: https, Next takes the
+   * scheme from it and leaves the host as the internal one, and the origin
+   * comes out as https://localhost:3020. The app listens on plain HTTP there,
+   * so the request dies in the TLS handshake and the catch below eats it.
+   * Counting was live on production for an hour and recorded nothing.
+   *
+   * The port comes from the request rather than an environment variable, so it
+   * is right whatever the process was started with.
+   */
+  const port = req.nextUrl.port || "80";
+  const url = `http://127.0.0.1:${port}/api/metrics/ingest`;
+
   event.waitUntil(
     metricsTokenAsync(secret)
       .then((token) =>
@@ -137,11 +152,19 @@ function maybeFlush(req: NextRequest, event: NextFetchEvent) {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-ladx-metrics": token },
           body: JSON.stringify({ hits, referrers: refs }),
+          // A redirect would turn this POST into a GET and lose the body, which
+          // is another way to fail without saying so.
+          redirect: "error",
         }),
       )
-      .catch(() => {
-        // The batch is gone either way. Losing a minute of counts is not worth
-        // holding a retry queue in the request path.
+      .then((res) => {
+        if (!res.ok) console.error(`[metrics] ingest refused: ${res.status}`);
+      })
+      .catch((e) => {
+        // Logged rather than swallowed. The batch is gone either way, and a
+        // counter that has quietly recorded nothing for a month is worse than
+        // one that says so in the log.
+        console.error("[metrics] flush failed:", e instanceof Error ? e.message : e);
       })
       .finally(() => {
         flushing = false;
