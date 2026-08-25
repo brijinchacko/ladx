@@ -177,3 +177,31 @@ describe("capacityFor", () => {
     expect(capacityFor(0, 100_000)).toBe(2);
   });
 });
+
+describe("a boolean from the ladder never reaches the screen", () => {
+  it("reads a BOOL stored as a real false as 0", () => {
+    // Tag.value is declared number, but the ladder editor writes booleans for
+    // BOOLs. React renders `false` as nothing, so a healthy NC stop button
+    // showed as an empty cell in the tag list instead of 1.
+    expect(valueOfPlcTag({ name: "Stop", type: "BOOL", value: false as never })).toBe(0);
+    expect(valueOfPlcTag({ name: "Stop", type: "BOOL", value: true as never })).toBe(1);
+  });
+
+  it("is always a finite number, whatever the column held", () => {
+    for (const junk of [null, undefined, "", "7", Number.NaN, Number.POSITIVE_INFINITY, {}]) {
+      const v = valueOfPlcTag({ name: "X", type: "INT", value: junk as never });
+      expect(typeof v).toBe("number");
+      expect(Number.isFinite(v)).toBe(true);
+    }
+  });
+
+  it("keeps a real number intact", () => {
+    expect(valueOfPlcTag({ name: "L", type: "INT", value: 62 })).toBe(62);
+    expect(valueOfPlcTag({ name: "L", type: "INT", value: -4.5 })).toBe(-4.5);
+  });
+
+  it("coerces HMI tags too, which can be hand-edited or imported", () => {
+    const s = buildTagSpace([], [{ name: "Sp", type: "BOOL", value: true as never }]);
+    expect(s.hmi.get("Sp")).toBe(1);
+  });
+});

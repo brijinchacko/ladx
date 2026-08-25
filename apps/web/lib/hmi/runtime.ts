@@ -19,7 +19,7 @@ export interface TagSpace {
 export function buildTagSpace(plcTags: Tag[], hmiTags: HmiTag[]): TagSpace {
   return {
     plc: new Map(plcTags.map((t) => [t.name, valueOfPlcTag(t)])),
-    hmi: new Map(hmiTags.map((t) => [t.name, t.value])),
+    hmi: new Map(hmiTags.map((t) => [t.name, toNumber(t.value)])),
   };
 }
 
@@ -33,7 +33,24 @@ export function buildTagSpace(plcTags: Tag[], hmiTags: HmiTag[]): TagSpace {
  */
 export function valueOfPlcTag(t: Tag): number {
   if (t.type === "TIMER" || t.type === "COUNTER") return t.dn ? 1 : 0;
-  return t.value;
+  return toNumber(t.value);
+}
+
+/**
+ * A tag value as a number, whatever the ladder actually stored.
+ *
+ * `Tag.value` is declared `number`, but a BOOL written by the ladder editor is
+ * a real `false`, and programs saved through the API carry that through. A
+ * boolean leaking into the HMI is not a harmless type wobble: React renders
+ * `false` as nothing at all, so the tag list showed a healthy stop button as
+ * an empty cell rather than 1. This is the boundary where a controller value
+ * becomes a screen value, so it is the place to settle it.
+ */
+export function toNumber(v: unknown): number {
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+  if (typeof v === "boolean") return v ? 1 : 0;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
 }
 
 /**
