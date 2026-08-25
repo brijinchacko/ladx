@@ -15,7 +15,7 @@
  *   so no arrangement is a trap.
  */
 
-export type PanelId = "tree" | "tools" | "properties";
+export type PanelId = "tree" | "tools" | "properties" | "assist";
 
 export interface PanelDef {
   id: PanelId;
@@ -26,6 +26,14 @@ export interface PanelDef {
   min: number;
   max: number;
   blurb: string;
+  /**
+   * Whether it starts open.
+   *
+   * Everything a builder needs to draw is open by default. Assist is not:
+   * three panes plus a chat column is more chrome than canvas on a laptop, and
+   * a pane you did not ask for is one you close before you use it once.
+   */
+  defaultOpen?: boolean;
 }
 
 export const PANELS: PanelDef[] = [
@@ -56,6 +64,16 @@ export const PANELS: PanelDef[] = [
     max: 420,
     blurb: "Everything about the selected object: binding, colours, actions.",
   },
+  {
+    id: "assist",
+    title: "Assist",
+    side: "right",
+    size: 300,
+    min: 240,
+    max: 480,
+    blurb: "Draw a screen from a description, or straight from the tag table.",
+    defaultOpen: false,
+  },
 ];
 
 export interface PanelState {
@@ -65,7 +83,7 @@ export interface PanelState {
 export type Layout = Record<PanelId, PanelState>;
 
 export const DEFAULT_LAYOUT: Layout = Object.fromEntries(
-  PANELS.map((p) => [p.id, { open: true, size: p.size }]),
+  PANELS.map((p) => [p.id, { open: p.defaultOpen ?? true, size: p.size }]),
 ) as Layout;
 
 const KEY = "ladx.hmi.layout.v1";
@@ -89,7 +107,7 @@ export function loadLayout(): Layout {
       const got = parsed?.[p.id];
       if (!got) continue;
       out[p.id] = {
-        open: typeof got.open === "boolean" ? got.open : true,
+        open: typeof got.open === "boolean" ? got.open : (p.defaultOpen ?? true),
         size: clamp(typeof got.size === "number" ? got.size : p.size, p.min, p.max),
       };
     }

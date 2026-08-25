@@ -110,6 +110,22 @@ export default function LadderClient({
           key={open}
           projectId={open}
           storage={storage}
+          /*
+           * The HMI for this same program.
+           *
+           * Resolved on the server rather than here: whether this project has
+           * an application, and which one, is a database question, and the
+           * answer changes in another tab. /studio/hmi/open goes straight in
+           * when there is exactly one and to the list with this project
+           * already chosen when there is not.
+           */
+          crossLinks={[
+            {
+              label: "HMI",
+              href: `/studio/hmi/open?project=${encodeURIComponent(open)}`,
+              hint: "Build the operator screens for this program. They bind to the tag table you are editing here, so this saves first.",
+            },
+          ]}
           bottomDock={({ program, load }) => (
             <LadderAi
               projectId={open}

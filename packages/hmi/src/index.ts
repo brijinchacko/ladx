@@ -20,6 +20,7 @@ export * from "./lib/alarm-bulk";
 export * from "./lib/expression";
 export * from "./lib/runtime";
 export * from "./lib/svg-import";
+export * from "./lib/generate";
 
 /* the drawings */
 export * from "./lib/symbols";
@@ -27,6 +28,7 @@ export { EXTRA_SYMBOLS } from "./lib/symbols-extra";
 export { hasRealistic, drawRealistic, shade, REALISTIC_IDS } from "./lib/symbols-realistic";
 
 /* the editor */
+export { default as HmiAi } from "./components/hmi-ai";
 export { default as HmiEditor } from "./components/hmi-editor";
 export type { HmiEditorProps, SaveApplication } from "./components/hmi-editor";
 export { default as HmiHome } from "./components/hmi-home";

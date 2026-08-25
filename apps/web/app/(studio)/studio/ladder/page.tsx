@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth/server";
-import { listPrograms } from "@/lib/db/ladder";
+import { SCRATCH, listPrograms } from "@/lib/db/ladder";
 import { listProjects } from "@/lib/platform/queries";
 import { type LadxProgram, programRoutines } from "@ladx/studio";
 import LadderClient from "./ladder-client";
@@ -35,7 +35,10 @@ export default async function LadderPage({
   // Checked against the user's own projects rather than trusted: the id comes
   // from a query string, and opening the editor onto somebody else's project id
   // would at best show an empty program under a name that is not theirs.
-  const initialProjectId = wanted && nameOf.has(wanted) ? wanted : null;
+  // "scratch" is the exception and is a real destination: it is the unattached
+  // program, and the HMI editor links back to it for an application filed
+  // against no project.
+  const initialProjectId = wanted === SCRATCH || (wanted && nameOf.has(wanted)) ? wanted : null;
 
   return (
     <LadderClient

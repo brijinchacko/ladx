@@ -1,7 +1,8 @@
 import HmiEditorClient from "@/components/studio/hmi-editor-client";
 import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
-import { hmiProjects, ladderPrograms } from "@/lib/db/schema";
+import { SCRATCH, loadProgram } from "@/lib/db/ladder";
+import { hmiProjects } from "@/lib/db/schema";
 import { getProject } from "@/lib/platform/queries";
 import { type HmiDoc, emptyDoc } from "@ladx/hmi";
 import type { LadxProgram } from "@ladx/studio";
@@ -16,6 +17,11 @@ export const dynamic = "force-dynamic";
  * The PLC tags come from the project's ladder program rather than from the
  * document, which is the whole point: one tag table, and a screen that cannot
  * bind to a tag the controller does not have.
+ *
+ * An application filed against no project reads the scratch program, the same
+ * unattached one the ladder editor opens when no project is chosen. Without
+ * that, going to HMI from a scratch program landed on an editor with an empty
+ * tag table and nothing to explain why.
  */
 export default async function HmiEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -28,17 +34,11 @@ export default async function HmiEditorPage({ params }: { params: Promise<{ id: 
     .limit(1);
   if (!row) notFound();
 
-  let program: LadxProgram | null = null;
-  let projectName: string | null = null;
-  if (row.projectId) {
-    const [prog] = await db()
-      .select({ program: ladderPrograms.program })
-      .from(ladderPrograms)
-      .where(and(eq(ladderPrograms.userId, user.id), eq(ladderPrograms.projectId, row.projectId)))
-      .limit(1);
-    program = (prog?.program as LadxProgram | undefined) ?? null;
-    projectName = (await getProject(user.id, row.projectId))?.name ?? null;
-  }
+  const stored = await loadProgram(user.id, row.projectId);
+  const program = (stored?.program as LadxProgram | undefined) ?? null;
+  const projectName = row.projectId
+    ? ((await getProject(user.id, row.projectId))?.name ?? null)
+    : null;
 
   // A document from an older build, or one that failed a partial write, must
   // not take the editor down: fall back to an empty application rather than
@@ -54,6 +54,7 @@ export default async function HmiEditorPage({ params }: { params: Promise<{ id: 
       initialName={row.name}
       program={program}
       projectName={projectName}
+      ladderHref={`/studio/ladder?project=${encodeURIComponent(row.projectId ?? SCRATCH)}`}
     />
   );
 }

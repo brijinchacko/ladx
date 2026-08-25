@@ -3,7 +3,8 @@
 import { api } from "@/lib/api";
 import { tauriStorage } from "@/lib/ladder-storage";
 import { LadxStudio } from "@ladx/studio";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 /**
  * Ladder, on the desktop.
@@ -13,8 +14,20 @@ import { useEffect, useState } from "react";
  * editor to fix rather than two that drift.
  */
 export default function LadderPage() {
+  return (
+    <Suspense fallback={<p className="p-6 text-[13px] text-ink-500">Loading…</p>}>
+      <Ladder />
+    </Suspense>
+  );
+}
+
+function Ladder() {
+  // A project named in the URL, from "Open the ladder program" in the HMI
+  // editor. Arriving with one skips the picker: the caller has already
+  // answered the only question it asks.
+  const wanted = useSearchParams().get("project");
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
-  const [projectId, setProjectId] = useState<string>("scratch");
+  const [projectId, setProjectId] = useState<string>(wanted ?? "scratch");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -53,7 +66,24 @@ export default function LadderPage() {
 
       {/* Keyed on the project so switching remounts the editor with the other
           program rather than leaving the previous one on screen. */}
-      <LadxStudio key={projectId} projectId={projectId} storage={tauriStorage()} />
+      <LadxStudio
+        key={projectId}
+        projectId={projectId}
+        storage={tauriStorage()}
+        /*
+         * The HMI built on this program's tags. The desktop has no server to
+         * resolve which application that is, so the /hmi page does it once the
+         * local list is in. It saves before it navigates either way.
+         */
+        crossLinks={[
+          {
+            label: "HMI",
+            href:
+              projectId === "scratch" ? "/hmi" : `/hmi?project=${encodeURIComponent(projectId)}`,
+            hint: "Build the operator screens for this program. They bind to the tag table you are editing here, so this saves first.",
+          },
+        ]}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 import { type LadxProgram, type Tag, scan } from "@ladx/studio";
-import { Bell, Loader2, Maximize2, Play, Plus, Save, Square } from "lucide-react";
+import { Bell, Loader2, Maximize2, Play, Plus, Save, Sparkles, Square } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -13,6 +13,8 @@ import {
   sortForSummary,
   stepAlarm,
 } from "../lib/alarms";
+import type { GenContext, GenerateScreen, GeneratedScreen } from "../lib/generate";
+import { defaultSize, draftScreen } from "../lib/generate";
 import {
   type History,
   emptyHistory,
@@ -45,6 +47,7 @@ import { sanitiseSvg } from "../lib/svg-import";
 import { SYMBOL_CATEGORIES, searchSymbols, symbolsIn } from "../lib/symbols";
 import type { Action, AlarmDef, AlarmPriority, HmiDoc, Widget, WidgetKind } from "../lib/types";
 import AlarmPopup from "./alarm-popup";
+import HmiAi from "./hmi-ai";
 import { ContextMenu, type Menu, MenuBar, Panel, PanelDock, ProjectTree } from "./hmi-chrome";
 import HmiSetup from "./hmi-setup";
 import Properties from "./properties";
@@ -97,6 +100,23 @@ export interface HmiEditorProps {
   onSave: SaveApplication;
   /** Where File > Close goes. The two surfaces mount the list at different paths. */
   closeHref?: string;
+  /**
+   * Back to the ladder program these tags come from.
+   *
+   * Null when there is nowhere to go, which is the case for an application
+   * filed against no project. A prop rather than a path, because the two
+   * surfaces mount the editor at different routes.
+   */
+  ladderHref?: string | null;
+  /**
+   * Draw a screen from a description.
+   *
+   * Optional: the tag table layout in the Assist pane needs no model, so the
+   * pane is worth having even on a surface with no provider connected.
+   */
+  onGenerate?: GenerateScreen;
+  /** Shown in the prompt box when there is no model to talk to. */
+  generateDisabledReason?: string | null;
 }
 
 export default function HmiEditor({
@@ -107,6 +127,9 @@ export default function HmiEditor({
   projectName,
   onSave,
   closeHref = "/studio/hmi",
+  ladderHref = null,
+  onGenerate,
+  generateDisabledReason = null,
 }: HmiEditorProps) {
   /**
    * The document, held as an undo stack.
@@ -392,6 +415,55 @@ export default function HmiEditor({
         if (w) Object.assign(w, patch);
         return d;
       });
+    },
+    [update, screenId],
+  );
+
+  /**
+   * Everything a generator needs to know, gathered at the moment it is asked.
+   *
+   * A function rather than a value: it closes over the document, the screen
+   * that is open and the live tag table, and handing over a snapshot taken at
+   * render time is how a request ends up describing a screen from two edits
+   * ago.
+   */
+  const genContext = useCallback(
+    (): GenContext => ({
+      plcTags,
+      hmiTags: doc.tags,
+      size: screen?.size ?? doc.defaultSize,
+      existing: screen?.widgets ?? [],
+      screenSlugs: doc.screens.map((s) => s.slug),
+      alarms: doc.alarms,
+      mode: "extend",
+    }),
+    [plcTags, doc, screen],
+  );
+
+  /**
+   * Put a generated screen into the document.
+   *
+   * One `update`, so the whole thing is one entry on the undo stack and one
+   * Undo removes all of it. Tags and alarms are merged rather than replaced
+   * even when the widgets are: somebody who asked to redraw the graphics did
+   * not ask to lose the alarm list.
+   */
+  const applyGenerated = useCallback(
+    (result: GeneratedScreen, mode: "replace" | "extend") => {
+      update((d) => {
+        const sc = d.screens.find((x) => x.id === screenId);
+        if (!sc) return d;
+        sc.widgets = mode === "replace" ? result.widgets : [...sc.widgets, ...result.widgets];
+        if (result.background) sc.background = result.background;
+
+        const names = new Set(d.tags.map((t) => t.name));
+        for (const t of result.hmiTags) if (!names.has(t.name)) d.tags.push(t);
+
+        const ids = new Set(d.alarms.map((a) => a.id));
+        for (const a of result.alarms) if (!ids.has(a.id)) d.alarms.push(a);
+        return d;
+      });
+      setSelected(null);
     },
     [update, screenId],
   );
@@ -896,6 +968,12 @@ export default function HmiEditor({
         { label: "Import JSON…", onSelect: () => docRef.current?.click() },
         { label: "Import symbol (SVG)…", onSelect: () => svgRef.current?.click() },
         { label: "", separator: true },
+        {
+          label: "Open the ladder program",
+          disabled: !ladderHref,
+          onSelect: () => ladderHref && router.push(ladderHref),
+        },
+        { label: "", separator: true },
         { label: "Close", onSelect: () => router.push(closeHref) },
       ],
     },
@@ -957,7 +1035,20 @@ export default function HmiEditor({
     },
     {
       label: "Insert",
-      items: BASIC.map((b) => ({ label: b.label, onSelect: () => addWidget(b.kind) })),
+      items: [
+        ...BASIC.map((b) => ({ label: b.label, onSelect: () => addWidget(b.kind) })),
+        { label: "", separator: true },
+        {
+          label: "Draw a screen from a description…",
+          onSelect: () => setPanel("assist", { open: true }),
+        },
+        {
+          label: "Lay out this screen from the tag table",
+          disabled: plcTags.length === 0,
+          onSelect: () =>
+            applyGenerated(draftScreen({ ...genContext(), mode: "replace" }), "replace"),
+        },
+      ],
     },
     {
       label: "Screen",
@@ -1062,6 +1153,19 @@ export default function HmiEditor({
               {plcTags.length} PLC tags · {projectName}
             </span>
           )}
+          <button
+            type="button"
+            onClick={() => setPanel("assist", { open: !layout.assist.open })}
+            title="Draw a screen from a description, or straight from the tag table."
+            className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12.5px] transition-colors ${
+              layout.assist.open
+                ? "border-teal-500 bg-teal-50 text-teal-800"
+                : "border-ink-200 bg-white text-ink-700 hover:border-ink-400"
+            }`}
+          >
+            <Sparkles className="h-3 w-3" />
+            Assist
+          </button>
           <button
             type="button"
             onClick={() => setSetupOpen(true)}
@@ -1367,6 +1471,25 @@ export default function HmiEditor({
             />
           </Panel>
         )}
+
+        {layout.assist.open && (
+          <Panel
+            id="assist"
+            layout={layout}
+            onResize={(size) => setPanel("assist", { size })}
+            onClose={() => setPanel("assist", { open: false })}
+            actions={
+              <span className="font-mono text-[10px] text-ink-400">{plcTags.length} PLC tags</span>
+            }
+          >
+            <HmiAi
+              context={genContext}
+              onGenerate={onGenerate}
+              onApply={applyGenerated}
+              disabledReason={onGenerate ? generateDisabledReason : "No model is connected."}
+            />
+          </Panel>
+        )}
       </div>
 
       <input
@@ -1522,39 +1645,6 @@ const BASIC: { kind: WidgetKind; label: string }[] = [
   { kind: "alarmBadge", label: "Alarm count" },
   { kind: "alarmMarquee", label: "Alarm ticker" },
 ];
-
-function defaultSize(kind: WidgetKind): { w: number; h: number } {
-  switch (kind) {
-    case "lamp":
-      return { w: 32, h: 32 };
-    case "bar":
-      return { w: 40, h: 120 };
-    case "gauge":
-      return { w: 120, h: 120 };
-    case "trend":
-      return { w: 280, h: 140 };
-    case "alarmSummary":
-    case "alarmHistory":
-      return { w: 320, h: 120 };
-    case "alarmBanner":
-      return { w: 400, h: 30 };
-    case "alarmBadge":
-      return { w: 64, h: 48 };
-    case "alarmMarquee":
-      return { w: 360, h: 26 };
-    case "text":
-      return { w: 120, h: 24 };
-    case "numeric":
-      return { w: 96, h: 28 };
-    case "line":
-      return { w: 120, h: 8 };
-    case "button":
-    case "toggle":
-      return { w: 96, h: 36 };
-    default:
-      return { w: 96, h: 72 };
-  }
-}
 
 /**
  * The tools pane: objects, then the symbol library by category.

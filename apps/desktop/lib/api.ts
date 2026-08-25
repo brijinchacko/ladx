@@ -61,6 +61,30 @@ export const api = {
     return invoke<void>("hmi_delete", { id });
   },
 
+  /* ── inference ── */
+
+  /**
+   * One completion, gathered rather than streamed.
+   *
+   * Generating a screen produces a JSON object that means nothing until it is
+   * whole, so there is nothing to show while it arrives. What comes back is
+   * raw text: the checking belongs to @ladx/hmi, and is the same checking the
+   * cloud build applies, because it is the same function.
+   */
+  async aiComplete(opts: {
+    system: string;
+    prompt: string;
+    model?: string;
+    maxTokens?: number;
+  }): Promise<{ text: string; model: string }> {
+    return invoke<{ text: string; model: string }>("ai_complete", {
+      system: opts.system,
+      prompt: opts.prompt,
+      model: opts.model,
+      maxTokens: opts.maxTokens,
+    });
+  },
+
   async streamChat(_opts: {
     messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
     model?: string;

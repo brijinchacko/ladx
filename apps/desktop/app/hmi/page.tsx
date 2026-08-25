@@ -1,7 +1,19 @@
 "use client";
 
 import { api } from "@/lib/api";
-import { type HmiDoc, HmiEditor, HmiHome, type HmiRow, emptyDoc } from "@ladx/hmi";
+import { settingsLoad } from "@/lib/invoke";
+import {
+  type GenerateScreen,
+  type HmiDoc,
+  HmiEditor,
+  HmiHome,
+  type HmiRow,
+  emptyDoc,
+  firstJsonObject,
+  normaliseScreen,
+  screenSystemPrompt,
+  screenUserPrompt,
+} from "@ladx/hmi";
 import type { LadxProgram } from "@ladx/studio";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
@@ -34,6 +46,15 @@ function Hmi() {
   const router = useRouter();
   const params = useSearchParams();
   const id = params.get("id");
+  /**
+   * A project named in the URL, from the HMI button in the ladder editor.
+   *
+   * Resolved here rather than by a route, because there is no server to
+   * resolve it: one application for that project opens straight into it, and
+   * anything else lands on the list with the project already chosen. The web
+   * does the same thing at /studio/hmi/open.
+   */
+  const wantedProject = params.get("project");
 
   const [rows, setRows] = useState<HmiRow[] | null>(null);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
@@ -43,6 +64,7 @@ function Hmi() {
     doc: HmiDoc;
     program: LadxProgram | null;
     projectName: string | null;
+    projectId: string | null;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,6 +98,14 @@ function Hmi() {
     }
   }, [id, loadList]);
 
+  useEffect(() => {
+    if (id || !wantedProject || !rows) return;
+    const mine = rows.filter((r) => r.projectId === wantedProject);
+    // Exactly one, go in. Several is a choice and none is a creation, and
+    // neither should happen because somebody followed a link.
+    if (mine.length === 1 && mine[0]) router.replace(`/hmi?id=${mine[0].id}`);
+  }, [id, wantedProject, rows, router]);
+
   // Open one, with its project's ladder program so the screens have tags.
   useEffect(() => {
     if (!id) return;
@@ -88,17 +118,27 @@ function Hmi() {
           return;
         }
         const doc = parseDoc(row.doc, row.name);
-        let program: LadxProgram | null = null;
-        let projectName: string | null = null;
-        if (row.projectId) {
-          const [prog, projs] = await Promise.all([
-            api.loadLadder(row.projectId),
-            api.listProjects(),
-          ]);
-          program = prog ? (safeParse(prog.doc) as LadxProgram | null) : null;
-          projectName = projs.find((p) => p.id === row.projectId)?.name ?? null;
-        }
-        if (!cancelled) setOpen({ id: row.id, name: row.name, doc, program, projectName });
+        // An application filed against no project reads the scratch program,
+        // the same unattached one the ladder editor opens when no project is
+        // chosen. Without it, coming here from a scratch program landed on an
+        // editor with an empty tag table and nothing to explain why.
+        const [prog, projs] = await Promise.all([
+          api.loadLadder(row.projectId),
+          api.listProjects(),
+        ]);
+        const program = prog ? (safeParse(prog.doc) as LadxProgram | null) : null;
+        const projectName = row.projectId
+          ? (projs.find((p) => p.id === row.projectId)?.name ?? null)
+          : null;
+        if (!cancelled)
+          setOpen({
+            id: row.id,
+            name: row.name,
+            doc,
+            program,
+            projectName,
+            projectId: row.projectId,
+          });
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not open it.");
       }
@@ -107,6 +147,24 @@ function Hmi() {
       cancelled = true;
     };
   }, [id]);
+
+  /**
+   * Draw a screen, through Ollama and nothing else.
+   *
+   * The prompt and the checking both come from @ladx/hmi, so a screen drawn
+   * here goes through exactly the same repairs and refusals as one drawn in
+   * the cloud build. What differs is the two lines in the middle, and they go
+   * over IPC to a model on this machine: no HTTP, no key, no telemetry.
+   */
+  const generate: GenerateScreen = useCallback(async ({ prompt, ctx }) => {
+    const settings = await settingsLoad().catch(() => ({ defaultModel: null }));
+    const result = await api.aiComplete({
+      system: screenSystemPrompt(),
+      prompt: screenUserPrompt(ctx, prompt),
+      model: settings.defaultModel ?? undefined,
+    });
+    return { ...normaliseScreen(firstJsonObject(result.text), ctx), model: result.model };
+  }, []);
 
   if (error) {
     return (
@@ -136,7 +194,11 @@ function Hmi() {
         program={open.program}
         projectName={open.projectName}
         closeHref="/hmi"
+        ladderHref={
+          open.projectId ? `/ladder?project=${encodeURIComponent(open.projectId)}` : "/ladder"
+        }
         onSave={async ({ id: appId, name, doc }) => api.saveHmi(appId, name, doc)}
+        onGenerate={generate}
       />
     );
   }
@@ -147,6 +209,7 @@ function Hmi() {
     <HmiHome
       applications={rows}
       projects={projects}
+      defaultProjectId={wantedProject}
       hrefFor={(appId) => `/hmi?id=${appId}`}
       onCreate={async ({ name, projectId, width, height }) => {
         const row = await api.createHmi(projectId, name, emptyDoc(name, { width, height }));

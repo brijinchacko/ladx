@@ -53,6 +53,7 @@ pub fn run() {
             commands::projects::delete_project,
             commands::validator::validate_st,
             commands::autofix::auto_fix_st,
+            commands::ai::ai_complete,
             commands::conversations::ensure_conversation,
             commands::conversations::create_conversation,
             commands::conversations::list_messages,

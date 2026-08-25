@@ -12,6 +12,7 @@ import {
   Hammer,
   HelpCircle,
   Loader2,
+  MonitorCog,
   Play,
   Radio,
   RotateCcw,
@@ -184,6 +185,19 @@ type Props = {
     program: LadxProgram | null;
     load: (next: LadxProgram) => void;
   }) => React.ReactNode;
+  /**
+   * The other tools that work on this same program.
+   *
+   * Shown as a Tools menu and as one button on the toolbar. Hrefs rather than
+   * components, because this package must not learn the host's routes; the
+   * host knows where its own HMI editor is mounted and this does not.
+   *
+   * Every one of them saves before it navigates. The HMI binds to this
+   * program's tag table by name, so arriving there before the autosave
+   * debounce has fired shows a tag table missing the tag you added thirty
+   * seconds ago, with nothing on screen to say why.
+   */
+  crossLinks?: { label: string; href: string; hint?: string }[];
 };
 
 export default function LadxStudio({
@@ -192,6 +206,7 @@ export default function LadxStudio({
   storage,
   onBack,
   bottomDock,
+  crossLinks = [],
 }: Props) {
   // Held in a ref, not recreated per render: the default builds a new object
   // each call, and a changing storage identity would re-trigger the load effect
@@ -2467,6 +2482,20 @@ export default function LadxStudio({
   // The order and the contents are the ones every PLC IDE uses, because a
   // student who learns that saving is under File carries that to TIA and
   // Studio 5000 unchanged. Nothing is listed that does not work.
+  /**
+   * Leave for another tool, having saved first.
+   *
+   * A full navigation rather than a router push: the destination reads this
+   * program from the server, so a fresh document is exactly what is wanted.
+   */
+  const followCrossLink = async (href: string) => {
+    if (program) {
+      await save();
+      setDirty(false);
+    }
+    window.location.assign(href);
+  };
+
   const menus: Menu[] = program
     ? [
         {
@@ -2589,6 +2618,17 @@ export default function LadxStudio({
             },
           ],
         },
+        ...(crossLinks.length
+          ? [
+              {
+                label: "Tools",
+                items: crossLinks.map((l) => ({
+                  label: l.label,
+                  onSelect: () => void followCrossLink(l.href),
+                })),
+              },
+            ]
+          : []),
         {
           label: "Help",
           items: [
@@ -2918,6 +2958,27 @@ export default function LadxStudio({
               <ChevronLeft size={15} />
             </button>
           </Tip>
+
+          {/* The other tools on this same program. One button each: there are
+              two of them, and a menu for two items is a menu nobody opens. */}
+          {crossLinks.map((l) => (
+            <Tip
+              key={l.href}
+              label={l.label}
+              text={l.hint ?? `Open ${l.label} on this program.`}
+              topic="saving"
+              onOpenHelp={openHelp}
+            >
+              <button
+                type="button"
+                onClick={() => void followCrossLink(l.href)}
+                className={css.backBtn}
+                aria-label={l.label}
+              >
+                <MonitorCog size={14} />
+              </button>
+            </Tip>
+          ))}
 
           <span className={css.sep} />
 

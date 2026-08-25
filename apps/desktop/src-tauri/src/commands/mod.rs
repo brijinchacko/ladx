@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod autofix;
 pub mod chat;
 pub mod conversations;
