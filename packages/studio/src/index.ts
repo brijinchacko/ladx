@@ -88,3 +88,9 @@ export {
   toStructuredText,
 } from "./lib/convert";
 export type { ConversionNote, ConversionResult, Severity, Target } from "./lib/convert";
+
+// Studio tools. Both are presentational given their data, so the web reads it
+// from Postgres and the desktop from its local SQLite, and neither the scan
+// engine nor the converter is implemented twice.
+export { default as Monitor, type ProgramSource, type SaveRecord } from "./components/Monitor";
+export { default as ConvertWorkbench, type ConvertSource } from "./components/ConvertWorkbench";

@@ -1,9 +1,10 @@
-import Monitor, { type ProgramSource } from "@/components/studio/monitor";
+import { saveRecordViaApi } from "@/components/studio/save-record";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
 import { listPrograms } from "@/lib/db/ladder";
 import { partitionRunnable } from "@/lib/ladder/runnable";
 import { getCompany, listProjects } from "@/lib/platform/queries";
+import { Monitor, type ProgramSource } from "@ladx/studio";
 import type { LadxProgram } from "@ladx/studio";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,8 @@ export default async function MonitorPage({
         subtitle="Run the logic, force the inputs, and record what happened."
       />
       <Monitor
+        ladderHref="/studio/ladder"
+        onSaveRecord={saveRecordViaApi}
         unreadable={broken.map((b) => b.name)}
         initialProjectId={wanted && nameOf.has(wanted) ? wanted : null}
         sources={sources}

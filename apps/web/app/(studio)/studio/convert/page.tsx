@@ -1,9 +1,10 @@
-import ConvertWorkbench, { type ConvertSource } from "@/components/studio/convert-workbench";
+import { saveRecordViaApi } from "@/components/studio/save-record";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
 import { listPrograms } from "@/lib/db/ladder";
 import { partitionRunnable } from "@/lib/ladder/runnable";
 import { getCompany, listProjects } from "@/lib/platform/queries";
+import { type ConvertSource, ConvertWorkbench } from "@ladx/studio";
 import type { LadxProgram } from "@ladx/studio";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +48,8 @@ export default async function StudioConvertPage({
         subtitle="Ladder into Structured Text, SCL, neutral text or PLCopen XML. Runs in your browser; nothing is uploaded."
       />
       <ConvertWorkbench
+        ladderHref="/studio/ladder"
+        onSaveRecord={saveRecordViaApi}
         unreadable={broken.map((b) => b.name)}
         initialProjectId={wanted && nameOf.has(wanted) ? wanted : null}
         sources={sources}

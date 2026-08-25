@@ -1,7 +1,7 @@
 "use client";
 
-import type { Element, LadderNode, Routine, Tag } from "@ladx/studio";
-import { rungLogic } from "@ladx/studio";
+import type { Element, LadderNode, Routine, Tag } from "../index";
+import { rungLogic } from "../index";
 
 /**
  * The program, drawn live.

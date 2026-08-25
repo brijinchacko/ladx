@@ -1,17 +1,5 @@
 "use client";
 
-import MonitorRungs from "@/components/studio/monitor-rungs";
-import {
-  type LadxProgram,
-  type Routine,
-  type ScanResult,
-  type Tag,
-  programRoutines,
-  resetTags,
-  scan,
-  seedPresets,
-  validate,
-} from "@ladx/studio";
 import {
   Activity,
   CircleDot,
@@ -23,6 +11,34 @@ import {
   StepForward,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type LadxProgram,
+  type Routine,
+  type ScanResult,
+  type Tag,
+  programRoutines,
+  resetTags,
+  scan,
+  seedPresets,
+  validate,
+} from "../index";
+import MonitorRungs from "./MonitorRungs";
+
+/**
+ * Where a generated record goes.
+ *
+ * Monitor writes a test record and Convert writes a conversion record, and
+ * both used to POST straight at /api/documents. That is a web assumption: the
+ * desktop build is forbidden from making HTTP calls at all and stores its
+ * documents through Tauri instead. Handing the write in as a callback lets one
+ * component serve both, and a surface with nowhere to put a record simply
+ * omits it, which hides the button rather than offering a save that fails.
+ */
+export type SaveRecord = (doc: {
+  title: string;
+  projectId: string | null;
+  content: string;
+}) => Promise<boolean>;
 
 export interface ProgramSource {
   /** The project this program belongs to, or null for the scratch program. */
@@ -83,6 +99,8 @@ export default function Monitor({
   author,
   initialProjectId,
   unreadable = [],
+  ladderHref = "/studio/ladder",
+  onSaveRecord,
 }: {
   sources: ProgramSource[];
   companyName: string | null;
@@ -91,6 +109,10 @@ export default function Monitor({
   initialProjectId?: string | null;
   /** Programs the engine cannot read, named so their absence is not a mystery. */
   unreadable?: string[];
+  /** Where "Open Ladder" goes. The two surfaces mount the editor at different paths. */
+  ladderHref?: string;
+  /** Where a generated record is written. Omitted means this surface cannot store one. */
+  onSaveRecord?: SaveRecord;
 }) {
   // A project named in the URL wins over "whatever is first", so a "Run it"
   // link from a project lands on that project's program rather than on the
@@ -183,7 +205,10 @@ export default function Monitor({
     );
   }, [program, applyTags]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reload whenever the chosen program changes, not on every tag edit.
+  // Deliberately keyed on the chosen program rather than on the tags: this
+  // reloads when you switch program, and must not re-run every time a tag is
+  // edited or forcing an input would reset the run. (The ignore directive this
+  // replaced is inert here; biome.json disables the rule for this package.)
   useEffect(() => {
     load();
     setRoutineName(null);
@@ -322,17 +347,13 @@ export default function Monitor({
         "",
       ].join("\n");
 
-      const res = await fetch("/api/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: `Logic test record — ${routine?.name ?? source.name}`,
-          projectId: source.projectId,
-          kind: "generated",
-          content: body,
-        }),
+      if (!onSaveRecord) return;
+      const ok = await onSaveRecord({
+        title: `Logic test record — ${routine?.name ?? source.name}`,
+        projectId: source.projectId,
+        content: body,
       });
-      setStatus(res.ok ? "Saved to the project's documents." : "Could not save the record.");
+      setStatus(ok ? "Saved to the project's documents." : "Could not save the record.");
     } finally {
       setSaving(false);
       setTimeout(() => setStatus(null), 5000);
@@ -358,7 +379,7 @@ export default function Monitor({
             </p>
           )}
           <a
-            href="/studio/ladder"
+            href={ladderHref}
             className="mt-4 inline-block rounded-md bg-ink-900 px-4 py-2 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
           >
             Open Ladder
@@ -470,7 +491,7 @@ export default function Monitor({
 
         <div className="ml-auto flex items-center gap-2">
           {status && <span className="text-[11.5px] text-ink-500">{status}</span>}
-          {source.projectId && (
+          {source.projectId && onSaveRecord && (
             <button
               type="button"
               onClick={captureEvidence}

@@ -1,17 +1,6 @@
 "use client";
 
 import {
-  type ConversionNote,
-  type LadxProgram,
-  STARTER_PROGRAMS,
-  TARGETS,
-  type Target,
-  convert,
-  parseImport,
-  programRoutines,
-  summarise,
-} from "@ladx/studio";
-import {
   AlertTriangle,
   Check,
   Copy,
@@ -26,6 +15,18 @@ import {
   Wrench,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ConversionNote,
+  type LadxProgram,
+  STARTER_PROGRAMS,
+  TARGETS,
+  type Target,
+  convert,
+  parseImport,
+  programRoutines,
+  summarise,
+} from "../index";
+import type { SaveRecord } from "./Monitor";
 
 export interface ConvertSource {
   projectId: string | null;
@@ -68,6 +69,8 @@ export default function ConvertWorkbench({
   author,
   initialProjectId,
   unreadable = [],
+  ladderHref = "/studio/ladder",
+  onSaveRecord,
 }: {
   sources: ConvertSource[];
   companyName: string | null;
@@ -76,6 +79,10 @@ export default function ConvertWorkbench({
   initialProjectId?: string | null;
   /** Programs that could not be read, named so their absence is not a mystery. */
   unreadable?: string[];
+  /** Where "Open Ladder" goes. The two surfaces mount the editor at different paths. */
+  ladderHref?: string;
+  /** Where a generated record is written. Omitted means this surface cannot store one. */
+  onSaveRecord?: SaveRecord;
 }) {
   // A project named in the URL wins over "whatever is first", so a "Convert"
   // link from a project opens that project's program.
@@ -212,17 +219,13 @@ export default function ConvertWorkbench({
         ),
       ].join("\n");
 
-      const res = await fetch("/api/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: `Conversion record — ${source.name}`,
-          projectId: source.projectId,
-          kind: "generated",
-          content: body,
-        }),
+      if (!onSaveRecord) return;
+      const ok = await onSaveRecord({
+        title: `Conversion record — ${source.name}`,
+        projectId: source.projectId,
+        content: body,
       });
-      setStatus(res.ok ? "Saved to the project's documents." : "Could not save the record.");
+      setStatus(ok ? "Saved to the project's documents." : "Could not save the record.");
     } finally {
       setSaving(false);
       setTimeout(() => setStatus(null), 5000);
@@ -307,7 +310,7 @@ export default function ConvertWorkbench({
 
         <div className="ml-auto flex items-center gap-2">
           {status && <span className="text-[11.5px] text-ink-500">{status}</span>}
-          {source?.projectId && (
+          {source?.projectId && onSaveRecord && (
             <button
               type="button"
               onClick={saveReport}
@@ -341,7 +344,7 @@ export default function ConvertWorkbench({
       )}
 
       {!source || !all || !current ? (
-        <Empty unreadable={unreadable} />
+        <Empty unreadable={unreadable} ladderHref={ladderHref} />
       ) : (
         <>
           {/* target tabs, each carrying what it will cost you */}
@@ -454,7 +457,7 @@ export default function ConvertWorkbench({
   );
 }
 
-function Empty({ unreadable = [] }: { unreadable?: string[] }) {
+function Empty({ unreadable = [], ladderHref }: { unreadable?: string[]; ladderHref: string }) {
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center p-8">
       <div className="max-w-sm text-center">
@@ -474,7 +477,7 @@ function Empty({ unreadable = [] }: { unreadable?: string[] }) {
         )}
 
         <a
-          href="/studio/ladder"
+          href={ladderHref}
           className="mt-4 inline-block rounded-md bg-ink-900 px-4 py-2 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
         >
           Open Ladder
