@@ -6,6 +6,7 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { projects } from "@/lib/db/schema";
 import { parseProjectFile } from "@/lib/parsers/spawn";
+import { deliverablesFor } from "@/lib/platform/scope";
 import { getStorage } from "@/lib/storage";
 import { eq } from "drizzle-orm";
 
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
       code?: string | null;
       description?: string | null;
       site?: string | null;
+      deliverables?: string[] | null;
     } | null;
     const name = body?.name?.trim();
     if (!name || name.length > 200) {
@@ -59,6 +61,10 @@ export async function POST(req: Request) {
       code: body?.code?.trim() || null,
       description: body?.description?.trim() || null,
       site: body?.site?.trim() || null,
+      // Filtered against the real lifecycle rather than stored as sent: a slug
+      // that names no template would put a task in the plan that no document
+      // can satisfy. Absent stays null, which means the whole lifecycle.
+      deliverables: Array.isArray(body?.deliverables) ? deliverablesFor(body.deliverables) : null,
     });
     return Response.json({ id }, { status: 201 });
   }

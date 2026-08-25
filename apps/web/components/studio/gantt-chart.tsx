@@ -10,9 +10,10 @@ import {
   linksFor,
   monthBands,
   scheduleProblems,
+  taskDates,
   toISODate,
 } from "@/lib/platform/gantt";
-import { AlertTriangle, Link2, Link2Off } from "lucide-react";
+import { AlertTriangle, CalendarPlus, Link2, Link2Off } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
 /** How wide a day is, per zoom level. Days need room for a label; quarters do not. */
@@ -60,9 +61,19 @@ export default function GanttChart({
   onSelect,
   selectedId,
   onLink,
+  onSchedule,
 }: {
   groups: GanttGroup[];
   zoom?: Zoom;
+  /**
+   * Lay a draft over the tasks that have no dates.
+   *
+   * Without this a plan that has never been scheduled renders as a fortnight
+   * of empty axis with every row reading "no dates": a chart of nothing, and
+   * one that looks broken rather than empty. Given the callback, the chart
+   * offers to fix it instead of drawing that.
+   */
+  onSchedule?: () => void;
   /** Committed on drop, never mid-drag: one write per gesture, not per pixel. */
   onReschedule?: (id: string, startsOn: string, dueOn: string) => void;
   onSelect?: (id: string) => void;
@@ -116,6 +127,7 @@ export default function GanttChart({
 
   const todayOffset = daysBetween(from, new Date());
   const width = days * dayPx;
+  const dated = all.filter((t) => taskDates(t) !== null).length;
 
   function beginDrag(e: React.PointerEvent, t: GanttTask, mode: "move" | "start" | "end") {
     const bar = barFor(t, from);
@@ -177,8 +189,53 @@ export default function GanttChart({
   const badLink = (from_: string, to: string) =>
     problems.backwards.some((b) => b.from === from_ && b.to === to);
 
+  // Nothing is dated. A fortnight of empty axis with every row reading "no
+  // dates" is not an empty chart, it is a broken-looking one, so this says what
+  // is actually true and offers the one action that helps.
+  if (dated === 0) {
+    return (
+      <div className="flex items-center justify-center p-10">
+        <div className="max-w-md text-center">
+          <CalendarPlus className="mx-auto mb-3 h-6 w-6 text-ink-300" />
+          <h3 className="font-display text-[15px] font-bold text-ink-900">
+            {all.length === 0 ? "Nothing to schedule yet" : "This plan has no dates yet"}
+          </h3>
+          <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-500">
+            {all.length === 0
+              ? "Tasks appear here once a project has a plan."
+              : `All ${all.length} tasks are undated, so there is nothing to draw. Lay them out on working days and drag them into shape from there.`}
+          </p>
+          {onSchedule && all.length > 0 && (
+            <button
+              type="button"
+              onClick={onSchedule}
+              className="mt-4 rounded-md bg-ink-900 px-4 py-2 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
+            >
+              Lay them out on working days
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-0 flex-col">
+      {onSchedule && all.length > dated && (
+        <p className="flex flex-wrap items-center gap-3 border-b border-ink-100 bg-ink-50/60 px-3 py-1.5 text-[12px] text-ink-600">
+          <span>
+            {all.length - dated} of {all.length} tasks have no dates, so they are not drawn.
+          </span>
+          <button
+            type="button"
+            onClick={onSchedule}
+            className="rounded-md border border-ink-200 bg-white px-2 py-0.5 text-[12px] text-ink-700 transition-colors hover:border-ink-400"
+          >
+            Schedule them
+          </button>
+        </p>
+      )}
+
       {(problems.cycles.length > 0 || problems.backwards.length > 0) && (
         <p className="flex items-start gap-1.5 border-b border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />

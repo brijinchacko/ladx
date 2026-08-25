@@ -233,6 +233,7 @@ export default async function ProjectWorkspace({
               <ProjectSummary
                 projectId={project.id}
                 fields={{
+                  deliverables: project.deliverables,
                   name: project.name,
                   code: project.code,
                   site: project.site,

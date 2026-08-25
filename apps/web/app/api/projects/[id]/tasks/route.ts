@@ -7,6 +7,7 @@ import { projectTasks } from "@/lib/db/schema";
 import { draftSchedule, toISODate } from "@/lib/platform/gantt";
 import { ACTIVE_PHASES, deliverablesFor } from "@/lib/platform/lifecycle";
 import { getProject } from "@/lib/platform/queries";
+import { owes } from "@/lib/platform/scope";
 import { and, asc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -51,6 +52,18 @@ const scheduleSchema = z.object({
   replace: z.boolean().optional(),
 });
 
+/**
+ * Bring an existing plan back in line with the project's scope.
+ *
+ * Scope is editable at any time, so widening it has to mean something: a
+ * project that starts as programming-only and later takes on the design
+ * package should gain those deliverables in its plan. Additive only. Narrowing
+ * the scope never deletes a task, because the work may already be under way,
+ * and losing somebody's progress to a mis-click on a checkbox is not a
+ * trade worth making. Removing work stays a deliberate per-task delete.
+ */
+const syncSchema = z.object({ sync: z.literal(true) });
+
 const seedSchema = z.object({
   seed: z.literal(true),
   /** When the work begins. Defaults to today; rolled forward off a weekend. */
@@ -83,6 +96,35 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!project) return NextResponse.json({ error: "project not found" }, { status: 404 });
 
   const body = await req.json().catch(() => null);
+
+  if (syncSchema.safeParse(body).success) {
+    const existing = await db()
+      .select({ templateSlug: projectTasks.templateSlug, position: projectTasks.position })
+      .from(projectTasks)
+      .where(and(eq(projectTasks.userId, auth.user.id), eq(projectTasks.projectId, id)));
+    const have = new Set(existing.map((r) => r.templateSlug).filter(Boolean));
+    let next = Math.max(0, ...existing.map((r) => r.position)) + 1;
+
+    const missing = ACTIVE_PHASES.flatMap((phase) =>
+      deliverablesFor(phase.id)
+        .filter((d) => owes(project.deliverables, d.slug) && !have.has(d.slug))
+        .map((d) => ({
+          userId: auth.user.id,
+          projectId: id,
+          title: `${d.abbr}: ${d.title}`,
+          detail: d.summary,
+          phase: phase.id,
+          templateSlug: d.slug,
+          position: next++,
+          startsOn: null as string | null,
+          dueOn: null as string | null,
+        })),
+    );
+
+    if (missing.length === 0) return NextResponse.json({ added: 0 });
+    const inserted = await db().insert(projectTasks).values(missing).returning();
+    return NextResponse.json({ added: inserted.length, tasks: inserted }, { status: 201 });
+  }
 
   const asSchedule = scheduleSchema.safeParse(body);
   if (asSchedule.success) {
@@ -141,18 +183,22 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     let position = 0;
+    // Only what this project owes. A job scoped to programming should not be
+    // handed a bill of materials and an O&M manual to delete one at a time.
     const rows = ACTIVE_PHASES.flatMap((phase) =>
-      deliverablesFor(phase.id).map((d) => ({
-        userId: auth.user.id,
-        projectId: id,
-        title: `${d.abbr}: ${d.title}`,
-        detail: d.summary,
-        phase: phase.id,
-        templateSlug: d.slug,
-        position: position++,
-        startsOn: null as string | null,
-        dueOn: null as string | null,
-      })),
+      deliverablesFor(phase.id)
+        .filter((d) => owes(project.deliverables, d.slug))
+        .map((d) => ({
+          userId: auth.user.id,
+          projectId: id,
+          title: `${d.abbr}: ${d.title}`,
+          detail: d.summary,
+          phase: phase.id,
+          templateSlug: d.slug,
+          position: position++,
+          startsOn: null as string | null,
+          dueOn: null as string | null,
+        })),
     );
 
     // Put the plan on the calendar rather than handing back a dated-nothing

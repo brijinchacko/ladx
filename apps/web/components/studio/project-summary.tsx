@@ -1,13 +1,16 @@
 "use client";
 
+import ScopePicker from "@/components/studio/scope-picker";
 import type { ProjectBrief } from "@/lib/platform/brief";
 import { briefProgress } from "@/lib/platform/brief";
+import { ALL_SLUGS, presetFor } from "@/lib/platform/scope";
 import { Check, FileText, Loader2, PencilRuler, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export interface SummaryFields {
+  deliverables: string[] | null;
   name: string;
   code: string | null;
   site: string | null;
@@ -47,6 +50,47 @@ export default function ProjectSummary({
   const [draft, setDraft] = useState<SummaryFields>(fields);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const [scope, setScope] = useState<string[]>(fields.deliverables ?? ALL_SLUGS);
+  const [savingScope, setSavingScope] = useState(false);
+  const [scopeSaved, setScopeSaved] = useState<string | null>(null);
+
+  const scopeCount = scope.length;
+  const scopePreset = presetFor(scope);
+  const original = fields.deliverables ?? ALL_SLUGS;
+  const scopeDirty = scope.length !== original.length || scope.some((sl) => !original.includes(sl));
+
+  /**
+   * Save the scope, then bring the plan in line with it.
+   *
+   * Two calls rather than one, because they are two different things: the
+   * project's scope is a fact about the engagement, and the plan is work
+   * derived from it. Syncing is additive, so widening the scope adds the
+   * deliverables it now owes and narrowing it deletes nothing.
+   */
+  async function saveScope() {
+    setSavingScope(true);
+    setScopeSaved(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deliverables: scope }),
+      });
+      if (!res.ok) return;
+      const sync = await fetch(`/api/projects/${projectId}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sync: true }),
+      });
+      const added = sync.ok ? ((await sync.json()) as { added: number }).added : 0;
+      setScopeSaved(added === 0 ? "none" : `${added} task${added === 1 ? "" : "s"}`);
+      router.refresh();
+      setTimeout(() => setScopeSaved(null), 6000);
+    } finally {
+      setSavingScope(false);
+    }
+  }
 
   const dirty =
     draft.name !== fields.name ||
@@ -172,6 +216,51 @@ export default function ProjectSummary({
           </Field>
         </div>
       </div>
+
+      {/* Scope. Its own section with its own action, because changing it can
+          add work to the plan and that should be a deliberate press rather
+          than a side effect of saving a project number. */}
+      <section className="border-t border-ink-100 px-5 py-4">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 className="font-display text-[13.5px] font-bold text-ink-900">Scope of work</h3>
+          <p className="text-[12.5px] text-ink-500">
+            What this project owes. The plan is built from it.
+          </p>
+          <span className="ml-auto font-mono text-[11px] text-ink-400">
+            {scopeCount} of {ALL_SLUGS.length}
+            {scopePreset ? ` · ${scopePreset.name}` : " · custom"}
+          </span>
+        </div>
+
+        <div className="mt-3">
+          <ScopePicker value={scope} onChange={setScope} />
+        </div>
+
+        {scopeDirty && (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={saveScope}
+              disabled={savingScope}
+              className="flex items-center gap-1.5 rounded-md bg-ink-900 px-3.5 py-1.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              {savingScope && <Loader2 className="h-3 w-3 animate-spin" />}
+              Save scope
+            </button>
+            <span className="text-[12px] text-ink-500">
+              Deliverables you add are put into the plan. Nothing is removed from it: work already
+              under way is not deleted by a checkbox.
+            </span>
+          </div>
+        )}
+        {scopeSaved && (
+          <p className="mt-2 text-[12.5px] text-teal-700">
+            {scopeSaved === "none"
+              ? "Scope saved. The plan already had everything it owes."
+              : `Scope saved, and ${scopeSaved} added to the plan.`}
+          </p>
+        )}
+      </section>
 
       {/* Everything this project already holds, as a way in. */}
       <div className="grid gap-px border-t border-ink-100 bg-ink-100 sm:grid-cols-4">

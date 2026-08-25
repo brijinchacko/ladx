@@ -139,6 +139,8 @@ export interface CreateProjectInput {
   code?: string | null;
   description?: string | null;
   site?: string | null;
+  /** Template slugs this project owes. Null or absent means all of them. */
+  deliverables?: string[] | null;
 }
 
 export async function createProject(
@@ -160,6 +162,7 @@ export async function createProject(
       name: input.name,
       clientId,
       code: input.code ?? null,
+      deliverables: input.deliverables ?? null,
       description: input.description ?? null,
       site: input.site ?? null,
       // A new project starts on its own summary rather than in requirements.
@@ -190,6 +193,7 @@ export async function updateProject(
   if (input.description !== undefined) patch.description = input.description;
   if (input.site !== undefined) patch.site = input.site;
   if (input.phase !== undefined) patch.phase = input.phase;
+  if (input.deliverables !== undefined) patch.deliverables = input.deliverables;
   if (input.clientId !== undefined) {
     // Same ownership check as create: never store a client id we cannot prove
     // the caller owns.

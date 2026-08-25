@@ -6,6 +6,7 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { projects } from "@/lib/db/schema";
 import { mergeBrief } from "@/lib/platform/brief";
+import { deliverablesFor } from "@/lib/platform/scope";
 import { getStorage } from "@/lib/storage";
 import { and, eq } from "drizzle-orm";
 
@@ -64,6 +65,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     ...(typeof body.site === "string" ? { site: body.site } : {}),
     ...("clientId" in body ? { clientId: (body.clientId as string | null) ?? null } : {}),
     ...(typeof body.phase === "string" ? { phase: body.phase as never } : {}),
+    // Scope, filtered against the real lifecycle so a stored slug always names
+    // a template. Replaced rather than merged: unticking a deliverable is the
+    // only way to say a project no longer owes it, and a merging write could
+    // not express that.
+    ...(Array.isArray(body.deliverables)
+      ? { deliverables: deliverablesFor(body.deliverables as string[]) }
+      : {}),
     // Merged rather than replaced: the brief is answered a few fields at a time,
     // from the project page and from the document a field was needed for, and a
     // replacing write would silently blank everything the other form did not send.

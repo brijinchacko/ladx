@@ -181,6 +181,18 @@ export const projects = pgTable(
     description: text("description"),
     /** Where in the lifecycle this project is. Drives the workflow view. */
     phase: projectPhaseEnum("phase").notNull().default("requirements"),
+    /**
+     * The deliverables this project owes, as template slugs.
+     *
+     * Null means all of them, which is what every project created before scope
+     * existed has, and what "full lifecycle" stores as an explicit list. An
+     * empty array is a real answer: a project can owe no documents at all.
+     *
+     * The lifecycle still defines every phase; this says which of its
+     * deliverables apply here, so somebody brought in to write logic is not
+     * handed a plan containing a bill of materials and an O&M manual.
+     */
+    deliverables: text("deliverables").array(),
     /** Free-form site or plant location, printed on documents. */
     site: text("site"),
     /**

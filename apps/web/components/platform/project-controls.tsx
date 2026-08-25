@@ -1,5 +1,7 @@
 "use client";
 
+import ScopePicker from "@/components/studio/scope-picker";
+import { SCOPE_PRESETS } from "@/lib/platform/scope";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -26,6 +28,11 @@ export function NewProjectForm({
   const [code, setCode] = useState("");
   const [clientId, setClientId] = useState(defaultClientId ?? "");
   const [site, setSite] = useState("");
+  // Defaults to the full lifecycle, which is what the plan produced before
+  // scope existed, so nobody who ignores this field gets less than they used to.
+  const [deliverables, setDeliverables] = useState<string[]>(
+    SCOPE_PRESETS.find((p) => p.id === "full")?.slugs ?? [],
+  );
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +57,7 @@ export function NewProjectForm({
           code: code.trim() || null,
           clientId: clientId || null,
           site: site.trim() || null,
+          deliverables,
           description: description.trim() || null,
         }),
       });
@@ -162,6 +170,17 @@ export function NewProjectForm({
             className="w-full rounded-sm border border-ink-200 px-2.5 py-2 text-[14px] outline-none focus:border-ink-500"
           />
         </label>
+
+        <div>
+          <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-400">
+            Scope of work
+          </span>
+          <p className="mb-2 text-[12.5px] leading-snug text-ink-500">
+            What this project owes. The plan is built from it, so a job scoped to programming does
+            not arrive with a bill of materials to delete. Changeable at any time from the project.
+          </p>
+          <ScopePicker value={deliverables} onChange={setDeliverables} />
+        </div>
 
         {clients.length === 0 && (
           <p className="text-[12.5px] text-ink-400">

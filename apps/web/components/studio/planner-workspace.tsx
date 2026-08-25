@@ -3,10 +3,11 @@
 import GanttChart, { type GanttGroup, type Zoom, ZOOM } from "@/components/studio/gantt-chart";
 import type { GanttTask } from "@/lib/platform/gantt";
 import { PHASES } from "@/lib/platform/lifecycle";
-import { CalendarRange, Loader2, RotateCcw } from "lucide-react";
+import { csvToPlan, planToCsv } from "@/lib/platform/plan-csv";
+import { CalendarRange, Download, Loader2, RotateCcw, Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 interface ProjectRow {
   id: string;
@@ -47,6 +48,8 @@ export default function PlannerWorkspace({
   const [hideDone, setHideDone] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [importNote, setImportNote] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const visibleProjects = useMemo(
     () => (clientId ? projects.filter((p) => p.clientId === clientId) : projects),
@@ -84,6 +87,102 @@ export default function PlannerWorkspace({
 
   const undated = shown.filter((t) => !t.startsOn && !t.dueOn).length;
 
+  /**
+   * Lay a working-day draft over undated tasks.
+   *
+   * Scoped to the projects on screen, so scheduling from a filtered view does
+   * not silently redate work the user cannot see. Additive: anything already
+   * dated is left alone, and a second run schedules nothing, so it cannot
+   * reshuffle a plan somebody has been dragging.
+   */
+  async function scheduleUndated() {
+    const ids = projectId
+      ? [projectId]
+      : [...new Set(shown.filter((t) => !t.startsOn && !t.dueOn).map((t) => t.projectId))];
+    if (ids.length === 0) return;
+    setBusy(true);
+    try {
+      for (const id of ids) {
+        await fetch(`/api/projects/${id}/tasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ schedule: true }),
+        });
+      }
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * The plan as a spreadsheet.
+   *
+   * Exports what is on screen, not everything: somebody filtered to one client
+   * is asking for that client's plan, and handing them the whole book of work
+   * would be a surprise in an email attachment.
+   */
+  function exportCsv() {
+    const csv = planToCsv(shown);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    // Named after what is in it: one project's plan carries its name, the whole
+    // book of work is just "plan". Not "plan-plan".
+    const project = projectId ? visibleProjects.find((p) => p.id === projectId) : null;
+    const stem = project ? `${project.name.replace(/[^\w-]+/g, "-").toLowerCase()}-plan` : "plan";
+    a.download = `${stem}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Read a plan back.
+   *
+   * Matched on the id column, so a file that went out to a project manager,
+   * came back edited, and is imported here updates the tasks rather than
+   * duplicating them. A row whose id is not in this plan is skipped rather
+   * than created: creating tasks from a spreadsheet is a different, more
+   * dangerous operation than updating dates on ones that already exist.
+   */
+  async function importCsv(file: File) {
+    setBusy(true);
+    setImportNote(null);
+    try {
+      const { rows, problems } = csvToPlan(await file.text());
+      const byId = new Map(tasks.map((t) => [t.id, t]));
+      let updated = 0;
+      let skipped = 0;
+      for (const r of rows) {
+        const existing = r.id ? byId.get(r.id) : undefined;
+        if (!existing) {
+          skipped++;
+          continue;
+        }
+        await fetch(`/api/projects/${existing.projectId}/tasks/${existing.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: r.title,
+            owner: r.owner,
+            ...(r.status ? { status: r.status } : {}),
+            startsOn: r.startsOn,
+            dueOn: r.dueOn,
+          }),
+        });
+        updated++;
+      }
+      const parts = [`${updated} task${updated === 1 ? "" : "s"} updated`];
+      if (skipped > 0) parts.push(`${skipped} row${skipped === 1 ? "" : "s"} matched nothing here`);
+      if (problems.length > 0) parts.push(problems.slice(0, 3).join(" "));
+      setImportNote(parts.join(". "));
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function patch(taskId: string, body: Record<string, unknown>) {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
@@ -104,7 +203,7 @@ export default function PlannerWorkspace({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-2">
+      <div className="relative flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-2">
         <CalendarRange className="h-3.5 w-3.5 shrink-0 text-teal-600" />
 
         <select
@@ -160,12 +259,49 @@ export default function PlannerWorkspace({
         </label>
 
         {undated > 0 && (
-          <span className="text-[12px] text-ink-400">
-            {undated} undated, so {undated === 1 ? "it is" : "they are"} not on the timeline
-          </span>
+          <button
+            type="button"
+            onClick={scheduleUndated}
+            disabled={busy}
+            title="Lay a working-day draft over the tasks that have no dates"
+            className="rounded-md border border-ink-200 bg-white px-2 py-1 text-[12px] text-ink-700 transition-colors hover:border-ink-400 disabled:opacity-50"
+          >
+            Schedule {undated} undated
+          </button>
         )}
 
         {busy && <Loader2 className="h-3.5 w-3.5 animate-spin text-ink-400" />}
+
+        <button
+          type="button"
+          onClick={exportCsv}
+          disabled={shown.length === 0}
+          title="Download what is on screen as a spreadsheet"
+          className="flex items-center gap-1 rounded-md border border-ink-200 bg-white px-2 py-1 text-[12px] text-ink-700 transition-colors hover:border-ink-400 disabled:opacity-40"
+        >
+          <Download className="h-3 w-3" />
+          Export
+        </button>
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          title="Read dates and owners back from a spreadsheet"
+          className="flex items-center gap-1 rounded-md border border-ink-200 bg-white px-2 py-1 text-[12px] text-ink-700 transition-colors hover:border-ink-400"
+        >
+          <Upload className="h-3 w-3" />
+          Import
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="sr-only"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void importCsv(f);
+            e.target.value = "";
+          }}
+        />
 
         {projectId && (
           <Link
@@ -176,6 +312,19 @@ export default function PlannerWorkspace({
           </Link>
         )}
       </div>
+
+      {importNote && (
+        <p className="flex items-center gap-3 border-b border-ink-100 bg-ink-50/60 px-3 py-1.5 text-[12px] text-ink-600">
+          {importNote}
+          <button
+            type="button"
+            onClick={() => setImportNote(null)}
+            className="ml-auto text-ink-400 hover:text-ink-700"
+          >
+            Dismiss
+          </button>
+        </p>
+      )}
 
       {selectedTask && (
         <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-ink-100 px-3 py-2">
@@ -275,6 +424,7 @@ export default function PlannerWorkspace({
             onSelect={setSelected}
             onReschedule={(id, startsOn, dueOn) => patch(id, { startsOn, dueOn })}
             onLink={(id, dependsOn) => patch(id, { dependsOn })}
+            onSchedule={scheduleUndated}
           />
         )}
       </div>
