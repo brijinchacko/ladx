@@ -21,6 +21,16 @@ import {
   sortForSummary,
   stepAlarm,
 } from "@/lib/hmi/alarms";
+import {
+  type History,
+  emptyHistory,
+  canRedo as histCanRedo,
+  canUndo as histCanUndo,
+  current as histCurrent,
+  push as histPush,
+  redo as histRedo,
+  undo as histUndo,
+} from "@/lib/hmi/history";
 import { PANEL_GROUPS, PANEL_PRESETS, presetFor } from "@/lib/hmi/panels";
 import {
   DEFAULT_LAYOUT,
@@ -86,7 +96,16 @@ export default function HmiEditor({
   program,
   projectName,
 }: HmiEditorProps) {
-  const [doc, setDoc] = useState<HmiDoc>(initialDoc);
+  /**
+   * The document, held as an undo stack.
+   *
+   * A drawing tool without undo is one people are afraid to use: every action
+   * becomes a decision about whether it can be reversed. Whole snapshots
+   * rather than inverse operations, because the alternative needs an undo
+   * written for every action and fails silently the day somebody forgets one.
+   */
+  const [history, setHistory] = useState<History<HmiDoc>>(() => emptyHistory(initialDoc));
+  const doc = histCurrent(history);
   const [name, setName] = useState(initialName);
   const [screenId, setScreenId] = useState(initialDoc.screens[0]?.id ?? "");
   const [selected, setSelected] = useState<string | null>(null);
@@ -142,6 +161,7 @@ export default function HmiEditor({
   }, []);
   const router = useRouter();
   const svgRef = useRef<HTMLInputElement>(null);
+  const docRef = useRef<HTMLInputElement>(null);
 
   const openSetup = useCallback((tab: typeof setupTab) => {
     setSetupTab(tab);
@@ -332,8 +352,24 @@ export default function HmiEditor({
   /* ── editing ── */
 
   const update = useCallback((fn: (d: HmiDoc) => HmiDoc) => {
-    setDoc((d) => fn(structuredClone(d)));
+    setHistory((h) => histPush(h, fn(structuredClone(histCurrent(h)))));
     setDirty(true);
+  }, []);
+
+  const doUndo = useCallback(() => {
+    setHistory((h) => {
+      if (!histCanUndo(h)) return h;
+      setDirty(true);
+      return histUndo(h);
+    });
+  }, []);
+
+  const doRedo = useCallback(() => {
+    setHistory((h) => {
+      if (!histCanRedo(h)) return h;
+      setDirty(true);
+      return histRedo(h);
+    });
   }, []);
 
   const patchWidget = useCallback(
@@ -522,6 +558,36 @@ export default function HmiEditor({
     [screenId, update],
   );
 
+  /**
+   * Read an exported application back.
+   *
+   * Replaces the whole document, which is why it goes through the undo stack:
+   * importing the wrong file must be one Cmd Z away rather than a lost
+   * afternoon. Checked before it is applied, because a JSON file with no
+   * screens would leave the editor with nothing to draw.
+   */
+  const importDoc = useCallback(async (file: File) => {
+    setImportNote(null);
+    try {
+      const parsed = JSON.parse(await file.text()) as { name?: string; doc?: HmiDoc };
+      const next = parsed.doc ?? (parsed as unknown as HmiDoc);
+      if (!next || !Array.isArray(next.screens) || next.screens.length === 0) {
+        setImportNote("That file has no screens in it.");
+        return;
+      }
+      setHistory((h) => histPush(h, next));
+      if (parsed.name) setName(parsed.name);
+      setScreenId(next.screens[0]?.id ?? "");
+      setSelected(null);
+      setDirty(true);
+      setImportNote(
+        `Imported ${file.name}: ${next.screens.length} screen${next.screens.length === 1 ? "" : "s"}. Cmd Z puts it back.`,
+      );
+    } catch {
+      setImportNote("That is not a readable application file.");
+    }
+  }, []);
+
   /** The document as a file, so an application can be moved between installs. */
   const exportJson = useCallback(() => {
     const blob = new Blob([JSON.stringify({ name, doc }, null, 2)], { type: "application/json" });
@@ -689,6 +755,15 @@ export default function HmiEditor({
       // Ignored while typing, or Cmd+C in a tag name would copy the widget.
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement)?.tagName ?? "");
       if (mod && !typing) {
+        if (e.key === "z") {
+          e.preventDefault();
+          if (e.shiftKey) doRedo();
+          else doUndo();
+        }
+        if (e.key === "y") {
+          e.preventDefault();
+          doRedo();
+        }
         if (e.key === "c") copySelected();
         if (e.key === "v") paste();
         if (e.key === "d") {
@@ -810,7 +885,8 @@ export default function HmiEditor({
       label: "File",
       items: [
         { label: "Save", shortcut: "Cmd S", onSelect: () => void save(), disabled: !dirty },
-        { label: "Export JSON", onSelect: exportJson, separator: false },
+        { label: "Export JSON", onSelect: exportJson },
+        { label: "Import JSON…", onSelect: () => docRef.current?.click() },
         { label: "Import symbol (SVG)…", onSelect: () => svgRef.current?.click() },
         { label: "", separator: true },
         { label: "Close", onSelect: () => router.push("/studio/hmi") },
@@ -819,6 +895,14 @@ export default function HmiEditor({
     {
       label: "Edit",
       items: [
+        { label: "Undo", shortcut: "Cmd Z", disabled: !histCanUndo(history), onSelect: doUndo },
+        {
+          label: "Redo",
+          shortcut: "Shift Cmd Z",
+          disabled: !histCanRedo(history),
+          onSelect: doRedo,
+        },
+        { label: "", separator: true },
         {
           label: "Duplicate",
           shortcut: "Cmd D",
@@ -1277,6 +1361,18 @@ export default function HmiEditor({
           </Panel>
         )}
       </div>
+
+      <input
+        ref={docRef}
+        type="file"
+        accept=".json,application/json"
+        className="sr-only"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void importDoc(f);
+          e.target.value = "";
+        }}
+      />
 
       <input
         ref={svgRef}
