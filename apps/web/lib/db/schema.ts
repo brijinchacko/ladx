@@ -773,6 +773,36 @@ export const documents = pgTable(
 // works on structured entities and re-parsing a text format on every load would
 // be slower and lossier than keeping the structure. DXF is the interchange
 // format on the way in and out, not the storage format.
+/**
+ * One HMI application per project, the way a ladder program is one per project.
+ *
+ * Screens, the tags the HMI owns, the alarms defined on tags, trends and the
+ * connection all live in one document because they are edited together and a
+ * screen is meaningless without the tag it binds to. The PLC tag table is
+ * deliberately NOT in here: the HMI binds to the ladder program's tags by
+ * name, so there is one tag table per project rather than two that drift.
+ */
+export const hmiProjects = pgTable(
+  "hmi_projects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** Null is the unattached scratch application, of which there is one. */
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    name: text("name").notNull().default("Untitled HMI"),
+    /** HmiDoc from lib/hmi/types.ts. */
+    doc: jsonb("doc").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    byUser: index("hmi_projects_user_idx").on(t.userId, t.updatedAt),
+    byProject: index("hmi_projects_project_idx").on(t.projectId),
+  }),
+);
+
 export const cadDrawings = pgTable(
   "cad_drawings",
   {
