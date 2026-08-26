@@ -43,6 +43,25 @@ export function NewProjectForm({
     if (params.get("new") === "1") setOpen(true);
   }, [params]);
 
+  /*
+   * Escape closes it.
+   *
+   * The dialog has always had a button labelled "Esc" in its corner and
+   * nothing listening for the key, which is a promise printed on the screen
+   * and not kept. Ignored while a field has focus only for the textarea's
+   * sake; every other control here is happy to lose focus to a close.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || busy) return;
+      e.preventDefault();
+      setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, busy]);
+
   async function create(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || busy) return;
@@ -86,124 +105,153 @@ export function NewProjectForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink-900/40 p-4 sm:items-center">
+    /*
+      The dialog is taller than a laptop window once the scope picker is open,
+      and it had no height cap and nothing that scrolled. Everything past the
+      fold, including the button that creates the project, was simply
+      unreachable: the form could be filled in and not submitted.
+
+      Three parts now. The header and the footer are fixed, so the Create
+      button is on screen whatever the scope, and only the fields between them
+      scroll. That is better than making the whole panel scroll, because
+      scrolling to the bottom of a seventeen deliverable list to find the
+      submit button is the same problem in a milder form.
+
+      `dvh` rather than `vh`: on a phone, `vh` is the window with the browser
+      chrome hidden, which is not the space actually available, and the footer
+      ends up under the toolbar.
+    */
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900/40 p-4 sm:items-center">
       <form
         onSubmit={create}
-        className="w-full max-w-lg space-y-4 rounded-sm border border-ink-200 bg-white p-6"
+        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col rounded-sm border border-ink-200 bg-white"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex shrink-0 items-center justify-between border-b border-ink-100 px-6 py-4">
           <h2 className="font-display text-lg font-bold text-ink-900">New project</h2>
           <button
             type="button"
             onClick={() => setOpen(false)}
+            title="Close without creating anything"
             className="font-mono text-[12px] text-ink-400 hover:text-ink-900"
           >
             Esc
           </button>
         </div>
 
-        <label className="block">
-          <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-400">
-            Project name
-          </span>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={200}
-            placeholder="Line 4 filler upgrade"
-            className="w-full rounded-sm border border-ink-200 px-3 py-2 text-[15px] outline-none focus:border-ink-500"
-          />
-        </label>
-
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
           <label className="block">
             <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-400">
-              Project number
+              Project name
             </span>
             <input
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              maxLength={40}
-              placeholder="LX-2601"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={200}
+              placeholder="Line 4 filler upgrade"
+              className="w-full rounded-sm border border-ink-200 px-3 py-2 text-[15px] outline-none focus:border-ink-500"
+            />
+          </label>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-400">
+                Project number
+              </span>
+              <input
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                maxLength={40}
+                placeholder="LX-2601"
+                className="w-full rounded-sm border border-ink-200 px-2.5 py-1.5 text-[14px] outline-none focus:border-ink-500"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-400">
+                Client
+              </span>
+              <select
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
+                className="w-full rounded-sm border border-ink-200 bg-white px-2.5 py-1.5 text-[14px] outline-none focus:border-ink-500"
+              >
+                {!defaultClientId && <option value="">No client yet</option>}
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <label className="block">
+            <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-400">
+              Site / location
+            </span>
+            <input
+              value={site}
+              onChange={(e) => setSite(e.target.value)}
+              maxLength={200}
               className="w-full rounded-sm border border-ink-200 px-2.5 py-1.5 text-[14px] outline-none focus:border-ink-500"
             />
           </label>
+
           <label className="block">
             <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-400">
-              Client
+              Description
             </span>
-            <select
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
-              className="w-full rounded-sm border border-ink-200 bg-white px-2.5 py-1.5 text-[14px] outline-none focus:border-ink-500"
-            >
-              {!defaultClientId && <option value="">No client yet</option>}
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              className="w-full rounded-sm border border-ink-200 px-2.5 py-2 text-[14px] outline-none focus:border-ink-500"
+            />
           </label>
+
+          <div>
+            <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-400">
+              Scope of work
+            </span>
+            <p className="mb-2 text-[12.5px] leading-snug text-ink-500">
+              What this project owes. The plan is built from it, so a job scoped to programming does
+              not arrive with a bill of materials to delete. Changeable at any time from the
+              project.
+            </p>
+            <ScopePicker value={deliverables} onChange={setDeliverables} />
+          </div>
+
+          {clients.length === 0 && (
+            <p className="text-[12.5px] text-ink-400">
+              No clients yet. You can create the project now and add a client later.
+            </p>
+          )}
         </div>
 
-        <label className="block">
-          <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-400">
-            Site / location
-          </span>
-          <input
-            value={site}
-            onChange={(e) => setSite(e.target.value)}
-            maxLength={200}
-            className="w-full rounded-sm border border-ink-200 px-2.5 py-1.5 text-[14px] outline-none focus:border-ink-500"
-          />
-        </label>
-
-        <label className="block">
-          <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-400">
-            Description
-          </span>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-            className="w-full rounded-sm border border-ink-200 px-2.5 py-2 text-[14px] outline-none focus:border-ink-500"
-          />
-        </label>
-
-        <div>
-          <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-400">
-            Scope of work
-          </span>
-          <p className="mb-2 text-[12.5px] leading-snug text-ink-500">
-            What this project owes. The plan is built from it, so a job scoped to programming does
-            not arrive with a bill of materials to delete. Changeable at any time from the project.
-          </p>
-          <ScopePicker value={deliverables} onChange={setDeliverables} />
-        </div>
-
-        {clients.length === 0 && (
-          <p className="text-[12.5px] text-ink-400">
-            No clients yet. You can create the project now and add a client later.
-          </p>
-        )}
-        {error && <p className="text-[13px] text-red-700">{error}</p>}
-
-        <div className="flex items-center gap-3 pt-1">
-          <button
-            type="submit"
-            disabled={!name.trim() || busy}
-            className="rounded-sm bg-ink-900 px-5 py-2 text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-          >
-            {busy ? "Creating…" : "Create project"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="text-[13.5px] text-ink-500 hover:text-ink-900"
-          >
-            Cancel
-          </button>
+        <div className="shrink-0 border-t border-ink-100 px-6 py-4">
+          {/* The error sits with the button that produced it, where somebody
+              who just clicked is already looking. */}
+          {error && <p className="mb-2 text-[13px] text-red-700">{error}</p>}
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={!name.trim() || busy}
+              className="rounded-sm bg-ink-900 px-5 py-2 text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              {busy ? "Creating…" : "Create project"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="text-[13.5px] text-ink-500 hover:text-ink-900"
+            >
+              Cancel
+            </button>
+            {!name.trim() && (
+              // The button is disabled until there is a name, and a disabled
+              // button with no explanation reads as a broken one.
+              <span className="text-[12.5px] text-ink-400">A project name is needed.</span>
+            )}
+          </div>
         </div>
       </form>
     </div>
