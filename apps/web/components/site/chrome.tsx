@@ -9,6 +9,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const NAV = [
+  // First, because it is what most first-time visitors are actually after and
+  // the only entry that leads somewhere they can use without signing up.
+  { href: "/free", label: "Free tools" },
   { href: "/resources", label: "Resources" },
   { href: "/forum", label: "Forum" },
   { href: "/help", label: "Help" },

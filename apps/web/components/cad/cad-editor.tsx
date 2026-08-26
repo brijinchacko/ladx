@@ -104,6 +104,16 @@ type Drag =
  * both simpler and more reliable than an inverse-operation undo stack, where a
  * single missed inverse corrupts the document silently.
  */
+/**
+ * Where a drawing is kept.
+ *
+ * A prop rather than a call, so the same editor serves the signed-in tool,
+ * which PUTs to an API route against a project, and the public one at /cad,
+ * which writes to the browser and has no account behind it. Returns whether it
+ * landed, so the editor knows when to stop showing unsaved.
+ */
+export type SaveDrawing = (input: { id: string; name: string; data: Drawing }) => Promise<boolean>;
+
 export default function CadEditor({
   drawingId,
   initial,
@@ -113,6 +123,8 @@ export default function CadEditor({
   sheets = [],
   projectId = null,
   projects = [],
+  onSave,
+  canGenerate = true,
 }: {
   drawingId: string;
   initial: Drawing;
@@ -125,6 +137,16 @@ export default function CadEditor({
   projectId?: string | null;
   /** Every project this user has, so a sheet can be filed without leaving. */
   projects?: { id: string; name: string }[];
+  /** Defaults to the API route, which is what the signed-in editor wants. */
+  onSave?: SaveDrawing;
+  /**
+   * Whether to offer AI drawing.
+   *
+   * False without an account, because generation needs a provider key that
+   * belongs to a user. Offering a button that always answers "sign in" is
+   * worse than not offering it.
+   */
+  canGenerate?: boolean;
 }) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1255,6 +1277,19 @@ export default function CadEditor({
     setSaving(true);
     setStatus(null);
     try {
+      if (onSave) {
+        const ok = await onSave({ id: drawingId, name, data: drawing });
+        if (ok) {
+          // The same two lines the API path does. `dirty` is computed against
+          // savedRef, so clearing the flag without moving the reference makes
+          // the next edit compare against a drawing from before the save and
+          // report no change.
+          savedRef.current = drawing;
+          setDirty(false);
+        }
+        setStatus(ok ? "Saved" : "Could not save");
+        return;
+      }
       const res = await fetch(`/api/cad/${drawingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -2141,21 +2176,26 @@ export default function CadEditor({
         history={cmdHistory}
       />
 
-      <AiDock
-        title="Draw with LADX"
-        placeholder="A DIN rail with twelve terminals at 6 mm pitch, labelled X1:1 to X1:12"
-        suggestions={[
-          "A 600 by 400 back plate with two DIN rails",
-          "A start/stop circuit with a seal-in and a motor",
-          "Eight cable glands along the bottom edge at 60 mm centres",
-        ]}
-        turns={aiTurns}
-        busy={aiBusy}
-        error={aiError}
-        modelNote={aiModel}
-        onSend={(prompt) => void generate(prompt)}
-        onUndo={undo}
-      />
+      {/* Hidden without an account. Generation needs a provider key that
+          belongs to a user, so the alternative is a prompt box that always
+          answers "sign in", which is worse than no prompt box. */}
+      {canGenerate && (
+        <AiDock
+          title="Draw with LADX"
+          placeholder="A DIN rail with twelve terminals at 6 mm pitch, labelled X1:1 to X1:12"
+          suggestions={[
+            "A 600 by 400 back plate with two DIN rails",
+            "A start/stop circuit with a seal-in and a motor",
+            "Eight cable glands along the bottom edge at 60 mm centres",
+          ]}
+          turns={aiTurns}
+          busy={aiBusy}
+          error={aiError}
+          modelNote={aiModel}
+          onSend={(prompt) => void generate(prompt)}
+          onUndo={undo}
+        />
+      )}
     </div>
   );
 }

@@ -3,10 +3,18 @@ import { SITE, faqSchema, jsonLd } from "@/lib/seo/schema";
 import ConvertClient from "./convert-client";
 
 export const metadata = {
-  title: "Convert ladder logic to Structured Text, SCL, neutral text or PLCopen XML",
+  title: "Free ladder logic to Structured Text converter, online",
   description:
     "Turn a ladder program into IEC 61131-3 Structured Text, Siemens SCL, Rockwell neutral text or PLCopen XML, with a report of everything that did not survive the conversion. Runs in your browser.",
   alternates: { canonical: `${SITE.url}/convert` },
+  openGraph: {
+    type: "website",
+    url: `${SITE.url}/convert`,
+    title: "Free ladder to Structured Text and SCL converter",
+    description:
+      "Four output formats and an honest report of what did not survive. Runs in your browser; nothing is uploaded.",
+    images: [{ url: "/og/products/convert", width: 1200, height: 630, alt: "LADX Convert" }],
+  },
 };
 
 const FAQ = [

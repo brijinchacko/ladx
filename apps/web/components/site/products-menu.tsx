@@ -164,13 +164,26 @@ export default function ProductsMenu({ active }: { active: boolean }) {
               <span className="text-[12.5px] text-ink-400">
                 One project underneath all of them. Nothing exports to anything.
               </span>
-              <Link
-                href="/ladder"
-                onClick={() => setOpen(false)}
-                className="ml-auto text-[13px] font-medium text-teal-700 hover:text-teal-800"
-              >
-                Try the editor, no account
-              </Link>
+              {/* The three that need no account, named individually. "Try the
+                  editor" hid two of them behind a phrase nobody would guess
+                  covered CAD and HMI. */}
+              <span className="ml-auto flex flex-wrap items-center gap-3 text-[13px] font-medium">
+                <span className="text-[12px] text-ink-400">No account:</span>
+                {[
+                  { href: "/ladder", label: "Ladder" },
+                  { href: "/cad", label: "CAD" },
+                  { href: "/hmi", label: "HMI" },
+                ].map((t) => (
+                  <Link
+                    key={t.href}
+                    href={t.href}
+                    onClick={() => setOpen(false)}
+                    className="text-teal-700 hover:text-teal-800"
+                  >
+                    {t.label}
+                  </Link>
+                ))}
+              </span>
             </div>
           </div>
         </div>

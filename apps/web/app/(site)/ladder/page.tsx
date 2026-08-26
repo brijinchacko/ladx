@@ -2,10 +2,21 @@ import { SITE, jsonLd, softwareSchema } from "@/lib/seo/schema";
 import StudioShell from "./studio-shell";
 
 export const metadata = {
-  title: "Ladder, the free browser ladder logic editor and simulator",
+  // The product is called Ladder; nobody searches for that. They search for
+  // free PLC programming software and an online PLC simulator, so the title
+  // leads with what it is rather than with what we named it.
+  title: "Free online PLC programming software and ladder logic simulator",
   description:
-    "Draw ladder logic and watch it run. A scan-accurate PLC simulator with a real output image, per-instruction edge memory and timers that count milliseconds. No account, runs in the browser.",
+    "Write ladder logic free in your browser and run it on a scan-accurate PLC simulator: real output image, per-instruction edge memory, timers in milliseconds. No account, no download, nothing that expires.",
   alternates: { canonical: `${SITE.url}/ladder` },
+  openGraph: {
+    type: "website",
+    url: `${SITE.url}/ladder`,
+    title: "Free online PLC programming and ladder logic simulator",
+    description:
+      "Draw a rung, press run, watch it conduct. No account, no download, nothing that expires.",
+    images: [{ url: "/og/products/studio", width: 1200, height: 630, alt: "LADX Ladder" }],
+  },
 };
 
 /**

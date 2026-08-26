@@ -86,6 +86,14 @@ describe("robots.txt keeps the private surface private", () => {
 
   const mustAllow = [
     "/",
+    // The tools that need no account. Every one of these is a page somebody
+    // arrives at from a search for a free tool, and blocking one would be the
+    // same defect that hid the template library for weeks.
+    "/free",
+    "/ladder",
+    "/cad",
+    "/hmi",
+    "/convert",
     "/products",
     "/products/hmi",
     "/resources",
@@ -94,8 +102,6 @@ describe("robots.txt keeps the private surface private", () => {
     "/documents/control-narrative",
     "/forum",
     "/help",
-    "/ladder",
-    "/convert",
   ];
 
   for (const path of mustAllow) {

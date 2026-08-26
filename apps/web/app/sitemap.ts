@@ -54,6 +54,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // looking for a FAT protocol wants a file, and these pages hand them one.
     { url: `${SITE.url}/documents`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE.url}/convert`, changeFrequency: "monthly", priority: 0.9 },
+    // The three tools that need no account. High priority deliberately: these
+    // are what somebody searching for a free tool is actually looking for, and
+    // they are the only pages on the site that answer that query by being the
+    // thing rather than describing it.
+    { url: `${SITE.url}/free`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE.url}/cad`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE.url}/hmi`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE.url}/forum`, changeFrequency: "daily", priority: 0.7 },
     { url: `${SITE.url}/help`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE.url}/cookies`, changeFrequency: "yearly", priority: 0.2 },

@@ -39,7 +39,15 @@ export type StudioStorage = {
   retentionNote?: string;
 };
 
-const KEY_PREFIX = "ladx.project.";
+/**
+ * Where a browser-stored project lives.
+ *
+ * Exported because the public HMI builder reads the scratch program out of it
+ * to get its PLC tags, and a second copy of this string in another package is
+ * a rename away from the two tools silently disagreeing about where the
+ * program is.
+ */
+export const KEY_PREFIX = "ladx.project.";
 
 /**
  * Browser-local storage.
