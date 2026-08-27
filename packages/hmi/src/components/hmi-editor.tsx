@@ -1,6 +1,17 @@
 "use client";
 import { type LadxProgram, type Tag, scan } from "@ladx/studio";
-import { Bell, Loader2, Maximize2, Play, Plus, Save, Sparkles, Square } from "lucide-react";
+import { focusModeLabel, useFocusMode } from "@ladx/studio";
+import {
+  Bell,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Play,
+  Plus,
+  Save,
+  Sparkles,
+  Square,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -147,7 +158,17 @@ export default function HmiEditor({
   const [running, setRunning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [focus, setFocus] = useState(false);
+  /*
+   * Focus and fullscreen, from the shared hook.
+   *
+   * This was a boolean that applied `fixed inset-0`, which is focus mode and
+   * was labelled "Full screen". Real fullscreen is a different thing: it takes
+   * the browser's own chrome too, which on a 1920 panel design is the
+   * difference between seeing the glass at 1:1 and not. The hook also notices
+   * when the browser leaves fullscreen behind our back, which a boolean cannot.
+   */
+  const screen_ = useFocusMode({ key: "ladx.hmi.mode.v1" });
+  const focus = screen_.immersive;
   const [setupOpen, setSetupOpen] = useState(false);
   const [importNote, setImportNote] = useState<string | null>(null);
   /**
@@ -829,7 +850,8 @@ export default function HmiEditor({
         e.preventDefault();
         void save();
       }
-      if (e.key === "Escape" && focus) setFocus(false);
+      // Escape is handled by useFocusMode, which knows whether to leave
+      // fullscreen or focus. Handling it here as well would skip a step.
       const mod = e.metaKey || e.ctrlKey;
       // Ignored while typing, or Cmd+C in a tag name would copy the widget.
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement)?.tagName ?? "");
@@ -1011,7 +1033,16 @@ export default function HmiEditor({
         { label: "", separator: true },
         { label: "Fit", onSelect: () => setZoom("fit"), checked: zoom === "fit" },
         { label: "100%", onSelect: () => setZoom(1), checked: zoom === 1 },
-        { label: "Full screen", onSelect: () => setFocus((f) => !f), checked: focus },
+        {
+          label: focusModeLabel(screen_.mode, screen_.canFullscreen),
+          onSelect: screen_.cycle,
+          checked: screen_.immersive,
+        },
+        {
+          label: "Leave focus mode",
+          disabled: !screen_.immersive,
+          onSelect: screen_.collapse,
+        },
         { label: "", separator: true },
         {
           label: "Schematic symbols",
@@ -1094,7 +1125,10 @@ export default function HmiEditor({
 
   return (
     <div
-      className={`relative flex min-h-0 flex-1 flex-col ${focus ? "fixed inset-0 z-50 bg-white" : ""}`}
+      ref={screen_.ref}
+      className={`relative flex min-h-0 flex-1 flex-col bg-white ${
+        screen_.immersive ? "fixed inset-0 z-50" : ""
+      }`}
     >
       <MenuBar menus={menus} />
 
@@ -1204,11 +1238,19 @@ export default function HmiEditor({
           </select>
           <button
             type="button"
-            onClick={() => setFocus((f) => !f)}
-            title="Full screen"
-            className="rounded-md border border-ink-200 bg-white px-2 py-1 text-ink-600 hover:border-ink-400"
+            onClick={screen_.cycle}
+            title={`${focusModeLabel(screen_.mode, screen_.canFullscreen)}. Press F, or Escape to step back.`}
+            className={`rounded-md border px-2 py-1 transition-colors ${
+              screen_.immersive
+                ? "border-teal-500 bg-teal-50 text-teal-800"
+                : "border-ink-200 bg-white text-ink-600 hover:border-ink-400"
+            }`}
           >
-            <Maximize2 className="h-3.5 w-3.5" />
+            {screen_.immersive ? (
+              <Minimize2 className="h-3.5 w-3.5" />
+            ) : (
+              <Maximize2 className="h-3.5 w-3.5" />
+            )}
           </button>
           <button
             type="button"

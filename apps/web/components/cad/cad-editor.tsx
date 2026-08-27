@@ -59,6 +59,7 @@ import {
   newId,
 } from "@/lib/cad/types";
 import { type Menu, MenuBar } from "@ladx/studio";
+import { focusModeLabel, useFocusMode } from "@ladx/studio";
 import { Download, FileText, Maximize2, Minimize2, Save, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -218,7 +219,18 @@ export default function CadEditor({
    * either side cost more than they give once the drawing is the thing being
    * thought about rather than the thing being started.
    */
-  const [focus, setFocus] = useState(false);
+  /*
+   * Focus and fullscreen, from the shared hook.
+   *
+   * This was a boolean that hid the side panels and left the editor sitting in
+   * the middle of the page, so on the public /cad page "focus mode" still had
+   * the site header above it. It now fills the viewport and can go to real
+   * fullscreen, which on a drawing is the whole point: a schematic is read
+   * across its full width and the chrome either side is the difference between
+   * a readable sheet and a scrolling one.
+   */
+  const screen_ = useFocusMode({ key: "ladx.cad.mode.v1" });
+  const focus = screen_.immersive;
 
   const [theme, setTheme] = useState<CanvasTheme>(THEMES[0] as CanvasTheme);
   useEffect(() => setTheme(loadTheme()), []);
@@ -1219,9 +1231,9 @@ export default function CadEditor({
         setSelected([]);
         setFilletFirst(null);
         setMeasured(null);
-        // Escape is also the way out of focus mode, because that is where a
-        // hand goes when a screen has nothing else on it.
-        if (focus) setFocus(false);
+        // Leaving focus mode on Escape is handled by useFocusMode, which
+        // knows whether to drop out of fullscreen first. Doing it here too
+        // would skip that step.
         return;
       }
       if (ev.key === "Enter" && tool === "polyline") {
@@ -1829,10 +1841,10 @@ export default function CadEditor({
           onSelect: () => setAngleStep((a) => (a === 90 ? 45 : a === 45 ? 15 : 90)),
         },
         {
-          label: focus ? "Leave focus mode" : "Focus mode",
+          label: focusModeLabel(screen_.mode, screen_.canFullscreen),
           shortcut: "Esc",
           separator: true,
-          onSelect: () => setFocus((f) => !f),
+          onSelect: screen_.cycle,
         },
         {
           label: showSheets ? "Hide sheets" : "Show sheets",
@@ -1921,7 +1933,12 @@ export default function CadEditor({
       : null;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div
+      ref={screen_.ref}
+      className={`flex min-h-0 flex-1 flex-col bg-white ${
+        screen_.immersive ? "fixed inset-0 z-50" : ""
+      }`}
+    >
       <MenuBar
         menus={menus}
         title={
@@ -1979,8 +1996,8 @@ export default function CadEditor({
         <div className="ml-auto flex items-center gap-2">
           {status && <span className="font-mono text-[11.5px] text-ink-500">{status}</span>}
           <IconBtn
-            title={focus ? "Leave focus mode (Esc)" : "Focus mode: hide everything but the drawing"}
-            onClick={() => setFocus((f) => !f)}
+            title={`${focusModeLabel(screen_.mode, screen_.canFullscreen)}. Press F, or Escape to step back.`}
+            onClick={screen_.cycle}
           >
             {focus ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
           </IconBtn>

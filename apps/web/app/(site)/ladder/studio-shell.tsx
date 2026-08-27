@@ -2,12 +2,14 @@
 
 import { CONSENT_EVENT, type ConsentState, hasConsent } from "@/lib/consent/consent";
 import {
+  type FocusMode,
   LadxStudio,
   type StudioProject,
   type StudioStorage,
   localStorageStorage,
+  useFocusMode,
 } from "@ladx/studio";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 /** A fixed id, so a reload reopens the same scratch project. */
 const SCRATCH_PROJECT = "scratch";
@@ -25,7 +27,8 @@ const MODE_KEY = "ladx.studio.mode";
  * These are ordered by how much furniture disappears, and the control cycles
  * through them in that order.
  */
-export type StudioMode = "docked" | "focus" | "full";
+/** Kept as an alias so existing imports still resolve. The truth is in @ladx/studio. */
+export type StudioMode = FocusMode;
 
 /**
  * Storage that keeps the project only for this page view.
@@ -61,11 +64,8 @@ function memoryStorage(): StudioStorage {
  * tree for the sake of one page.
  */
 export default function StudioShell() {
-  const [mode, setMode] = useState<StudioMode>("docked");
-  const [ready, setReady] = useState(false);
   // undefined until read on the client, so we never guess on the first paint.
   const [mayPersist, setMayPersist] = useState<boolean | undefined>(undefined);
-  const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMayPersist(hasConsent("functional"));
@@ -82,123 +82,35 @@ export default function StudioShell() {
     [mayPersist],
   );
 
-  // Restore the last mode, but never restore `full`: the Fullscreen API only
-  // grants fullscreen in response to a user gesture, so restoring it would
-  // leave the UI claiming a state the browser had refused.
-  useEffect(() => {
-    // Remembering the mode is itself a functional preference, so it waits for
-    // the same permission the project data does.
-    if (mayPersist) {
-      try {
-        if (window.localStorage.getItem(MODE_KEY) === "focus") setMode("focus");
-      } catch {
-        // Storage unavailable. The default mode is a fine answer.
-      }
-    }
-    setReady(true);
-  }, [mayPersist]);
-
-  useEffect(() => {
-    if (!ready || !mayPersist) return;
-    try {
-      window.localStorage.setItem(MODE_KEY, mode === "full" ? "focus" : mode);
-    } catch {
-      // Nothing to do: the mode still applies for this visit.
-    }
-  }, [mode, ready, mayPersist]);
-
-  // Hide the site chrome for the two immersive modes. Cleaned up on unmount so
-  // navigating away from Studio never leaves the site without a header.
-  useEffect(() => {
+  /*
+   * Focus and fullscreen, from the shared hook.
+   *
+   * This implementation used to live here and nowhere else, which is why the
+   * other four tools each had a worse version or none. It moved to
+   * @ladx/studio; what stays here is the one thing specific to this page,
+   * which is hiding the site header and footer.
+   */
+  const onModeChange = useCallback((next: FocusMode) => {
     const root = document.documentElement;
-    if (mode === "docked") root.removeAttribute("data-studio-immersive");
+    if (next === "docked") root.removeAttribute("data-studio-immersive");
     else root.setAttribute("data-studio-immersive", "");
-    return () => root.removeAttribute("data-studio-immersive");
-  }, [mode]);
+  }, []);
 
-  /**
-   * Keep our state honest when the browser leaves fullscreen on its own.
-   *
-   * Esc, F11 and the OS window controls all exit fullscreen without telling us,
-   * and a control still reading "Exit fullscreen" after that is a control that
-   * does nothing when pressed.
-   */
+  const screen_ = useFocusMode({
+    key: MODE_KEY,
+    mayPersist,
+    onChange: onModeChange,
+  });
+  const { mode, cycle, collapse, immersive } = screen_;
+
+  // Cleaned up on unmount, so navigating away never leaves the site headerless.
   useEffect(() => {
-    const onChange = () => {
-      if (!document.fullscreenElement) {
-        setMode((m) => (m === "full" ? "focus" : m));
-      }
-    };
-    document.addEventListener("fullscreenchange", onChange);
-    return () => document.removeEventListener("fullscreenchange", onChange);
+    return () => document.documentElement.removeAttribute("data-studio-immersive");
   }, []);
-
-  const enterFull = useCallback(async () => {
-    const el = wrapRef.current;
-    if (!el) return;
-    try {
-      await el.requestFullscreen();
-      setMode("full");
-    } catch {
-      // Fullscreen can be refused by permissions policy, and on iOS Safari it
-      // is not available for arbitrary elements at all. Focus mode gets most of
-      // the benefit, so fall back to it rather than failing silently.
-      setMode("focus");
-    }
-  }, []);
-
-  const exitFull = useCallback(async () => {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen().catch(() => {});
-    }
-    setMode("focus");
-  }, []);
-
-  const cycle = useCallback(() => {
-    if (mode === "docked") setMode("focus");
-    else if (mode === "focus") void enterFull();
-    else void exitFull();
-  }, [mode, enterFull, exitFull]);
-
-  const collapse = useCallback(() => {
-    if (mode === "full") void exitFull();
-    else setMode("docked");
-  }, [mode, exitFull]);
-
-  /**
-   * Keyboard shortcuts, suppressed while the user is typing.
-   *
-   * Studio has a tag table and rung comments in it, so a bare "f" binding would
-   * make it impossible to type the letter f into a tag name.
-   */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      const typing =
-        !!t &&
-        (t.tagName === "INPUT" ||
-          t.tagName === "TEXTAREA" ||
-          t.tagName === "SELECT" ||
-          t.isContentEditable);
-      if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
-
-      if (e.key === "Escape" && mode !== "docked") {
-        e.preventDefault();
-        collapse();
-      } else if (e.key === "f" || e.key === "F") {
-        e.preventDefault();
-        cycle();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [mode, cycle, collapse]);
-
-  const immersive = mode !== "docked";
 
   return (
     <div
-      ref={wrapRef}
+      ref={screen_.ref}
       className={
         immersive
           ? "fixed inset-0 z-50 bg-white"

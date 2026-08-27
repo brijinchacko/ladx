@@ -10,6 +10,8 @@ import {
   FolderKanban,
   Info,
   Loader2,
+  Maximize2,
+  Minimize2,
   PackageOpen,
   Upload,
   Wrench,
@@ -26,6 +28,7 @@ import {
   programRoutines,
   summarise,
 } from "../index";
+import { focusModeLabel, useFocusMode } from "../lib/focus-mode";
 import type { SaveRecord } from "./Monitor";
 
 export interface ConvertSource {
@@ -84,6 +87,15 @@ export default function ConvertWorkbench({
   /** Where a generated record is written. Omitted means this surface cannot store one. */
   onSaveRecord?: SaveRecord;
 }) {
+  /*
+   * Focus and fullscreen.
+   *
+   * Structured Text output is long lines, and the whole reason to look at a
+   * conversion is to read it. The site chrome either side is the difference
+   * between reading a line and wrapping it.
+   */
+  const screen_ = useFocusMode({ key: "ladx.convert.mode.v1" });
+
   // A project named in the URL wins over "whatever is first", so a "Convert"
   // link from a project opens that project's program.
   const [sourceKey, setSourceKey] = useState<string>(
@@ -236,7 +248,30 @@ export default function ConvertWorkbench({
     // `relative` for the sr-only upload input further down: absolute with no
     // positioned ancestor escapes to the initial containing block and stretches
     // the document, which scrolls the whole Studio shell.
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div
+      ref={screen_.ref}
+      className={`relative flex min-h-0 flex-1 flex-col bg-white ${
+        screen_.immersive ? "fixed inset-0 z-50" : ""
+      }`}
+    >
+      {/* Focus and fullscreen, the same control every other tool has. */}
+      <button
+        type="button"
+        onClick={screen_.cycle}
+        title={`${focusModeLabel(screen_.mode, screen_.canFullscreen)}. Press F, or Escape to step back.`}
+        aria-label={focusModeLabel(screen_.mode, screen_.canFullscreen)}
+        className={`absolute right-3 top-2 z-10 rounded-md border px-2 py-1 transition-colors ${
+          screen_.immersive
+            ? "border-teal-500 bg-teal-50 text-teal-800"
+            : "border-ink-200 bg-white text-ink-500 hover:border-ink-400"
+        }`}
+      >
+        {screen_.immersive ? (
+          <Minimize2 className="h-3.5 w-3.5" />
+        ) : (
+          <Maximize2 className="h-3.5 w-3.5" />
+        )}
+      </button>
       {unreadable.length > 0 && (
         <p className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900">
           {unreadable.length} saved program{unreadable.length === 1 ? "" : "s"} could not be read

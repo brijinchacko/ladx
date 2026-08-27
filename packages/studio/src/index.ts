@@ -50,6 +50,8 @@ export * from "./lib/addressing";
 export * from "./lib/portable";
 export { emptyProgram, STARTER_PROGRAMS, STARTER_BY_KEY } from "./lib/starters";
 export { localStorageStorage, httpStorage, KEY_PREFIX as PROJECT_KEY_PREFIX } from "./lib/storage";
+export { useFocusMode, focusModeLabel } from "./lib/focus-mode";
+export type { FocusMode, FocusModeApi } from "./lib/focus-mode";
 export type { StudioStorage, StudioProject } from "./lib/storage";
 export { LADX_BRANDING } from "./lib/branding";
 export type { Branding } from "./lib/branding";
