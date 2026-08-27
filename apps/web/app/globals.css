@@ -161,6 +161,15 @@
     animation: none !important;
     opacity: 0.6;
   }
+
+  /* The alarm ticker and the pipe flow. Both are decoration over information
+     that is also present without them: the alarm is in the list, and the pipe
+     still shows its colour. Somebody who has asked for less motion should not
+     have to watch either. */
+  [style*="ladx-marquee"],
+  [style*="ladx-flow"] {
+    animation: none !important;
+  }
 }
 
 /* The alarm ticker. Scrolled by CSS rather than a timer: driving it from the
@@ -171,5 +180,18 @@
   }
   to {
     transform: translateX(-100%);
+  }
+}
+
+/* Flow through a pipe. The dashes travel along the stroke, so a running line
+   is visibly running and a stopped one is visibly stopped, which is the single
+   most useful thing a mimic can tell somebody at a glance. CSS rather than a
+   timer, for the same reason as the ticker above. */
+@keyframes ladx-flow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -24;
   }
 }

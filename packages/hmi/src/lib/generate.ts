@@ -948,6 +948,33 @@ export function defaultSize(kind: WidgetKind): { w: number; h: number } {
   switch (kind) {
     case "lamp":
       return { w: 32, h: 32 };
+    // Sizes chosen so an object dropped on the panel is immediately the right
+    // shape. A tank that arrives square has to be resized before it reads as a
+    // tank, and every one of those is a small tax on drawing a screen.
+    case "tank":
+      return { w: 90, h: 150 };
+    case "thermometer":
+      return { w: 44, h: 150 };
+    case "statusStack":
+      return { w: 28, h: 90 };
+    case "pipe":
+      return { w: 180, h: 24 };
+    case "xyChart":
+      return { w: 260, h: 180 };
+    case "table":
+      return { w: 260, h: 140 };
+    case "clock":
+      return { w: 150, h: 52 };
+    case "steps":
+      return { w: 320, h: 32 };
+    case "radioGroup":
+      return { w: 180, h: 32 };
+    case "checkbox":
+      return { w: 150, h: 28 };
+    case "textEntry":
+      return { w: 160, h: 30 };
+    case "faceplate":
+      return { w: 140, h: 90 };
     case "bar":
       return { w: 40, h: 120 };
     case "gauge":

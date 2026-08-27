@@ -24,6 +24,7 @@ import {
   sortForSummary,
   stepAlarm,
 } from "../lib/alarms";
+import { expandInstance } from "../lib/faceplates";
 import type { GenContext, GenerateScreen, GeneratedScreen } from "../lib/generate";
 import { defaultSize, draftScreen } from "../lib/generate";
 import {
@@ -262,6 +263,15 @@ export default function HmiEditor({
   const trendsRef = useRef<Map<string, TrendBuffer>>(new Map());
   const lastSampleRef = useRef<Map<string, number>>(new Map());
   const [trendTick, setTrendTick] = useState(0);
+  /**
+   * The wall clock, ticked once a second.
+   *
+   * Separate from the scan tick because a clock does not need a hundred
+   * updates a second and the scan does not need to carry the time. Only runs
+   * while the panel is running, so a design session is not re-rendering every
+   * second for a widget nobody is looking at.
+   */
+  const [clockNow, setClockNow] = useState(0);
   spaceRef.current = space;
   alarmRef.current = alarmState;
 
@@ -350,7 +360,12 @@ export default function HmiEditor({
     if (!running) return;
     const period = 100;
     const timer = setInterval(() => step(period), period);
-    return () => clearInterval(timer);
+    setClockNow(Date.now());
+    const clock = setInterval(() => setClockNow(Date.now()), 1000);
+    return () => {
+      clearInterval(timer);
+      clearInterval(clock);
+    };
   }, [running, step]);
 
   // Leaving run mode puts the tags back where they started, so a design
@@ -818,6 +833,23 @@ export default function HmiEditor({
             setAlarmState(acked);
             break;
           }
+          case "loadRecipe": {
+            /*
+             * Every value at once, and recorded.
+             *
+             * A recipe written value by value across several scans is a
+             * machine briefly running on a mixture of two products, which is
+             * the sort of thing that shows up as a batch nobody can explain.
+             */
+            const recipe = (doc.recipes ?? []).find((r) => r.id === a.recipe);
+            if (!recipe) break;
+            for (const v of recipe.values) {
+              const written = writeTag(next, v.target, v.value);
+              if (!written.error) next = written.space;
+            }
+            break;
+          }
+
           case "goToScreen": {
             const target = doc.screens.find((s) => s.slug === a.slug);
             if (target) setScreenId(target.id);
@@ -830,7 +862,7 @@ export default function HmiEditor({
       spaceRef.current = next;
       setSpace(next);
     },
-    [running, doc.screens],
+    [running, doc.screens, doc.recipes],
   );
 
   /* ── save ── */
@@ -903,6 +935,32 @@ export default function HmiEditor({
 
   const sel = screen?.widgets.find((w) => w.id === selected) ?? null;
 
+  /*
+   * The screen's widgets with faceplate instances expanded.
+   *
+   * Computed once per render rather than inside the map, because expansion
+   * walks every widget of every definition and doing it per instance per
+   * frame during a run is the sort of thing that makes a screen feel slow for
+   * no reason anybody can see.
+   *
+   * The runtime iterates this too, so an alarm or an animation bound to a tag
+   * inside a faceplate behaves exactly like one bound anywhere else.
+   */
+  const { widgets: expandedParts, expandedIds } = useMemo(() => {
+    const src = screen?.widgets ?? [];
+    const ids = new Set<string>();
+    const out: Widget[] = [];
+    for (const w of src) {
+      if (w.kind !== "faceplate") continue;
+      const { widgets } = expandInstance(w, doc.faceplates ?? []);
+      if (widgets.length && widgets[0] !== w) {
+        ids.add(w.id);
+        out.push(...widgets);
+      }
+    }
+    return { widgets: out.sort((a, b) => (a.z ?? 0) - (b.z ?? 0)), expandedIds: ids };
+  }, [screen?.widgets, doc.faceplates]);
+
   const outstanding = useMemo(
     () =>
       sortForSummary(
@@ -939,6 +997,39 @@ export default function HmiEditor({
    */
   const liveData = (w: Widget): LiveData | undefined => {
     void trendTick;
+
+    if (w.kind === "clock") {
+      // Passed in rather than read inside the widget. A component calling
+      // Date() during render disagrees with the server on the first paint,
+      // which React reports as a hydration mismatch and then discards the
+      // tree. The scan loop already ticks, so it has the time to hand.
+      return { now: running ? clockNow : undefined };
+    }
+
+    if (w.kind === "xyChart") {
+      /*
+       * Two pens of one trend, plotted against each other.
+       *
+       * Reusing a trend rather than inventing a second sampler: the buffer,
+       * its interval and its span are already configured and already running,
+       * and a chart with its own sampling would drift from the trend beside it
+       * showing the same tags.
+       */
+      const id = (w.config?.trendId as string) ?? doc.trends[0]?.id;
+      const def = doc.trends.find((t) => t.id === id) ?? doc.trends[0];
+      if (!def) return undefined;
+      const xi = Number(w.config?.xPen ?? 0);
+      const yi = Number(w.config?.yPen ?? 1);
+      const samples = trendsRef.current.get(def.id)?.toArray() ?? [];
+      const xy = samples
+        .map((sm) => ({ x: sm.v[xi], y: sm.v[yi] }))
+        .filter(
+          (pt): pt is { x: number; y: number } =>
+            pt.x !== null && pt.y !== null && pt.x !== undefined && pt.y !== undefined,
+        );
+      return { xy };
+    }
+
     if (w.kind === "trend") {
       const id = (w.config?.trendId as string) ?? doc.trends[0]?.id;
       const def = doc.trends.find((t) => t.id === id) ?? doc.trends[0];
@@ -1335,6 +1426,29 @@ export default function HmiEditor({
                 }}
               >
                 {!running && <GridOverlay w={screen.size.width} h={screen.size.height} />}
+
+                {/*
+                  Faceplate instances are drawn expanded and moved as one.
+                  The parts come out locked, so the drag handle below still
+                  belongs to the instance and dragging it moves the whole
+                  thing, which is the behaviour anybody who has used a
+                  template in another package expects.
+                */}
+                {expandedParts.map((w) => (
+                  <div key={w.id} style={{ pointerEvents: running ? undefined : "none" }}>
+                    <WidgetView
+                      widget={w}
+                      ctx={ctx}
+                      live={running}
+                      role={doc.role ?? "engineer"}
+                      defaultStyle={doc.symbolStyle ?? "schematic"}
+                      data={liveData(w)}
+                      onPress={() => fire(w.onPress)}
+                      onRelease={() => fire(w.onRelease)}
+                    />
+                  </div>
+                ))}
+
                 {[...screen.widgets]
                   .sort((a, b) => (a.z ?? 0) - (b.z ?? 0))
                   .map((w) => (
@@ -1366,15 +1480,20 @@ export default function HmiEditor({
                         />
                       )}
                       <div>
-                        <WidgetView
-                          widget={w}
-                          ctx={ctx}
-                          live={running}
-                          defaultStyle={doc.symbolStyle ?? "schematic"}
-                          data={liveData(w)}
-                          onPress={() => fire(w.onPress)}
-                          onRelease={() => fire(w.onRelease)}
-                        />
+                        {/* An expanded instance is already drawn above; what is
+                            left here is its selection box and handles. */}
+                        {!(w.kind === "faceplate" && expandedIds.has(w.id)) && (
+                          <WidgetView
+                            widget={w}
+                            ctx={ctx}
+                            live={running}
+                            role={doc.role ?? "engineer"}
+                            defaultStyle={doc.symbolStyle ?? "schematic"}
+                            data={liveData(w)}
+                            onPress={() => fire(w.onPress)}
+                            onRelease={() => fire(w.onRelease)}
+                          />
+                        )}
                       </div>
                       {!running && selected === w.id && (
                         <>
@@ -1673,15 +1792,29 @@ const BASIC: { kind: WidgetKind; label: string }[] = [
   { kind: "rect", label: "Rectangle" },
   { kind: "ellipse", label: "Ellipse" },
   { kind: "line", label: "Line" },
+  { kind: "pipe", label: "Pipe" },
   { kind: "text", label: "Text" },
   { kind: "numeric", label: "Numeric" },
   { kind: "lamp", label: "Lamp" },
   { kind: "bar", label: "Bar" },
+  { kind: "tank", label: "Tank level" },
+  { kind: "thermometer", label: "Thermometer" },
   { kind: "gauge", label: "Gauge" },
+  { kind: "statusStack", label: "Tower light" },
   { kind: "multistate", label: "Multi-state" },
+  { kind: "steps", label: "Step sequence" },
   { kind: "button", label: "Button" },
   { kind: "toggle", label: "Toggle" },
+  { kind: "checkbox", label: "Checkbox" },
+  { kind: "radioGroup", label: "Radio group" },
+  { kind: "numericEntry", label: "Numeric entry" },
+  { kind: "textEntry", label: "Text entry" },
+  { kind: "slider", label: "Slider" },
   { kind: "trend", label: "Trend" },
+  { kind: "xyChart", label: "XY chart" },
+  { kind: "table", label: "Value table" },
+  { kind: "clock", label: "Clock" },
+  { kind: "faceplate", label: "Faceplate" },
   { kind: "alarmSummary", label: "Alarm list" },
   { kind: "alarmBanner", label: "Alarm banner" },
   { kind: "alarmBadge", label: "Alarm count" },

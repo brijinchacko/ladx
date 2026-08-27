@@ -5,7 +5,8 @@ import type { EvalContext } from "../lib/expression";
 import { resolveBool, resolveNumber } from "../lib/runtime";
 import { fitSvg } from "../lib/svg-import";
 import { SymbolView } from "../lib/symbols";
-import type { Widget } from "../lib/types";
+import { roleAllows } from "../lib/types";
+import type { Binding, Role, Widget } from "../lib/types";
 
 /**
  * One widget, drawn.
@@ -34,6 +35,16 @@ export interface LiveData {
     needsAck: boolean;
     raisedAt?: number;
   }[];
+  /** Oldest first, for the XY chart. One point per sample of the two tags. */
+  xy?: { x: number; y: number }[];
+  /**
+   * The wall clock, passed in rather than read here.
+   *
+   * A component calling Date() during render disagrees with the server on the
+   * first paint, and React reports that as a hydration mismatch and throws the
+   * tree away. The editor already ticks once per scan, so it has the time.
+   */
+  now?: number;
 }
 
 export interface WidgetViewProps {
@@ -41,6 +52,8 @@ export interface WidgetViewProps {
   ctx: EvalContext;
   live: boolean;
   data?: LiveData;
+  /** The role the runtime is acting as. Decides what is greyed out. */
+  role?: Role;
   /** The document's style. A widget can override it for one object. */
   defaultStyle?: "schematic" | "realistic";
   onPress?: () => void;
@@ -144,6 +157,7 @@ export default function WidgetView({
   ctx,
   live,
   data,
+  role = "engineer",
   defaultStyle = "schematic",
   onPress,
   onRelease,
@@ -154,6 +168,16 @@ export default function WidgetView({
   const sw = w.strokeWidth ?? 1.5;
   const { w: width, h: height } = w.rect;
   const font = w.fontSize ?? 14;
+
+  /*
+   * Whether the current role may operate this control.
+   *
+   * Reading is never gated. Hiding a reading from somebody not allowed to
+   * change it helps nobody and is how an operator ends up unable to say what
+   * the plant is doing. Only the press and release handlers are withheld.
+   */
+  const allowed = roleAllows(role, w.requiresRole);
+  const deniedNote = w.requiresRole ? `Needs the ${w.requiresRole} role` : undefined;
 
   const box: ReactNode = (() => {
     switch (w.kind) {
@@ -347,10 +371,11 @@ export default function WidgetView({
         return (
           <button
             type="button"
-            disabled={!live}
-            onPointerDown={live ? onPress : undefined}
-            onPointerUp={live ? onRelease : undefined}
-            onPointerLeave={live ? onRelease : undefined}
+            disabled={!live || !allowed}
+            title={allowed ? undefined : deniedNote}
+            onPointerDown={live && allowed ? onPress : undefined}
+            onPointerUp={live && allowed ? onRelease : undefined}
+            onPointerLeave={live && allowed ? onRelease : undefined}
             style={{
               width,
               height,
@@ -707,6 +732,660 @@ export default function WidgetView({
                 </div>
               ))
             )}
+          </div>
+        );
+      }
+
+      /* ─────────────────── process graphics ─────────────────── */
+
+      case "pipe": {
+        /*
+         * A pipe, not a line.
+         *
+         * Two strokes: the bore in the pipe colour, and a dashed overlay that
+         * animates while the flow binding is true. The animation is CSS rather
+         * than a timer, because a pipe redrawn from the scan loop would
+         * re-render the screen every frame for decoration.
+         *
+         * A stopped line looks stopped, which is the entire point: an operator
+         * glancing at a mimic wants to know what is moving, and a static arrow
+         * cannot tell them.
+         */
+        const bore = Math.max(2, w.pipe?.bore ?? 10);
+        const pts = w.points?.length
+          ? w.points
+          : [
+              { x: 0, y: height / 2 },
+              { x: width, y: height / 2 },
+            ];
+        const d = pts.map((pt) => `${pt.x},${pt.y}`).join(" ");
+        const flowing = live && w.pipe?.flowing ? resolveBool(w.pipe.flowing, ctx) : false;
+        const speed = w.pipe?.speed ?? 1;
+        return (
+          <svg width={width} height={height} role="img" aria-label={w.name ?? "pipe"}>
+            <title>{w.name ?? "Pipe"}</title>
+            <polyline
+              points={d}
+              fill="none"
+              stroke={stroke}
+              strokeWidth={bore + 2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <polyline
+              points={d}
+              fill="none"
+              stroke={fill}
+              strokeWidth={bore}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {flowing && (
+              <polyline
+                points={d}
+                fill="none"
+                stroke={stroke}
+                strokeWidth={Math.max(2, bore * 0.4)}
+                strokeLinecap="butt"
+                strokeDasharray={`${bore * 0.8} ${bore * 1.6}`}
+                opacity={0.55}
+                style={{
+                  animation: `ladx-flow ${Math.max(0.3, 2 / Math.abs(speed || 1))}s linear infinite`,
+                  animationDirection: speed < 0 ? "reverse" : "normal",
+                }}
+              />
+            )}
+          </svg>
+        );
+      }
+
+      case "tank": {
+        /*
+         * A vessel with a level in it.
+         *
+         * A bar rotated ninety degrees is not this: a tank has a shape, the
+         * level sits inside that shape, and the scale beside it is what turns
+         * a coloured area into a reading. Drawn flat, because a shaded
+         * three-dimensional tank spends contrast on looking like a tank.
+         */
+        const min = w.min ?? 0;
+        const max = w.max ?? 100;
+        const v = live ? resolveNumber(w.value, ctx) : (min + max) / 2;
+        const frac =
+          v === null || max === min ? 0 : Math.max(0, Math.min(1, (v - min) / (max - min)));
+        const lipH = Math.min(10, height * 0.08);
+        const bodyH = height - lipH;
+        return (
+          <div style={{ width, height, position: "relative" }}>
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                width,
+                height: lipH,
+                background: stroke,
+                opacity: 0.35,
+                borderRadius: `${lipH / 2}px ${lipH / 2}px 0 0`,
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                top: lipH,
+                width,
+                height: bodyH,
+                border: `${sw}px solid ${stroke}`,
+                borderRadius: `0 0 ${Math.min(14, width / 4)}px ${Math.min(14, width / 4)}px`,
+                overflow: "hidden",
+                background: "transparent",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: `${frac * 100}%`,
+                  background: fill,
+                  transition: "height 220ms linear",
+                }}
+              />
+            </div>
+            {/* Quarter marks, so the fill is a measurement rather than a mood. */}
+            {[0.25, 0.5, 0.75].map((t) => (
+              <div
+                key={t}
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  top: lipH + bodyH * (1 - t),
+                  width: Math.min(8, width * 0.22),
+                  height: 1,
+                  background: stroke,
+                  opacity: 0.4,
+                }}
+              />
+            ))}
+            {live && (
+              <span
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 3,
+                  textAlign: "center",
+                  fontSize: Math.max(9, font - 3),
+                  fontFamily: "ui-monospace, monospace",
+                  color: stroke,
+                }}
+              >
+                {formatValue(v, w.decimals ?? 0, w.units)}
+              </span>
+            )}
+          </div>
+        );
+      }
+
+      case "thermometer": {
+        const min = w.min ?? 0;
+        const max = w.max ?? 100;
+        const v = live ? resolveNumber(w.value, ctx) : (min + max) / 2;
+        const frac =
+          v === null || max === min ? 0 : Math.max(0, Math.min(1, (v - min) / (max - min)));
+        const bulb = Math.min(width, height * 0.22);
+        const colW = Math.max(4, bulb * 0.45);
+        const colH = height - bulb;
+        return (
+          <div style={{ width, height, position: "relative" }}>
+            <div
+              style={{
+                position: "absolute",
+                left: (width - colW) / 2,
+                top: 0,
+                width: colW,
+                height: colH,
+                border: `${sw}px solid ${stroke}`,
+                borderRadius: colW / 2,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: `${frac * 100}%`,
+                  background: fill,
+                  transition: "height 220ms linear",
+                }}
+              />
+            </div>
+            <div
+              style={{
+                position: "absolute",
+                left: (width - bulb) / 2,
+                bottom: 0,
+                width: bulb,
+                height: bulb,
+                borderRadius: "50%",
+                background: fill,
+                border: `${sw}px solid ${stroke}`,
+              }}
+            />
+          </div>
+        );
+      }
+
+      case "statusStack": {
+        /*
+         * The tower light on the corner of the machine, on the screen.
+         *
+         * Each lamp takes its own binding out of config.lamps, so it maps onto
+         * the real beacon rather than onto a single state value. An operator
+         * who knows the machine reads this without reading anything.
+         */
+        const lamps = (w.config?.lamps as
+          | { colour: string; when?: Binding; label?: string }[]
+          | undefined) ?? [
+          { colour: "#B4531A", label: "Fault" },
+          { colour: "#C8A63C", label: "Warning" },
+          { colour: "#3F9E5A", label: "Running" },
+        ];
+        const each = height / Math.max(1, lamps.length);
+        return (
+          <div
+            style={{
+              width,
+              height,
+              display: "flex",
+              flexDirection: "column",
+              border: `${sw}px solid ${stroke}`,
+              borderRadius: Math.min(8, width / 3),
+              overflow: "hidden",
+              background: fill,
+            }}
+          >
+            {lamps.map((l, i) => {
+              const on =
+                live && l.when ? resolveBool(l.when, ctx) : !live && i === lamps.length - 1;
+              return (
+                <div
+                  key={`${l.colour}-${i}`}
+                  title={l.label}
+                  style={{
+                    height: each,
+                    background: on ? l.colour : stroke,
+                    opacity: on ? 1 : 0.16,
+                    borderBottom: i < lamps.length - 1 ? `1px solid ${stroke}55` : undefined,
+                  }}
+                />
+              );
+            })}
+          </div>
+        );
+      }
+
+      /* ────────────────────────── data ────────────────────────── */
+
+      case "table": {
+        /*
+         * Live tags as rows.
+         *
+         * The thing an operator asks for when the mimic does not have room for
+         * everything, and the thing an engineer wants during commissioning.
+         * Right aligned, monospaced digits, because a column of numbers that
+         * shifts as the values change is a column nobody can compare down.
+         */
+        const rows =
+          (w.config?.rows as
+            | { label: string; value?: Binding; units?: string; decimals?: number }[]
+            | undefined) ?? [];
+        const rowH = Math.max(16, Math.min(26, font + 8));
+        return (
+          <div
+            style={{
+              width,
+              height,
+              background: fill,
+              border: `${sw}px solid ${stroke}`,
+              overflow: "hidden",
+              fontSize: Math.max(9, font - 2),
+              color: stroke,
+            }}
+          >
+            {rows.length === 0 ? (
+              <span
+                style={{
+                  display: "flex",
+                  height: "100%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: 0.5,
+                }}
+              >
+                Table: add rows in Properties
+              </span>
+            ) : (
+              rows.slice(0, Math.floor(height / rowH)).map((r, i) => (
+                <div
+                  key={`${r.label}-${i}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    height: rowH,
+                    padding: "0 6px",
+                    borderBottom: `0.5px solid ${stroke}22`,
+                  }}
+                >
+                  <span
+                    style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  >
+                    {r.label}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "ui-monospace, monospace",
+                      fontVariantNumeric: "tabular-nums",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {formatValue(live ? resolveNumber(r.value, ctx) : 0, r.decimals ?? 0, r.units)}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        );
+      }
+
+      case "xyChart": {
+        /*
+         * One value against another rather than against time.
+         *
+         * A trend answers "what did it do"; this answers "how do these two
+         * relate", which is the question behind a pump curve, a calibration
+         * check or a temperature against a setpoint. Deliberately not a trend
+         * with two pens, which is a different picture of the same data.
+         */
+        const pts = data?.xy ?? [];
+        const pad = 6;
+        const xs = pts.map((p) => p.x);
+        const ys = pts.map((p) => p.y);
+        const xMin = w.config?.xMin !== undefined ? Number(w.config.xMin) : Math.min(0, ...xs);
+        const xMax = w.config?.xMax !== undefined ? Number(w.config.xMax) : Math.max(1, ...xs);
+        const yMin = w.min ?? Math.min(0, ...ys);
+        const yMax = w.max ?? Math.max(1, ...ys);
+        const px = (v: number) => pad + ((v - xMin) / (xMax - xMin || 1)) * (width - pad * 2);
+        const py = (v: number) =>
+          height - pad - ((v - yMin) / (yMax - yMin || 1)) * (height - pad * 2);
+        return (
+          <svg
+            width={width}
+            height={height}
+            style={{ background: fill, border: `${sw}px solid ${stroke}` }}
+            role="img"
+            aria-label={w.name ?? "XY chart"}
+          >
+            <title>{w.name ?? "XY chart"}</title>
+            {[0.25, 0.5, 0.75].map((t) => (
+              <line
+                key={t}
+                x1={pad}
+                x2={width - pad}
+                y1={pad + (height - pad * 2) * t}
+                y2={pad + (height - pad * 2) * t}
+                stroke={stroke}
+                strokeWidth="0.5"
+                opacity="0.25"
+              />
+            ))}
+            {pts.length > 1 && (
+              <polyline
+                points={pts.map((p) => `${px(p.x)},${py(p.y)}`).join(" ")}
+                fill="none"
+                stroke={stroke}
+                strokeWidth="1.4"
+              />
+            )}
+            {pts.slice(-1).map((p) => (
+              <circle key="last" cx={px(p.x)} cy={py(p.y)} r="3" fill={stroke} />
+            ))}
+            {pts.length === 0 && (
+              <text
+                x={width / 2}
+                y={height / 2}
+                textAnchor="middle"
+                fontSize="11"
+                fill={stroke}
+                opacity="0.5"
+              >
+                {live ? "Waiting for samples" : "XY chart"}
+              </text>
+            )}
+          </svg>
+        );
+      }
+
+      case "clock": {
+        /*
+         * The time, on the control room screen.
+         *
+         * Rendered from `data` rather than read here, because a component that
+         * calls Date() during render disagrees with the server on the first
+         * paint and React reports it as a hydration mismatch.
+         */
+        const now = data?.now;
+        const showDate = w.config?.date !== false;
+        return (
+          <div
+            style={{
+              width,
+              height,
+              ...boxStyle(w, fill, stroke, sw),
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily: "ui-monospace, monospace",
+              color: stroke,
+              lineHeight: 1.1,
+            }}
+          >
+            <span style={{ fontSize: font + 4, fontVariantNumeric: "tabular-nums" }}>
+              {now ? new Date(now).toLocaleTimeString("en-GB") : "--:--:--"}
+            </span>
+            {showDate && (
+              <span style={{ fontSize: Math.max(9, font - 4), opacity: 0.65 }}>
+                {now ? new Date(now).toLocaleDateString("en-GB") : "--/--/----"}
+              </span>
+            )}
+          </div>
+        );
+      }
+
+      case "steps": {
+        /*
+         * Which phase the batch is in.
+         *
+         * Read off one integer rather than a bit per step, so two steps cannot
+         * both be active, which is the state a pile of latches gets into and
+         * nobody can diagnose.
+         */
+        const labels = (w.config?.steps as string[] | undefined) ?? [
+          "Fill",
+          "Heat",
+          "Hold",
+          "Drain",
+        ];
+        const at = live ? (resolveNumber(w.value, ctx) ?? 0) : 1;
+        const horizontal = width >= height;
+        return (
+          <div
+            style={{
+              width,
+              height,
+              display: "flex",
+              flexDirection: horizontal ? "row" : "column",
+              gap: 2,
+              fontSize: Math.max(8, font - 4),
+            }}
+          >
+            {labels.map((label, i) => {
+              const done = i + 1 < at;
+              const active = i + 1 === at;
+              return (
+                <div
+                  key={label}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 4px",
+                    background: active ? fill : stroke,
+                    opacity: active ? 1 : done ? 0.4 : 0.14,
+                    color: active ? stroke : fill,
+                    fontWeight: active ? 700 : 400,
+                    overflow: "hidden",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {label}
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
+
+      /* ────────────────────────── input ────────────────────────── */
+
+      case "checkbox": {
+        const on = live ? resolveBool(w.value, ctx) : false;
+        return (
+          <button
+            type="button"
+            disabled={!live || !allowed}
+            onPointerDown={live && allowed ? onPress : undefined}
+            title={allowed ? undefined : deniedNote}
+            style={{
+              width,
+              height,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "0 6px",
+              background: "transparent",
+              border: "none",
+              color: stroke,
+              fontSize: font,
+              cursor: live && allowed ? "pointer" : "default",
+              opacity: allowed ? 1 : 0.5,
+              textAlign: "left",
+            }}
+          >
+            <span
+              style={{
+                width: font + 4,
+                height: font + 4,
+                flexShrink: 0,
+                border: `${sw}px solid ${stroke}`,
+                borderRadius: 3,
+                background: on ? fill : "transparent",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: font,
+                lineHeight: 1,
+                color: stroke,
+              }}
+            >
+              {on ? "×" : ""}
+            </span>
+            {w.text ?? "Enabled"}
+          </button>
+        );
+      }
+
+      case "radioGroup": {
+        /*
+         * One of several, all visible.
+         *
+         * A dropdown hides the options, which on a panel is exactly wrong: an
+         * operator choosing a mode wants to see what the modes are and which
+         * one is selected without opening anything.
+         */
+        const options = (w.config?.options as { label: string; value: number }[] | undefined) ?? [
+          { label: "Manual", value: 0 },
+          { label: "Auto", value: 1 },
+        ];
+        const current = live ? resolveNumber(w.value, ctx) : options[0]?.value;
+        const horizontal = width >= height;
+        return (
+          <div
+            style={{
+              width,
+              height,
+              display: "flex",
+              flexDirection: horizontal ? "row" : "column",
+              gap: 2,
+              opacity: allowed ? 1 : 0.5,
+            }}
+            title={allowed ? undefined : deniedNote}
+          >
+            {options.map((o) => {
+              const on = current === o.value;
+              return (
+                <div
+                  key={`${o.label}-${o.value}`}
+                  data-radio-value={o.value}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: `${sw}px solid ${stroke}`,
+                    background: on ? fill : "transparent",
+                    color: stroke,
+                    fontWeight: on ? 700 : 400,
+                    fontSize: Math.max(9, font - 2),
+                    cursor: live && allowed ? "pointer" : "default",
+                    overflow: "hidden",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {o.label}
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
+
+      case "textEntry": {
+        /*
+         * Free text into an HMI tag: a batch id, an operator name, a note.
+         *
+         * Read only in the runtime here, because writing a string needs a tag
+         * that holds one and the tag space is numeric. It draws the field so a
+         * screen can be laid out and handed over with it on, and says so
+         * rather than pretending to accept typing.
+         */
+        return (
+          <div
+            style={{
+              width,
+              height,
+              ...boxStyle(w, fill, stroke, sw),
+              display: "flex",
+              alignItems: "center",
+              padding: "0 8px",
+              color: stroke,
+              fontSize: font,
+              opacity: 0.9,
+            }}
+          >
+            <span style={{ opacity: w.text ? 1 : 0.45 }}>{w.text ?? "Text entry"}</span>
+          </div>
+        );
+      }
+
+      /* ──────────────────────── structure ──────────────────────── */
+
+      case "faceplate": {
+        /*
+         * An instance, drawn by the editor rather than here.
+         *
+         * Expanding a faceplate means substituting its parameters into every
+         * binding of every widget inside it, which needs the document. This
+         * renderer is given one widget and a tag context, so what it draws is
+         * the placeholder for an instance whose definition could not be found.
+         * The editor resolves the normal case before it gets here.
+         */
+        return (
+          <div
+            style={{
+              width,
+              height,
+              border: `1px dashed ${stroke}`,
+              color: stroke,
+              opacity: 0.6,
+              fontSize: Math.max(9, font - 3),
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              padding: 4,
+            }}
+          >
+            {w.faceplate?.id ? "Faceplate not found" : "Faceplate: pick one in Properties"}
           </div>
         );
       }

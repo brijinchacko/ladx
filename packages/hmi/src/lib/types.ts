@@ -102,6 +102,48 @@ export type WidgetKind =
   | "alarmBadge"
   /** A scrolling one-line ticker, for a wall display. */
   | "alarmMarquee"
+  // process graphics
+  /**
+   * A pipe run, with flow that animates when a tag says the product is moving.
+   *
+   * Distinct from a line, which is a line. A pipe has bore, it joins other
+   * pipes at its ends, and the single most useful thing a mimic can show is
+   * which way the product is going. Every serious HMI package has a dedicated
+   * pipe tool for exactly this reason.
+   */
+  | "pipe"
+  /** A vessel drawn as a level, with the fill following the tag. */
+  | "tank"
+  /** A bulb and column, for anything measured in degrees. */
+  | "thermometer"
+  /** Stacked lamps, the tower light on the corner of the machine. */
+  | "statusStack"
+  // data
+  /** One value against another, for a correlation rather than a history. */
+  | "xyChart"
+  /** Live tags as rows, which is what an operator asks for when a mimic is not enough. */
+  | "table"
+  /** The time, because a control room screen is also a clock. */
+  | "clock"
+  /** A step or batch phase indicator: which of these are done, which is running. */
+  | "steps"
+  // input
+  /** Free text into an HMI tag: a batch id, an operator name, a note. */
+  | "textEntry"
+  /** One of several, as radio buttons rather than a dropdown. */
+  | "radioGroup"
+  /** A single bit, as a checkbox. */
+  | "checkbox"
+  // structure
+  /**
+   * An instance of a faceplate.
+   *
+   * The thing that separates an HMI builder from a drawing program. Define a
+   * valve once, place forty, change the definition and all forty change. The
+   * instance carries only its parameters, so a screen with forty valves on it
+   * holds forty short parameter lists rather than forty copies of the graphics.
+   */
+  | "faceplate"
   // library
   | "symbol";
 
@@ -217,6 +259,134 @@ export interface Widget {
   onRelease?: Action[];
   /** Trend pens, alarm filters, selector options. */
   config?: Record<string, unknown>;
+
+  /* ── the new kinds ── */
+  /**
+   * Which faceplate this instances, and what its parameters are set to.
+   *
+   * Only meaningful for kind "faceplate". The arguments are a flat map because
+   * they are substituted into strings; anything richer would need a type
+   * system inside the faceplate, which is a language, which is not what this
+   * is for.
+   */
+  faceplate?: { id: string; args: Record<string, string> };
+  /**
+   * The minimum role that may operate this control.
+   *
+   * Absent means anyone. Applies to the press and release handlers only: a
+   * value is still readable, because hiding a reading from an operator who is
+   * not allowed to change it helps nobody.
+   */
+  requiresRole?: Role;
+  /** Pipe bore in pixels, and which way the product moves through it. */
+  pipe?: {
+    bore?: number;
+    /** Animated only while this is true, so a stopped line is visibly stopped. */
+    flowing?: Binding;
+    /** Negative reverses the direction the dashes travel. */
+    speed?: number;
+  };
+}
+
+/* ───────────────────────────── faceplates ────────────────────────────── */
+
+/**
+ * A reusable piece of a screen, with holes in it.
+ *
+ * Every real HMI has this and calls it something different: a faceplate, a
+ * template, a user defined object, a symbol with properties. The idea is the
+ * same everywhere. A valve is drawn once, with the tag names left as
+ * parameters, and then placed forty times with forty different tags.
+ *
+ * Without it, a screen with forty valves on it is forty copies of the same
+ * graphics, and improving the valve means editing forty things and missing
+ * one. It is the same argument as an add-on instruction in ladder, for the
+ * same reason, and it is the single largest difference between a builder and
+ * a drawing program.
+ *
+ * Parameters are substituted by name. A widget inside the definition binding
+ * to `{{Tag}}.Open_FB` resolves against the instance's `Tag` parameter, so the
+ * definition never names a real tag and cannot be accidentally wired to one.
+ */
+export interface FaceplateParam {
+  name: string;
+  /**
+   * What it stands for.
+   *
+   * `tag` substitutes into a binding, which is the common case. `text` and
+   * `number` substitute into captions, limits and ranges.
+   */
+  kind: "tag" | "text" | "number";
+  /** Shown in the properties panel, so somebody placing one knows what to type. */
+  label?: string;
+  default?: string;
+}
+
+export interface Faceplate {
+  id: string;
+  name: string;
+  /** The drawing, at its natural size. Instances scale to their own rect. */
+  size: ScreenSize;
+  params: FaceplateParam[];
+  /** The same widgets a screen holds, with `{{param}}` in their bindings. */
+  widgets: Widget[];
+  /** What it is for, shown where it is picked from. */
+  note?: string;
+}
+
+/* ─────────────────────────────── recipes ─────────────────────────────── */
+
+/**
+ * A named set of values, written to tags on demand.
+ *
+ * A plant that makes more than one product needs this, and a plant that does
+ * not have it has it anyway, written on a laminated card beside the panel and
+ * typed in by hand every changeover. That is the failure this replaces: the
+ * card is the recipe management system, and it has no version, no record of
+ * who changed it and no way to tell whether the values in the controller match
+ * it.
+ *
+ * Deliberately values against tags rather than a batch engine. ISA-88
+ * procedural control is a different and much larger thing; this is the part
+ * every machine needs, which is loading a parameter set and recording that it
+ * was loaded.
+ */
+export interface RecipeValue {
+  target: TagRef;
+  value: number;
+}
+
+export interface Recipe {
+  id: string;
+  name: string;
+  /** Free text: the product code, the customer, whatever identifies it. */
+  note?: string;
+  values: RecipeValue[];
+  updated?: string;
+}
+
+/* ─────────────────────────────── security ────────────────────────────── */
+
+/**
+ * Who may do what.
+ *
+ * Four levels rather than arbitrary groups, because an HMI's security exists
+ * to stop the wrong action rather than to model an organisation, and a scheme
+ * an operator cannot explain is one that gets shared as a single login.
+ *
+ * This is not authentication. Nothing here checks a password against anything;
+ * it records which role a control requires so the design can be reviewed and
+ * handed over, and so the runtime can grey out what the current role may not
+ * touch. Real authentication belongs to whatever the panel runs on.
+ */
+export type Role = "view" | "operate" | "supervise" | "engineer";
+
+export const ROLE_ORDER: Role[] = ["view", "operate", "supervise", "engineer"];
+
+/** Whether `held` is at least `needed`. */
+export function roleAllows(held: Role, needed: Role | undefined): boolean {
+  if (!needed) return true;
+  return ROLE_ORDER.indexOf(held) >= ROLE_ORDER.indexOf(needed);
 }
 
 /* ─────────────────────────────── actions ─────────────────────────────── */
@@ -236,6 +406,13 @@ export type Action =
   | { kind: "ackAll" }
   | { kind: "shelveAlarm"; alarm: string; minutes: number }
   | { kind: "goToScreen"; slug: string }
+  /**
+   * Write every value in a recipe to its tag, in one go.
+   *
+   * One action rather than a setTag per value, because a half loaded recipe is
+   * a machine running on a mixture of two products and nothing saying so.
+   */
+  | { kind: "loadRecipe"; recipe: string }
   | { kind: "runScript"; script: string };
 
 export interface TagRef {
@@ -374,6 +551,18 @@ export interface HmiDoc {
    */
   popupPriorities?: AlarmPriority[];
   trends: TrendDef[];
+  /** Reusable pieces of screen. Empty on a document from before they existed. */
+  faceplates?: Faceplate[];
+  /** Named parameter sets. */
+  recipes?: Recipe[];
+  /**
+   * The role the runtime is currently acting as.
+   *
+   * Held on the document because it is a design-time and demonstration
+   * setting: it decides what is greyed out while somebody is building and
+   * showing the screen. It is not a credential and nothing authenticates it.
+   */
+  role?: Role;
   connection: Connection;
 }
 
@@ -400,6 +589,9 @@ export function emptyDoc(
     alarms: [],
     popupPriorities: ["critical"],
     trends: [],
+    faceplates: [],
+    recipes: [],
+    role: "engineer",
     connection: { protocol: "simulated", pollMs: 250, timeoutMs: 3000 },
   };
 }

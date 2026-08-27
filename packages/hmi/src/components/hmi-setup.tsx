@@ -4,15 +4,19 @@ import type { Tag } from "@ladx/studio";
 import { Layers, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { type BulkOptions, DEFAULT_BULK, buildBulkAlarms } from "../lib/alarm-bulk";
+import { paramsUsed } from "../lib/faceplates";
 import { PANEL_PRESETS, sanitiseSize } from "../lib/panels";
 import { getSymbol } from "../lib/symbols";
+import { ROLE_ORDER } from "../lib/types";
 import type {
   AlarmCondition,
   AlarmDef,
   AlarmPriority,
   Connection,
+  Faceplate,
   HmiDoc,
   Protocol,
+  Recipe,
   Screen,
   TrendDef,
 } from "../lib/types";
@@ -27,7 +31,15 @@ import type {
  * how alarm configuration ends up done badly.
  */
 
-type Tab = "screen" | "tags" | "alarms" | "trends" | "connection";
+type Tab =
+  | "screen"
+  | "tags"
+  | "alarms"
+  | "trends"
+  | "recipes"
+  | "faceplates"
+  | "security"
+  | "connection";
 
 const CONDITIONS: { id: AlarmCondition; label: string; needsSetpoint: boolean; hint: string }[] = [
   { id: "digital", label: "Digital", needsSetpoint: false, hint: "Trips on a bit." },
@@ -114,7 +126,18 @@ export default function HmiSetup({
         <header className="flex shrink-0 items-center gap-3 border-b border-ink-100 px-4 py-3">
           <h2 className="font-display text-[15px] font-bold text-ink-900">Setup</h2>
           <nav className="ml-2 flex gap-0.5">
-            {(["screen", "tags", "alarms", "trends", "connection"] as Tab[]).map((t) => (
+            {(
+              [
+                "screen",
+                "tags",
+                "alarms",
+                "trends",
+                "recipes",
+                "faceplates",
+                "security",
+                "connection",
+              ] as Tab[]
+            ).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -143,6 +166,11 @@ export default function HmiSetup({
           {tab === "tags" && <TagsTab doc={doc} onChange={onChange} />}
           {tab === "alarms" && <AlarmsTab doc={doc} plcTags={plcTags} onChange={onChange} />}
           {tab === "trends" && <TrendsTab doc={doc} plcTags={plcTags} onChange={onChange} />}
+          {tab === "recipes" && <RecipesTab doc={doc} plcTags={plcTags} onChange={onChange} />}
+          {tab === "faceplates" && (
+            <FaceplatesTab doc={doc} screenId={screenId} onChange={onChange} />
+          )}
+          {tab === "security" && <SecurityTab doc={doc} onChange={onChange} />}
           {tab === "connection" && <ConnectionTab conn={doc.connection} onChange={onChange} />}
         </div>
       </div>
@@ -1219,6 +1247,466 @@ function BulkAlarms({
           {preview.skipped.length > 3 && ` and ${preview.skipped.length - 3} more`}.
         </p>
       )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────── recipes ─────────────────────────────── */
+
+/**
+ * Named parameter sets, and loading one.
+ *
+ * The failure this replaces is a laminated card beside the panel with the
+ * settings for each product written on it, typed in by hand every changeover.
+ * The card is the recipe system, and it has no version, no record of who
+ * changed it, and no way to tell whether what is in the controller matches it.
+ *
+ * Capturing from the live tags rather than only typing values is what makes it
+ * get used: the settings that work are the ones currently in the machine after
+ * somebody spent a shift getting them right, and asking them to transcribe
+ * those into a form is asking them not to bother.
+ */
+function RecipesTab({
+  doc,
+  plcTags,
+  onChange,
+}: {
+  doc: HmiDoc;
+  plcTags: Tag[];
+  onChange: (fn: (d: HmiDoc) => HmiDoc) => void;
+}) {
+  const recipes = doc.recipes ?? [];
+  const [openId, setOpenId] = useState<string | null>(recipes[0]?.id ?? null);
+  const open = recipes.find((r) => r.id === openId) ?? null;
+
+  /*
+   * The id is minted before the update, not inside it.
+   *
+   * `onChange` runs inside a state updater, and React deliberately invokes
+   * those twice in development to surface impurity. Generating a random id in
+   * there produced two different ids, so the recipe stored in the document and
+   * the one selected afterwards were not the same recipe: the chip appeared
+   * and the panel below it said there were no recipes. Minting outside and
+   * closing over the value makes the updater pure and the two agree.
+   */
+  const addRecipe = () => {
+    const id = `rc${Math.random().toString(36).slice(2, 9)}`;
+    onChange((d) => {
+      d.recipes = [
+        ...(d.recipes ?? []),
+        { id, name: `Recipe ${(d.recipes?.length ?? 0) + 1}`, values: [] },
+      ];
+      return d;
+    });
+    setOpenId(id);
+  };
+
+  const patch = (id: string, fn: (r: Recipe) => void) =>
+    onChange((d) => {
+      const r = (d.recipes ?? []).find((x) => x.id === id);
+      if (r) fn(r);
+      return d;
+    });
+
+  /** Every numeric tag a recipe could sensibly set. */
+  const settable = plcTags.filter(
+    (t) => t.type === "INT" || t.type === "TIMER" || t.type === "COUNTER",
+  );
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="font-display text-[14px] font-bold text-ink-900">Recipes</h3>
+        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-500">
+          A named set of values written to tags on demand. This is the laminated card beside the
+          panel, with a version and a record of what it contains.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {recipes.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            onClick={() => setOpenId(r.id)}
+            className={`rounded-sm border px-2 py-1 text-[12.5px] transition-colors ${
+              r.id === openId
+                ? "border-ink-900 bg-ink-900 text-white"
+                : "border-ink-200 text-ink-700 hover:border-ink-400"
+            }`}
+          >
+            {r.name}
+            <span className="ml-1.5 font-mono text-[10px] opacity-60">{r.values.length}</span>
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={addRecipe}
+          className="rounded-sm border border-dashed border-ink-300 px-2 py-1 text-[12.5px] text-ink-500 hover:border-ink-500 hover:text-ink-900"
+        >
+          New recipe
+        </button>
+      </div>
+
+      {!open ? (
+        <p className="rounded-sm border border-dashed border-ink-200 p-4 text-[12.5px] text-ink-400">
+          No recipes yet. A machine that makes one product does not need any.
+        </p>
+      ) : (
+        <div className="space-y-3 rounded-sm border border-ink-200 p-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="flex flex-col gap-1">
+              <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
+                Name
+              </span>
+              <input
+                value={open.name}
+                onChange={(e) =>
+                  patch(open.id, (r) => {
+                    r.name = e.target.value;
+                  })
+                }
+                className="w-44 rounded-sm border border-ink-200 px-2 py-1 text-[12.5px] outline-none focus:border-ink-500"
+              />
+            </label>
+            <label className="flex flex-1 flex-col gap-1">
+              <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
+                Note
+              </span>
+              <input
+                value={open.note ?? ""}
+                placeholder="Product code, customer, whatever identifies it"
+                onChange={(e) =>
+                  patch(open.id, (r) => {
+                    r.note = e.target.value;
+                  })
+                }
+                className="w-full rounded-sm border border-ink-200 px-2 py-1 text-[12.5px] outline-none focus:border-ink-500 placeholder:text-ink-300"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                const remaining = recipes.filter((r) => r.id !== open.id);
+                onChange((d) => {
+                  d.recipes = (d.recipes ?? []).filter((r) => r.id !== open.id);
+                  return d;
+                });
+                setOpenId(remaining[0]?.id ?? null);
+              }}
+              className="rounded-sm border border-ink-200 px-2 py-1 text-[12px] text-[#B4531A] hover:border-[#B4531A]"
+            >
+              Delete
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={settable.length === 0}
+              onClick={() =>
+                patch(open.id, (r) => {
+                  // Captured from what is in the machine now. The values that
+                  // work are the ones somebody spent a shift arriving at, and
+                  // asking them to transcribe those is asking them not to.
+                  r.values = settable.map((t) => ({
+                    target: { source: "plc" as const, tag: t.name },
+                    value: t.type === "TIMER" || t.type === "COUNTER" ? (t.preset ?? 0) : t.value,
+                  }));
+                  r.updated = new Date().toISOString();
+                })
+              }
+              className="rounded-sm border border-ink-200 px-2.5 py-1 text-[12px] text-ink-700 hover:border-ink-400 disabled:opacity-40"
+            >
+              Capture from live tags
+            </button>
+            <span className="self-center text-[11.5px] text-ink-400">
+              {settable.length} numeric tags in the program
+              {open.updated ? ` · captured ${new Date(open.updated).toLocaleString("en-GB")}` : ""}
+            </span>
+          </div>
+
+          {open.values.length === 0 ? (
+            <p className="text-[12.5px] text-ink-400">
+              No values yet. Capture from the live tags, or add them one at a time below.
+            </p>
+          ) : (
+            <ul className="space-y-1">
+              {open.values.map((v, i) => (
+                <li key={`${v.target.tag}-${i}`} className="flex items-center gap-2">
+                  <span className="w-40 truncate font-mono text-[11.5px] text-ink-700">
+                    {v.target.tag}
+                  </span>
+                  <input
+                    type="number"
+                    value={v.value}
+                    onChange={(e) =>
+                      patch(open.id, (r) => {
+                        const row = r.values[i];
+                        if (row) row.value = Number(e.target.value);
+                      })
+                    }
+                    className="w-28 rounded-sm border border-ink-200 px-2 py-0.5 text-[12px] tabular-nums outline-none focus:border-ink-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      patch(open.id, (r) => {
+                        r.values = r.values.filter((_, j) => j !== i);
+                      })
+                    }
+                    className="text-[11.5px] text-ink-400 hover:text-[#B4531A]"
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <p className="border-t border-ink-100 pt-2 text-[11.5px] leading-relaxed text-ink-400">
+            To load one on the panel, put a button on a screen and give it a Load recipe action.
+            Loading writes every value in the set to its tag in one go.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───────────────────────────── faceplates ────────────────────────────── */
+
+/**
+ * Reusable pieces of screen.
+ *
+ * Created from what is on the current screen, because that is the gesture that
+ * matches how one actually comes about: somebody draws a valve, decides they
+ * need forty, and wants the one they just drew to become the template. Asking
+ * them to start from an empty definition and draw it again is why template
+ * systems go unused.
+ *
+ * Parameters are found by scanning for `{{Name}}` in the definition rather than
+ * declared separately, so the two cannot disagree.
+ */
+function FaceplatesTab({
+  doc,
+  screenId,
+  onChange,
+}: {
+  doc: HmiDoc;
+  screenId: string;
+  onChange: (fn: (d: HmiDoc) => HmiDoc) => void;
+}) {
+  const faceplates = doc.faceplates ?? [];
+  const screen = doc.screens.find((s) => s.id === screenId) ?? doc.screens[0];
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="font-display text-[14px] font-bold text-ink-900">Faceplates</h3>
+        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-500">
+          Draw a valve once and place it forty times. Write{" "}
+          <code className="font-mono">{"{{Tag}}"}</code> where a tag name goes in the definition,
+          and each instance supplies its own. Changing the definition changes every instance, which
+          is the whole point.
+        </p>
+      </div>
+
+      <div className="rounded-sm border border-ink-200 p-3">
+        <p className="text-[12.5px] text-ink-600">
+          Make one from the {screen?.widgets.length ?? 0} objects on{" "}
+          <strong className="font-semibold">{screen?.name ?? "this screen"}</strong>. Draw the thing
+          once with <code className="font-mono">{"{{Tag}}"}</code> in its bindings, then capture it.
+        </p>
+        <button
+          type="button"
+          disabled={!screen || screen.widgets.length === 0}
+          onClick={() => {
+            // Minted outside the updater, for the same reason as a recipe id.
+            const id = `fp${Math.random().toString(36).slice(2, 9)}`;
+            onChange((d) => {
+              const sc = d.screens.find((s) => s.id === screenId) ?? d.screens[0];
+              if (!sc || sc.widgets.length === 0) return d;
+              // Normalised to the top left of what was drawn, so the definition
+              // is the shape rather than the shape plus wherever it happened to
+              // sit on the screen it came from.
+              const minX = Math.min(...sc.widgets.map((w) => w.rect.x));
+              const minY = Math.min(...sc.widgets.map((w) => w.rect.y));
+              const maxX = Math.max(...sc.widgets.map((w) => w.rect.x + w.rect.w));
+              const maxY = Math.max(...sc.widgets.map((w) => w.rect.y + w.rect.h));
+              const widgets = sc.widgets
+                .filter((w) => w.kind !== "faceplate")
+                .map((w) => ({
+                  ...structuredClone(w),
+                  rect: { ...w.rect, x: w.rect.x - minX, y: w.rect.y - minY },
+                }));
+              const fp: Faceplate = {
+                id,
+                name: `Faceplate ${(d.faceplates?.length ?? 0) + 1}`,
+                size: { width: Math.max(1, maxX - minX), height: Math.max(1, maxY - minY) },
+                params: paramsUsed({
+                  id,
+                  name: "",
+                  size: { width: 1, height: 1 },
+                  params: [],
+                  widgets,
+                }).map((name) => ({ name, kind: "tag" as const })),
+                widgets,
+              };
+              d.faceplates = [...(d.faceplates ?? []), fp];
+              return d;
+            });
+          }}
+          className="mt-2.5 rounded-sm bg-ink-900 px-3 py-1.5 text-[12.5px] font-medium text-white disabled:opacity-40"
+        >
+          Capture this screen as a faceplate
+        </button>
+      </div>
+
+      {faceplates.length === 0 ? (
+        <p className="rounded-sm border border-dashed border-ink-200 p-4 text-[12.5px] text-ink-400">
+          None yet.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {faceplates.map((fp) => (
+            <li key={fp.id} className="rounded-sm border border-ink-200 p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  value={fp.name}
+                  onChange={(e) =>
+                    onChange((d) => {
+                      const f = (d.faceplates ?? []).find((x) => x.id === fp.id);
+                      if (f) f.name = e.target.value;
+                      return d;
+                    })
+                  }
+                  className="w-44 rounded-sm border border-ink-200 px-2 py-1 text-[12.5px] outline-none focus:border-ink-500"
+                />
+                <span className="font-mono text-[11px] text-ink-400">
+                  {fp.widgets.length} objects · {fp.size.width}×{fp.size.height}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange((d) => {
+                      d.faceplates = (d.faceplates ?? []).filter((x) => x.id !== fp.id);
+                      return d;
+                    })
+                  }
+                  className="ml-auto text-[11.5px] text-ink-400 hover:text-[#B4531A]"
+                >
+                  Delete
+                </button>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {fp.params.length === 0 ? (
+                  <span className="text-[11.5px] text-ink-400">
+                    No parameters. Put {"{{Tag}}"} in a binding and capture again.
+                  </span>
+                ) : (
+                  fp.params.map((prm) => (
+                    <span
+                      key={prm.name}
+                      className="rounded-sm border border-ink-200 bg-ink-50 px-1.5 py-0.5 font-mono text-[10.5px] text-ink-700"
+                    >
+                      {prm.name}
+                    </span>
+                  ))
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* ────────────────────────────── security ─────────────────────────────── */
+
+/**
+ * Which role the runtime is acting as.
+ *
+ * Not authentication, and the page says so. Nothing here checks a password
+ * against anything: it records which role a control needs so the design can be
+ * reviewed and handed over, and so a demonstration can show what an operator
+ * sees rather than what an engineer sees. Real authentication belongs to
+ * whatever the panel runs on.
+ */
+function SecurityTab({
+  doc,
+  onChange,
+}: { doc: HmiDoc; onChange: (fn: (d: HmiDoc) => HmiDoc) => void }) {
+  const current = doc.role ?? "engineer";
+  const gated = doc.screens.flatMap((s) => s.widgets.filter((w) => w.requiresRole));
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="font-display text-[14px] font-bold text-ink-900">Roles</h3>
+        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-500">
+          Four levels, because an HMI's security exists to stop the wrong action rather than to
+          model an organisation, and a scheme an operator cannot explain becomes a single shared
+          login.
+        </p>
+      </div>
+
+      <div>
+        <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
+          Acting as
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          {ROLE_ORDER.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() =>
+                onChange((d) => {
+                  d.role = r;
+                  return d;
+                })
+              }
+              className={`rounded-sm border px-2.5 py-1 text-[12.5px] capitalize transition-colors ${
+                r === current
+                  ? "border-ink-900 bg-ink-900 text-white"
+                  : "border-ink-200 text-ink-700 hover:border-ink-400"
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="rounded-sm border border-[#E4C9A8] bg-[#FDF6EC] p-3 text-[12px] leading-relaxed text-[#7A4A12]">
+        This is a design and demonstration setting, not a credential. Nothing here authenticates
+        anybody, and switching role needs no password. It exists so a screen can be built and
+        reviewed against what each role may touch, and so the requirement can be handed over.
+      </p>
+
+      <div>
+        <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
+          Controls with a role set
+        </span>
+        {gated.length === 0 ? (
+          <p className="text-[12.5px] text-ink-400">
+            None. Set one on a control in Properties, and anybody below that role sees it greyed.
+          </p>
+        ) : (
+          <ul className="space-y-1">
+            {gated.map((w) => (
+              <li key={w.id} className="flex items-center gap-2 text-[12.5px] text-ink-700">
+                <span className="font-mono text-[11px] text-ink-400">{w.kind}</span>
+                {w.name ?? w.text ?? w.id}
+                <span className="ml-auto rounded-sm border border-ink-200 px-1.5 py-0.5 font-mono text-[10.5px] capitalize text-ink-600">
+                  {w.requiresRole}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

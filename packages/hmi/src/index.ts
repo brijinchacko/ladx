@@ -21,6 +21,7 @@ export * from "./lib/expression";
 export * from "./lib/runtime";
 export * from "./lib/svg-import";
 export * from "./lib/generate";
+export * from "./lib/faceplates";
 
 /* the drawings */
 export * from "./lib/symbols";
