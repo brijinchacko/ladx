@@ -10,7 +10,6 @@ import CadToolbar, {
   type ToolId,
   toolSpec,
 } from "@/components/cad/cad-toolbar";
-import AiDock, { type AiTurn } from "@/components/studio/ai-dock";
 import {
   type CommandSpec,
   findCommand,
@@ -68,6 +67,7 @@ import {
   focusModeLabel,
   useFocusMode,
 } from "@ladx/studio";
+import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
 import { Download, FileText, Maximize2, Minimize2, Save, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -285,11 +285,6 @@ export default function CadEditor({
   const [hatchPattern, setHatchPattern] = useState<"solid" | "lines" | "cross">("lines");
   const [hatchSpacing, setHatchSpacing] = useState(4);
   const [cmdHistory, setCmdHistory] = useState<string[]>([]);
-
-  const [aiTurns, setAiTurns] = useState<AiTurn[]>([]);
-  const [aiBusy, setAiBusy] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [aiModel, setAiModel] = useState<string | null>(null);
 
   const commit = useCallback(
     (next: Drawing) => {
@@ -1547,83 +1542,124 @@ export default function CadEditor({
       .join(". ");
   }, [drawing]);
 
-  const generate = useCallback(
-    async (prompt: string) => {
-      setAiBusy(true);
-      setAiError(null);
-      setAiTurns((t) => [...t, { id: `u${Date.now()}`, role: "you", text: prompt }]);
-      try {
-        const res = await fetch("/api/cad/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt,
-            layers: drawing.layers.map((l) => l.name),
-            context: sheetSummary(),
-          }),
+  /**
+   * Drawing from a description.
+   *
+   * The steps are the real stages, reported as they happen: a symbol reference
+   * becomes the library's own geometry rather than the model's idea of what a
+   * contact looks like, anything out of range is dropped, and what lands is
+   * selected so undo takes exactly it back out.
+   */
+  const runAssist = useCallback(
+    async (prompt: string, { step, ask, model, signal }: AssistRunContext) => {
+      step.start("read", "Reading the sheet");
+      step.detail(
+        `${drawing.entities.length} entities on ${drawing.layers.length} layers, active layer ${layer}`,
+      );
+
+      /*
+       * Ask for the size rather than guessing it.
+       *
+       * A back plate, a rail or a gland row drawn at the wrong size looks
+       * finished and is wrong by a factor nobody notices until it is ordered.
+       * The question costs one click; the guess costs a panel.
+       */
+      let request = prompt;
+      const mentionsSize = /\b\d{2,}\s*(mm|cm|m)\b|\b\d{3,}\b|\bpitch\b|\bcentres?\b/i.test(prompt);
+      if (!mentionsSize && /\b(plate|rail|enclosure|panel|cabinet|gland)\b/i.test(prompt)) {
+        step.start("ask", "Checking the size before drawing it");
+        const answer = await ask({
+          text: "What size, in millimetres? A back plate or a rail drawn at the wrong size looks finished and is wrong by a factor nobody notices until it is ordered.",
+          options: ["600 by 400", "800 by 600", "1000 by 800", "Use a sensible default"],
         });
-        const body = (await res.json()) as {
-          entities?: { type: string; symbol?: string; at?: Point; layer?: string }[];
-          summary?: string;
-          model?: string;
-          dropped?: number;
-          error?: string;
-        };
-        if (!res.ok || !body.entities) {
-          setAiError(body.error ?? "Could not draw that.");
-          return;
-        }
-
-        // A symbol reference becomes the library's own geometry, so what lands
-        // is the same shape the picker inserts rather than the model's idea of
-        // what a contact looks like.
-        const built: Entity[] = [];
-        for (const raw of body.entities) {
-          if (raw.type === "symbol") {
-            const sym = getSymbol(raw.symbol ?? "");
-            if (sym && raw.at) built.push(...sym.build(raw.at));
-            continue;
-          }
-          built.push({ ...(raw as unknown as Entity), id: newId("ai") });
-        }
-
-        if (built.length === 0) {
-          setAiError("Nothing usable came back. Try describing it more concretely.");
-          return;
-        }
-
-        const missing = [...new Set(built.map((b) => b.layer))].filter(
-          (n) => !drawing.layers.some((l) => l.name === n),
-        );
-        commit({
-          ...drawing,
-          layers: [
-            ...drawing.layers,
-            ...missing.map((n) => ({ name: n, color: "0F1A24", visible: true, locked: false })),
-          ],
-          entities: [...drawing.entities, ...built],
-        });
-        setSelected(built.map((b) => b.id));
-        setAiModel(body.model ?? null);
-        setAiTurns((t) => [
-          ...t,
-          {
-            id: `a${Date.now()}`,
-            role: "ladx",
-            text: `${body.summary || "Drawn."} ${built.length} entities added${
-              body.dropped ? `, ${body.dropped} dropped as out of range` : ""
-            }. They are selected; undo takes them back out.`,
-            undoable: true,
-          },
-        ]);
-      } catch {
-        setAiError("Could not reach the model. Try again, or draw it by hand.");
-      } finally {
-        setAiBusy(false);
+        request = `${prompt}. Size: ${answer}.`;
+        step.start("asked", "Using that");
+        step.detail(answer);
       }
+
+      step.start("draw", model ? `Asking ${model}` : "Asking the model");
+      const res = await fetch("/api/cad/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: request,
+          layers: drawing.layers.map((l) => l.name),
+          context: sheetSummary(),
+          model,
+        }),
+        signal,
+      });
+      const body = (await res.json()) as {
+        entities?: { type: string; symbol?: string; at?: Point; layer?: string }[];
+        summary?: string;
+        model?: string;
+        dropped?: number;
+        error?: string;
+      };
+      if (!res.ok || !body.entities) {
+        step.fail(body.error ?? "The model did not return any geometry");
+        throw new Error(body.error ?? "Could not draw that.");
+      }
+      step.detail(body.model ? `${body.model} replied` : "Reply received");
+
+      step.start("build", "Building the geometry");
+      // A symbol reference becomes the library's own geometry, so what lands is
+      // the same shape the picker inserts rather than the model's idea of what
+      // a contact looks like.
+      const built: Entity[] = [];
+      let fromLibrary = 0;
+      for (const raw of body.entities) {
+        if (raw.type === "symbol") {
+          const sym = getSymbol(raw.symbol ?? "");
+          if (sym && raw.at) {
+            built.push(...sym.build(raw.at));
+            fromLibrary++;
+          }
+          continue;
+        }
+        built.push({ ...(raw as unknown as Entity), id: newId("ai") });
+      }
+      if (built.length === 0) {
+        step.fail("Nothing usable came back");
+        throw new Error("Nothing usable came back. Try describing it more concretely.");
+      }
+      step.detail(
+        `${built.length} entities, ${fromLibrary} from the symbol library${
+          body.dropped ? `, ${body.dropped} dropped as out of range` : ""
+        }`,
+      );
+
+      const missing = [...new Set(built.map((b) => b.layer))].filter(
+        (n) => !drawing.layers.some((l) => l.name === n),
+      );
+      if (missing.length) {
+        step.start("layers", "Adding the layers it used");
+        step.detail(missing.join(", "));
+      } else {
+        step.skip("layers", "No new layers needed");
+      }
+
+      step.start("place", "Placing it on the sheet");
+      commit({
+        ...drawing,
+        layers: [
+          ...drawing.layers,
+          ...missing.map((n) => ({ name: n, color: "0F1A24", visible: true, locked: false })),
+        ],
+        entities: [...drawing.entities, ...built],
+      });
+      setSelected(built.map((b) => b.id));
+      step.detail("Selected, so undo takes exactly this back out");
+
+      return {
+        text: `${body.summary || "Drawn."} ${built.length} entities added. They are selected; undo takes them back out.`,
+        undoable: true,
+      };
     },
-    [drawing, commit, sheetSummary],
+    [drawing, commit, sheetSummary, layer],
   );
+
+  const assist = useAssistant({ run: runAssist });
 
   /* ── filing this sheet against a project ── */
 
@@ -2277,7 +2313,8 @@ export default function CadEditor({
           belongs to a user, so the alternative is a prompt box that always
           answers "sign in", which is worse than no prompt box. */}
       {canGenerate && (
-        <AiDock
+        <Assistant
+          toolId="cad"
           title="Draw with LADX"
           placeholder="A DIN rail with twelve terminals at 6 mm pitch, labelled X1:1 to X1:12"
           suggestions={[
@@ -2285,12 +2322,20 @@ export default function CadEditor({
             "A start/stop circuit with a seal-in and a motor",
             "Eight cable glands along the bottom edge at 60 mm centres",
           ]}
-          turns={aiTurns}
-          busy={aiBusy}
-          error={aiError}
-          modelNote={aiModel}
-          onSend={(prompt) => void generate(prompt)}
-          onUndo={undo}
+          turns={assist.turns}
+          busy={assist.busy}
+          steps={assist.steps}
+          error={assist.error}
+          models={assist.models}
+          question={assist.question}
+          onSend={assist.send}
+          onAnswer={assist.answer}
+          onStop={assist.stop}
+          onUndo={() => {
+            undo();
+            assist.markUndone();
+          }}
+          footnote="LADX can make mistakes, and how good the result is depends heavily on the model. Check every dimension before the drawing is issued."
         />
       )}
     </div>

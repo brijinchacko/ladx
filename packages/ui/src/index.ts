@@ -29,3 +29,18 @@ export { Markdown } from "./components/chat/markdown";
 export { Thinking, StreamCaret } from "./components/chat/thinking";
 export { CodeBlock, type CodeBlockProps } from "./components/code/code-block";
 export { cn } from "./lib/cn";
+
+/* the assistant, shared by every tool */
+export { default as Assistant } from "./components/assistant/assistant";
+export type {
+  AssistantProps,
+  AssistantTurn,
+  AssistantModels,
+  AssistantModelOption,
+  AssistantQuestion,
+} from "./components/assistant/assistant";
+export { Steps, StepLog } from "./components/assistant/steps";
+export type { AssistStep, StepState } from "./components/assistant/steps";
+export { useAssistant } from "./lib/use-assistant";
+export type { AssistRunContext, AssistResult, UseAssistantOptions } from "./lib/use-assistant";
+export * from "./lib/assistant-frame";

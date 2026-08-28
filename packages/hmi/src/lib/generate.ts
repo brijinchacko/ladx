@@ -103,6 +103,17 @@ export interface GenContext {
 export interface GenerateRequest {
   prompt: string;
   ctx: GenContext;
+  /**
+   * Which model to ask, or undefined to let the host choose.
+   *
+   * Chosen in the assistant rather than in a settings page, because which model
+   * answered is the single biggest factor in whether a generated screen is any
+   * good, and burying the choice means somebody concludes the feature is bad
+   * when what they have is a bad model.
+   */
+  model?: string | null;
+  /** Aborts when the person presses Stop. */
+  signal?: AbortSignal;
 }
 
 export type GenerateScreen = (

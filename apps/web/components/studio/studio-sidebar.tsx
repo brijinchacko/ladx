@@ -42,7 +42,7 @@ const TOOLS = [
   { href: "/studio/ladder", label: "Ladder", icon: Grid2x2Check },
   { href: "/studio/monitor", label: "Monitor", icon: Activity },
   { href: "/studio/cad", label: "CAD", icon: PencilRuler },
-  { href: "/studio/hmi", label: "HMI", icon: MonitorCog },
+  { href: "/studio/hmi", label: "HMI/SCADA", icon: MonitorCog },
   { href: "/studio/convert", label: "Convert", icon: GitCompareArrows },
   { href: "/studio/documents", label: "Documents", icon: Library },
   { href: "/studio/knowledge", label: "Knowledge", icon: FileText },

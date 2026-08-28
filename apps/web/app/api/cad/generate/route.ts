@@ -18,6 +18,9 @@ export const maxDuration = 120;
 
 const schema = z.object({
   prompt: z.string().trim().min(3).max(4000),
+  // Chosen in the assistant, where the work happens. Optional: absent
+  // means the saved default, or whatever the free tier has healthy.
+  model: z.string().trim().max(200).nullish(),
   /** Layers on the sheet, so it draws onto ones that exist. */
   layers: z.array(z.string().max(64)).max(40).default([]),
   /** What is already there, summarised, so it can place work beside it. */
@@ -158,6 +161,7 @@ export async function POST(req: Request) {
       try {
         const result = await complete({
           userId: auth.user.id,
+          model: parsed.data.model,
           messages: [
             { role: "system", content: system },
             { role: "user", content: user },

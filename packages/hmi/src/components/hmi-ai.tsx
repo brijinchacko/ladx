@@ -13,182 +13,231 @@
  * Whatever comes back lands as one ordinary edit that Undo takes straight out
  * again. That is the property that makes this safe to try: nothing a model
  * writes is harder to remove than anything you drew by hand.
+ *
+ * The panel, the step list, the model picker and the clarifying questions are
+ * the shared assistant, so this behaves exactly like the one in CAD and in the
+ * ladder editor. What is specific to an HMI is only what happens between the
+ * prompt and the drawing, which is the `run` below.
  */
 
-import { Loader2, Sparkles, TriangleAlert, Wand2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
+import { Wand2 } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import type { GenContext, GenerateScreen, GeneratedScreen } from "../lib/generate";
 import { draftScreen } from "../lib/generate";
 
-interface Turn {
-  id: string;
-  role: "you" | "ladx";
-  text: string;
-  problems?: string[];
-}
-
 const SUGGESTIONS = [
   "An overview screen: the motor, its start and stop buttons, and a lamp for each output",
-  "A tank mimic with a level bar, a pump symbol that turns green when it runs, and a hi level alarm",
+  "A tank mimic with a level bar, a pump that turns green when it runs, and a hi level alarm",
   "Add a trend of the analogue values across the bottom",
-  "Add an alarm banner at the top and a button that acknowledges everything",
+  "An alarm banner at the top and a button that acknowledges everything",
 ];
+
+/**
+ * Whether a request is too vague to draw without guessing.
+ *
+ * The test is deliberately crude, because the cost of the two mistakes is not
+ * symmetric. Asking a question that was not needed costs one click. Guessing on
+ * "make me a screen" produces something that looks finished, is bound to
+ * whatever the model felt like, and gets found out later.
+ */
+function tooVagueToDraw(prompt: string): boolean {
+  const p = prompt.trim().toLowerCase();
+  if (p.length < 24) return true;
+  const vague = /^(make|build|draw|create|do|give me)\b.{0,28}$/.test(p);
+  return vague;
+}
 
 export default function HmiAi({
   context,
   onGenerate,
   onApply,
+  onUndo,
   disabledReason,
+  hasProvider = true,
 }: {
   /** Built by the editor each time, so it is never a screen or two behind. */
   context: () => GenContext;
   /** Absent on a surface with no provider connected. The draft still works. */
   onGenerate?: GenerateScreen;
   onApply: (result: GeneratedScreen, mode: "replace" | "extend") => void;
+  /** Takes the last generated screen back out. */
+  onUndo?: () => void;
   /** Why the model is unavailable, if it is. */
   disabledReason?: string | null;
+  /** Whether to offer a model list at all. The desktop has no HTTP model API. */
+  hasProvider?: boolean;
 }) {
-  const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState<"extend" | "replace">("extend");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [model, setModel] = useState<string | null>(null);
-  const [turns, setTurns] = useState<Turn[]>([]);
+  // Read inside `run` rather than closed over, so a mode changed after pressing
+  // send is not applied to a request that is already in flight.
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
 
-  const report = useCallback((result: GeneratedScreen, verb: string) => {
-    const n = result.widgets.length;
-    setTurns((t) => [
-      ...t,
-      {
-        id: `a${t.length}`,
-        role: "ladx",
+  const run = useCallback(
+    async (prompt: string, { step, ask, model, signal }: AssistRunContext) => {
+      if (!onGenerate) throw new Error(disabledReason ?? "No model is connected.");
+
+      step.start("read", "Reading the tag table");
+      const ctx = { ...context(), mode: modeRef.current };
+      const plc = ctx.plcTags.length;
+      const analogue = ctx.plcTags.filter((t) => t.type !== "BOOL").length;
+      step.detail(
+        `${plc} controller tag${plc === 1 ? "" : "s"}, ${analogue} analogue, ` +
+          `${ctx.existing.length} object${ctx.existing.length === 1 ? "" : "s"} already on the glass, ` +
+          `${ctx.size.width}×${ctx.size.height} panel`,
+      );
+
+      if (plc === 0) {
+        step.fail("No controller tags, so nothing to bind to");
+        throw new Error(
+          "This project has no ladder program, so there are no tags to bind to. Draw a rung first, or use From tag table once there is one.",
+        );
+      }
+
+      /*
+       * Ask before guessing, on the one input a drawing cannot recover from.
+       *
+       * "Make me a screen" has no answer that is not a guess, and a guessed
+       * screen is worse than a question because it looks finished.
+       */
+      let request = prompt;
+      if (tooVagueToDraw(prompt)) {
+        step.start("ask", "Working out what to draw");
+        const answer = await ask({
+          text: "What should this screen be for? Naming the equipment and what the operator does from it is enough.",
+          options: [
+            "An overview of the whole machine",
+            "A tank and its pump",
+            "A conveyor, start and stop",
+            "Alarms and their history",
+          ],
+        });
+        request = `${prompt}. ${answer}`;
+        step.start("asked", "Using that");
+        step.detail(answer);
+      }
+
+      step.start("draw", model ? `Asking ${model}` : "Asking the model");
+      const result = await onGenerate({ prompt: request, ctx, model, signal });
+      if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+      step.detail(
+        result.model ? `${result.model} replied` : "Reply received, checking what came back",
+      );
+
+      step.start("check", "Checking every binding against the tag table");
+      if (result.widgets.length === 0 && result.problems.length === 0) {
+        step.fail("Nothing to draw");
+        throw new Error(
+          "The model returned nothing to draw. Describing the screen more concretely usually fixes it.",
+        );
+      }
+      step.detail(
+        result.problems.length === 0
+          ? "Every binding resolved"
+          : `${result.problems.length} thing${result.problems.length === 1 ? "" : "s"} repaired or flagged`,
+      );
+
+      step.start(
+        "place",
+        modeRef.current === "replace" ? "Drawing the screen" : "Adding to the screen",
+      );
+      onApply(result, modeRef.current);
+      const n = result.widgets.length;
+      step.detail(`${n} object${n === 1 ? "" : "s"} placed`);
+
+      if (result.hmiTags.length) {
+        step.start("tags", "Adding the screen's own tags");
+        step.detail(result.hmiTags.map((t) => t.name).join(", "));
+      } else {
+        step.skip("tags", "No screen tags needed");
+      }
+      if (result.alarms.length) {
+        step.start("alarms", "Defining alarms");
+        step.detail(`${result.alarms.length} defined`);
+      } else {
+        step.skip("alarms", "No alarms proposed");
+      }
+
+      // The next request is nearly always "and now add…", and replacing the
+      // screen you just accepted is rarely what anybody means twice.
+      setMode("extend");
+
+      return {
         text: [
-          `${n} object${n === 1 ? "" : "s"} ${verb}.`,
-          result.hmiTags.length ? `${result.hmiTags.length} screen tags added.` : "",
-          result.alarms.length ? `${result.alarms.length} alarms defined.` : "",
+          `${n} object${n === 1 ? "" : "s"} ${modeRef.current === "replace" ? "drawn" : "added"}.`,
           result.notes ?? "",
           "Run it before you hand it over.",
         ]
           .filter(Boolean)
           .join(" "),
         problems: result.problems,
-      },
-    ]);
-  }, []);
+        undoable: true,
+      };
+    },
+    [onGenerate, context, onApply, disabledReason],
+  );
 
-  const send = useCallback(async () => {
-    const text = prompt.trim();
-    if (!text || !onGenerate) return;
-    const ctx = { ...context(), mode };
+  const a = useAssistant({ run, modelsUrl: hasProvider ? "/api/models" : null });
 
-    setBusy(true);
-    setError(null);
-    setPrompt("");
-    setTurns((t) => [...t, { id: `u${t.length}`, role: "you", text }]);
-
-    try {
-      const result = await onGenerate({ prompt: text, ctx });
-      if (result.widgets.length === 0 && result.problems.length === 0) {
-        setError("The model returned nothing to draw. Try describing the screen more concretely.");
-        return;
-      }
-      onApply(result, mode);
-      setModel(result.model ?? null);
-      report(result, mode === "replace" ? "drawn" : "added");
-      // The next request is nearly always "and now add…", and replacing the
-      // screen you just accepted is rarely what anybody means twice.
-      setMode("extend");
-    } catch (e) {
-      setError(
-        e instanceof Error && e.message
-          ? e.message
-          : "Could not reach the model. The tag table layout below needs no model at all.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }, [prompt, onGenerate, context, mode, onApply, report]);
-
+  /**
+   * The layout with no model involved.
+   *
+   * Reported through the same step list as a generated screen, because it is
+   * the same job done a different way and showing it differently would suggest
+   * it is a lesser one. It is not: every binding on it is real by construction.
+   */
   const draft = useCallback(() => {
     const ctx = { ...context(), mode: "replace" as const };
     const result = draftScreen(ctx);
-    setError(null);
-    setTurns((t) => [
-      ...t,
-      { id: `u${t.length}`, role: "you", text: "Lay this out from the tag table." },
-    ]);
     if (result.widgets.length) onApply(result, "replace");
-    report(result, "drawn");
-  }, [context, onApply, report]);
+    const n = result.widgets.length;
+    a.record(
+      "Lay this out from the tag table.",
+      {
+        text: n
+          ? `${n} object${n === 1 ? "" : "s"} drawn straight from the tag table. Every binding on it is real by construction, because it was built from the tags rather than described. Run it before you hand it over.`
+          : "There are no tags to lay out. Draw a rung in the ladder editor first, and this will have something to bind to.",
+        problems: result.problems,
+        undoable: n > 0,
+      },
+      [
+        {
+          id: "d1",
+          label: "Laying out every tag in the program",
+          state: "done",
+          detail: `${ctx.plcTags.length} controller tags, ${ctx.size.width}×${ctx.size.height} panel, no model involved`,
+        },
+      ],
+    );
+  }, [context, onApply, a]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        {turns.length === 0 ? (
-          <div className="space-y-2">
-            <p className="text-[12.5px] leading-relaxed text-ink-500">
-              Describe the screen. It is drawn against this project's tag table, so it can only bind
-              to tags the controller actually has, and anything it got wrong is listed rather than
-              hidden.
-            </p>
-            <ul className="space-y-1">
-              {SUGGESTIONS.map((s) => (
-                <li key={s}>
-                  <button
-                    type="button"
-                    onClick={() => setPrompt(s)}
-                    className="w-full rounded-md border border-ink-100 bg-white px-2 py-1.5 text-left text-[12px] leading-snug text-ink-600 transition-colors hover:border-ink-300 hover:text-ink-900"
-                  >
-                    {s}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <ol className="space-y-2.5">
-            {turns.map((t) => (
-              <li key={t.id}>
-                <p
-                  className={`text-[12.5px] leading-relaxed ${
-                    t.role === "you" ? "font-medium text-ink-900" : "text-ink-600"
-                  }`}
-                >
-                  {t.role === "you" ? "" : "· "}
-                  {t.text}
-                </p>
-                {t.problems && t.problems.length > 0 && (
-                  <ul className="mt-1.5 space-y-1 rounded-md border border-[#E4C9A8] bg-[#FDF6EC] p-2">
-                    {t.problems.map((p) => (
-                      <li
-                        key={p}
-                        className="flex gap-1.5 text-[11.5px] leading-snug text-[#7A4A12]"
-                      >
-                        <TriangleAlert className="mt-px h-3 w-3 shrink-0" />
-                        <span>{p}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {t.role === "ladx" && t.problems?.length === 0 && (
-                  <p className="mt-1 text-[11px] text-ink-400">
-                    Every binding resolved, which is not the same as it being the screen you wanted.
-                  </p>
-                )}
-              </li>
-            ))}
-          </ol>
-        )}
-
-        {error && (
-          <p className="mt-2 rounded-md border border-[#E4B4A8] bg-[#FDEFEC] px-2 py-1.5 text-[12px] leading-snug text-[#7A2E12]">
-            {error}
-          </p>
-        )}
-      </div>
-
-      <div className="shrink-0 border-t border-ink-100 p-2.5">
-        <div className="mb-2 flex items-center gap-1.5">
+    <Assistant
+      toolId="hmi"
+      title="Assist"
+      placeholder="A tank mimic with a level bar and a pump that turns green when it runs"
+      suggestions={SUGGESTIONS}
+      turns={a.turns}
+      busy={a.busy}
+      steps={a.steps}
+      error={a.error}
+      models={hasProvider ? a.models : undefined}
+      question={a.question}
+      onSend={a.send}
+      onAnswer={a.answer}
+      onStop={a.stop}
+      onUndo={
+        onUndo
+          ? () => {
+              onUndo();
+              a.markUndone();
+            }
+          : undefined
+      }
+      disabledReason={disabledReason}
+      controls={
+        <div className="flex items-center gap-1.5">
           <div className="flex overflow-hidden rounded-md border border-ink-200">
             {(["extend", "replace"] as const).map((m) => (
               <button
@@ -213,44 +262,7 @@ export default function HmiAi({
             From tag table
           </button>
         </div>
-
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          onKeyDown={(e) => {
-            // Enter sends, because this is a prompt box and not a document.
-            // Shift+Enter is there for the two-sentence description.
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              void send();
-            }
-          }}
-          rows={3}
-          disabled={!onGenerate || busy}
-          placeholder={
-            disabledReason ??
-            "A tank mimic with a level bar and a pump that turns green when it runs"
-          }
-          className="w-full resize-none rounded-md border border-ink-200 bg-white px-2 py-1.5 text-[12.5px] leading-snug outline-none focus:border-ink-500 disabled:bg-ink-50"
-        />
-
-        <div className="mt-1.5 flex items-center gap-2">
-          <span className="truncate font-mono text-[10.5px] text-ink-400">
-            {busy
-              ? "Drawing"
-              : (model ?? (disabledReason ? "No model connected" : "Enter to send"))}
-          </span>
-          <button
-            type="button"
-            onClick={() => void send()}
-            disabled={!onGenerate || busy || !prompt.trim()}
-            className="ml-auto flex items-center gap-1.5 rounded-md bg-ink-900 px-2.5 py-1 text-[12px] font-medium text-white transition-opacity disabled:opacity-40"
-          >
-            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-            Draw
-          </button>
-        </div>
-      </div>
-    </div>
+      }
+    />
   );
 }

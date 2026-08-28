@@ -44,6 +44,9 @@ const tag = z.object({
 
 const request = z.object({
   prompt: z.string().trim().min(3).max(4000),
+  // Chosen in the assistant, where the work happens. Optional: absent
+  // means the saved default, or whatever the free tier has healthy.
+  model: z.string().trim().max(200).nullish(),
   ctx: z.object({
     plcTags: z.array(tag).max(500).default([]),
     hmiTags: z
@@ -95,6 +98,7 @@ export async function POST(req: Request) {
       try {
         const result = await complete({
           userId: auth.user.id,
+          model: parsed.data.model,
           messages: [
             { role: "system", content: system },
             { role: "user", content: user },

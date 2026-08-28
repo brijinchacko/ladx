@@ -1,6 +1,6 @@
 "use client";
 import type { LadxProgram, Tag } from "@ladx/studio";
-import { focusModeLabel, useFocusMode } from "@ladx/studio";
+import { DockPanel, DockStrip, type Side, focusModeLabel, useFocusMode } from "@ladx/studio";
 import {
   Bell,
   Loader2,
@@ -31,6 +31,7 @@ import {
 } from "../lib/history";
 import { usePanelRuntime } from "../lib/panel-runtime";
 import { PANEL_GROUPS, PANEL_PRESETS, presetFor } from "../lib/panels";
+import { hmiDock } from "../lib/panels-layout";
 import {
   DEFAULT_LAYOUT,
   type Layout,
@@ -46,7 +47,7 @@ import type { AlarmDef, HmiDoc, Widget, WidgetKind } from "../lib/types";
 import AlarmPopup from "./alarm-popup";
 import HistoryPanel from "./history-panel";
 import HmiAi from "./hmi-ai";
-import { ContextMenu, type Menu, MenuBar, Panel, PanelDock, ProjectTree } from "./hmi-chrome";
+import { ContextMenu, type Menu, MenuBar, ProjectTree } from "./hmi-chrome";
 import HmiSetup from "./hmi-setup";
 import Properties from "./properties";
 import WidgetView from "./widget-view";
@@ -981,6 +982,97 @@ export default function HmiEditor({
     },
   ];
 
+  /**
+   * One panel's contents, by id.
+   *
+   * A lookup rather than the contents being written where the panel used to
+   * sit, because the layout now decides which side each one goes to and the
+   * same body has to render on the left or the right without being written
+   * twice.
+   */
+  const panelBody = (id: PanelId) => {
+    switch (id) {
+      case "tree":
+        return (
+          <ProjectTree
+            doc={doc}
+            appName={name}
+            screenId={screenId}
+            plcTagCount={plcTags.length}
+            onSelectScreen={setScreenId}
+            onOpenSetup={openSetup}
+          />
+        );
+      case "tools":
+        return (
+          <Tools
+            onAdd={addWidget}
+            running={running}
+            outstanding={outstanding}
+            onAck={() => fire([{ kind: "ackAll" }])}
+          />
+        );
+      case "properties":
+        return sel ? (
+          <div className="p-3">
+            <Properties
+              widget={sel}
+              plc={liveTags}
+              hmiTags={doc.tags}
+              screens={doc.screens}
+              trends={doc.trends}
+              onChange={(patch) => patchWidget(sel.id, patch)}
+              onDelete={() => {
+                update((d) => {
+                  const sc = d.screens.find((s) => s.id === screenId);
+                  if (sc) sc.widgets = sc.widgets.filter((w) => w.id !== sel.id);
+                  return d;
+                });
+                setSelected(null);
+              }}
+            />
+          </div>
+        ) : (
+          <p className="p-3 text-[12.5px] text-ink-400 leading-relaxed">
+            Nothing selected. Pick an object on the panel, or add one from Tools.
+          </p>
+        );
+      default:
+        return null;
+    }
+  };
+
+  /**
+   * The open panels docked to one side.
+   *
+   * Assist is excluded: it stopped being a docked pane when it grew its own
+   * frame, and it stays in the panel list only so that closing it still leaves
+   * a chip in the strip to bring it back.
+   */
+  const panelsOn = (side: Side) =>
+    hmiDock.panels
+      .filter(
+        (p) => p.id !== "assist" && layout[p.id].open && hmiDock.sideOf(layout, p.id) === side,
+      )
+      .map((p) => (
+        <DockPanel
+          key={p.id}
+          dock={hmiDock}
+          id={p.id}
+          layout={layout}
+          onResize={(size) => setPanel(p.id, { size })}
+          onClose={() => setPanel(p.id, { open: false })}
+          onMove={(to) => setPanel(p.id, { side: to })}
+          actions={
+            p.id === "properties" && sel ? (
+              <span className="font-mono text-[10px] text-ink-400">{sel.name ?? sel.kind}</span>
+            ) : null
+          }
+        >
+          {panelBody(p.id)}
+        </DockPanel>
+      ));
+
   if (!screen)
     return <p className="p-6 text-[13px] text-ink-500">This application has no screens.</p>;
 
@@ -1126,23 +1218,7 @@ export default function HmiEditor({
       </div>
 
       <div className="flex min-h-0 flex-1">
-        {layout.tree.open && (
-          <Panel
-            id="tree"
-            layout={layout}
-            onResize={(size) => setPanel("tree", { size })}
-            onClose={() => setPanel("tree", { open: false })}
-          >
-            <ProjectTree
-              doc={doc}
-              appName={name}
-              screenId={screenId}
-              plcTagCount={plcTags.length}
-              onSelectScreen={setScreenId}
-              onOpenSetup={openSetup}
-            />
-          </Panel>
-        )}
+        {panelsOn("left")}
 
         {/* centre: the panel, with properties docked under it */}
         <div className="flex min-w-0 flex-1 flex-col">
@@ -1340,81 +1416,30 @@ export default function HmiEditor({
             </div>
           </div>
 
-          {layout.properties.open && (
-            <Panel
-              id="properties"
-              layout={layout}
-              onResize={(size) => setPanel("properties", { size })}
-              onClose={() => setPanel("properties", { open: false })}
-              actions={
-                sel ? (
-                  <span className="font-mono text-[10px] text-ink-400">{sel.name ?? sel.kind}</span>
-                ) : null
-              }
-            >
-              {sel ? (
-                <div className="p-3">
-                  <Properties
-                    widget={sel}
-                    plc={liveTags}
-                    hmiTags={doc.tags}
-                    screens={doc.screens}
-                    trends={doc.trends}
-                    onChange={(patch) => patchWidget(sel.id, patch)}
-                    onDelete={() => {
-                      update((d) => {
-                        const sc = d.screens.find((s) => s.id === screenId);
-                        if (sc) sc.widgets = sc.widgets.filter((w) => w.id !== sel.id);
-                        return d;
-                      });
-                      setSelected(null);
-                    }}
-                  />
-                </div>
-              ) : (
-                <p className="p-3 text-[12.5px] leading-relaxed text-ink-400">
-                  Nothing selected. Pick an object on the panel, or add one from Tools.
-                </p>
-              )}
-            </Panel>
-          )}
+          {panelsOn("bottom")}
         </div>
 
-        {layout.tools.open && (
-          <Panel
-            id="tools"
-            layout={layout}
-            onResize={(size) => setPanel("tools", { size })}
-            onClose={() => setPanel("tools", { open: false })}
-          >
-            <Tools
-              onAdd={addWidget}
-              running={running}
-              outstanding={outstanding}
-              onAck={() => fire([{ kind: "ackAll" }])}
-            />
-          </Panel>
-        )}
-
-        {layout.assist.open && (
-          <Panel
-            id="assist"
-            layout={layout}
-            onResize={(size) => setPanel("assist", { size })}
-            onClose={() => setPanel("assist", { open: false })}
-            actions={
-              <span className="font-mono text-[10px] text-ink-400">{plcTags.length} PLC tags</span>
-            }
-          >
-            <HmiAi
-              context={genContext}
-              onGenerate={onGenerate}
-              onApply={applyGenerated}
-              disabledReason={onGenerate ? generateDisabledReason : "No model is connected."}
-            />
-          </Panel>
-        )}
+        {panelsOn("right")}
       </div>
+
+      {/*
+        The assistant, at the editor root rather than inside the column.
+
+        It carries its own frame now: docked to the bottom by default, and
+        draggable anywhere from its header. A panel welded into the layout is in
+        the way exactly when the work is underneath it, which on a mimic is most
+        of the time.
+      */}
+      {layout.assist.open && (
+        <HmiAi
+          context={genContext}
+          onGenerate={onGenerate}
+          onApply={applyGenerated}
+          onUndo={doUndo}
+          hasProvider={Boolean(onGenerate)}
+          disabledReason={onGenerate ? generateDisabledReason : "No model is connected."}
+        />
+      )}
 
       <input
         ref={docRef}
@@ -1502,7 +1527,8 @@ export default function HmiEditor({
         />
       )}
 
-      <PanelDock
+      <DockStrip
+        dock={hmiDock}
         layout={layout}
         onOpen={(id) => setPanel(id, { open: true })}
         onReset={() => {

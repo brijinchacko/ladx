@@ -22,11 +22,12 @@ export default function HmiEditorClient(props: Omit<HmiEditorProps, "onSave" | "
         });
         return res.ok;
       }}
-      onGenerate={async ({ prompt, ctx }) => {
+      onGenerate={async ({ prompt, ctx, model, signal }) => {
         const res = await fetch("/api/hmi/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt, ctx }),
+          body: JSON.stringify({ prompt, ctx, model }),
+          signal,
         });
         const body = await res.json().catch(() => null);
         // The message the route wrote, not a generic one: "connect a key in

@@ -121,17 +121,13 @@ export default function LadderClient({
            */
           crossLinks={[
             {
-              label: "HMI",
+              label: "HMI/SCADA",
               href: `/studio/hmi/open?project=${encodeURIComponent(open)}`,
               hint: "Build the operator screens for this program. They bind to the tag table you are editing here, so this saves first.",
             },
           ]}
           bottomDock={({ program, load }) => (
-            <LadderAi
-              projectId={open}
-              getProgram={() => program}
-              onProgram={(next) => load(next)}
-            />
+            <LadderAi getProgram={() => program} onProgram={(next) => load(next)} />
           )}
         />
       </div>

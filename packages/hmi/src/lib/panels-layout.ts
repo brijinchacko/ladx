@@ -32,6 +32,7 @@ export const PANELS: PanelDef[] = [
     min: 160,
     max: 400,
     blurb: "Screens, tags, alarms and trends, as a tree.",
+    sides: ["left", "right"],
   },
   {
     id: "tools",
@@ -41,6 +42,7 @@ export const PANELS: PanelDef[] = [
     min: 190,
     max: 420,
     blurb: "Objects and the symbol library, by category.",
+    sides: ["right", "left"],
   },
   {
     id: "properties",
@@ -50,6 +52,10 @@ export const PANELS: PanelDef[] = [
     min: 120,
     max: 420,
     blurb: "Everything about the selected object: binding, colours, actions.",
+    // Under the glass by default, because that is where a properties pane
+    // belongs on a drawing surface, and beside it for anybody who would rather
+    // have the height.
+    sides: ["bottom", "right", "left"],
   },
   {
     id: "assist",
@@ -58,7 +64,8 @@ export const PANELS: PanelDef[] = [
     size: 300,
     min: 240,
     max: 480,
-    blurb: "Draw a screen from a description, or straight from the tag table.",
+    blurb:
+      "Draw a screen from a description, or straight from the tag table. It floats, and remembers where you put it.",
     /*
      * Not open to begin with.
      *

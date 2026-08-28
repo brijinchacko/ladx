@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "@ladx/studio": "workspace:*",
-    "lucide-react": "^0.451.0"
+    "lucide-react": "^0.451.0",
+    "@ladx/ui": "workspace:*"
   },
   "peerDependencies": {
     "next": "^15.0.0",

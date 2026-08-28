@@ -1,8 +1,8 @@
 "use client";
 
-import AiDock, { type AiTurn } from "@/components/studio/ai-dock";
 import type { LadxProgram } from "@ladx/studio";
-import { useCallback, useState } from "react";
+import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
+import { useCallback } from "react";
 
 /**
  * Writing ladder from a description.
@@ -22,102 +22,137 @@ import { useCallback, useState } from "react";
  * It extends by default rather than replacing. Somebody with forty rungs open
  * who asks for an interlock means "add one", and a tool that answers by
  * replacing their program is a tool they will not open again.
+ *
+ * The panel, the step list, the model picker and the questions are the shared
+ * assistant, so this behaves exactly like the one in CAD and the HMI builder.
  */
 export default function LadderAi({
-  projectId,
   getProgram,
   onProgram,
+  onUndo,
 }: {
-  /** Scratch or a project, only to name the thread. */
-  projectId: string;
   /** The program as it stands, for context. */
   getProgram: () => LadxProgram | null;
   /** Called with the merged program, for the editor to load. */
   onProgram: (program: LadxProgram, replaced: boolean) => void;
+  /** Takes the last generated rungs back out. */
+  onUndo?: () => void;
 }) {
-  const [turns, setTurns] = useState<AiTurn[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [model, setModel] = useState<string | null>(null);
-
-  const send = useCallback(
-    async (prompt: string) => {
-      setBusy(true);
-      setError(null);
-      setTurns((t) => [...t, { id: `u${Date.now()}`, role: "you", text: prompt }]);
-
+  const run = useCallback(
+    async (prompt: string, { step, ask, model, signal }: AssistRunContext) => {
+      step.start("read", "Reading the program");
       const current = getProgram();
+      const rungs = current?.rungs.length ?? 0;
+      const tags = current?.tags.length ?? 0;
+      step.detail(
+        `${rungs} rung${rungs === 1 ? "" : "s"}, ${tags} tag${tags === 1 ? "" : "s"} already defined`,
+      );
+
       // Replace only when there is nothing to lose.
-      const mode = current && current.rungs.length > 0 ? "extend" : "replace";
+      const mode = rungs > 0 ? "extend" : "replace";
 
-      try {
-        const res = await fetch("/api/ladder/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt, current, mode }),
+      /*
+       * Ask about the stop button rather than guessing.
+       *
+       * This is the one input on a ladder program where a wrong guess is a
+       * safety difference rather than an inconvenience: a stop wired normally
+       * closed reads 1 when healthy and needs XIC, and getting it backwards
+       * builds a machine that will not stop when a wire breaks. A model asked
+       * for "a start and stop" with no more information has to guess, and it
+       * guesses wrong often enough to matter.
+       */
+      let request = prompt;
+      if (/\bstop\b/i.test(prompt) && !/normally\s+(closed|open)|\bn\/?[co]\b/i.test(prompt)) {
+        step.start("ask", "Checking one thing before writing it");
+        const answer = await ask({
+          text: "Is the stop button normally closed? A real one usually is, which means it reads 1 when healthy and the rung needs an XIC rather than an XIO.",
+          options: [
+            "Normally closed, the usual wiring",
+            "Normally open",
+            "I do not know, use the safe one",
+          ],
         });
-        const body = (await res.json()) as {
-          program?: LadxProgram;
-          problems?: string[];
-          notes?: string;
-          model?: string;
-          error?: string;
-        };
-        if (!res.ok || !body.program) {
-          setError(body.error ?? "Could not write that.");
-          return;
-        }
-
-        const generated = body.program;
-        let merged = generated;
-        if (mode === "extend" && current) {
-          // Tags are merged by name, keeping what the program already had: the
-          // existing one carries the address and the device kind, which the
-          // simulator needs and the model would have guessed at.
-          const byName = new Map(current.tags.map((t) => [t.name, t]));
-          for (const t of generated.tags) if (!byName.has(t.name)) byName.set(t.name, t);
-          merged = {
-            ...current,
-            tags: [...byName.values()],
-            rungs: [...current.rungs, ...generated.rungs],
-          };
-        }
-
-        onProgram(merged, mode === "replace");
-        setModel(body.model ?? null);
-
-        const problems = body.problems ?? [];
-        setTurns((t) => [
-          ...t,
-          {
-            id: `a${Date.now()}`,
-            role: "ladx",
-            text: [
-              `${generated.rungs.length} rung${generated.rungs.length === 1 ? "" : "s"} ${
-                mode === "replace" ? "written" : "added"
-              }.`,
-              body.notes,
-              problems.length
-                ? `The validator flagged ${problems.length}: ${problems.slice(0, 3).join(" ")}`
-                : "The validator found nothing wrong, which is not the same as it being right.",
-              "Simulate it before you download it.",
-            ]
-              .filter(Boolean)
-              .join(" "),
-            undoable: true,
-          },
-        ]);
-      } catch {
-        setError("Could not reach the model. Try again, or write it by hand.");
-      } finally {
-        setBusy(false);
+        request = `${prompt}. Stop button: ${answer}.`;
+        step.start("asked", "Using that");
+        step.detail(answer);
       }
+
+      step.start("write", model ? `Asking ${model}` : "Asking the model");
+      const res = await fetch("/api/ladder/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: request, current, mode, model }),
+        signal,
+      });
+      const body = (await res.json()) as {
+        program?: LadxProgram;
+        problems?: string[];
+        notes?: string;
+        model?: string;
+        error?: string;
+      };
+      if (!res.ok || !body.program) {
+        step.fail(body.error ?? "The model did not return a program");
+        throw new Error(body.error ?? "Could not write that.");
+      }
+      step.detail(body.model ? `${body.model} replied` : "Reply received");
+
+      step.start("validate", "Running the validator over it");
+      const problems = body.problems ?? [];
+      step.detail(
+        problems.length === 0
+          ? "Nothing flagged, which is not the same as it being right"
+          : `${problems.length} flagged`,
+      );
+
+      const generated = body.program;
+      let merged = generated;
+      if (mode === "extend" && current) {
+        step.start("merge", "Merging into the program");
+        // Tags are merged by name, keeping what the program already had: the
+        // existing one carries the address and the device kind, which the
+        // simulator needs and the model would have guessed at.
+        const byName = new Map(current.tags.map((t) => [t.name, t]));
+        let added = 0;
+        for (const t of generated.tags)
+          if (!byName.has(t.name)) {
+            byName.set(t.name, t);
+            added++;
+          }
+        merged = {
+          ...current,
+          tags: [...byName.values()],
+          rungs: [...current.rungs, ...generated.rungs],
+        };
+        step.detail(
+          `${generated.rungs.length} rung${generated.rungs.length === 1 ? "" : "s"} appended, ${added} new tag${added === 1 ? "" : "s"}, existing tags kept as wired`,
+        );
+      }
+
+      onProgram(merged, mode === "replace");
+
+      return {
+        text: [
+          `${generated.rungs.length} rung${generated.rungs.length === 1 ? "" : "s"} ${
+            mode === "replace" ? "written" : "added"
+          }.`,
+          body.notes,
+          "Simulate it before you download it.",
+        ]
+          .filter(Boolean)
+          .join(" "),
+        problems,
+        undoable: true,
+      };
     },
     [getProgram, onProgram],
   );
 
+  const a = useAssistant({ run });
+
   return (
-    <AiDock
+    <Assistant
+      toolId="ladder"
       title="Write with LADX"
       placeholder="A motor with start, stop and a seal-in, and a lamp that comes on after five seconds"
       suggestions={[
@@ -125,11 +160,24 @@ export default function LadderAi({
         "Add a guard interlock that stops the motor",
         "A conveyor that runs for 10 seconds after the last bottle passes",
       ]}
-      turns={turns}
-      busy={busy}
-      error={error}
-      modelNote={model}
-      onSend={(p) => void send(p)}
+      turns={a.turns}
+      busy={a.busy}
+      steps={a.steps}
+      error={a.error}
+      models={a.models}
+      question={a.question}
+      onSend={a.send}
+      onAnswer={a.answer}
+      onStop={a.stop}
+      onUndo={
+        onUndo
+          ? () => {
+              onUndo();
+              a.markUndone();
+            }
+          : undefined
+      }
+      footnote="LADX can make mistakes, and how good the result is depends heavily on the model. Simulate everything before it reaches a controller."
     />
   );
 }

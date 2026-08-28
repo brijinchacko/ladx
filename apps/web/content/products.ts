@@ -320,7 +320,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     slug: "hmi",
-    name: "HMI",
+    name: "HMI/SCADA",
     tagline: "The operator screens, on the same tags.",
     state: "live",
     group: "panel",

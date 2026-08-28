@@ -50,7 +50,7 @@ export default async function HmiPage({
   return (
     <>
       <WorkspaceHeader
-        title="HMI"
+        title="HMI/SCADA"
         subtitle="Operator screens, bound to the same tags the ladder runs on."
       />
       <HmiHomeClient

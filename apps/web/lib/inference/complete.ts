@@ -28,15 +28,29 @@ export async function complete(input: {
   maxTokens?: number;
   temperature?: number;
   signal?: AbortSignal;
+  /**
+   * A model chosen for this one request, overriding the saved preference.
+   *
+   * The assistants let somebody pick a model in the place the work happens,
+   * which is the right place for it: which model answered is the single biggest
+   * factor in whether a generated rung or screen is any good. A picker that did
+   * not actually change the model would be worse than no picker, so the choice
+   * arrives here and wins over the default.
+   *
+   * Only honoured against the user's own key. On the shared free tier the model
+   * is whatever is healthy at that moment, and pinning one there would mean a
+   * request that fails outright instead of falling through to one that works.
+   */
+  model?: string | null;
 }): Promise<CompletionResult> {
-  const { userId, messages, maxTokens = 2048, temperature = 0, signal } = input;
+  const { userId, messages, maxTokens = 2048, temperature = 0, signal, model: wanted } = input;
 
   const preferred = await preferredProvider(userId);
   if (preferred) {
     const creds = await credentialsFor(userId, preferred.kind);
     if (creds) {
       const provider = getProvider(preferred.kind);
-      const model = preferred.defaultModel ?? creds.defaultModel;
+      const model = wanted || preferred.defaultModel || creds.defaultModel;
       if (model) {
         const chunks: string[] = [];
         for await (const delta of provider.stream(creds, {
@@ -63,7 +77,18 @@ export async function complete(input: {
 
   const provider = getProvider("openrouter");
   const creds = { apiKey: key };
-  const candidates = rankFreeModels(await provider.listModels(creds));
+  const ranked = rankFreeModels(await provider.listModels(creds));
+  /*
+   * A chosen model goes to the front of the free tier rather than replacing it.
+   *
+   * Honouring the choice matters, but a free model that is rate limited or down
+   * is a normal condition rather than an error, and pinning to it would turn a
+   * working request into a failed one. Putting it first tries it, and keeps the
+   * fall-through behind it.
+   */
+  const candidates = wanted
+    ? [...ranked.filter((m) => m.id === wanted), ...ranked.filter((m) => m.id !== wanted)]
+    : ranked;
   const result = await streamWithFallback({
     provider,
     creds,
