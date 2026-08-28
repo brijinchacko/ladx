@@ -245,10 +245,14 @@ living in one app that both apps needed.
 
 ### Phase 2, `0.2.0`: the rest of the drawing tools
 
-CAD, and Documents from templates. CAD is already pure client side in
-`apps/web/components/cad`; what it needs is a home in the desktop app and file
-storage. Documents need the template engine and PDF generation, which is `jspdf`
-and already client side.
+**CAD shipped in `0.2.0`.** It came across as predicted, because the drafting
+was always client side: what it needed was somewhere to keep drawings and
+something to generate them with. It is `packages/cad` now rather than a folder
+in the web app, drawings live in their own SQLite table, and generation goes to
+the local Ollama.
+
+Documents is what remains of this phase. It needs the template engine and PDF
+generation, which is `jspdf` and already client side.
 
 ### Phase 3, `0.3.0` to `1.0.0`: the workspace
 
