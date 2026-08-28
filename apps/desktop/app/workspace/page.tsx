@@ -16,7 +16,6 @@ import {
   type ProjectFolder,
   createProjectFolder,
   listProjectFiles,
-  listProjectFolders,
   openProjectFolder,
   pickWorkspace,
   revealProject,
@@ -34,25 +33,27 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 export default function WorkspacePage() {
-  const { project, workspace, loading, open, setWorkspace } = useProjectFolder();
-  const [projects, setProjects] = useState<ProjectFolder[] | null>(null);
+  /*
+   * The project list comes from the provider, not from here.
+   *
+   * This page used to keep its own copy and refresh that, so creating a
+   * project updated the page and left the sidebar showing the list from before
+   * it: no Recent projects, no count, until something else happened to reload
+   * them. Two pieces of state for one fact is one of them being wrong.
+   */
+  const { project, projects, workspace, loading, open, refresh, setWorkspace } = useProjectFolder();
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const refresh = useCallback(async (dir: string) => {
+  const reload = useCallback(async () => {
     try {
-      setProjects(await listProjectFolders(dir));
+      await refresh();
       setError(null);
     } catch (err) {
-      setProjects([]);
       setError(message(err));
     }
-  }, []);
-
-  useEffect(() => {
-    if (workspace) void refresh(workspace);
-  }, [workspace, refresh]);
+  }, [refresh]);
 
   const choose = async () => {
     setBusy(true);
@@ -134,7 +135,7 @@ export default function WorkspacePage() {
               </button>
               <button
                 type="button"
-                onClick={() => void refresh(workspace)}
+                onClick={() => void reload()}
                 className="shrink-0 text-ink-400 hover:text-ink-700"
                 title="Look again"
               >
@@ -166,7 +167,7 @@ export default function WorkspacePage() {
             onCreated={(made) => {
               setCreating(false);
               open(made);
-              void refresh(workspace);
+              void reload();
             }}
           />
         )}
@@ -177,17 +178,17 @@ export default function WorkspacePage() {
               ? `${projects.length} project${projects.length === 1 ? "" : "s"}`
               : "Projects"}
           </h2>
-          {loading || (workspace && projects === null) ? (
+          {loading ? (
             <p className="text-[13px] text-ink-500">Looking…</p>
           ) : !workspace ? (
             <p className="text-[13px] text-ink-500">Choose a folder above to see what is in it.</p>
-          ) : projects && projects.length === 0 ? (
+          ) : projects.length === 0 ? (
             <p className="text-[13px] text-ink-500">
               Nothing here yet. New project builds the folder structure for one.
             </p>
           ) : (
             <ul className="space-y-2">
-              {projects?.map((p) => (
+              {projects.map((p) => (
                 <ProjectRow
                   key={p.path}
                   project={p}

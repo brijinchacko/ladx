@@ -44,30 +44,48 @@ function ChatPageInner() {
   useEffect(() => {
     let live = true;
     (async () => {
+      /*
+       * Two reads, two catches, because they fail for different reasons.
+       *
+       * These were one Promise.all under one catch that ended every message
+       * with "Is Ollama running on localhost:11434?". A database that could
+       * not be opened, or a project that had been deleted, then sent the
+       * person to check a service that was working perfectly.
+       */
       try {
-        const [s, m, p, convo] = await Promise.all([
-          settingsLoad(),
-          ollamaModels(),
+        const [p, convo] = await Promise.all([
           projectId ? getProject(projectId) : Promise.resolve(null),
           ensureConversation(projectId ?? null),
         ]);
         if (!live) return;
-
         if (projectId) setProject(p);
+        if (!convo?.id) throw new Error("This conversation could not be opened.");
         setConversationId(convo.id);
 
-        // Load any prior turns so the user picks up where they left off.
+        // Prior turns, so somebody picks up where they left off.
         const msgs = await listMessages(convo.id);
         if (!live) return;
-        setInitialMessages(
-          msgs.map((m) => ({
-            id: m.id,
-            role: m.role,
-            content: m.content,
-          })),
+        setInitialMessages(msgs.map((m) => ({ id: m.id, role: m.role, content: m.content })));
+      } catch (err) {
+        if (!live) return;
+        setError(
+          err instanceof Error
+            ? `${err.message} Conversations are stored on this machine; reopen the app if this keeps happening.`
+            : "The conversation could not be opened.",
         );
+        return;
+      }
 
-        const chosen = s.defaultModel ?? m.suggested ?? m.models[0]?.name ?? null;
+      /*
+       * The model, which is a separate service and the one thing here that is
+       * genuinely often not running. Failing to read it does not hide the
+       * conversation that was just loaded: history is worth having without a
+       * model, and the message says what to do about the model.
+       */
+      try {
+        const [settings, models] = await Promise.all([settingsLoad(), ollamaModels()]);
+        if (!live) return;
+        const chosen = settings.defaultModel ?? models.suggested ?? models.models[0]?.name ?? null;
         if (!chosen) {
           setError("No Ollama models installed. Run `ollama pull qwen2.5-coder:14b` then reload.");
         } else {
@@ -77,8 +95,8 @@ function ChatPageInner() {
         if (!live) return;
         setError(
           err instanceof Error
-            ? `${err.message}. Is Ollama running on localhost:11434?`
-            : "load failed",
+            ? `${err.message} Is Ollama running on localhost:11434?`
+            : "Ollama could not be reached on localhost:11434.",
         );
       }
     })();

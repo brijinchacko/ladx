@@ -84,13 +84,17 @@ export const api = {
       maxTokens: opts.maxTokens,
     });
   },
-
-  async streamChat(_opts: {
-    messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
-    model?: string;
-    signal?: AbortSignal;
-  }): Promise<Response> {
-    // Phase 2 wires this to the Ollama lifecycle in src-tauri/src/commands/chat.rs.
-    throw new Error("desktop streamChat not implemented yet (Phase 2)");
-  },
 };
+
+/*
+ * There is no streamChat here on purpose.
+ *
+ * There used to be, throwing "not implemented yet (Phase 2)", and it had been
+ * dead for as long as the chat page has worked: nothing calls it. Chat streams
+ * through lib/desktop-chat-stream, which bridges the Tauri event bus into the
+ * async iterable ChatWindow wants, because a Response object is the web's
+ * shape and there is no HTTP here to produce one.
+ *
+ * Leaving the stub in said the opposite of the truth to anybody reading this
+ * file for what the desktop can do.
+ */
