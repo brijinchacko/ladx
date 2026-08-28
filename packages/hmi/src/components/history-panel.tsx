@@ -228,7 +228,7 @@ export default function HistoryPanel({
     URL.revokeObjectURL(url);
   };
 
-  const num = (v: number | null) => (v === null ? "—" : v.toFixed(2).replace(/\.00$/, ""));
+  const num = (v: number | null) => (v === null ? "-" : v.toFixed(2).replace(/\.00$/, ""));
 
   return (
     <div

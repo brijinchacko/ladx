@@ -360,7 +360,7 @@ export default function WidgetView({
               justifyContent: "center",
             }}
           >
-            {hit?.text ?? states[0]?.text ?? "—"}
+            {hit?.text ?? states[0]?.text ?? "-"}
           </span>
         );
       }

@@ -77,7 +77,7 @@ function El({
   return (
     <span className="flex shrink-0 flex-col items-center px-0.5">
       <span className="mb-0.5 max-w-[7rem] truncate font-mono text-[9.5px] text-ink-500">
-        {node.tag || "—"}
+        {node.tag || "-"}
       </span>
       <span
         className={`flex h-8 flex-col items-center justify-center rounded border-2 ${

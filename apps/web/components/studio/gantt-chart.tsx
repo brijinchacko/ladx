@@ -46,8 +46,9 @@ export interface GanttGroup {
  * A Gantt earns its space by answering two questions a list cannot: what
  * overlaps, and what is waiting on what. So bars are draggable (the plan is
  * the thing being edited, not a read-only picture of one), dependencies are
- * drawn as real links, and a link that cannot hold — a cycle, or a successor
- * starting before its predecessor ends — is marked rather than quietly drawn
+ * drawn as real links, and a link that cannot hold, meaning a cycle or a
+ * successor starting before its predecessor ends, is marked rather than
+ * quietly drawn
  * as if it were fine.
  *
  * Rows are grouped, by lifecycle phase inside a project and by project across
@@ -438,7 +439,7 @@ export default function GanttChart({
                     {bar ? (
                       bar.milestone ? (
                         <span
-                          title={`${t.title} — a single date, so it is drawn as a milestone`}
+                          title={`${t.title}, a single date, so it is drawn as a milestone`}
                           className={`absolute top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 ${
                             inCycle ? "bg-[#B4531A]" : STATUS_FILL[t.status]
                           }`}

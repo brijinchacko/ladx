@@ -639,7 +639,7 @@ export function LifecycleFigure({ className }: { className?: string }) {
               fill={INK}
               opacity="0.32"
             >
-              {s.owes === 0 ? "—" : `${s.owes} doc${s.owes === 1 ? "" : "s"}`}
+              {s.owes === 0 ? "none" : `${s.owes} doc${s.owes === 1 ? "" : "s"}`}
             </text>
           </g>
         );

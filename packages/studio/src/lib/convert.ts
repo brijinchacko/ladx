@@ -445,6 +445,24 @@ function neutralNode(node: LadderNode, notes: ConversionNote[], where: string): 
   return parts.length > 0 ? `[${parts.join(",")}]` : "";
 }
 
+/**
+ * One rung as neutral text, for anything that needs to describe it.
+ *
+ * Exported because the simulator's assistant has to put the logic in front of a
+ * model, and rendering a rung a second time somewhere else is how the two
+ * descriptions drift until the explanation is about a rung that does not exist.
+ * Notes are discarded here: the caller is describing, not converting.
+ */
+export function rungToNeutralText(rung: Rung): string {
+  const sink: ConversionNote[] = [];
+  const cond = neutralNode(rungLogic(rung), sink, "");
+  const outs = rung.outputs
+    .map((el) => neutralNode({ kind: "el", ...el }, sink, ""))
+    .filter((t) => t.length > 0)
+    .join("");
+  return `${cond}${outs};`;
+}
+
 export function toNeutralText(program: LadxProgram): ConversionResult {
   const notes: ConversionNote[] = [];
   const routines = programRoutines(program);

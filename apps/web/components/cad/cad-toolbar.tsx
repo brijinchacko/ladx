@@ -283,7 +283,7 @@ function ToolButton({
     <button
       type="button"
       onClick={onClick}
-      title={`${spec.label} (${spec.key})${spec.hint ? ` — ${spec.hint}` : ""}`}
+      title={`${spec.label} (${spec.key})${spec.hint ? `, ${spec.hint}` : ""}`}
       aria-pressed={active}
       className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${
         active ? "bg-ink-900 text-white" : "text-ink-500 hover:bg-ink-200 hover:text-ink-900"

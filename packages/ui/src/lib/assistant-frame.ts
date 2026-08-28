@@ -106,6 +106,16 @@ export function loadFrame(toolId: string, vw: number, vh: number): Frame {
   }
 }
 
+/** Whether this tool's frame was ever put somewhere deliberately. */
+export function hasStoredFrame(toolId: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(KEY(toolId)) !== null;
+  } catch {
+    return false;
+  }
+}
+
 export function saveFrame(toolId: string, f: Frame): void {
   if (typeof window === "undefined") return;
   try {

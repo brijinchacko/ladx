@@ -1,5 +1,6 @@
 "use client";
 
+import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
 import {
   AlertTriangle,
   Check,
@@ -154,6 +155,60 @@ export default function ConvertWorkbench({
     return () => clearTimeout(t);
   }, [copied]);
 
+  /**
+   * Asking what to do about a conversion note.
+   *
+   * The notes say what did not survive; this says what to do about it, which is
+   * the part that turns a report into a migration. It explains rather than
+   * edits, so nothing it says can change the output, and the prompt is told
+   * never to claim the conversion is finished.
+   */
+  const runAssist = useCallback(
+    async (question: string, { step, model, signal }: AssistRunContext) => {
+      step.start("read", "Reading the conversion");
+      const manual = current ? current.result.notes.filter((n) => n.severity === "manual") : [];
+      step.detail(
+        current
+          ? `${current.target.name} output, ${current.result.notes.length} notes, ${manual.length} needing a person`
+          : "Nothing converted yet",
+      );
+
+      if (!current || !source) {
+        step.fail("Nothing to talk about yet");
+        throw new Error("Open a program first, and this can answer questions about the result.");
+      }
+
+      const context = [
+        `Source program: ${source.name}, ${source.program.rungs.length} rungs, ${source.program.tags.length} tags`,
+        `Target: ${current.target.name}`,
+        "",
+        "Notes the conversion produced:",
+        ...current.result.notes.map((n) => `  [${n.severity}] ${n.where}: ${n.message}`),
+        "",
+        "The converted output:",
+        current.result.text.slice(0, 12000),
+      ].join("\n");
+
+      step.start("ask", model ? `Asking ${model}` : "Asking the model");
+      const res = await fetch("/api/assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tool: "convert", context, question, model }),
+        signal,
+      });
+      const b = (await res.json()) as { answer?: string; model?: string; error?: string };
+      if (!res.ok || !b.answer) {
+        step.fail(b.error ?? "No answer came back");
+        throw new Error(b.error ?? "Could not reach a model.");
+      }
+      step.detail(b.model ? `${b.model} replied` : "Reply received");
+      return { text: b.answer, undoable: false };
+    },
+    [current, source],
+  );
+
+  const assist = useAssistant({ run: runAssist });
+
   const takeFile = useCallback(async (file: File) => {
     const out = readProgramFile(file.name, await file.text());
     if (!out.ok) {
@@ -252,7 +307,7 @@ export default function ConvertWorkbench({
 
       if (!onSaveRecord) return;
       const ok = await onSaveRecord({
-        title: `Conversion record — ${source.name}`,
+        title: `Conversion record, ${source.name}`,
         projectId: source.projectId,
         content: body,
       });
@@ -321,7 +376,7 @@ export default function ConvertWorkbench({
             {sources.length === 0 && <option value="__none">No saved programs</option>}
             {sources.map((s) => (
               <option key={s.projectId ?? "__scratch"} value={s.projectId ?? "__scratch"}>
-                {s.projectName ? `${s.projectName} — ${s.name}` : `${s.name} (scratch)`}
+                {s.projectName ? `${s.projectName}, ${s.name}` : `${s.name} (scratch)`}
               </option>
             ))}
           </select>
@@ -545,6 +600,33 @@ export default function ConvertWorkbench({
               </ul>
             </aside>
           </div>
+
+          {/*
+            The assistant, the same one every other tool has.
+
+            The notes say what did not survive; this says what to do about it,
+            which is the part that turns a report into a migration.
+          */}
+          <Assistant
+            toolId="convert"
+            title="Ask about this conversion"
+            placeholder="What do I do about the timer note?"
+            suggestions={[
+              "What do I have to do by hand here?",
+              "How do the timers differ on the target?",
+              "Is this safe to download as it stands?",
+            ]}
+            turns={assist.turns}
+            busy={assist.busy}
+            steps={assist.steps}
+            error={assist.error}
+            models={assist.models}
+            question={assist.question}
+            onSend={assist.send}
+            onAnswer={assist.answer}
+            onStop={assist.stop}
+            footnote="It explains the conversion and what is left to do. It changes nothing, and it can be wrong: the output is a starting point that a person has to verify."
+          />
         </>
       )}
     </div>

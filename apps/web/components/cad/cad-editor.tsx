@@ -2309,10 +2309,15 @@ export default function CadEditor({
         }}
       />
 
-      {/* Hidden without an account. Generation needs a provider key that
-          belongs to a user, so the alternative is a prompt box that always
-          answers "sign in", which is worse than no prompt box. */}
-      {canGenerate && (
+      {/*
+        Always present, and disabled without an account.
+
+        It used to be hidden entirely, which made the same feature look like
+        three different features across the tools: hidden here, absent in the
+        ladder editor, disabled in the HMI builder. It now says why it cannot
+        run, and starts as a bar rather than a box so it costs no canvas.
+      */}
+      {
         <Assistant
           toolId="cad"
           title="Draw with LADX"
@@ -2335,9 +2340,14 @@ export default function CadEditor({
             undo();
             assist.markUndone();
           }}
+          disabledReason={
+            canGenerate
+              ? null
+              : "Drawing from a description needs a provider key, which belongs to an account. Sign up and connect one in Settings."
+          }
           footnote="LADX can make mistakes, and how good the result is depends heavily on the model. Check every dimension before the drawing is issued."
         />
-      )}
+      }
     </div>
   );
 }

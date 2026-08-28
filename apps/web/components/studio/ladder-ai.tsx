@@ -30,6 +30,7 @@ export default function LadderAi({
   getProgram,
   onProgram,
   onUndo,
+  disabledReason,
 }: {
   /** The program as it stands, for context. */
   getProgram: () => LadxProgram | null;
@@ -37,6 +38,13 @@ export default function LadderAi({
   onProgram: (program: LadxProgram, replaced: boolean) => void;
   /** Takes the last generated rungs back out. */
   onUndo?: () => void;
+  /**
+   * Why it cannot run, on a surface with no provider.
+   *
+   * Present rather than hidden, so the feature reads the same everywhere. It
+   * opens as a bar in this state and costs no canvas.
+   */
+  disabledReason?: string | null;
 }) {
   const run = useCallback(
     async (prompt: string, { step, ask, model, signal }: AssistRunContext) => {
@@ -148,7 +156,7 @@ export default function LadderAi({
     [getProgram, onProgram],
   );
 
-  const a = useAssistant({ run });
+  const a = useAssistant({ run, modelsUrl: disabledReason ? null : "/api/models" });
 
   return (
     <Assistant
@@ -164,7 +172,7 @@ export default function LadderAi({
       busy={a.busy}
       steps={a.steps}
       error={a.error}
-      models={a.models}
+      models={disabledReason ? undefined : a.models}
       question={a.question}
       onSend={a.send}
       onAnswer={a.answer}
@@ -177,6 +185,7 @@ export default function LadderAi({
             }
           : undefined
       }
+      disabledReason={disabledReason}
       footnote="LADX can make mistakes, and how good the result is depends heavily on the model. Simulate everything before it reaches a controller."
     />
   );

@@ -19,6 +19,7 @@ import {
   MIN_W,
   clampFrame,
   defaultFrame,
+  hasStoredFrame,
   loadFrame,
   saveFrame,
 } from "../../lib/assistant-frame";
@@ -153,8 +154,25 @@ export default function Assistant({
    * initialiser is the same bug wearing a hat.
    */
   useEffect(() => {
-    setFrame(loadFrame(toolId, window.innerWidth, window.innerHeight));
-  }, [toolId]);
+    const stored = loadFrame(toolId, window.innerWidth, window.innerHeight);
+    /*
+     * An assistant that cannot run starts put away.
+     *
+     * It is still there, still says why, and is one click from being read,
+     * which is the point: hiding it entirely on the surfaces with no model is
+     * how the same feature ends up looking like three different features. But
+     * a panel that cannot do anything should not be occupying the canvas of a
+     * tool somebody came to use, so it opens as a bar rather than a box.
+     *
+     * Only when nothing was stored. Somebody who opened it anyway gets it back
+     * the way they left it.
+     */
+    if (disabledReason && !hasStoredFrame(toolId)) {
+      setFrame({ ...stored, mode: "minimised" });
+      return;
+    }
+    setFrame(stored);
+  }, [toolId, disabledReason]);
 
   // Re-clamped on resize, not only on restore. A window dragged to a smaller
   // display, a zoom, or devtools opening all shrink the viewport under a panel

@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "jspdf": "^2.5.2",
-    "lucide-react": "^0.451.0"
+    "lucide-react": "^0.451.0",
+    "@ladx/ui": "workspace:*"
   },
   "peerDependencies": {
     "react": "^19.0.0",

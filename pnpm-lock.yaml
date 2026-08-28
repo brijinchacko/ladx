@@ -283,6 +283,9 @@ importers:
 
   packages/studio:
     dependencies:
+      '@ladx/ui':
+        specifier: workspace:*
+        version: link:../ui
       jspdf:
         specifier: ^2.5.2
         version: 2.5.2

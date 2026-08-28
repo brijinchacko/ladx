@@ -76,7 +76,11 @@ export default function HmiAi({
 
   const run = useCallback(
     async (prompt: string, { step, ask, model, signal }: AssistRunContext) => {
-      if (!onGenerate) throw new Error(disabledReason ?? "No model is connected.");
+      if (!onGenerate)
+        throw new Error(
+          disabledReason ??
+            "Drawing a screen from a description needs a provider key, which belongs to an account. Sign up and connect one in Settings.",
+        );
 
       step.start("read", "Reading the tag table");
       const ctx = { ...context(), mode: modeRef.current };

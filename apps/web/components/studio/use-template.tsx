@@ -141,7 +141,7 @@ export default function UseTemplate({
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
-                  {p.clientName ? ` — ${p.clientName}` : ""}
+                  {p.clientName ? `, ${p.clientName}` : ""}
                 </option>
               ))}
             </select>

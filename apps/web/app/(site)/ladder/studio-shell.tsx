@@ -1,8 +1,10 @@
 "use client";
 
+import LadderAi from "@/components/studio/ladder-ai";
 import { CONSENT_EVENT, type ConsentState, hasConsent } from "@/lib/consent/consent";
 import {
   type FocusMode,
+  type LadxProgram,
   LadxStudio,
   type StudioProject,
   type StudioStorage,
@@ -124,7 +126,26 @@ export default function StudioShell() {
       >
         <StudioBar mode={mode} onCycle={cycle} onCollapse={collapse} mayPersist={mayPersist} />
         <div className="min-h-0 flex-1">
-          <LadxStudio projectId={SCRATCH_PROJECT} storage={storage} />
+          <LadxStudio
+            projectId={SCRATCH_PROJECT}
+            storage={storage}
+            /*
+             * The assistant, present and disabled.
+             *
+             * Writing a rung from a description needs a provider key, which
+             * belongs to an account, so it cannot run here. It is still shown,
+             * because hiding it on one surface and showing it on another made
+             * the same feature look like several. It opens as a bar and costs
+             * no rung space.
+             */
+            bottomDock={({ program, load }) => (
+              <LadderAi
+                getProgram={() => program}
+                onProgram={(next: LadxProgram) => load(next)}
+                disabledReason="Writing a rung from a description needs a provider key, which belongs to an account. Sign up and connect one in Settings."
+              />
+            )}
+          />
         </div>
       </div>
     </div>

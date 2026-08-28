@@ -1437,7 +1437,11 @@ export default function HmiEditor({
           onApply={applyGenerated}
           onUndo={doUndo}
           hasProvider={Boolean(onGenerate)}
-          disabledReason={onGenerate ? generateDisabledReason : "No model is connected."}
+          disabledReason={
+            onGenerate
+              ? generateDisabledReason
+              : "Drawing a screen from a description needs a provider key, which belongs to an account. Sign up and connect one in Settings."
+          }
         />
       )}
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
 import {
   Activity,
   CircleDot,
@@ -24,6 +25,7 @@ import {
   seedPresets,
   validate,
 } from "../index";
+import { rungToNeutralText } from "../lib/convert";
 import { focusModeLabel, useFocusMode } from "../lib/focus-mode";
 import MonitorRungs from "./MonitorRungs";
 
@@ -330,7 +332,7 @@ export default function Monitor({
         `| **Run by** | ${author}${companyName ? `, ${companyName}` : ""} |`,
         `| **Recorded** | ${now} UTC |`,
         `| **Scans** | ${scans} |`,
-        `| **Scan time** | ${rate} ms set, ${observedScanMs ?? "—"} ms observed |`,
+        `| **Scan time** | ${rate} ms set, ${observedScanMs ?? "not yet"} ms observed |`,
         "",
         "This record was produced by running the program in LADX Studio's monitor.",
         "It is a desk test of the logic, not a test of the installed system, and it",
@@ -361,7 +363,7 @@ export default function Monitor({
 
       if (!onSaveRecord) return;
       const ok = await onSaveRecord({
-        title: `Logic test record — ${routine?.name ?? source.name}`,
+        title: `Logic test record, ${routine?.name ?? source.name}`,
         projectId: source.projectId,
         content: body,
       });
@@ -400,6 +402,68 @@ export default function Monitor({
       </div>
     );
   }
+
+  /**
+   * Asking why the logic is doing what it is doing.
+   *
+   * The most asked question in this trade, and the one a simulator is uniquely
+   * placed to answer: it has the rungs and it has every tag value at this
+   * instant, which is exactly what somebody standing at a panel does not have.
+   *
+   * It explains rather than edits. Nothing it says changes the program, so the
+   * failure mode is not a bad edit, it is a confident wrong diagnosis that
+   * somebody acts on. The context below is assembled from what is actually in
+   * front of the person, and the prompt is told to say it cannot tell rather
+   * than to guess.
+   */
+  const runAssist = useCallback(
+    async (question: string, { step, model, signal }: AssistRunContext) => {
+      step.start("read", "Reading the program and the live values");
+      const rungs = routine?.rungs ?? [];
+      const on = tags.filter((t) => Number(t.value) !== 0);
+      step.detail(
+        `${rungs.length} rung${rungs.length === 1 ? "" : "s"}, ${tags.length} tags, ${on.length} currently on, ${running ? `running at ${observedScanMs ?? rate} ms` : "stopped"}`,
+      );
+
+      const context = [
+        `Program: ${source?.name ?? "Untitled"}${routine ? `, routine ${routine.name}` : ""}`,
+        running
+          ? `State: running, ${scans} scans, about ${observedScanMs ?? rate} ms per scan`
+          : "State: stopped",
+        "",
+        "Tag values right now:",
+        ...tags.map(
+          (t) =>
+            `  ${t.name} = ${t.value}  (${t.type}${t.device ? `, ${t.device}` : ""}${t.isInput ? ", input" : ""}${t.isOutput ? ", output" : ""}${t.comment ? `, "${t.comment}"` : ""})`,
+        ),
+        "",
+        "Rungs, as neutral text:",
+        ...rungs.map(
+          (r, i) => `  ${i + 1}: ${r.comment ? `(* ${r.comment} *) ` : ""}${rungToNeutralText(r)}`,
+        ),
+      ].join("\n");
+
+      step.start("ask", model ? `Asking ${model}` : "Asking the model");
+      const res = await fetch("/api/assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tool: "monitor", context, question, model }),
+        signal,
+      });
+      const b = (await res.json()) as { answer?: string; model?: string; error?: string };
+      if (!res.ok || !b.answer) {
+        step.fail(b.error ?? "No answer came back");
+        throw new Error(b.error ?? "Could not reach a model.");
+      }
+      step.detail(b.model ? `${b.model} replied` : "Reply received");
+      // Nothing was changed, so nothing is offered as undoable. Saying so is the
+      // point: this reads the program, it does not touch it.
+      return { text: b.answer, undoable: false };
+    },
+    [routine, tags, running, observedScanMs, rate, scans, source],
+  );
+
+  const assist = useAssistant({ run: runAssist });
 
   return (
     <div
@@ -442,7 +506,7 @@ export default function Monitor({
         >
           {sources.map((s) => (
             <option key={s.projectId ?? "__scratch"} value={s.projectId ?? "__scratch"}>
-              {s.projectName ? `${s.projectName} — ${s.name}` : `${s.name} (scratch)`}
+              {s.projectName ? `${s.projectName}, ${s.name}` : `${s.name} (scratch)`}
             </option>
           ))}
         </select>
@@ -704,6 +768,35 @@ export default function Monitor({
           </div>
         </aside>
       </div>
+
+      {/*
+        The assistant, the same one every other tool has.
+
+        It reads the program and the live tag values and explains; it never
+        edits. That is the whole reason it is worth having here: standing at a
+        panel, the thing you cannot see is every value at once, and the
+        simulator has exactly that.
+      */}
+      <Assistant
+        toolId="monitor"
+        title="Ask about the logic"
+        placeholder="Why is the conveyor not starting?"
+        suggestions={[
+          "Why is this rung not conducting?",
+          "Which tag is holding the output off?",
+          "What would I have to press to make rung 1 true?",
+        ]}
+        turns={assist.turns}
+        busy={assist.busy}
+        steps={assist.steps}
+        error={assist.error}
+        models={assist.models}
+        question={assist.question}
+        onSend={assist.send}
+        onAnswer={assist.answer}
+        onStop={assist.stop}
+        footnote="It reads the program and the values in front of you and explains them. It does not change anything, and it can be wrong: check the rung yourself before acting on it."
+      />
     </div>
   );
 }
