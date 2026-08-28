@@ -1,4 +1,5 @@
 import { PhaseSelect } from "@/components/platform/project-controls";
+import ClientStandardsPanel from "@/components/studio/client-standards-panel";
 import DeliverableRow from "@/components/studio/deliverable-row";
 import DocumentList from "@/components/studio/document-list";
 import OnboardingGate from "@/components/studio/onboarding-gate";
@@ -14,6 +15,7 @@ import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { cadDrawings, documents, ladderPrograms, projectTasks } from "@/lib/db/schema";
 import { missingFor } from "@/lib/platform/brief";
+import { getStandards } from "@/lib/platform/client-records";
 import { ACTIVE_PHASES, PHASES, deliverablesFor, getPhase } from "@/lib/platform/lifecycle";
 import { getClient, getCompany, getProject, listClients } from "@/lib/platform/queries";
 import { and, asc, desc, eq } from "drizzle-orm";
@@ -83,49 +85,51 @@ export default async function ProjectWorkspace({
   const project = await getProject(user.id, id);
   if (!project) notFound();
 
-  const [company, client, projectDocs, drawings, tasks, clients, programs] = await Promise.all([
-    getCompany(user.id),
-    project.clientId ? getClient(user.id, project.clientId) : Promise.resolve(null),
-    db()
-      .select({
-        id: documents.id,
-        title: documents.title,
-        kind: documents.kind,
-        templateSlug: documents.templateSlug,
-        fileName: documents.fileName,
-        mimeType: documents.mimeType,
-        byteSize: documents.byteSize,
-        projectId: documents.projectId,
-        updatedAt: documents.updatedAt,
-      })
-      .from(documents)
-      .where(and(eq(documents.userId, user.id), eq(documents.projectId, id)))
-      .orderBy(desc(documents.updatedAt)),
-    db()
-      .select({
-        id: cadDrawings.id,
-        name: cadDrawings.name,
-        updatedAt: cadDrawings.updatedAt,
-      })
-      .from(cadDrawings)
-      .where(and(eq(cadDrawings.userId, user.id), eq(cadDrawings.projectId, id)))
-      .orderBy(desc(cadDrawings.updatedAt)),
-    db()
-      .select()
-      .from(projectTasks)
-      .where(and(eq(projectTasks.userId, user.id), eq(projectTasks.projectId, id)))
-      .orderBy(asc(projectTasks.position), asc(projectTasks.createdAt)),
-    listClients(user.id),
-    db()
-      .select({
-        id: ladderPrograms.id,
-        name: ladderPrograms.name,
-        program: ladderPrograms.program,
-        updatedAt: ladderPrograms.updatedAt,
-      })
-      .from(ladderPrograms)
-      .where(and(eq(ladderPrograms.userId, user.id), eq(ladderPrograms.projectId, id))),
-  ]);
+  const [company, client, projectDocs, drawings, tasks, clients, programs, standards] =
+    await Promise.all([
+      getCompany(user.id),
+      project.clientId ? getClient(user.id, project.clientId) : Promise.resolve(null),
+      db()
+        .select({
+          id: documents.id,
+          title: documents.title,
+          kind: documents.kind,
+          templateSlug: documents.templateSlug,
+          fileName: documents.fileName,
+          mimeType: documents.mimeType,
+          byteSize: documents.byteSize,
+          projectId: documents.projectId,
+          updatedAt: documents.updatedAt,
+        })
+        .from(documents)
+        .where(and(eq(documents.userId, user.id), eq(documents.projectId, id)))
+        .orderBy(desc(documents.updatedAt)),
+      db()
+        .select({
+          id: cadDrawings.id,
+          name: cadDrawings.name,
+          updatedAt: cadDrawings.updatedAt,
+        })
+        .from(cadDrawings)
+        .where(and(eq(cadDrawings.userId, user.id), eq(cadDrawings.projectId, id)))
+        .orderBy(desc(cadDrawings.updatedAt)),
+      db()
+        .select()
+        .from(projectTasks)
+        .where(and(eq(projectTasks.userId, user.id), eq(projectTasks.projectId, id)))
+        .orderBy(asc(projectTasks.position), asc(projectTasks.createdAt)),
+      listClients(user.id),
+      db()
+        .select({
+          id: ladderPrograms.id,
+          name: ladderPrograms.name,
+          program: ladderPrograms.program,
+          updatedAt: ladderPrograms.updatedAt,
+        })
+        .from(ladderPrograms)
+        .where(and(eq(ladderPrograms.userId, user.id), eq(ladderPrograms.projectId, id))),
+      project.clientId ? getStandards(user.id, project.clientId) : Promise.resolve(null),
+    ]);
 
   // A deliverable that has already been started opens rather than regenerating,
   // so an edited document is never silently replaced by a fresh template.
@@ -230,6 +234,19 @@ export default async function ProjectWorkspace({
           */}
           {onSummary ? (
             <div className="mt-6 space-y-8">
+              {/*
+                The client's conventions, on the job they apply to. A standards
+                pack on a client page is a filing cabinet; the same pack here is
+                the difference between a job delivered right and delivered
+                again.
+              */}
+              {client && (
+                <ClientStandardsPanel
+                  clientId={client.id}
+                  clientName={client.name}
+                  standards={standards}
+                />
+              )}
               <ProjectSummary
                 projectId={project.id}
                 fields={{

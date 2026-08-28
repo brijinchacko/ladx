@@ -1,10 +1,12 @@
 import ClientForm, { DeleteClientButton } from "@/components/platform/client-form";
+import { Contacts, Sites, Standards } from "@/components/platform/client-records";
 import { NewProjectForm } from "@/components/platform/project-controls";
 import DocumentList from "@/components/studio/document-list";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents } from "@/lib/db/schema";
+import { getStandards, listContacts, listSites } from "@/lib/platform/client-records";
 import { getPhase } from "@/lib/platform/lifecycle";
 import { getClient, listProjects } from "@/lib/platform/queries";
 import { and, desc, eq } from "drizzle-orm";
@@ -28,7 +30,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   const client = await getClient(user.id, id);
   if (!client) notFound();
 
-  const [allProjects, clientDocs] = await Promise.all([
+  const [allProjects, clientDocs, contacts, sites, standards] = await Promise.all([
     listProjects(user.id),
     db()
       .select({
@@ -45,6 +47,9 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
       .from(documents)
       .where(and(eq(documents.userId, user.id), eq(documents.clientId, id)))
       .orderBy(desc(documents.updatedAt)),
+    listContacts(user.id, id),
+    listSites(user.id, id),
+    getStandards(user.id, id),
   ]);
 
   const projects = allProjects.filter((p) => p.clientId === id);
@@ -59,6 +64,10 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-4xl space-y-10 p-6">
+          <Contacts clientId={client.id} contacts={contacts} sites={sites} />
+          <Sites clientId={client.id} sites={sites} />
+          <Standards clientId={client.id} standards={standards} />
+
           {/* projects for this client */}
           <section>
             <div className="mb-3 flex items-center justify-between gap-4">

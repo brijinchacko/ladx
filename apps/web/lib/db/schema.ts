@@ -811,9 +811,150 @@ export const clients = pgTable(
   }),
 );
 
+/**
+ * The people at a client, rather than one name in a field.
+ *
+ * A client is a company and the single `contactName` on it was always a
+ * simplification: a control project has a buyer who signs the order, a site
+ * engineer who tells you where the panel goes, a maintenance manager who has to
+ * live with it afterwards, and somebody in accounts who wants the invoice
+ * addressed a particular way. They are rarely the same person and the one you
+ * need depends on what you are doing.
+ *
+ * The role is free text with suggestions rather than an enum. Every firm names
+ * these differently and a fixed list would be wrong for most of them.
+ */
+export const clientContacts = pgTable(
+  "client_contacts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    role: text("role"),
+    email: text("email"),
+    phone: text("phone"),
+    /** Which site they are based at, when it matters. */
+    siteId: uuid("site_id"),
+    /** The one to put on documents when nothing else is said. */
+    isPrimary: boolean("is_primary").notNull().default(false),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("client_contacts_user_idx").on(t.userId),
+    clientIdx: index("client_contacts_client_idx").on(t.clientId),
+  }),
+);
+
+/**
+ * Where the work actually happens.
+ *
+ * A client is a company; a panel goes into a building. A group with four plants
+ * is one client and four sites, and nearly everything operational is a property
+ * of the site rather than the company: the address you drive to, who lets you
+ * in, whether you need an induction before you can carry a screwdriver through
+ * the gate, and what the site voltage is.
+ *
+ * Access notes are the field that earns this table on its own. Turning up
+ * without knowing you needed a permit is a wasted day.
+ */
+export const clientSites = pgTable(
+  "client_sites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    addressLine1: text("address_line1"),
+    addressLine2: text("address_line2"),
+    city: text("city"),
+    region: text("region"),
+    postcode: text("postcode"),
+    country: text("country"),
+    /** What it takes to get on site: permits, inductions, escorts, PPE. */
+    accessNotes: text("access_notes"),
+    /** Whether an induction is needed before anybody can work there. */
+    inductionRequired: boolean("induction_required").notNull().default(false),
+    /** Supply and environment, which decide half the panel design. */
+    supplyVoltage: text("supply_voltage"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("client_sites_user_idx").on(t.userId),
+    clientIdx: index("client_sites_client_idx").on(t.clientId),
+  }),
+);
+
+/**
+ * The client's own engineering rules.
+ *
+ * This is the part a CRM cannot do and the reason Clients belongs in an
+ * engineering tool at all. Every end client has its own conventions, and they
+ * are not preferences: a customer specification routinely requires the drawing
+ * descriptor and the PLC descriptor to match character for character, and a
+ * project delivered against the wrong convention is rework rather than a
+ * difference of opinion.
+ *
+ * Held per client so it travels with the work: the ladder editor can check a
+ * tag against the convention, CAD can number a drawing the way this client
+ * numbers them, and the HMI can be built to their alarm colours rather than
+ * ours. Written down once beats being in one engineer's head.
+ */
+export const clientStandards = pgTable(
+  "client_standards",
+  {
+    clientId: uuid("client_id")
+      .primaryKey()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** e.g. "AREA_EQUIP_FUNC, 18 characters, upper case". */
+    tagConvention: text("tag_convention"),
+    /** A pattern the editor can check against, when the convention is regular. */
+    tagPattern: text("tag_pattern"),
+    /** e.g. "PRJ-DISC-SHEET, three digits". */
+    drawingNumbering: text("drawing_numbering"),
+    /** Rockwell, Siemens, Beckhoff, and which range. */
+    preferredPlc: text("preferred_plc"),
+    preferredHmi: text("preferred_hmi"),
+    preferredDrive: text("preferred_drive"),
+    /** ISA-101 greyscale, or the client's own palette. */
+    hmiConvention: text("hmi_convention"),
+    /** How many alarm priorities they use and what they mean. */
+    alarmConvention: text("alarm_convention"),
+    /** What has to be handed over, and in what format. */
+    documentRequirements: text("document_requirements"),
+    /** Anything else that would otherwise live in somebody's head. */
+    notes: text("notes"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("client_standards_user_idx").on(t.userId),
+  }),
+);
+
 export type CompanyProfile = typeof companyProfiles.$inferSelect;
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
+export type ClientContact = typeof clientContacts.$inferSelect;
+export type NewClientContact = typeof clientContacts.$inferInsert;
+export type ClientSite = typeof clientSites.$inferSelect;
+export type NewClientSite = typeof clientSites.$inferInsert;
+export type ClientStandards = typeof clientStandards.$inferSelect;
+export type NewClientStandards = typeof clientStandards.$inferInsert;
 export type Project = typeof projects.$inferSelect;
 
 // ----- documents -----

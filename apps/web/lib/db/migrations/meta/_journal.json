@@ -148,6 +148,13 @@
       "when": 1787674738794,
       "tag": "0020_lively_bloodaxe",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1787908571849,
+      "tag": "0021_nice_whirlwind",
+      "breakpoints": true
     }
   ]
 }
