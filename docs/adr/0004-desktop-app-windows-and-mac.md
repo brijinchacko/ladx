@@ -52,9 +52,17 @@ price:
 - Azure Trusted Signing is the newer option, cheaper than EV, cloud held, and
   worth pricing before committing to a token.
 
-**Decision needed from the business, not from engineering:** whether to buy EV
-or equivalent. Shipping OV means telling every early customer to click through a
-malware warning.
+**Decided, 2026-08-28: ship unsigned for now.** Named early customers are told
+in advance, and the download page says so on the page rather than letting the
+operating system say it first: somebody who was not warned reasonably concludes
+the download is malicious and stops. The installer's SHA-256 is published for
+the same reason, because without a signature that is the only check a person
+can make.
+
+This is a decision to defer, not to skip. A certificate has to be bought before
+any public release, and the choice when it is bought is still EV or Azure
+Trusted Signing over OV: an OV certificate does not clear SmartScreen until it
+has accrued reputation from downloads we will not have.
 
 ### 2. The update policy contradicts the network rule
 
@@ -133,7 +141,10 @@ schema for the surfaces that have never run on desktop.
    Two downloads is a support question we should not create.
 3. **Built on the target.** macOS builds on macOS, Windows on Windows, in a
    GitHub Actions matrix. Cross compiling a signed and notarised macOS app is
-   not a thing to attempt.
+   not a thing to attempt, and a Windows installer cannot be produced from a
+   Mac at all: the MSI needs the Windows SDK and WiX. The repository is a
+   private GitHub repository so that matrix can run, which is the only reason
+   there is a Windows build.
 4. **Opt in updates, off by default.** See above. The network rule is reworded
    accordingly, in this document.
 5. **Ollama is required, and detected rather than bundled.** Bundling model
@@ -198,11 +209,32 @@ in it and opens it in Finder or Explorer. Convert files its exports into
 both fall back to a download when no project is open rather than losing the
 file. A macOS `.app` and `.dmg` build locally, unsigned.
 
-**Fixed on the way:** the exported panel runtime was built by a script inside
-`apps/web`, so the desktop shipped without it and the export menu item there
-failed on a 404 for a file nobody had noticed was missing. The script now lives
-in `packages/hmi` beside the panel entry it bundles, and both apps ask for it by
-output directory.
+**Also done:** the desktop now has the web app's layout rather than only its
+tools. Four of them opened with no sidebar because the shell was a component
+each page opted into; it is a layout now, and `packages/ui` owns the sidebar's
+class names so the two surfaces cannot drift again.
+
+A `/download` page on the site carries the builds, with the version, the files
+and each platform's availability in one module so the page, the header and the
+sitemap cannot disagree. A platform without a build says so rather than offering
+a link that 404s.
+
+**Fixed on the way**, three of a kind, all the same shape: an asset or a script
+living in one app that both apps needed.
+
+- The exported panel runtime was built by a script inside `apps/web`, so the
+  desktop shipped without it and the export menu item failed on a 404 for a file
+  nobody had noticed was missing. The script now lives in `packages/hmi` beside
+  the panel entry it bundles.
+- The brand artwork lived in `apps/web/public`, so the desktop drew a broken
+  image where its logo goes for as long as it has existed. It is part of the
+  Logo component, so it now sits next to it in `packages/ui`.
+- The desktop had no `icons/icon.ico`, which `tauri-build` requires to generate
+  a Windows resource file, so every Windows build failed before it linked while
+  macOS carried on fine. It surfaced the first time a Windows runner actually
+  ran, which is the argument for running the matrix early rather than at
+  release. The icon it did have was a cropped fragment of the wordmark; the app
+  icon is now the square mark the rest of the product uses.
 
 ### Phase 2, `0.2.0`: the rest of the drawing tools
 
