@@ -116,6 +116,21 @@ export interface HmiEditorProps {
   onGenerate?: GenerateScreen;
   /** Shown in the prompt box when there is no model to talk to. */
   generateDisabledReason?: string | null;
+  /**
+   * Where an exported panel goes, when the surface has somewhere better than
+   * the browser's downloads folder.
+   *
+   * The desktop files it into the open project, under HMI, beside the screens
+   * it was built from. Omitted, it downloads as it always has.
+   *
+   * The label travels with the behaviour, because a menu item that says
+   * "Download" and quietly writes a file somewhere is worse than either one on
+   * its own. `save` returns where it went, so the editor can say so.
+   */
+  onExport?: {
+    label: string;
+    save: (html: string, filename: string) => Promise<string>;
+  };
 }
 
 export default function HmiEditor({
@@ -129,6 +144,7 @@ export default function HmiEditor({
   ladderHref = null,
   onGenerate,
   generateDisabledReason = null,
+  onExport,
 }: HmiEditorProps) {
   /**
    * The document, held as an undo stack.
@@ -622,11 +638,32 @@ export default function HmiEditor({
       if (!res.ok) throw new Error(`runtime ${res.status}`);
       const runtime = await res.text();
       const html = buildPanelHtml({ doc, program, name, runtime });
+      const filename = panelFileName(name);
+
+      if (onExport) {
+        // Reported separately from the runtime fetch above, because a save
+        // that failed for its own reason must not be explained as a missing
+        // runtime. Somebody chasing the wrong cause loses an afternoon.
+        try {
+          // Said rather than assumed: a file written into a folder the person
+          // cannot see needs naming, or they press the button again wondering
+          // whether it worked.
+          setImportNote(`Panel saved to ${await onExport.save(html, filename)}`);
+        } catch (err) {
+          setImportNote(
+            `The panel was built but could not be saved: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+        }
+        return;
+      }
+
       const blob = new Blob([html], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = panelFileName(name);
+      a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
     } catch {
@@ -637,7 +674,7 @@ export default function HmiEditor({
     } finally {
       setExporting(false);
     }
-  }, [doc, program, name]);
+  }, [doc, program, name, onExport]);
 
   /* ── dragging on the canvas ── */
 

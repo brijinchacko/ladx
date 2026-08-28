@@ -28,7 +28,7 @@ export function ProjectsList() {
   if (rows.length === 0) {
     return (
       <div className="border border-dashed border-ink-200 rounded-lg p-8 text-center text-ink-500 text-sm">
-        No projects yet. Click <strong>Open project</strong> to import an L5X or PLCopen TC6 .xml
+        Nothing imported yet. Click <strong>Open program</strong> to read an L5X or PLCopen TC6 .xml
         file.
       </div>
     );

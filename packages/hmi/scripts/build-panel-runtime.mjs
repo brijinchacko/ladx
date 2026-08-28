@@ -7,9 +7,14 @@
  * script the export inlines.
  *
  * Bundled ahead of time rather than at export, because the alternative is
- * shipping a bundler to the browser. It is written to `public/`, so the editor
- * fetches it from its own origin at export time; the exported file itself
- * fetches nothing, which is the whole point of it.
+ * shipping a bundler to the browser. It is written into the calling app's
+ * `public/`, so the editor fetches it from its own origin at export time; the
+ * exported file itself fetches nothing, which is the whole point of it.
+ *
+ * It lives beside the panel entry it bundles rather than in one of the apps,
+ * because both the web app and the desktop app need it. When it lived in
+ * apps/web the desktop shipped without it, and the export menu item there
+ * failed on a 404 for a file nobody had noticed was missing.
  *
  * IIFE rather than an ES module: an exported panel is opened from a file://
  * URL as often as from a server, and a module script there is blocked by the
@@ -22,9 +27,16 @@ import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const repo = resolve(here, "../../..");
-const entry = resolve(repo, "packages/hmi/src/panel/main.tsx");
-const out = resolve(here, "../public/panel/runtime.js");
+const entry = resolve(here, "../src/panel/main.tsx");
+
+// Where it goes is the caller's business: each app serves it from its own
+// public directory, and the editor fetches it from its own origin.
+const flag = process.argv.indexOf("--out");
+if (flag === -1 || !process.argv[flag + 1]) {
+  console.error("build-panel-runtime: --out <public dir> is required");
+  process.exit(1);
+}
+const out = resolve(process.cwd(), process.argv[flag + 1], "panel/runtime.js");
 
 await mkdir(dirname(out), { recursive: true });
 
@@ -113,4 +125,4 @@ await writeFile(
   ].join("\n"),
 );
 
-console.log(`panel runtime: ${(size / 1024).toFixed(0)} kB at public/panel/runtime.js`);
+console.log(`panel runtime: ${(size / 1024).toFixed(0)} kB at ${out}`);

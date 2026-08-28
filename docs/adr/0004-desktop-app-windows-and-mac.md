@@ -1,7 +1,9 @@
 # ADR 0004, LADX Studio as a desktop app for Windows and macOS
 
 **Date:** 2026-08-28
-**Status:** Proposed. Needs decisions on signing spend and the update policy before work starts.
+**Status:** Accepted for Phase 1, which is in progress. Signing spend and the
+update policy are still open and are the only items that block a release rather
+than the work.
 
 ## Context
 
@@ -82,7 +84,40 @@ but the rule as written says "no `reqwest` to public domains", and somebody will
 eventually read `reqwest` and stop. Stating it here means the next person does
 not have to guess.
 
-### 4. Storage is Postgres on the web and has to be SQLite here
+### 4. A project is a folder here, and that is the whole point
+
+The web app keeps documents in Postgres and object storage, which is right for
+a browser. On a laptop in a switchroom it is wrong: the customer wants the
+folder, the folder goes on a memory stick at handover, and half of what lands
+in it was never made by LADX. A project that is a real directory can hold the
+datasheet somebody dragged in, and opens for a person who never installed this
+application, which is what handover means.
+
+So the desktop asks once where projects live and builds a structure inside it.
+The folders are the lifecycle phases the product already models, in the order
+they happen, numbered because Explorer and Finder sort alphabetically and
+without numbers Handover files before Specification:
+
+`01 Specification`, `02 Drawings` (DXF, PDF), `03 Programs` (Exports),
+`04 HMI` (Panels), `05 Testing`, `06 Commissioning`, `07 Handover`,
+`99 Working`.
+
+Two rules make it survivable rather than merely tidy:
+
+- **One function decides where a document goes.** A tool says what kind of
+  thing it made and nothing else. Two callers deciding separately is how a
+  project ends up with drawings in three places and a handover pack missing
+  one of them.
+- **Nothing is ever overwritten.** A second file of the same name gets `(2)`,
+  and a project name already taken gets a numbered folder. Two jobs called
+  "Line 4 upgrade" is ordinary, and silently merging them is the kind of loss
+  nobody notices until the wrong drawing is issued.
+
+A `ladx-project.json` marks the directory and carries a format version from the
+first release, before there is anything to migrate, because adding one later
+means guessing at what the files without it were.
+
+### 5. Storage is Postgres on the web and has to be SQLite here
 
 The web app's data lives in Postgres with S3 for files. None of that exists on a
 laptop in a switchroom. `rusqlite` is already in the workspace and the Rust side
@@ -155,6 +190,19 @@ Work: SQLite behind `StudioStorage`, the assistant wired to Ollama through
 `invoke()` rather than `/api/*`, macOS added to the build, and both platforms
 signed. This is the release that proves the pipeline, which is the thing worth
 proving early.
+
+**Done so far:** the project folder above, its ten Tauri commands, and a
+Workspace surface that chooses where projects live, creates one, lists what is
+in it and opens it in Finder or Explorer. Convert files its exports into
+`03 Programs`, the HMI builder files exported panels into `04 HMI/Panels`, and
+both fall back to a download when no project is open rather than losing the
+file. A macOS `.app` and `.dmg` build locally, unsigned.
+
+**Fixed on the way:** the exported panel runtime was built by a script inside
+`apps/web`, so the desktop shipped without it and the export menu item there
+failed on a 404 for a file nobody had noticed was missing. The script now lives
+in `packages/hmi` beside the panel entry it bundles, and both apps ask for it by
+output directory.
 
 ### Phase 2, `0.2.0`: the rest of the drawing tools
 

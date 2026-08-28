@@ -76,6 +76,7 @@ export default function ConvertWorkbench({
   unreadable = [],
   ladderHref = "/studio/ladder",
   onSaveRecord,
+  onExport,
 }: {
   sources: ConvertSource[];
   companyName: string | null;
@@ -88,6 +89,23 @@ export default function ConvertWorkbench({
   ladderHref?: string;
   /** Where a generated record is written. Omitted means this surface cannot store one. */
   onSaveRecord?: SaveRecord;
+  /**
+   * Where an export goes, when the surface has somewhere better than the
+   * browser's downloads folder.
+   *
+   * The desktop files it into the open project, next to the drawings and the
+   * test records, which is where it belongs and where a browser cannot put it.
+   * Omitted, the file downloads as it always has.
+   *
+   * The label travels with the behaviour rather than as a separate prop,
+   * because a button that says "Download" and quietly writes a file somewhere
+   * is worse than either one on its own. `save` returns where it went, so the
+   * screen can say so.
+   */
+  onExport?: {
+    label: string;
+    save: (text: string, filename: string) => Promise<string>;
+  };
 }) {
   /*
    * Focus and fullscreen.
@@ -233,7 +251,16 @@ export default function ConvertWorkbench({
     });
   }, []);
 
+  const [exported, setExported] = useState<string | null>(null);
+
   const download = (text: string, filename: string) => {
+    if (onExport) {
+      onExport
+        .save(text, filename)
+        .then((path) => setExported(`to ${path}`))
+        .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+      return;
+    }
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -246,6 +273,14 @@ export default function ConvertWorkbench({
   /** Every target at once, which is what a migration actually needs. */
   const downloadAll = () => {
     if (!all) return;
+    if (onExport) {
+      // Reported as a count rather than one path at a time: saving five files
+      // and being told about one of them reads like the other four failed.
+      Promise.all(all.map(({ result }) => onExport.save(result.text, result.filename)))
+        .then((paths) => setExported(`${paths.length} files into the project`))
+        .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+      return;
+    }
     for (const { result } of all) download(result.text, result.filename);
   };
 
@@ -452,6 +487,15 @@ export default function ConvertWorkbench({
         </div>
       </div>
 
+      {exported && (
+        <p
+          className="shrink-0 truncate border-ink-100 border-b bg-ink-50/60 px-3 py-1.5 text-[11.5px] text-ink-600"
+          title={exported}
+        >
+          Saved {exported}
+        </p>
+      )}
+
       {error && (
         <div className="shrink-0 border-red-200 border-b bg-red-50 px-3 py-2">
           <p className="text-[12.5px] text-red-800">{error}</p>
@@ -558,7 +602,7 @@ export default function ConvertWorkbench({
                     className="flex h-6 items-center gap-1.5 rounded border border-ink-200 px-2 text-[11.5px] text-ink-600 transition-colors hover:border-ink-400"
                   >
                     <Download className="h-3 w-3" />
-                    Download
+                    {onExport ? onExport.label : "Download"}
                   </button>
                 </div>
               </div>
@@ -637,7 +681,9 @@ export default function ConvertWorkbench({
               },
               {
                 id: "download",
-                label: "Download every target at once",
+                label: onExport
+                  ? "Save every target into the project"
+                  : "Download every target at once",
                 hint: "What a migration actually needs, rather than one at a time.",
                 onSelect: downloadAll,
               },

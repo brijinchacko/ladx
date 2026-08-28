@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/build-panel-runtime.mjs && next dev --turbopack -p 3000",
-    "build": "node scripts/build-panel-runtime.mjs && next build",
+    "dev": "node ../../packages/hmi/scripts/build-panel-runtime.mjs --out public && next dev --turbopack -p 3000",
+    "build": "node ../../packages/hmi/scripts/build-panel-runtime.mjs --out public && next build",
     "start": "next start -p 3000",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit",
@@ -14,7 +14,7 @@
     "test": "vitest run",
     "admin:grant": "node scripts/grant-admin.mjs",
     "admin:list": "node scripts/grant-admin.mjs --list",
-    "panel:build": "node scripts/build-panel-runtime.mjs"
+    "panel:build": "node ../../packages/hmi/scripts/build-panel-runtime.mjs --out public"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.665.0",

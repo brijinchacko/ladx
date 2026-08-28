@@ -110,9 +110,12 @@ export default function HomePage() {
         <section>
           <div className="flex items-end justify-between mb-3">
             <div>
-              <h2 className="text-lg font-semibold">Projects</h2>
+              {/* Not "Projects": a project is the folder on disk under
+                  Workspace, and two things by that name is a person opening the
+                  wrong one. These are the vendor files that have been read. */}
+              <h2 className="text-lg font-semibold">Imported programs</h2>
               <p className="text-xs text-ink-500">
-                L5X (Rockwell) and PLCopen TC6 .xml. Manifest stored locally; no cloud upload.
+                L5X (Rockwell) and PLCopen TC6 .xml. Read on this machine, nothing uploaded.
               </p>
             </div>
             <UploadProjectButton />

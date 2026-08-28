@@ -57,6 +57,8 @@ export async function licenceActivate(licenceKey: string): Promise<ActivationRec
 
 export interface StudioSettings {
   defaultModel?: string | null;
+  workspaceDir?: string | null;
+  lastProject?: string | null;
 }
 
 export async function settingsLoad(): Promise<StudioSettings> {
@@ -191,4 +193,124 @@ export async function ensureConversation(projectId: string | null): Promise<Conv
 
 export async function listMessages(conversationId: string): Promise<MessageRow[]> {
   return tauriInvoke<MessageRow[]>("list_messages", { conversationId });
+}
+
+// ----- project folders -----
+//
+// The thing the desktop can do that the browser cannot: a project is a real
+// directory on a disk the person controls, which they can back up, put on a
+// memory stick and hand to a customer. These wrap the Rust side that builds
+// and files into it.
+
+/** A project on disk: where it is, plus the manifest that marks it as ours. */
+export interface ProjectFolder {
+  path: string;
+  format: number;
+  id: string;
+  name: string;
+  client?: string | null;
+  code?: string | null;
+  created: string;
+  updated: string;
+  appVersion: string;
+}
+
+export interface FolderEntry {
+  folder: string;
+  name: string;
+  bytes: number;
+  path: string;
+}
+
+/**
+ * What kind of thing is being saved.
+ *
+ * The caller says what it is and the Rust layout decides where it goes, so
+ * nothing writing a file has to know the folder names. Two callers deciding
+ * separately is how a project ends up with drawings in three places.
+ */
+export type DocumentKind =
+  | "spec"
+  | "drawing"
+  | "dxf"
+  | "pdf-drawing"
+  | "ladder"
+  | "export"
+  | "st"
+  | "scl"
+  | "plcopen"
+  | "neutral"
+  | "hmi"
+  | "panel"
+  | "test"
+  | "recording"
+  | "commissioning"
+  | "handover";
+
+/** Ask for the folder projects should live in. Null means they cancelled. */
+export async function pickWorkspace(): Promise<string | null> {
+  return tauriInvoke<string | null>("pick_workspace");
+}
+
+export async function createProjectFolder(opts: {
+  parent: string;
+  name: string;
+  client?: string | null;
+  code?: string | null;
+}): Promise<ProjectFolder> {
+  return tauriInvoke<ProjectFolder>("create_project_folder", {
+    parent: opts.parent,
+    name: opts.name,
+    client: opts.client ?? null,
+    code: opts.code ?? null,
+  });
+}
+
+export async function listProjectFolders(parent: string): Promise<ProjectFolder[]> {
+  return tauriInvoke<ProjectFolder[]>("list_project_folders", { parent });
+}
+
+/** Open a project the person points at, wherever it is. */
+export async function openProjectFolder(): Promise<ProjectFolder | null> {
+  return tauriInvoke<ProjectFolder | null>("open_project_folder");
+}
+
+/** Returns the full path it was written to. */
+export async function saveIntoProject(opts: {
+  project: string;
+  kind: DocumentKind | string;
+  filename: string;
+  contents: string;
+}): Promise<string> {
+  return tauriInvoke<string>("save_into_project", opts);
+}
+
+export async function readFromProject(opts: {
+  project: string;
+  kind: DocumentKind | string;
+  filename: string;
+}): Promise<string | null> {
+  return tauriInvoke<string | null>("read_from_project", opts);
+}
+
+export async function listProjectFiles(project: string): Promise<FolderEntry[]> {
+  return tauriInvoke<FolderEntry[]>("list_project_files", { project });
+}
+
+/** Show the folder in Explorer or Finder. */
+export async function revealProject(project: string): Promise<void> {
+  await tauriInvoke<void>("reveal_project", { project });
+}
+
+export async function setWorkspaceDir(dir: string): Promise<void> {
+  await tauriInvoke<void>("set_workspace_dir", { dir });
+}
+
+export async function getWorkspaceDir(): Promise<string | null> {
+  return tauriInvoke<string | null>("get_workspace_dir");
+}
+
+/** Null forgets it, which is what closing a project means. */
+export async function setLastProject(project: string | null): Promise<void> {
+  await tauriInvoke<void>("set_last_project", { project });
 }

@@ -7,6 +7,7 @@ import {
   type LadxProgram,
   partitionRunnableLike,
 } from "@/lib/designs";
+import { useProjectFolder } from "@/lib/project-folder";
 import { useEffect, useState } from "react";
 
 /**
@@ -19,6 +20,7 @@ import { useEffect, useState } from "react";
 export default function ConvertPage() {
   const [sources, setSources] = useState<ConvertSource[] | null>(null);
   const [unreadable, setUnreadable] = useState<string[]>([]);
+  const { project, fileInto } = useProjectFolder();
 
   useEffect(() => {
     (async () => {
@@ -46,8 +48,36 @@ export default function ConvertPage() {
       author=""
       unreadable={unreadable}
       ladderHref="/ladder"
+      /*
+       * A converted program belongs with the job, not in the downloads folder.
+       * With no project open there is nowhere better, so it downloads as it
+       * always has rather than vanishing.
+       */
+      onExport={
+        project
+          ? {
+              label: "Save to project",
+              save: async (text, filename) =>
+                (await fileInto(kindOf(filename), filename, text)) ?? filename,
+            }
+          : undefined
+      }
     />
   );
+}
+
+/**
+ * Which folder an export belongs in, from what it is.
+ *
+ * Everything Convert produces is a program in some other dialect, so it all
+ * files under Programs; the extension only decides whether it is the program
+ * or an export of it.
+ */
+function kindOf(filename: string): string {
+  const ext = filename.split(".").pop()?.toLowerCase() ?? "";
+  if (ext === "xml") return "plcopen";
+  if (ext === "l5x" || ext === "l5k") return "neutral";
+  return "export";
 }
 
 function safeParse(json: string): unknown {

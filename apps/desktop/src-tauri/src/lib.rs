@@ -14,6 +14,7 @@ mod db;
 mod licence;
 mod ollama;
 mod state;
+mod workspace;
 
 use tauri::Manager;
 
@@ -67,6 +68,17 @@ pub fn run() {
             commands::designs::hmi_create,
             commands::designs::hmi_save,
             commands::designs::hmi_delete,
+            commands::workspace::pick_workspace,
+            commands::workspace::create_project_folder,
+            commands::workspace::list_project_folders,
+            commands::workspace::open_project_folder,
+            commands::workspace::save_into_project,
+            commands::workspace::read_from_project,
+            commands::workspace::list_project_files,
+            commands::workspace::reveal_project,
+            commands::workspace::set_workspace_dir,
+            commands::workspace::get_workspace_dir,
+            commands::workspace::set_last_project,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

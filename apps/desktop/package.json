@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "tauri dev",
-    "dev:next": "next dev --turbopack -p 1420",
-    "build": "next build",
-    "build:next": "next build",
+    "dev:next": "pnpm panel:build && next dev --turbopack -p 1420",
+    "build": "pnpm panel:build && next build",
+    "build:next": "pnpm panel:build && next build",
+    "panel:build": "node ../../packages/hmi/scripts/build-panel-runtime.mjs --out public",
     "tauri": "tauri",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit"

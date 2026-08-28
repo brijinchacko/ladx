@@ -13,6 +13,20 @@ pub struct StudioSettings {
     /// Last user-selected Ollama model name. None = use the auto-suggested.
     #[serde(default)]
     pub default_model: Option<String>,
+    /// Where projects live.
+    ///
+    /// Asked once rather than per project. Somebody who keeps work in one
+    /// place should not be picking it every time, and somebody who does not
+    /// can still choose per project when creating one.
+    #[serde(default)]
+    pub workspace_dir: Option<String>,
+    /// The project folder that was open when the app last closed.
+    ///
+    /// Reopened on launch. Somebody who spent yesterday on one job is
+    /// overwhelmingly likely to be on it again this morning, and being put back
+    /// where they were is the difference between a tool and a filing cabinet.
+    #[serde(default)]
+    pub last_project: Option<String>,
 }
 
 #[tauri::command]

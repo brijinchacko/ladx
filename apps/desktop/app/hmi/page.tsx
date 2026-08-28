@@ -2,6 +2,7 @@
 
 import { api } from "@/lib/api";
 import { settingsLoad } from "@/lib/invoke";
+import { useProjectFolder } from "@/lib/project-folder";
 import {
   type GenerateScreen,
   type HmiDoc,
@@ -44,6 +45,7 @@ function Loading() {
 
 function Hmi() {
   const router = useRouter();
+  const folder = useProjectFolder();
   const params = useSearchParams();
   const id = params.get("id");
   /**
@@ -199,6 +201,20 @@ function Hmi() {
         }
         onSave={async ({ id: appId, name, doc }) => api.saveHmi(appId, name, doc)}
         onGenerate={generate}
+        /*
+         * A panel is a deliverable, so it belongs in the job folder under HMI
+         * rather than in Downloads with everything else. With no project open
+         * there is nowhere better and it downloads as it always has.
+         */
+        onExport={
+          folder.project
+            ? {
+                label: "Save to project",
+                save: async (html, filename) =>
+                  (await folder.fileInto("panel", filename, html)) ?? filename,
+              }
+            : undefined
+        }
       />
     );
   }

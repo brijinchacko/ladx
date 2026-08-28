@@ -30,7 +30,7 @@ export function UploadProjectButton() {
     <div className="flex flex-col items-end gap-2">
       <Button variant="primary" onClick={go} disabled={busy}>
         <Upload className="h-4 w-4 mr-2" />
-        {busy ? "Importing…" : "Open project"}
+        {busy ? "Importing…" : "Open program"}
       </Button>
       {error && <p className="text-xs text-danger max-w-xs text-right">{error}</p>}
     </div>
