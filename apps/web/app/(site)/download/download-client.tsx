@@ -81,9 +81,9 @@ export default function DownloadClient() {
           The desktop build, for work that cannot leave the building
         </h1>
         <p className="text-[15px] leading-relaxed text-ink-600">
-          The ladder editor, the simulator, the HMI builder and Convert, running on your own
-          machine. Inference is a local Ollama model, so prompts and programs stay on the computer.
-          After the licence check on first run it needs no network at all.
+          The ladder editor, the simulator, CAD, the HMI builder and Convert, running on your own
+          machine. Inference is a local Ollama model, so prompts, programs and drawings stay on the
+          computer. After the licence check on first run it needs no network at all.
         </p>
       </header>
 
