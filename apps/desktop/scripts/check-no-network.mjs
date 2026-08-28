@@ -44,6 +44,14 @@ const ALLOWED_HOSTS = [
   "radix-ui.com",
   "github.com",
   "ollama.com",
+  // An XMP metadata namespace jsPDF stamps into every document. A namespace
+  // URI is an identifier; nothing resolves it.
+  "jspdf.default.namespaceuri",
+  // jsPDF's `output("pdfobjectnewwindow")` loads PDFObject from a CDN to
+  // preview in a browser tab. We never call that mode: the CAD writer returns
+  // `output("blob")`, which is asserted by a test in @ladx/cad so this stays
+  // dead rather than becoming true quietly.
+  "cdnjs.cloudflare.com",
 ];
 
 /**

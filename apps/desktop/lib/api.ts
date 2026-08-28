@@ -39,6 +39,36 @@ export const api = {
     return invoke<DesignRow[]>("ladder_list");
   },
 
+  /* ── drawings ── */
+
+  async listCad(): Promise<DesignRow[]> {
+    return invoke<DesignRow[]>("cad_list");
+  },
+
+  async getCad(id: string): Promise<DesignRow | null> {
+    return invoke<DesignRow | null>("cad_get", { id });
+  },
+
+  async createCad(projectId: string | null, name: string, doc: string): Promise<DesignRow> {
+    return invoke<DesignRow>("cad_create", { projectId, name, doc });
+  },
+
+  async saveCad(id: string, name: string, doc: string): Promise<boolean> {
+    return invoke<boolean>("cad_save", { id, name, doc });
+  },
+
+  async renameCad(id: string, name: string): Promise<boolean> {
+    return invoke<boolean>("cad_rename", { id, name });
+  },
+
+  async setCadProject(id: string, projectId: string | null): Promise<boolean> {
+    return invoke<boolean>("cad_set_project", { id, projectId });
+  },
+
+  async deleteCad(id: string): Promise<void> {
+    await invoke<void>("cad_delete", { id });
+  },
+
   /* ── HMI ── */
 
   async listHmi(): Promise<DesignRow[]> {

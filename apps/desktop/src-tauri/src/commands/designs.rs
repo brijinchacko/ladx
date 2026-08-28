@@ -1,4 +1,4 @@
-//! Tauri commands for ladder programs and HMI applications.
+//! Tauri commands for ladder programs, HMI applications and drawings.
 //!
 //! These are what replaces the cloud build's HTTP routes. The desktop makes no
 //! outbound calls at all, so the frontend reaches storage through `invoke`,
@@ -6,9 +6,12 @@
 
 use crate::db::{
     designs::{
-        create_hmi as db_create_hmi, delete_hmi as db_delete_hmi, get_hmi as db_get_hmi,
-        list_hmi as db_list_hmi, list_ladder as db_list_ladder, load_ladder as db_load_ladder,
-        save_hmi as db_save_hmi, save_ladder as db_save_ladder, DesignRow,
+        create_cad as db_create_cad, create_hmi as db_create_hmi, delete_cad as db_delete_cad,
+        delete_hmi as db_delete_hmi, get_cad as db_get_cad, get_hmi as db_get_hmi,
+        list_cad as db_list_cad, list_hmi as db_list_hmi, list_ladder as db_list_ladder,
+        load_ladder as db_load_ladder, rename_cad as db_rename_cad, save_cad as db_save_cad,
+        save_hmi as db_save_hmi, save_ladder as db_save_ladder,
+        set_cad_project as db_set_cad_project, DesignRow,
     },
     ProjectsDb,
 };
@@ -92,6 +95,78 @@ pub fn hmi_save(
 #[tauri::command]
 pub fn hmi_delete(state: tauri::State<'_, AppState>, id: String) -> Result<(), String> {
     with_db(&state.projects, |conn| db_delete_hmi(conn, &id))
+}
+
+/* ── drawings ── */
+
+#[tauri::command]
+pub fn cad_list(state: tauri::State<'_, AppState>) -> Result<Vec<DesignRow>, String> {
+    with_db(&state.projects, db_list_cad)
+}
+
+#[tauri::command]
+pub fn cad_get(
+    state: tauri::State<'_, AppState>,
+    id: String,
+) -> Result<Option<DesignRow>, String> {
+    with_db(&state.projects, |conn| db_get_cad(conn, &id))
+}
+
+#[tauri::command]
+pub fn cad_create(
+    state: tauri::State<'_, AppState>,
+    project_id: Option<String>,
+    name: String,
+    doc: String,
+) -> Result<DesignRow, String> {
+    if doc.len() > MAX_DOC_BYTES {
+        return Err("that drawing is too large to store".into());
+    }
+    with_db(&state.projects, |conn| {
+        db_create_cad(conn, project_id.as_deref(), &name, &doc)
+    })
+}
+
+#[tauri::command]
+pub fn cad_save(
+    state: tauri::State<'_, AppState>,
+    id: String,
+    name: String,
+    doc: String,
+) -> Result<bool, String> {
+    if doc.len() > MAX_DOC_BYTES {
+        return Err("that drawing is too large to store".into());
+    }
+    with_db(&state.projects, |conn| db_save_cad(conn, &id, &name, &doc))
+}
+
+/// Rename without writing the drawing.
+///
+/// The sheet list renames from a row with no drawing in hand, so a rename that
+/// also wrote a document would write whatever the list happened to be holding.
+#[tauri::command]
+pub fn cad_rename(
+    state: tauri::State<'_, AppState>,
+    id: String,
+    name: String,
+) -> Result<bool, String> {
+    with_db(&state.projects, |conn| db_rename_cad(conn, &id, &name))
+}
+
+#[tauri::command]
+pub fn cad_set_project(
+    state: tauri::State<'_, AppState>,
+    id: String,
+    project_id: Option<String>,
+) -> Result<bool, String> {
+    with_db(&state.projects, |conn| {
+        db_set_cad_project(conn, &id, project_id.as_deref())
+    })
+}
+
+#[tauri::command]
+pub fn cad_delete(state: tauri::State<'_, AppState>, id: String) -> Result<(), String> {
+    with_db(&state.projects, |conn| db_delete_cad(conn, &id))
 }
 
 fn with_db<T>(

@@ -46,6 +46,7 @@ import {
   MessageSquarePlus,
   MonitorCog,
   PanelLeft,
+  PencilRuler,
   Settings,
 } from "lucide-react";
 import Link from "next/link";
@@ -56,13 +57,14 @@ import type { ReactNode } from "react";
  * The tools, in the web app's order.
  *
  * Ladder first because it is where most work starts, then the ones you open
- * from a program rather than instead of one. CAD, Documents and Knowledge are
- * Phase 2 and 3 and are absent rather than disabled: a greyed row that never
- * becomes available is a promise the app is not keeping.
+ * from a program rather than instead of one. Documents and Knowledge are still to
+ * come and are absent rather than disabled: a greyed row that never becomes
+ * available is a promise the app is not keeping.
  */
 const TOOLS = [
   { href: "/ladder", label: "Ladder", icon: Grid2x2Check },
   { href: "/monitor", label: "Monitor", icon: Activity },
+  { href: "/cad", label: "CAD", icon: PencilRuler },
   { href: "/hmi", label: "HMI/SCADA", icon: MonitorCog },
   { href: "/convert", label: "Convert", icon: GitCompareArrows },
 ];

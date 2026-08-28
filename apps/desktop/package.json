@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ladx/cad": "workspace:*",
     "@ladx/design-system": "workspace:*",
     "@ladx/hmi": "workspace:*",
     "@ladx/studio": "workspace:*",

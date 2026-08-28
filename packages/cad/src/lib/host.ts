@@ -26,9 +26,24 @@ export interface CadStore {
   setProject(id: string, projectId: string | null): Promise<void>;
 }
 
+/**
+ * One thing a model asked for, before the editor turns it into geometry.
+ *
+ * Deliberately loose: `type` and `symbol` are whatever the model said, and the
+ * editor resolves a symbol name against the library rather than trusting the
+ * model's idea of what a contact looks like. Anything it cannot resolve is
+ * counted in `dropped` rather than drawn wrong.
+ */
+export interface GeneratedEntity {
+  type: string;
+  symbol?: string;
+  at?: Point;
+  layer?: string;
+}
+
 /** What a generated drawing comes back as, before symbols are resolved. */
 export interface GeneratedGeometry {
-  entities: { type: string; symbol?: string; at?: Point; layer?: string }[];
+  entities: GeneratedEntity[];
   summary?: string;
   model?: string | null;
   /** How much the host refused to build, so the editor can say so. */

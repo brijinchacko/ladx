@@ -60,6 +60,22 @@ pub fn apply_schema(conn: &Connection) -> Result<()> {
         CREATE INDEX IF NOT EXISTS hmi_projects_project_idx
         ON hmi_projects (project_id);
 
+        -- Drawings. A set is many sheets, so like the HMI and unlike the
+        -- ladder program there is no one-per-project constraint: a panel job
+        -- is a cover sheet, a power distribution sheet and half a dozen
+        -- schematics, and they are all the same project.
+        CREATE TABLE IF NOT EXISTS cad_drawings (
+            id          TEXT PRIMARY KEY,
+            project_id  TEXT,
+            name        TEXT NOT NULL DEFAULT 'Untitled drawing',
+            doc         TEXT NOT NULL,
+            created_at  TEXT NOT NULL,
+            updated_at  TEXT NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS cad_drawings_project_idx
+        ON cad_drawings (project_id);
+
         CREATE INDEX IF NOT EXISTS hmi_projects_updated_idx
         ON hmi_projects (updated_at DESC);
         "#,
@@ -186,6 +202,87 @@ pub fn save_hmi(conn: &Connection, id: &str, name: &str, doc: &str) -> Result<bo
 
 pub fn delete_hmi(conn: &Connection, id: &str) -> Result<()> {
     conn.execute("DELETE FROM hmi_projects WHERE id = ?1", params![id])?;
+    Ok(())
+}
+
+/* ── drawings ── */
+
+pub fn list_cad(conn: &Connection) -> Result<Vec<DesignRow>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, project_id, name, doc, updated_at
+         FROM cad_drawings ORDER BY updated_at DESC",
+    )?;
+    let rows = stmt.query_map([], map_row)?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn get_cad(conn: &Connection, id: &str) -> Result<Option<DesignRow>> {
+    Ok(conn
+        .query_row(
+            "SELECT id, project_id, name, doc, updated_at FROM cad_drawings WHERE id = ?1",
+            params![id],
+            map_row,
+        )
+        .optional()?)
+}
+
+pub fn create_cad(
+    conn: &Connection,
+    project_id: Option<&str>,
+    name: &str,
+    doc: &str,
+) -> Result<DesignRow> {
+    let now = Utc::now().to_rfc3339();
+    let id = uuid::Uuid::new_v4().to_string();
+    conn.execute(
+        "INSERT INTO cad_drawings (id, project_id, name, doc, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?5)",
+        params![id, project_id, name, doc, now],
+    )?;
+    Ok(DesignRow {
+        id,
+        project_id: project_id.map(|s| s.to_string()),
+        name: name.to_string(),
+        doc: doc.to_string(),
+        updated_at: now,
+    })
+}
+
+pub fn save_cad(conn: &Connection, id: &str, name: &str, doc: &str) -> Result<bool> {
+    let now = Utc::now().to_rfc3339();
+    let n = conn.execute(
+        "UPDATE cad_drawings SET name = ?2, doc = ?3, updated_at = ?4 WHERE id = ?1",
+        params![id, name, doc, now],
+    )?;
+    Ok(n > 0)
+}
+
+/// Rename without touching the drawing.
+///
+/// Separate from save because the sheet list renames from a row, with no
+/// drawing in hand, and passing the stored one back in just to change a name
+/// is a round trip that can lose an edit made in between.
+pub fn rename_cad(conn: &Connection, id: &str, name: &str) -> Result<bool> {
+    let now = Utc::now().to_rfc3339();
+    let n = conn.execute(
+        "UPDATE cad_drawings SET name = ?2, updated_at = ?3 WHERE id = ?1",
+        params![id, name, now],
+    )?;
+    Ok(n > 0)
+}
+
+/// File a drawing under a project, or under none.
+pub fn set_cad_project(conn: &Connection, id: &str, project_id: Option<&str>) -> Result<bool> {
+    let now = Utc::now().to_rfc3339();
+    let n = conn.execute(
+        "UPDATE cad_drawings SET project_id = ?2, updated_at = ?3 WHERE id = ?1",
+        params![id, project_id, now],
+    )?;
+    Ok(n > 0)
+}
+
+pub fn delete_cad(conn: &Connection, id: &str) -> Result<()> {
+    conn.execute("DELETE FROM cad_drawings WHERE id = ?1", params![id])?;
     Ok(())
 }
 
@@ -349,5 +446,87 @@ mod tests {
         create_hmi(&c, None, "Newer", "{}").unwrap();
         let rows = list_hmi(&c).unwrap();
         assert_eq!(rows[0].name, "Newer");
+    }
+
+    /* ── drawings ── */
+
+    #[test]
+    fn a_project_may_hold_several_drawings() {
+        // Unlike a ladder program and like the HMI: a panel job is a cover
+        // sheet, a power distribution sheet and half a dozen schematics.
+        let c = db();
+        create_cad(&c, Some("p1"), "Cover sheet", "{}").unwrap();
+        create_cad(&c, Some("p1"), "Power distribution", "{}").unwrap();
+        assert_eq!(list_cad(&c).unwrap().len(), 2);
+    }
+
+    #[test]
+    fn a_drawing_round_trips() {
+        let c = db();
+        let made = create_cad(&c, None, "Loose sheet", "{\"entities\":[]}").unwrap();
+        let got = get_cad(&c, &made.id).unwrap().unwrap();
+        assert_eq!(got.name, "Loose sheet");
+        assert_eq!(got.doc, "{\"entities\":[]}");
+        assert!(got.project_id.is_none());
+    }
+
+    #[test]
+    fn saving_replaces_the_drawing_and_says_it_found_one() {
+        let c = db();
+        let made = create_cad(&c, None, "Sheet", "{}").unwrap();
+        assert!(save_cad(&c, &made.id, "Sheet 1", "{\"v\":2}").unwrap());
+        let got = get_cad(&c, &made.id).unwrap().unwrap();
+        assert_eq!(got.name, "Sheet 1");
+        assert_eq!(got.doc, "{\"v\":2}");
+    }
+
+    #[test]
+    fn saving_a_drawing_that_is_not_there_reports_false() {
+        // The editor shows "Could not save" on this rather than claiming it
+        // worked, which is the whole reason the bool comes back.
+        assert!(!save_cad(&db(), "gone", "x", "{}").unwrap());
+    }
+
+    #[test]
+    fn renaming_leaves_the_drawing_alone() {
+        // The sheet list renames from a row with no drawing in hand, so a
+        // rename that also wrote a document would write a stale one.
+        let c = db();
+        let made = create_cad(&c, None, "Old name", "{\"entities\":[1]}").unwrap();
+        assert!(rename_cad(&c, &made.id, "New name").unwrap());
+        let got = get_cad(&c, &made.id).unwrap().unwrap();
+        assert_eq!(got.name, "New name");
+        assert_eq!(got.doc, "{\"entities\":[1]}");
+    }
+
+    #[test]
+    fn a_drawing_can_be_filed_and_unfiled() {
+        let c = db();
+        let made = create_cad(&c, None, "Sheet", "{}").unwrap();
+        assert!(set_cad_project(&c, &made.id, Some("p1")).unwrap());
+        assert_eq!(
+            get_cad(&c, &made.id).unwrap().unwrap().project_id.as_deref(),
+            Some("p1")
+        );
+        assert!(set_cad_project(&c, &made.id, None).unwrap());
+        assert!(get_cad(&c, &made.id).unwrap().unwrap().project_id.is_none());
+    }
+
+    #[test]
+    fn deleting_removes_it() {
+        let c = db();
+        let made = create_cad(&c, None, "Sheet", "{}").unwrap();
+        delete_cad(&c, &made.id).unwrap();
+        assert!(get_cad(&c, &made.id).unwrap().is_none());
+    }
+
+    #[test]
+    fn drawings_list_newest_first() {
+        // The list is what somebody scans to find the sheet they were on.
+        let c = db();
+        create_cad(&c, None, "Older", "{}").unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(5));
+        create_cad(&c, None, "Newer", "{}").unwrap();
+        assert_eq!(list_cad(&c).unwrap()[0].name, "Newer");
     }
 }
