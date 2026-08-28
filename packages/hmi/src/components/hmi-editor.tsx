@@ -15,6 +15,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type AlarmRuntime, needsAck } from "../lib/alarms";
+import { buildPanelHtml, panelFileName } from "../lib/export-panel";
 import { expandInstance } from "../lib/faceplates";
 import type { GenContext, GenerateScreen, GeneratedScreen } from "../lib/generate";
 import { defaultSize, draftScreen } from "../lib/generate";
@@ -600,6 +601,43 @@ export default function HmiEditor({
     URL.revokeObjectURL(url);
   }, [name, doc]);
 
+  /**
+   * The application as one HTML file that runs it.
+   *
+   * The runtime is fetched from this origin and inlined, so the file that
+   * comes out fetches nothing at all: it opens from a USB stick, from a share,
+   * or on a machine that has never had a network, which is the normal
+   * condition of the machine it ends up on.
+   *
+   * Fetching it here rather than bundling it into the editor keeps 300 kB of
+   * panel runtime out of every page load for the sake of a menu item most
+   * people use once.
+   */
+  const [exporting, setExporting] = useState(false);
+  const exportPanel = useCallback(async () => {
+    setExporting(true);
+    try {
+      const res = await fetch("/panel/runtime.js", { cache: "force-cache" });
+      if (!res.ok) throw new Error(`runtime ${res.status}`);
+      const runtime = await res.text();
+      const html = buildPanelHtml({ doc, program, name, runtime });
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = panelFileName(name);
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Said rather than swallowed: a menu item that does nothing is worse
+      // than one that explains why, and the only cause is a build that did
+      // not produce the runtime.
+      setImportNote("The panel runtime could not be loaded, so nothing was exported.");
+    } finally {
+      setExporting(false);
+    }
+  }, [doc, program, name]);
+
   /* ── dragging on the canvas ── */
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -800,6 +838,11 @@ export default function HmiEditor({
       items: [
         { label: "Save", shortcut: "Cmd S", onSelect: () => void save(), disabled: !dirty },
         { label: "Export JSON", onSelect: exportJson },
+        {
+          label: exporting ? "Exporting panel…" : "Export as a running panel…",
+          disabled: exporting,
+          onSelect: () => void exportPanel(),
+        },
         { label: "Import JSON…", onSelect: () => docRef.current?.click() },
         { label: "Import symbol (SVG)…", onSelect: () => svgRef.current?.click() },
         { label: "", separator: true },

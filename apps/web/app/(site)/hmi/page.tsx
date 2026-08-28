@@ -79,6 +79,7 @@ export default function HmiPage() {
               "ISA-18.2 alarm state machine",
               "Runs against real ladder logic",
               "Records a run and exports it as CSV",
+              "Exports one HTML file that runs the screen",
               "Fourteen real panel sizes",
             ],
             updated: "2026-08-26",
@@ -132,6 +133,30 @@ export default function HmiPage() {
         </p>
 
         <h2 className="mt-12 font-display text-[1.3rem] font-bold tracking-[-0.012em] text-ink-900">
+          It exports a panel that actually runs
+        </h2>
+        <p className="mt-3 text-[15.5px] leading-relaxed text-ink-600">
+          One HTML file, holding the screens, the ladder program, the scan engine and the renderer.
+          Open it and the screen is running: no install, no server, and no network, so it works from
+          a USB stick on a machine that has never been online, which is the normal condition of the
+          machine it ends up on.
+        </p>
+        <p className="mt-3 text-[15.5px] leading-relaxed text-ink-600">
+          Being exact about what that is, because "deploy to a panel" means something specific. It
+          is not a TP1500 project or a PanelView application; those are closed vendor formats and
+          writing one without their tooling is not something to claim. It is a panel for the other
+          kind of hardware, which is most of the new kind: an industrial PC, a thin client, a tablet
+          on the line, a small board beside the machine. All of those run a browser.
+        </p>
+        <p className="mt-3 text-[15.5px] leading-relaxed text-ink-600">
+          The runtime inside the file is the same code the builder runs, not a port of it. A second
+          implementation is faithful on the day it is written and drifts from then on, and the
+          entire value of exporting a screen somebody signed off is that it is the screen they
+          signed off. The process behind it is still the simulator, and the file says so in its own
+          source.
+        </p>
+
+        <h2 className="mt-12 font-display text-[1.3rem] font-bold tracking-[-0.012em] text-ink-900">
           The run is recorded, and the spike survives
         </h2>
         <p className="mt-3 text-[15.5px] leading-relaxed text-ink-600">
@@ -155,7 +180,7 @@ export default function HmiPage() {
         <ul className="mt-3 space-y-2.5">
           {[
             "It does not talk to plant equipment. The runtime is the simulator, which is what makes a screen testable at a desk.",
-            "It does not deploy to a panel. There is no download to a TP1500 or a PanelView.",
+            "It does not produce a vendor panel project. There is no download to a TP1500 or a PanelView, because those are closed formats; what it exports is a panel that runs in a browser.",
             "It is not a plant historian. A run can be recorded, reviewed and exported as CSV, but that is a record of a simulated test held in the browser, not months of instrument data you can query next year.",
             "Scripting is a small expression language over tags, deliberately not a programming language.",
           ].map((l) => (

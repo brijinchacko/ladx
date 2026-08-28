@@ -1,7 +1,7 @@
 # ADR 0002, Connecting to live plant equipment
 
 **Date:** 2026-08-28
-**Status:** Proposed, needs a decision. No code has been written against it.
+**Status:** Decided, 2026-08-28. Option D. See Resolution.
 
 ## Context
 
@@ -144,3 +144,30 @@ Of B, if chosen:
 - Version pinning per protocol, per vendor, recorded here as it accrues.
 
 Of A or D: none. This ADR stays as the record of why not.
+
+## Resolution, 2026-08-28
+
+**D.** No live plant connection. The published positioning stands unchanged:
+the connection is configured and exported, never dialled, and the desktop rule
+in `CLAUDE.md` is untouched.
+
+What was built instead is the panel export the product page already promised:
+one HTML file carrying the screens, the ladder program, the scan engine and the
+renderer, which opens and runs with no install, no server and no network. It is
+deliberately not a vendor project file, and both the page and the exported
+file's own source say so.
+
+Two consequences worth recording, because they are the shape any future
+revisit has to fit:
+
+The panel makes the same no-network promise the desktop does, and it is checked
+the same way it should be: `apps/web/scripts/build-panel-runtime.mjs` fails the
+build if the bundle contains fetch, XMLHttpRequest, WebSocket, sendBeacon,
+EventSource or a dynamic import. A promise like that is worth what the check
+behind it is worth, and the way it breaks is an import added for a good reason
+that happens to phone home.
+
+The runtime is shared rather than reimplemented. `usePanelRuntime` is the
+builder's scan loop, alarm evaluation and trend sampling, and the exported panel
+runs that same hook. If a live connection is ever built, it has one place to go
+in, which is the only reason this ADR does not need reopening to allow for it.

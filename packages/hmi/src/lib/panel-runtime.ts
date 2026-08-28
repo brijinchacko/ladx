@@ -1,6 +1,11 @@
 "use client";
 
-import { type LadxProgram, type Tag, scan } from "@ladx/studio";
+// By subpath, not from the package root. The root re-exports every studio
+// component, and an exported panel that pulls in the ladder editor and its
+// stylesheet for the sake of one function is a much larger file than it
+// needs to be.
+import { scan } from "@ladx/studio/lib/engine";
+import type { LadxProgram, Tag } from "@ladx/studio/lib/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   type AlarmRuntime,

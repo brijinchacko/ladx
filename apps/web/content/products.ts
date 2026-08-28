@@ -356,6 +356,10 @@ export const PRODUCTS: Product[] = [
         p: "Press run and the ladder solves, the HMI writes land at the top of the scan the way a real controller reads them, the trends fill and the alarms evaluate. A start button on glass starts the motor in the logic. Nothing is mocked.",
       },
       {
+        h: "It exports a panel that actually runs",
+        p: "One HTML file holding the screens, the ladder program, the scan engine and the renderer. Open it and the screen is running, with no install, no server and no network, so it works from a USB stick on a machine that has never been online. Not a TP1500 or PanelView project, which are closed formats, but a panel for the hardware most new panels actually are. The runtime inside it is the same code the builder runs rather than a port of it, because the value of exporting a screen somebody signed off is that it is the screen they signed off.",
+      },
+      {
         h: "The run is recorded, and the spike survives",
         p: "Every trend also records, and the recording outlives pressing Stop, because stopping is usually the moment before somebody wants to look at what just happened. Older samples are compacted to a minimum and a maximum per interval rather than an average: an average removes the excursion, and the excursion is the reason the recording was opened. Export is CSV with the low and the high in separate columns.",
       },
@@ -370,7 +374,7 @@ export const PRODUCTS: Product[] = [
     ],
     limits: [
       "It does not talk to plant equipment. The runtime is the simulator, which is what makes a screen testable at a desk; the driver settings are recorded for handover, not dialled.",
-      "It does not deploy to a panel. There is no download to a TP1500 or a PanelView, and an application is exported as its own document rather than as a vendor project file.",
+      "It does not produce a vendor panel project. There is no download to a TP1500 or a PanelView; those are closed formats. What it exports is one HTML file that runs the screen in a browser, which is what an industrial PC or a thin client is.",
       "It is not a plant historian. A run is recorded, reviewed and exported, but that is a record of a simulated test held in the browser for the session, not months of instrument data.",
       "Scripting is a small expression language over tags, not a programming language. It has no property access, no functions of its own and no way to reach the page, which is deliberate.",
     ],
@@ -389,7 +393,7 @@ export const PRODUCTS: Product[] = [
       },
       {
         q: "Can it deploy to a Siemens or Allen Bradley panel?",
-        a: "No. It designs, proves and documents the screens, and the connection settings are recorded for handover rather than dialled. Export to a panel runtime is the next thing on its list, and the product page says so rather than implying otherwise.",
+        a: "Not as a vendor project file. A TP1500 or PanelView application is a closed format and writing one without their tooling is not something to claim. It does export a panel: one HTML file carrying the screens, the ladder program and the runtime, which opens and runs with no install and no network, on the industrial PCs, thin clients and tablets that most new panels actually are.",
       },
     ],
     figure: "tagBinding",
