@@ -1,14 +1,14 @@
 "use client";
 
+import { ChevronRight, Terminal } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   COMMANDS,
   type CommandSpec,
   findCommand,
   parseCoordinate,
   suggestCommands,
-} from "@/lib/cad/commands";
-import { ChevronRight, Terminal } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+} from "../lib/commands";
 
 /**
  * The command line.

@@ -6,11 +6,11 @@
 // straight into a controlled document with no step in between is not a feature.
 
 import { getApiUser } from "@/lib/auth/server";
-import { SYMBOLS } from "@/lib/cad/symbols";
-import type { Entity } from "@/lib/cad/types";
 import { auditInBackground } from "@/lib/db/audit";
 import { complete, firstJsonObject } from "@/lib/inference/complete";
 import { ProviderError } from "@/lib/providers";
+import { SYMBOLS } from "@ladx/cad";
+import type { Entity } from "@ladx/cad";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 

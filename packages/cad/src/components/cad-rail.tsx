@@ -1,15 +1,15 @@
 "use client";
 
+import { Eye, EyeOff, Lock, LockOpen, StickyNote } from "lucide-react";
+import { useState } from "react";
 import {
   DRAWING_TEMPLATES,
   type DrawingTemplate,
   TEMPLATE_SECTIONS,
-} from "@/lib/cad/drawing-templates";
-import { type CadSymbol, symbolsByFamily } from "@/lib/cad/symbols";
-import { SHEETS, type SheetSize } from "@/lib/cad/titleblock";
-import type { Layer } from "@/lib/cad/types";
-import { Eye, EyeOff, Lock, LockOpen, StickyNote } from "lucide-react";
-import { useState } from "react";
+} from "../lib/drawing-templates";
+import { type CadSymbol, symbolsByFamily } from "../lib/symbols";
+import { SHEETS, type SheetSize } from "../lib/titleblock";
+import type { Layer } from "../lib/types";
 
 type Tab = "sheets" | "schematic" | "panel" | "layers";
 

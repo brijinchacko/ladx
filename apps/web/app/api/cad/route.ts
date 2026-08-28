@@ -2,10 +2,10 @@
 // POST /api/cad              create one
 
 import { getApiUser } from "@/lib/auth/server";
-import { emptyDrawing } from "@/lib/cad/types";
 import { db } from "@/lib/db/client";
 import { cadDrawings } from "@/lib/db/schema";
 import { getProject } from "@/lib/platform/queries";
+import { emptyDrawing } from "@ladx/cad";
 import { and, desc, eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";

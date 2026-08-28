@@ -5,9 +5,9 @@ import {
   type DrawingTemplate,
   TEMPLATE_SECTIONS,
   buildDrawingFromTemplate,
-} from "@/lib/cad/drawing-templates";
-import { readDxf } from "@/lib/cad/dxf";
-import { DEFAULT_LAYERS, type Entity, emptyDrawing } from "@/lib/cad/types";
+} from "@ladx/cad";
+import { readDxf } from "@ladx/cad";
+import { DEFAULT_LAYERS, type Entity, emptyDrawing } from "@ladx/cad";
 import { Clock, FilePlus2, Loader2, PencilRuler, Trash2, Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

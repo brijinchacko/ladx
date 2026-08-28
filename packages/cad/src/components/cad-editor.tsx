@@ -1,63 +1,5 @@
 "use client";
 
-import CadCommandLine from "@/components/cad/cad-commandline";
-import CadProperties from "@/components/cad/cad-properties";
-import CadRail from "@/components/cad/cad-rail";
-import CadSheets, { type SheetRow } from "@/components/cad/cad-sheets";
-import CadToolbar, {
-  ALL_TOOLS,
-  TOOL_PANELS,
-  type ToolId,
-  toolSpec,
-} from "@/components/cad/cad-toolbar";
-import {
-  type CommandSpec,
-  findCommand,
-  parseCoordinate,
-  resolveCoordinate,
-} from "@/lib/cad/commands";
-import { type DrawingTemplate, buildDrawingFromTemplate } from "@/lib/cad/drawing-templates";
-import { readDxf, writeDxf } from "@/lib/cad/dxf";
-import {
-  arrayPolar,
-  arrayRectangular,
-  constrainAngle,
-  extendLine,
-  filletLines,
-  offsetEntity,
-  trimLine,
-} from "@/lib/cad/operations";
-import { type CadPanelId, cadDock } from "@/lib/cad/panels";
-import { drawingToPdf } from "@/lib/cad/pdf";
-import {
-  centreOf,
-  drawEntity,
-  hitTest,
-  hitTestBox,
-  mirrorAbout,
-  rotateAbout,
-  scaleAbout,
-  transformEntity,
-  translateEntity,
-} from "@/lib/cad/render";
-import { type SnapHit, findSnap } from "@/lib/cad/snap";
-import { type CadSymbol, getSymbol } from "@/lib/cad/symbols";
-import { type CanvasTheme, THEMES, contrastColour, loadTheme, saveTheme } from "@/lib/cad/theme";
-import {
-  BORDER_LAYER,
-  type SheetSize,
-  type TitleBlockFields,
-  buildTitleBlock,
-} from "@/lib/cad/titleblock";
-import {
-  DEFAULT_LAYERS,
-  type Drawing,
-  type Entity,
-  type Point,
-  drawingBounds,
-  formatLength,
-  newId,
-} from "@/lib/cad/types";
 import { type Menu, MenuBar } from "@ladx/studio";
 import {
   type DockLayout,
@@ -71,6 +13,54 @@ import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@l
 import { Download, FileText, Maximize2, Minimize2, Save, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type CommandSpec, findCommand, parseCoordinate, resolveCoordinate } from "../lib/commands";
+import { type DrawingTemplate, buildDrawingFromTemplate } from "../lib/drawing-templates";
+import { readDxf, writeDxf } from "../lib/dxf";
+import {
+  arrayPolar,
+  arrayRectangular,
+  constrainAngle,
+  extendLine,
+  filletLines,
+  offsetEntity,
+  trimLine,
+} from "../lib/operations";
+import { type CadPanelId, cadDock } from "../lib/panels";
+import { drawingToPdf } from "../lib/pdf";
+import {
+  centreOf,
+  drawEntity,
+  hitTest,
+  hitTestBox,
+  mirrorAbout,
+  rotateAbout,
+  scaleAbout,
+  transformEntity,
+  translateEntity,
+} from "../lib/render";
+import { type SnapHit, findSnap } from "../lib/snap";
+import { type CadSymbol, getSymbol } from "../lib/symbols";
+import { type CanvasTheme, THEMES, contrastColour, loadTheme, saveTheme } from "../lib/theme";
+import {
+  BORDER_LAYER,
+  type SheetSize,
+  type TitleBlockFields,
+  buildTitleBlock,
+} from "../lib/titleblock";
+import {
+  DEFAULT_LAYERS,
+  type Drawing,
+  type Entity,
+  type Point,
+  drawingBounds,
+  formatLength,
+  newId,
+} from "../lib/types";
+import CadCommandLine from "./cad-commandline";
+import CadProperties from "./cad-properties";
+import CadRail from "./cad-rail";
+import CadSheets, { type SheetRow } from "./cad-sheets";
+import CadToolbar, { ALL_TOOLS, TOOL_PANELS, type ToolId, toolSpec } from "./cad-toolbar";
 
 /** How many clicks each tool takes before it produces something. */
 const CLICKS: Partial<Record<ToolId, number>> = {

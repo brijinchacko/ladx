@@ -1,8 +1,8 @@
 "use client";
 
-import { formatLength } from "@/lib/cad/types";
-import type { Entity, Layer } from "@/lib/cad/types";
 import { useId } from "react";
+import { formatLength } from "../lib/types";
+import type { Entity, Layer } from "../lib/types";
 
 /**
  * What is selected, and how to change it.

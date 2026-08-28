@@ -1,7 +1,7 @@
 "use client";
 
-import { readDxf } from "@/lib/cad/dxf";
-import { emptyDrawing } from "@/lib/cad/types";
+import { readDxf } from "@ladx/cad";
+import { emptyDrawing } from "@ladx/cad";
 import { PencilRuler, Plus, Trash2, Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

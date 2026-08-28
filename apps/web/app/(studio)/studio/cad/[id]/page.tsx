@@ -1,10 +1,10 @@
-import CadEditor from "@/components/cad/cad-editor";
 import { requireUser } from "@/lib/auth/server";
-import type { Drawing } from "@/lib/cad/types";
-import { emptyDrawing } from "@/lib/cad/types";
 import { db } from "@/lib/db/client";
 import { cadDrawings, clients, projects } from "@/lib/db/schema";
 import { getCompany, listProjects } from "@/lib/platform/queries";
+import { CadEditor } from "@ladx/cad";
+import type { Drawing } from "@ladx/cad";
+import { emptyDrawing } from "@ladx/cad";
 import { and, eq, isNull } from "drizzle-orm";
 import { notFound } from "next/navigation";
 

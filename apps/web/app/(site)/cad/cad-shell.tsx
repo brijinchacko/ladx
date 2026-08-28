@@ -1,8 +1,8 @@
 "use client";
 
-import CadEditor from "@/components/cad/cad-editor";
-import { type Drawing, emptyDrawing } from "@/lib/cad/types";
 import { CONSENT_EVENT, hasConsent } from "@/lib/consent/consent";
+import { CadEditor } from "@ladx/cad";
+import { type Drawing, emptyDrawing } from "@ladx/cad";
 import { useCallback, useEffect, useState } from "react";
 
 /** A fixed id, so a reload reopens the same drawing. */
