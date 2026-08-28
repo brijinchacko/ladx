@@ -7,8 +7,18 @@
  * without a build says so instead of offering a link that 404s.
  */
 
-/** The desktop app's own SemVer, matching apps/desktop/src-tauri/tauri.conf.json. */
-export const DESKTOP_VERSION = "0.1.1";
+/**
+ * The version this site is actually serving.
+ *
+ * Deliberately not "the version in tauri.conf.json". Those are two different
+ * facts and this is the one the page needs: bumping this the moment the app
+ * version changed put two dead links on a live download page, because the
+ * installers for the new version had not been built yet, let alone uploaded.
+ *
+ * Bump it after the files are on the server, never before, and check the
+ * checksums below at the same time.
+ */
+export const DESKTOP_VERSION = "0.1.0";
 
 /** Where the installers are served from. */
 const BASE = "/downloads";
