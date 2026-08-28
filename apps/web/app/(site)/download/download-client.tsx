@@ -133,9 +133,9 @@ export default function DownloadClient() {
         <div>
           <h2 className="mb-2 font-semibold text-ink-900">What is not in it yet</h2>
           <p className="text-[13.5px] leading-relaxed text-ink-600">
-            CAD, Documents, the planner, clients and the knowledge base are on the web app and not
-            yet on the desktop. This first release carries the tools that already run with no
-            server: ladder, monitor, HMI/SCADA and Convert.
+            Documents, the planner, clients and the knowledge base are on the web app and not yet on
+            the desktop. This release carries the tools that run with no server at all: ladder,
+            monitor, CAD, HMI/SCADA and Convert.
           </p>
           <Link
             href="/products"
@@ -297,9 +297,9 @@ function WebAppNotice({ onClose }: { onClose: () => void }) {
         There is a version with nothing to install
       </h2>
       <p className="mb-4 text-[14px] leading-relaxed text-ink-600">
-        LADX runs in the browser as well, with more tools than the desktop build has yet: CAD,
-        Documents, the planner, clients and the knowledge base are all there. Nothing to install and
-        nothing to update.
+        LADX runs in the browser as well, with more tools than the desktop build has yet: Documents,
+        the planner, clients and the knowledge base are all there. Nothing to install and nothing to
+        update.
       </p>
 
       <div className="mb-5 rounded-lg bg-ink-50/60 p-4 text-[13px] leading-relaxed text-ink-600">
