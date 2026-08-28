@@ -291,3 +291,37 @@ describe("every target produces output", () => {
     expect(withCompare.text).toContain("Level &lt; 10");
   });
 });
+
+describe("a tag that is also an instance", () => {
+  it("is declared once, not twice", () => {
+    /*
+     * A TIMER tag called RunTime driving a TON also called RunTime is what a
+     * Rockwell program looks like, and it is what arrives from an L5X import.
+     * Declaring both produced `RunTime : TIMER;` and `RunTime : TON;` in one
+     * VAR block, which no compiler accepts, so the output looked right and
+     * would not build.
+     */
+    const program: LadxProgram = {
+      name: "Conveyor",
+      scanMs: 100,
+      tags: [
+        { name: "Run", type: "BOOL", value: 0 },
+        { name: "RunTime", type: "TIMER", value: 0, preset: 60000 },
+      ],
+      rungs: [
+        {
+          id: "r1",
+          branches: [[{ id: "e1", type: "XIC", tag: "Run" }]],
+          outputs: [{ id: "e2", type: "TON", tag: "RunTime", preset: 60000 }],
+        },
+      ],
+    };
+    const out = convert(program, "st").text;
+    const declarations = out
+      .split("END_VAR")[0]
+      ?.split("\n")
+      .filter((l) => /^\s*RunTime\s*:/.test(l));
+    expect(declarations).toHaveLength(1);
+    expect(declarations?.[0]).toContain("TON");
+  });
+});

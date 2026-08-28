@@ -24,11 +24,12 @@ import {
   TARGETS,
   type Target,
   convert,
-  parseImport,
   programRoutines,
   summarise,
 } from "../index";
 import { focusModeLabel, useFocusMode } from "../lib/focus-mode";
+import { READABLE_ACCEPT, readProgramFile } from "../lib/import-any";
+import type { ImportNote } from "../lib/import-l5x";
 import type { SaveRecord } from "./Monitor";
 
 export interface ConvertSource {
@@ -104,6 +105,18 @@ export default function ConvertWorkbench({
       : sources[0]?.projectId) ?? "__none",
   );
   const [uploaded, setUploaded] = useState<ConvertSource | null>(null);
+  /**
+   * What reading the file had to say.
+   *
+   * Kept apart from the conversion's own notes and shown above them, because
+   * they answer different questions: these are about what did or did not come
+   * across from the vendor's file, and a person has to read them before they
+   * can trust anything downstream of it.
+   */
+  const [importNotes, setImportNotes] = useState<ImportNote[]>([]);
+  const [importFormat, setImportFormat] = useState<string | null>(null);
+  /** What to do instead, when the file was one LADX deliberately does not open. */
+  const [remedy, setRemedy] = useState<string | null>(null);
   const [target, setTarget] = useState<Target>("st");
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -142,17 +155,23 @@ export default function ConvertWorkbench({
   }, [copied]);
 
   const takeFile = useCallback(async (file: File) => {
-    const parsed = parseImport(await file.text());
-    if (!parsed.ok) {
-      setError(parsed.error);
+    const out = readProgramFile(file.name, await file.text());
+    if (!out.ok) {
+      setError(out.error);
+      setRemedy(out.remedy ?? null);
+      setImportNotes([]);
+      setImportFormat(null);
       return;
     }
     setError(null);
+    setRemedy(null);
+    setImportNotes(out.imported.notes);
+    setImportFormat(out.format);
     setUploaded({
       projectId: null,
       projectName: null,
-      name: file.name.replace(/\.[^.]+$/, ""),
-      program: parsed.program,
+      name: out.name || file.name.replace(/\.[^.]+$/, ""),
+      program: out.imported.program,
     });
   }, []);
 
@@ -319,7 +338,7 @@ export default function ConvertWorkbench({
         <input
           ref={fileRef}
           type="file"
-          accept=".json,application/json"
+          accept={READABLE_ACCEPT}
           className="sr-only"
           onChange={(e) => {
             const f = e.target.files?.[0];
@@ -376,9 +395,46 @@ export default function ConvertWorkbench({
       </div>
 
       {error && (
-        <p className="shrink-0 border-b border-red-200 bg-red-50 px-3 py-2 text-[12.5px] text-red-800">
-          {error}
-        </p>
+        <div className="shrink-0 border-red-200 border-b bg-red-50 px-3 py-2">
+          <p className="text-[12.5px] text-red-800">{error}</p>
+          {/* The remedy is the point of refusing a project file at all: the
+              person is holding what their tool saved, and what they need is the
+              two clicks that produce something readable. */}
+          {remedy && <p className="mt-1 text-[12.5px] text-red-900">{remedy}</p>}
+        </div>
+      )}
+
+      {importNotes.length > 0 && (
+        <details
+          open={importNotes.some((n) => n.severity === "manual")}
+          className="shrink-0 border-ink-100 border-b bg-ink-50/40 px-3 py-2"
+        >
+          <summary className="cursor-pointer text-[12.5px] text-ink-700">
+            {importFormat ? `Read from ${importFormat}` : "Read"}
+            {": "}
+            {importNotes.filter((n) => n.severity === "manual").length} to do by hand,{" "}
+            {importNotes.filter((n) => n.severity === "warning").length} to check
+          </summary>
+          <ul className="mt-2 space-y-1.5">
+            {importNotes.map((n) => (
+              <li key={`${n.severity}${n.where}${n.message}`} className="flex gap-2">
+                <span
+                  className={`mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full ${
+                    n.severity === "manual"
+                      ? "bg-[#B4531A]"
+                      : n.severity === "warning"
+                        ? "bg-[#C08A2E]"
+                        : "bg-ink-300"
+                  }`}
+                  aria-hidden="true"
+                />
+                <span className="text-[12px] text-ink-600 leading-snug">
+                  <span className="font-mono text-[11px] text-ink-400">{n.where}</span> {n.message}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
 
       {!source || !all || !current ? (

@@ -53,6 +53,11 @@ export { localStorageStorage, httpStorage, KEY_PREFIX as PROJECT_KEY_PREFIX } fr
 export { useFocusMode, focusModeLabel } from "./lib/focus-mode";
 export type { FocusMode, FocusModeApi } from "./lib/focus-mode";
 export * from "./lib/dock";
+export { parseL5X, parseNeutralRung, resetImportIds } from "./lib/import-l5x";
+export { parsePlcopenXml } from "./lib/import-plcopen";
+export { readProgramFile, refusalFor, READABLE_ACCEPT } from "./lib/import-any";
+export type { ReadResult, ReadFailure } from "./lib/import-any";
+export type { ImportedProgram, ImportNote, ImportSeverity } from "./lib/import-l5x";
 export { DockPanel, DockStrip } from "./components/DockPanel";
 export type { StudioStorage, StudioProject } from "./lib/storage";
 export { LADX_BRANDING } from "./lib/branding";

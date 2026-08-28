@@ -299,6 +299,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.0
         version: 19.2.3(@types/react@19.2.14)
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
       react:
         specifier: ^19.0.0
         version: 19.2.5
@@ -310,7 +313,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.1.0
-        version: 2.1.9(@types/node@22.19.17)(jsdom@30.0.1)
+        version: 2.1.9(@types/node@22.19.17)(jsdom@25.0.1)
 
   packages/types:
     devDependencies:

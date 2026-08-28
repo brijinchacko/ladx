@@ -348,7 +348,22 @@ export function toStructuredText(
     // Declarations, once the body has told us what it needed.
     out.push(`PROGRAM ${ident(routine.name)}`);
     out.push("VAR");
-    for (const tag of program.tags) out.push(tagDeclaration(tag, dialect));
+
+    /*
+     * A tag and an instance can be the same thing, and must be declared once.
+     *
+     * A TIMER tag called RunTime driving a TON also called RunTime is the
+     * normal case, not an edge one: it is what a Rockwell program looks like,
+     * and it arrives that way from an L5X import. Emitting both declarations
+     * produces `RunTime : TIMER;` and `RunTime : TON;` in the same VAR block,
+     * which no compiler accepts. The instance wins, because it carries the
+     * function block type the body actually calls.
+     */
+    const instanceNames = new Set(ctx.declarations.keys());
+    for (const tag of program.tags) {
+      if (instanceNames.has(ident(tag.name))) continue;
+      out.push(tagDeclaration(tag, dialect));
+    }
     if (ctx.declarations.size > 0) {
       out.push("  (* Instances created by the conversion *)");
       for (const [name, type] of ctx.declarations) out.push(`  ${name} : ${type};`);

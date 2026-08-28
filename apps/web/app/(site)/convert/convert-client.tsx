@@ -1,12 +1,14 @@
 "use client";
 
 import {
+  type ImportNote,
   type LadxProgram,
+  READABLE_ACCEPT,
   STARTER_PROGRAMS,
   TARGETS,
   type Target,
   convert,
-  parseImport,
+  readProgramFile,
   summarise,
 } from "@ladx/studio";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -41,6 +43,11 @@ export default function ConvertClient() {
   const [sourceName, setSourceName] = useState<string>("");
   const [target, setTarget] = useState<Target>("st");
   const [error, setError] = useState<string | null>(null);
+  /** What to do instead, when the file was a project rather than an export. */
+  const [remedy, setRemedy] = useState<string | null>(null);
+  /** What reading the file had to say, which is the part a migration lives on. */
+  const [importNotes, setImportNotes] = useState<ImportNote[]>([]);
+  const [importFormat, setImportFormat] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -54,14 +61,20 @@ export default function ConvertClient() {
   }, [copied]);
 
   const loadText = useCallback((raw: string, name: string) => {
-    const parsed = parseImport(raw);
-    if (!parsed.ok) {
-      setError(parsed.error);
+    const out = readProgramFile(name, raw);
+    if (!out.ok) {
+      setError(out.error);
+      setRemedy(out.remedy ?? null);
+      setImportNotes([]);
+      setImportFormat(null);
       setProgram(null);
       return;
     }
     setError(null);
-    setProgram(parsed.program);
+    setRemedy(null);
+    setImportNotes(out.imported.notes);
+    setImportFormat(out.format);
+    setProgram(out.imported.program);
     setSourceName(name);
   }, []);
 
@@ -78,6 +91,9 @@ export default function ConvertClient() {
     const starter = STARTER_PROGRAMS[0];
     if (!starter) return;
     setError(null);
+    setRemedy(null);
+    setImportNotes([]);
+    setImportFormat(null);
     setProgram(starter.program);
     setSourceName(`${starter.name} (example)`);
   }, []);
@@ -107,15 +123,15 @@ export default function ConvertClient() {
               onClick={() => fileRef.current?.click()}
               className="w-full rounded-sm border border-dashed border-ink-300 px-4 py-5 text-[13.5px] text-ink-600 transition-colors hover:border-ink-500 hover:text-ink-900"
             >
-              Choose a LADX project file
+              Open a program
               <span className="mt-1 block font-mono text-[11px] text-ink-400">
-                File → Export project, in Studio
+                .L5X from Studio 5000, PLCopen XML, or a LADX export
               </span>
             </button>
             <input
               ref={fileRef}
               type="file"
-              accept=".json,application/json"
+              accept={READABLE_ACCEPT}
               className="sr-only"
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -132,9 +148,45 @@ export default function ConvertClient() {
             </button>
 
             {error && (
-              <p className="border-l-2 border-red-500 bg-red-50 py-2 pl-3 text-[13px] text-red-800">
-                {error}
-              </p>
+              <div className="border-red-500 border-l-2 bg-red-50 py-2 pl-3">
+                <p className="text-[13px] text-red-800">{error}</p>
+                {/* The whole point of recognising a project file is being able
+                    to name the export that works instead. */}
+                {remedy && <p className="mt-1 text-[12.5px] text-red-900">{remedy}</p>}
+              </div>
+            )}
+
+            {importNotes.length > 0 && (
+              <details
+                open={importNotes.some((n) => n.severity === "manual")}
+                className="border-ink-200 border-t pt-3"
+              >
+                <summary className="cursor-pointer text-[12.5px] text-ink-700">
+                  {importFormat ? `Read from ${importFormat}` : "Read"}:{" "}
+                  {importNotes.filter((n) => n.severity === "manual").length} to do by hand,{" "}
+                  {importNotes.filter((n) => n.severity === "warning").length} to check
+                </summary>
+                <ul className="mt-2 space-y-1.5">
+                  {importNotes.map((n) => (
+                    <li key={`${n.severity}${n.where}${n.message}`} className="flex gap-2">
+                      <span
+                        className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${
+                          n.severity === "manual"
+                            ? "bg-[#B4531A]"
+                            : n.severity === "warning"
+                              ? "bg-[#C08A2E]"
+                              : "bg-ink-300"
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <span className="text-[12px] text-ink-600 leading-snug">
+                        <span className="font-mono text-[11px] text-ink-400">{n.where}</span>{" "}
+                        {n.message}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             )}
 
             {program && (
