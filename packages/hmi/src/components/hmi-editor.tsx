@@ -1432,6 +1432,9 @@ export default function HmiEditor({
       */}
       {layout.assist.open && (
         <HmiAi
+          // Keyed to the application, so opening this one again brings its own
+          // conversation back rather than the last one you had anywhere.
+          memoryKey={`hmi:${id}`}
           context={genContext}
           onGenerate={onGenerate}
           onApply={applyGenerated}

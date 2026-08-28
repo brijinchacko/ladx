@@ -463,7 +463,10 @@ export default function Monitor({
     [routine, tags, running, observedScanMs, rate, scans, source],
   );
 
-  const assist = useAssistant({ run: runAssist });
+  const assist = useAssistant({
+    run: runAssist,
+    memoryKey: source ? `monitor:${source.projectId ?? source.name}` : null,
+  });
 
   return (
     <div

@@ -523,7 +523,18 @@ export default function PlannerWorkspace({
     [shown, state, today, visibleProjects, runOps, runMode],
   );
 
-  const assist = useAssistant({ run: runAssist });
+  /*
+   * Keyed to what is being planned.
+   *
+   * Narrowed to one project, the thread is that project's; across the book of
+   * work it is the general one. Carrying a conversation about one job into
+   * another would be worse than starting fresh, because the task names in it
+   * are somebody else's.
+   */
+  const assist = useAssistant({
+    run: runAssist,
+    memoryKey: projectId ? `planner:${projectId}` : "planner:all",
+  });
 
   /** The same thing to every selected task. */
   const bulk = useCallback(

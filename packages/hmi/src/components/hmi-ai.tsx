@@ -54,6 +54,7 @@ export default function HmiAi({
   onUndo,
   disabledReason,
   hasProvider = true,
+  memoryKey,
 }: {
   /** Built by the editor each time, so it is never a screen or two behind. */
   context: () => GenContext;
@@ -66,6 +67,8 @@ export default function HmiAi({
   disabledReason?: string | null;
   /** Whether to offer a model list at all. The desktop has no HTTP model API. */
   hasProvider?: boolean;
+  /** What this conversation belongs to, so it is still here next time. */
+  memoryKey?: string | null;
 }) {
   const [mode, setMode] = useState<"extend" | "replace">("extend");
   // Read inside `run` rather than closed over, so a mode changed after pressing
@@ -181,7 +184,11 @@ export default function HmiAi({
     [onGenerate, context, onApply, disabledReason],
   );
 
-  const a = useAssistant({ run, modelsUrl: hasProvider ? "/api/models" : null });
+  const a = useAssistant({
+    run,
+    modelsUrl: hasProvider ? "/api/models" : null,
+    memoryKey,
+  });
 
   /**
    * The layout with no model involved.

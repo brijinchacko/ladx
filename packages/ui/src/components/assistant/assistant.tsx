@@ -26,12 +26,15 @@ import {
   MIN_H,
   MIN_W,
   clampFrame,
+  clearDockInset,
   defaultFrame,
   hasStoredFrame,
   isDocked,
   loadFrame,
+  publishDockInset,
   saveFrame,
 } from "../../lib/assistant-frame";
+import { AiMark } from "./mark";
 import { type AssistStep, Steps } from "./steps";
 
 /**
@@ -250,6 +253,26 @@ export default function Assistant({
 
   const setMode = useCallback((mode: AssistantMode) => update({ mode }), [update]);
 
+  /*
+   * Tell the page how much room it is taking.
+   *
+   * Without this a docked panel simply covers the work, which on the left hid
+   * the project tree. Containers that read the variables move out of the way;
+   * ones that do not are no worse off than before.
+   */
+  useEffect(() => {
+    if (!frame) return;
+    publishDockInset(
+      frame.mode,
+      Math.max(MIN_W, Math.min(frame.w, 560)),
+      Math.max(MIN_H, Math.min(frame.h, 460)),
+    );
+  }, [frame]);
+
+  // Cleared on unmount, so a tool that closes the panel entirely does not leave
+  // the page padded against something that is no longer there.
+  useEffect(() => () => clearDockInset(), []);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every new turn or step
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
@@ -314,7 +337,7 @@ export default function Assistant({
           onClick={() => setMode("floating")}
           className="flex items-center gap-1.5 font-semibold text-[12px] text-white transition-opacity hover:opacity-80"
         >
-          <Sparkles className="h-3 w-3" />
+          <AiMark size={13} />
           {title}
           <ChevronUp className="h-3 w-3 opacity-70" />
         </button>
@@ -415,7 +438,7 @@ export default function Assistant({
         }`}
       >
         <GripVertical className="h-3 w-3 shrink-0 text-white/50" />
-        <Sparkles className="h-3 w-3 shrink-0 text-white" />
+        <AiMark size={14} className="shrink-0 text-white" />
         <span className="truncate font-semibold text-[12px] text-white">{title}</span>
 
         {models && (

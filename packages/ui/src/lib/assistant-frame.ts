@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 /**
  * Where the assistant sits, and how big it is.
  *
@@ -161,3 +163,56 @@ export function saveFrame(toolId: string, f: Frame): void {
     // an error in front of somebody drawing.
   }
 }
+
+/* ─────────────────────────── reserving space ─────────────────────────── */
+
+/**
+ * How much room a docked panel is taking, published to the page.
+ *
+ * The panel is positioned against the viewport, which is the only way one
+ * component mounted at five different points in five different layouts can
+ * reach all four edges. On its own that means it covers the work, which is
+ * exactly the complaint: docking it to the left hid the project tree.
+ *
+ * So it writes its thickness onto the document as custom properties, and any
+ * container that wants to get out of the way reads them:
+ *
+ *   style={{ paddingLeft: "var(--ladx-ai-left, 0px)" }}
+ *
+ * A CSS variable rather than a context because the containers that need to move
+ * are in five packages and two apps, some of them server rendered, and threading
+ * a provider through all of them to communicate one number is more machinery
+ * than the number is worth. A page that reads nothing still works; the panel
+ * simply overlaps, which is the old behaviour rather than a broken one.
+ */
+export const DOCK_VARS = {
+  top: "--ladx-ai-top",
+  right: "--ladx-ai-right",
+  bottom: "--ladx-ai-bottom",
+  left: "--ladx-ai-left",
+} as const;
+
+export function publishDockInset(mode: AssistantMode, w: number, h: number): void {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  for (const v of Object.values(DOCK_VARS)) root.style.setProperty(v, "0px");
+  if (!isDocked(mode)) return;
+  const px = mode === "left" || mode === "right" ? `${Math.round(w)}px` : `${Math.round(h)}px`;
+  root.style.setProperty(DOCK_VARS[mode], px);
+}
+
+/** Clear the reservation, for when the panel unmounts entirely. */
+export function clearDockInset(): void {
+  if (typeof document === "undefined") return;
+  for (const v of Object.values(DOCK_VARS)) {
+    document.documentElement.style.setProperty(v, "0px");
+  }
+}
+
+/** What a container should apply to get out of a docked panel's way. */
+export const DOCK_INSET_STYLE: CSSProperties = {
+  paddingTop: `var(${DOCK_VARS.top}, 0px)`,
+  paddingRight: `var(${DOCK_VARS.right}, 0px)`,
+  paddingBottom: `var(${DOCK_VARS.bottom}, 0px)`,
+  paddingLeft: `var(${DOCK_VARS.left}, 0px)`,
+};

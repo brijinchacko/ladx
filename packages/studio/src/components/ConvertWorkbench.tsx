@@ -207,7 +207,10 @@ export default function ConvertWorkbench({
     [current, source],
   );
 
-  const assist = useAssistant({ run: runAssist });
+  const assist = useAssistant({
+    run: runAssist,
+    memoryKey: source ? `convert:${source.projectId ?? source.name}` : null,
+  });
 
   const takeFile = useCallback(async (file: File) => {
     const out = readProgramFile(file.name, await file.text());

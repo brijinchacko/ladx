@@ -1,4 +1,5 @@
 import { SiteFooter, SiteHeader } from "@/components/site/chrome";
+import { DOCK_INSET_STYLE } from "@ladx/ui";
 import type { ReactNode } from "react";
 
 /**
@@ -10,7 +11,16 @@ import type { ReactNode } from "react";
  */
 export default function SiteLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-ink-900 antialiased">
+    /*
+      Padded away from a docked LADX AI, the same as the studio shell.
+      
+      The free tools mount it too, and docking it to the left there covered the
+      site header. The variables are zero unless it is docked.
+    */
+    <div
+      style={DOCK_INSET_STYLE}
+      className="flex min-h-screen flex-col bg-white text-ink-900 antialiased transition-[padding] duration-150"
+    >
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <SiteFooter />

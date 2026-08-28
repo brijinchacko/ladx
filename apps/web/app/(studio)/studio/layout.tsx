@@ -3,6 +3,7 @@ import { isAdmin } from "@/lib/auth/admin";
 import { requireUser } from "@/lib/auth/server";
 import { listUserConversations } from "@/lib/db/conversations";
 import { listProjects } from "@/lib/platform/queries";
+import { DOCK_INSET_STYLE } from "@ladx/ui";
 import type { ReactNode } from "react";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,18 @@ export default async function StudioLayout({ children }: { children: ReactNode }
   ]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white text-ink-900">
+    /*
+      Padded away from whatever LADX AI is docked to.
+      
+      On the outer element rather than on `main`, so docking it to the left
+      pushes the sidebar across instead of covering the project tree, which is
+      what a dock is supposed to do. The variables are zero unless the panel is
+      docked, so this costs nothing the rest of the time.
+    */
+    <div
+      style={DOCK_INSET_STYLE}
+      className="flex h-screen overflow-hidden bg-white text-ink-900 transition-[padding] duration-150"
+    >
       <StudioSidebar
         conversations={conversations.map((c) => ({
           id: c.id,

@@ -1659,7 +1659,9 @@ export default function CadEditor({
     [drawing, commit, sheetSummary, layer],
   );
 
-  const assist = useAssistant({ run: runAssist });
+  // Keyed to the drawing, so coming back to this sheet brings back the
+  // conversation about this sheet.
+  const assist = useAssistant({ run: runAssist, memoryKey: `cad:${drawingId}` });
 
   /* ── filing this sheet against a project ── */
 
@@ -2353,7 +2355,7 @@ export default function CadEditor({
               onSelect: assist.reset,
             },
           ]}
-          footnote="Relay can make mistakes, and how good the result is depends heavily on the model. Check every dimension before the drawing is issued."
+          footnote="LADX AI can make mistakes, and how good the result is depends heavily on the model. Check every dimension before the drawing is issued."
         />
       }
     </div>

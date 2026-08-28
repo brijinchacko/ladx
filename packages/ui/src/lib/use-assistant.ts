@@ -49,6 +49,28 @@ export interface UseAssistantOptions {
   modelsUrl?: string | null;
   /** Where the chosen model is remembered. One per tool would be surprising. */
   storageKey?: string;
+  /**
+   * What this conversation belongs to, so it is still there next time.
+   *
+   * Usually the tool and the project: `hmi:<projectId>`. Opening the HMI
+   * builder on the Acme job and finding the conversation about the Acme job is
+   * the difference between an assistant and a text box. Opening a different
+   * project gets a different thread, because carrying one job's context into
+   * another is worse than starting fresh: the tag names are wrong and the
+   * assumptions are somebody else's.
+   *
+   * Omit on a surface with nothing to belong to, like a scratch program, and
+   * the thread lives for the visit.
+   */
+  memoryKey?: string | null;
+  /**
+   * How many turns to keep.
+   *
+   * A cap rather than everything, because these are held in the browser and a
+   * long thread with step lists attached is not small. The oldest go first,
+   * which is the right end to lose.
+   */
+  memoryTurns?: number;
 }
 
 interface Pending {
@@ -62,6 +84,8 @@ export function useAssistant({
   run,
   modelsUrl = "/api/models",
   storageKey = MODEL_KEY,
+  memoryKey = null,
+  memoryTurns = 40,
 }: UseAssistantOptions) {
   const [turns, setTurns] = useState<AssistantTurn[]>([]);
   const [busy, setBusy] = useState(false);
@@ -69,6 +93,59 @@ export function useAssistant({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  /* ── what it remembers ── */
+
+  /*
+   * Restored on the client only, and keyed to the work.
+   *
+   * Reading storage during a server render is a hydration mismatch, and
+   * seeding state from it in the initialiser is the same bug wearing a hat.
+   * Defensive about shape: a thread written by an older build must not take
+   * the tool down on load, so anything that does not look like turns is
+   * discarded rather than rendered.
+   */
+  useEffect(() => {
+    if (!memoryKey) {
+      setTurns([]);
+      return;
+    }
+    try {
+      const raw = window.localStorage.getItem(`ladx.ai.thread.${memoryKey}`);
+      if (!raw) {
+        setTurns([]);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      setTurns(
+        Array.isArray(parsed)
+          ? parsed.filter(
+              (t: unknown): t is AssistantTurn =>
+                Boolean(t) &&
+                typeof (t as AssistantTurn).id === "string" &&
+                typeof (t as AssistantTurn).text === "string",
+            )
+          : [],
+      );
+    } catch {
+      setTurns([]);
+    }
+  }, [memoryKey]);
+
+  // Written back whenever the thread changes. Undo is deliberately not
+  // restorable across a reload: the inverses describe a document as it was in
+  // that session, and offering to apply them to a document somebody has since
+  // changed is worse than not offering.
+  useEffect(() => {
+    if (!memoryKey) return;
+    try {
+      const keep = turns.slice(-memoryTurns).map((t) => ({ ...t, undoable: false }));
+      window.localStorage.setItem(`ladx.ai.thread.${memoryKey}`, JSON.stringify(keep));
+    } catch {
+      // Private browsing, or a full quota. The thread still works for this
+      // visit, which is what it did before it was remembered at all.
+    }
+  }, [turns, memoryKey, memoryTurns]);
 
   /* ── which model ── */
 
@@ -237,7 +314,14 @@ export function useAssistant({
     setError(null);
     setSteps([]);
     setPending(null);
-  }, []);
+    if (memoryKey) {
+      try {
+        window.localStorage.removeItem(`ladx.ai.thread.${memoryKey}`);
+      } catch {
+        // Nothing was stored, so nothing to clear.
+      }
+    }
+  }, [memoryKey]);
 
   /**
    * Put a turn in the transcript without running the model.

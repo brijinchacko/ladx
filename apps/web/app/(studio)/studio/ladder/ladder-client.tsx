@@ -127,7 +127,11 @@ export default function LadderClient({
             },
           ]}
           bottomDock={({ program, load }) => (
-            <LadderAi getProgram={() => program} onProgram={(next) => load(next)} />
+            <LadderAi
+              memoryKey={`ladder:${open}`}
+              getProgram={() => program}
+              onProgram={(next) => load(next)}
+            />
           )}
         />
       </div>

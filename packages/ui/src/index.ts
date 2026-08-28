@@ -43,6 +43,7 @@ export type {
   RunModeControl,
 } from "./components/assistant/assistant";
 export { Steps, StepLog } from "./components/assistant/steps";
+export { AiMark } from "./components/assistant/mark";
 export type { AssistStep, StepState } from "./components/assistant/steps";
 export { useAssistant } from "./lib/use-assistant";
 export type { AssistRunContext, AssistResult, UseAssistantOptions } from "./lib/use-assistant";

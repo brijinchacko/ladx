@@ -31,6 +31,7 @@ export default function LadderAi({
   onProgram,
   onUndo,
   disabledReason,
+  memoryKey,
 }: {
   /** The program as it stands, for context. */
   getProgram: () => LadxProgram | null;
@@ -45,6 +46,8 @@ export default function LadderAi({
    * opens as a bar in this state and costs no canvas.
    */
   disabledReason?: string | null;
+  /** What this conversation belongs to, so it is still here next time. */
+  memoryKey?: string | null;
 }) {
   const run = useCallback(
     async (prompt: string, { step, ask, model, signal }: AssistRunContext) => {
@@ -156,7 +159,11 @@ export default function LadderAi({
     [getProgram, onProgram],
   );
 
-  const a = useAssistant({ run, modelsUrl: disabledReason ? null : "/api/models" });
+  const a = useAssistant({
+    run,
+    modelsUrl: disabledReason ? null : "/api/models",
+    memoryKey,
+  });
 
   return (
     <Assistant
@@ -194,7 +201,7 @@ export default function LadderAi({
           onSelect: a.reset,
         },
       ]}
-      footnote="Relay can make mistakes, and how good the result is depends heavily on the model. Simulate everything before it reaches a controller."
+      footnote="LADX AI can make mistakes, and how good the result is depends heavily on the model. Simulate everything before it reaches a controller."
     />
   );
 }
