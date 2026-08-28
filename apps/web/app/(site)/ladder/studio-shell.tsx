@@ -96,11 +96,9 @@ export default function StudioShell() {
     else root.setAttribute("data-studio-immersive", "");
   }, []);
 
-  const screen_ = useFocusMode({
-    key: MODE_KEY,
-    mayPersist,
-    onChange: onModeChange,
-  });
+  // The mode is not remembered any more, so consent no longer comes into it:
+  // the key is passed only so an older build's stored value gets cleared.
+  const screen_ = useFocusMode({ key: MODE_KEY, onChange: onModeChange });
   const { mode, cycle, collapse, immersive } = screen_;
 
   // Cleaned up on unmount, so navigating away never leaves the site headerless.

@@ -42,9 +42,20 @@ export interface FocusModeApi {
  * Everything awkward about the Fullscreen API is handled here rather than five
  * times:
  *
- *   Fullscreen needs a user gesture, so a remembered `full` is never restored;
- *   the stored value is clamped to `focus`. Restoring it would leave the UI
- *   claiming a state the browser had refused.
+ *   No immersive mode is ever restored. Every visit starts docked, with the
+ *   site header where somebody expects it.
+ *
+ *   That began as a narrower rule: fullscreen needs a user gesture, so a
+ *   remembered `full` was clamped to `focus` rather than restored, because
+ *   restoring it would have left the UI claiming a state the browser had
+ *   refused. Remembering `focus` turned out to be the same mistake wearing a
+ *   hat. Focus mode covers the viewport, header included, so somebody who
+ *   pressed F once and came back a week later landed on a page with no logo,
+ *   no navigation and no evident way back to the site. On a free tool reached
+ *   from a search result that does not read as a mode, it reads as broken.
+ *
+ *   The mode costs one keystroke to re-enter and it is on a labelled control,
+ *   so nothing is lost by asking for it per visit.
  *
  *   Esc, F11 and the window controls all leave fullscreen without telling the
  *   page. Without the `fullscreenchange` listener, a control still reading
@@ -54,22 +65,20 @@ export interface FocusModeApi {
  *   iOS Safari it does not exist for arbitrary elements. Falling back to focus
  *   gets most of the benefit rather than failing silently.
  *
- * @param key       Where to remember the mode. Omit to not remember it.
- * @param mayPersist Whether storing a preference is allowed at all. Undefined
- *                   while the answer is still being read on the client.
+ * @param key Formerly where the mode was remembered. Kept only so the stale
+ *            value written by older builds can be cleared; nothing is stored
+ *            under it any more.
  */
 export function useFocusMode(options?: {
   key?: string;
-  mayPersist?: boolean;
   /**
    * Called when the mode changes, for a host that needs to hide site chrome.
    * The ladder page uses it to set an attribute on the document element.
    */
   onChange?: (mode: FocusMode) => void;
 }): FocusModeApi {
-  const { key, mayPersist, onChange } = options ?? {};
+  const { key, onChange } = options ?? {};
   const [mode, setMode] = useState<FocusMode>("docked");
-  const [ready, setReady] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
   const canFullscreen = useMemo(() => {
@@ -77,28 +86,21 @@ export function useFocusMode(options?: {
     return typeof document.documentElement.requestFullscreen === "function";
   }, []);
 
-  // Restored on the client only, and never to `full`. Reading storage during
-  // the server render is a hydration mismatch; seeding state from it in the
-  // initialiser is the same bug wearing a hat.
+  /*
+   * Clear what older builds stored.
+   *
+   * The mode is no longer remembered, so the key is dead. Leaving it would be
+   * harmless today and confusing to the next person who finds it and assumes
+   * something reads it.
+   */
   useEffect(() => {
-    if (key && mayPersist !== false) {
-      try {
-        if (window.localStorage.getItem(key) === "focus") setMode("focus");
-      } catch {
-        // Storage unavailable. The default is a fine answer.
-      }
-    }
-    setReady(true);
-  }, [key, mayPersist]);
-
-  useEffect(() => {
-    if (!ready || !key || mayPersist === false) return;
+    if (!key) return;
     try {
-      window.localStorage.setItem(key, mode === "full" ? "focus" : mode);
+      window.localStorage.removeItem(key);
     } catch {
-      // The mode still applies for this visit.
+      // Storage unavailable, which means there is nothing stale in it either.
     }
-  }, [mode, ready, key, mayPersist]);
+  }, [key]);
 
   useEffect(() => {
     onChange?.(mode);
