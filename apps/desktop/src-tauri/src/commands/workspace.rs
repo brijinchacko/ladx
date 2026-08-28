@@ -224,6 +224,17 @@ pub fn get_workspace_dir(state: tauri::State<'_, AppState>) -> Result<Option<Str
     Ok(crate::commands::settings::settings_load(state)?.workspace_dir)
 }
 
+/// Remember whether the sidebar is collapsed.
+#[tauri::command]
+pub fn set_sidebar_collapsed(
+    state: tauri::State<'_, AppState>,
+    collapsed: bool,
+) -> Result<(), String> {
+    let mut settings = crate::commands::settings::settings_load(state.clone())?;
+    settings.sidebar_collapsed = collapsed;
+    crate::commands::settings::settings_save(state, settings)
+}
+
 /// Remember which project was open, so a relaunch lands back in it.
 ///
 /// A command of its own rather than the frontend reading the settings, editing

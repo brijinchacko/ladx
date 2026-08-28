@@ -19,6 +19,7 @@ import {
   listProjectFolders,
   saveIntoProject,
   setLastProject,
+  setSidebarCollapsed,
   setWorkspaceDir,
   settingsLoad,
 } from "@/lib/invoke";
@@ -27,6 +28,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 interface ProjectFolderState {
   /** The open project, or null when work is not filed anywhere. */
   project: ProjectFolder | null;
+  /** Everything in the workspace folder, for the sidebar and the list. */
+  projects: ProjectFolder[];
+  /** Re-read the workspace folder, after creating or deleting a project. */
+  refresh: () => Promise<void>;
+  /** Sidebar collapsed to icons. Kept here because the shell has no store. */
+  collapsed: boolean;
+  setCollapsed: (next: boolean) => void;
   /** Where projects live. Null until somebody has chosen. */
   workspace: string | null;
   /** True until the remembered project has been looked for, so nothing flickers. */
@@ -50,7 +58,9 @@ const Ctx = createContext<ProjectFolderState | null>(null);
 
 export function ProjectFolderProvider({ children }: { children: React.ReactNode }) {
   const [project, setProject] = useState<ProjectFolder | null>(null);
+  const [projects, setProjects] = useState<ProjectFolder[]>([]);
   const [workspace, setWorkspaceState] = useState<string | null>(null);
+  const [collapsed, setCollapsedState] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Put somebody back where they were. Whoever spent yesterday on one job is
@@ -67,13 +77,17 @@ export function ProjectFolderProvider({ children }: { children: React.ReactNode 
         );
         if (!live) return;
         setWorkspaceState(settings.workspaceDir ?? null);
-        if (settings.workspaceDir && settings.lastProject) {
+        setCollapsedState(settings.sidebarCollapsed ?? false);
+        if (settings.workspaceDir) {
           // Found by listing rather than by reading the path directly, so a
           // project that was deleted or moved since last launch simply is not
           // there instead of throwing on the first screen of the app.
           const all = await listProjectFolders(settings.workspaceDir).catch(() => []);
           if (!live) return;
-          setProject(all.find((p) => p.path === settings.lastProject) ?? null);
+          setProjects(all);
+          if (settings.lastProject) {
+            setProject(all.find((p) => p.path === settings.lastProject) ?? null);
+          }
         }
       } finally {
         if (live) setLoading(false);
@@ -92,9 +106,25 @@ export function ProjectFolderProvider({ children }: { children: React.ReactNode 
     void setLastProject(next?.path ?? null).catch(() => {});
   }, []);
 
+  const refresh = useCallback(async () => {
+    if (!workspace) {
+      setProjects([]);
+      return;
+    }
+    setProjects(await listProjectFolders(workspace).catch(() => []));
+  }, [workspace]);
+
   const setWorkspace = useCallback((dir: string) => {
     setWorkspaceState(dir);
     void setWorkspaceDir(dir).catch(() => {});
+    void listProjectFolders(dir)
+      .then(setProjects)
+      .catch(() => setProjects([]));
+  }, []);
+
+  const setCollapsed = useCallback((next: boolean) => {
+    setCollapsedState(next);
+    void setSidebarCollapsed(next).catch(() => {});
   }, []);
 
   const fileInto = useCallback(
@@ -106,8 +136,30 @@ export function ProjectFolderProvider({ children }: { children: React.ReactNode 
   );
 
   const value = useMemo(
-    () => ({ project, workspace, loading, open, setWorkspace, fileInto }),
-    [project, workspace, loading, open, setWorkspace, fileInto],
+    () => ({
+      project,
+      projects,
+      workspace,
+      loading,
+      collapsed,
+      open,
+      refresh,
+      setWorkspace,
+      setCollapsed,
+      fileInto,
+    }),
+    [
+      project,
+      projects,
+      workspace,
+      loading,
+      collapsed,
+      open,
+      refresh,
+      setWorkspace,
+      setCollapsed,
+      fileInto,
+    ],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

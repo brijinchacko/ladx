@@ -11,7 +11,6 @@
  * anybody thinks about arranging it.
  */
 
-import { DesktopShell } from "@/components/desktop-shell";
 import {
   type FolderEntry,
   type ProjectFolder,
@@ -80,7 +79,7 @@ export default function WorkspacePage() {
   };
 
   return (
-    <DesktopShell>
+    <div className="relative min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto max-w-4xl space-y-6 p-8">
         <header className="flex items-end justify-between gap-4">
           <div>
@@ -202,7 +201,7 @@ export default function WorkspacePage() {
 
         {project && <Contents project={project} />}
       </div>
-    </DesktopShell>
+    </div>
   );
 }
 

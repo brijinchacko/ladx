@@ -6,6 +6,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter=@ladx/web", "dev"],
       "port": 3000
+    },
+    {
+      "name": "ladx-desktop",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter=@ladx/desktop", "dev:next"],
+      "port": 1420
     }
   ]
 }

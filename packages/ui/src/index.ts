@@ -50,3 +50,6 @@ export type { AssistRunContext, AssistResult, UseAssistantOptions } from "./lib/
 export * from "./lib/assistant-frame";
 export { ASSISTANT, RELAY_TITLES } from "./lib/assistant-brand";
 export type { RelayTool } from "./lib/assistant-brand";
+
+// The sidebar's appearance, shared so the web and the desktop cannot drift.
+export * from "./lib/sidebar";

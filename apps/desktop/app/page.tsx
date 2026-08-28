@@ -1,6 +1,5 @@
 "use client";
 
-import { DesktopShell } from "@/components/desktop-shell";
 import { ProjectsList } from "@/components/projects-list";
 import { UploadProjectButton } from "@/components/upload-project-button";
 import {
@@ -50,7 +49,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <DesktopShell>
+    <div className="relative min-h-0 flex-1 overflow-y-auto">
       <div className="p-8 max-w-3xl mx-auto space-y-6">
         <header>
           <h1 className="text-3xl font-semibold tracking-tight mb-1">ladX Studio</h1>
@@ -123,7 +122,7 @@ export default function HomePage() {
           <ProjectsList />
         </section>
       </div>
-    </DesktopShell>
+    </div>
   );
 }
 

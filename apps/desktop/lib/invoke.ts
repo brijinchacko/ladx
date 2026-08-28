@@ -59,6 +59,7 @@ export interface StudioSettings {
   defaultModel?: string | null;
   workspaceDir?: string | null;
   lastProject?: string | null;
+  sidebarCollapsed?: boolean;
 }
 
 export async function settingsLoad(): Promise<StudioSettings> {
@@ -313,4 +314,8 @@ export async function getWorkspaceDir(): Promise<string | null> {
 /** Null forgets it, which is what closing a project means. */
 export async function setLastProject(project: string | null): Promise<void> {
   await tauriInvoke<void>("set_last_project", { project });
+}
+
+export async function setSidebarCollapsed(collapsed: boolean): Promise<void> {
+  await tauriInvoke<void>("set_sidebar_collapsed", { collapsed });
 }

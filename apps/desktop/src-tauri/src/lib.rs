@@ -79,6 +79,7 @@ pub fn run() {
             commands::workspace::set_workspace_dir,
             commands::workspace::get_workspace_dir,
             commands::workspace::set_last_project,
+            commands::workspace::set_sidebar_collapsed,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

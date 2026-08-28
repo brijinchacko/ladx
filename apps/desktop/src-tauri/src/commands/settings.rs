@@ -27,6 +27,13 @@ pub struct StudioSettings {
     /// where they were is the difference between a tool and a filing cabinet.
     #[serde(default)]
     pub last_project: Option<String>,
+    /// Whether the sidebar is collapsed to icons.
+    ///
+    /// In settings.json rather than localStorage, which this app does not use.
+    /// The web app keeps the same preference in localStorage; the difference is
+    /// where it is stored, not what it does.
+    #[serde(default)]
+    pub sidebar_collapsed: bool,
 }
 
 #[tauri::command]

@@ -4,7 +4,6 @@
 // segments, so we use a query string: /project?id=<uuid>.
 
 import { DeleteProjectButton } from "@/components/delete-project-button";
-import { DesktopShell } from "@/components/desktop-shell";
 import { type ProjectRow, getProject } from "@/lib/invoke";
 import { Button } from "@ladx/ui";
 import { Loader2 } from "lucide-react";
@@ -16,11 +15,9 @@ export default function ProjectPage() {
   return (
     <Suspense
       fallback={
-        <DesktopShell>
-          <div className="p-8 flex items-center gap-2 text-ink-500 text-sm">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-          </div>
-        </DesktopShell>
+        <div className="flex items-center gap-2 p-8 text-sm text-ink-500">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+        </div>
       }
     >
       <ProjectDetail />
@@ -46,34 +43,28 @@ function ProjectDetail() {
 
   if (error) {
     return (
-      <DesktopShell>
-        <div className="p-8 max-w-3xl mx-auto">
-          <div className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
-            {error}
-          </div>
+      <div className="mx-auto max-w-3xl p-8">
+        <div className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+          {error}
         </div>
-      </DesktopShell>
+      </div>
     );
   }
   if (row === undefined) {
     return (
-      <DesktopShell>
-        <div className="p-8 flex items-center gap-2 text-ink-500 text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-        </div>
-      </DesktopShell>
+      <div className="flex items-center gap-2 p-8 text-sm text-ink-500">
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+      </div>
     );
   }
   if (row === null) {
     return (
-      <DesktopShell>
-        <div className="p-8 max-w-3xl mx-auto">
-          <p className="text-ink-500">Project not found.</p>
-          <Link href="/" className="text-teal-500 text-sm">
-            ← Back
-          </Link>
-        </div>
-      </DesktopShell>
+      <div className="mx-auto max-w-3xl p-8">
+        <p className="text-ink-500">Project not found.</p>
+        <Link href="/" className="text-sm text-teal-500">
+          ← Back
+        </Link>
+      </div>
     );
   }
 
@@ -85,8 +76,8 @@ function ProjectDetail() {
   ];
 
   return (
-    <DesktopShell>
-      <div className="p-8 max-w-3xl mx-auto space-y-6">
+    <div className="relative min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto max-w-3xl space-y-6 p-8">
         <header className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs text-ink-500">
@@ -155,7 +146,7 @@ function ProjectDetail() {
           )}
         </section>
       </div>
-    </DesktopShell>
+    </div>
   );
 }
 

@@ -2,7 +2,24 @@
 
 import AccountMenu from "@/components/studio/account-menu";
 import ChatHistory, { type HistoryItem } from "@/components/studio/chat-history";
-import { Logo } from "@ladx/ui";
+import {
+  Logo,
+  SIDEBAR_ASIDE,
+  SIDEBAR_ASIDE_COLLAPSED,
+  SIDEBAR_BODY,
+  SIDEBAR_BRAND,
+  SIDEBAR_BRAND_LINK,
+  SIDEBAR_BRAND_SUB,
+  SIDEBAR_COLLAPSE_BUTTON,
+  SIDEBAR_EXPAND_BUTTON,
+  SIDEBAR_FOOT,
+  SIDEBAR_SECTION,
+  SIDEBAR_SECTION_LABEL,
+  SIDEBAR_SECTION_ROWS,
+  sidebarCountClass,
+  sidebarIconClass,
+  sidebarRowClass,
+} from "@ladx/ui";
 import {
   Activity,
   CalendarRange,
@@ -98,12 +115,12 @@ export default function StudioSidebar({
 
   if (collapsed) {
     return (
-      <aside className="flex w-14 shrink-0 flex-col items-center border-r border-ink-100 bg-ink-50/40 py-3">
+      <aside className={SIDEBAR_ASIDE_COLLAPSED}>
         <button
           type="button"
           onClick={() => setCollapsed(false)}
           aria-label="Expand sidebar"
-          className="mb-3 flex h-9 w-9 items-center justify-center rounded-md text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-900"
+          className={SIDEBAR_EXPAND_BUTTON}
         >
           <PanelLeft className="h-4 w-4" />
         </button>
@@ -154,20 +171,18 @@ export default function StudioSidebar({
   }
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-ink-100 bg-ink-50/40">
+    <aside className={SIDEBAR_ASIDE}>
       {/* brand + collapse */}
-      <div className="flex items-center justify-between px-4 py-3.5">
-        <Link href="/studio" className="flex flex-col items-start gap-0.5" aria-label="LADX Studio">
+      <div className={SIDEBAR_BRAND}>
+        <Link href="/studio" className={SIDEBAR_BRAND_LINK} aria-label="LADX Studio">
           <Logo size={17} />
-          <span className="pl-[1px] font-mono text-[9.5px] uppercase leading-none tracking-[0.34em] text-ink-400">
-            Studio
-          </span>
+          <span className={SIDEBAR_BRAND_SUB}>Studio</span>
         </Link>
         <button
           type="button"
           onClick={() => setCollapsed(true)}
           aria-label="Collapse sidebar"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-ink-300 transition-colors hover:bg-ink-100 hover:text-ink-700"
+          className={SIDEBAR_COLLAPSE_BUTTON}
         >
           <ChevronsLeft className="h-4 w-4" />
         </button>
@@ -178,7 +193,7 @@ export default function StudioSidebar({
         <NewButton onProjects={isActive("/studio/projects")} />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 pb-3">
+      <div className={SIDEBAR_BODY}>
         {/*
           Where you can go, before what you have been doing.
 
@@ -262,7 +277,7 @@ export default function StudioSidebar({
       </div>
 
       {/* account: settings, the way back to the website, and sign out */}
-      <div className="border-t border-ink-100 p-3">
+      <div className={SIDEBAR_FOOT}>
         <AccountMenu userName={userName} userEmail={userEmail} />
       </div>
     </aside>
@@ -360,11 +375,9 @@ function NewButton({ onProjects }: { onProjects: boolean }) {
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="mb-4">
-      <p className="mb-1 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-300">
-        {label}
-      </p>
-      <div className="space-y-px">{children}</div>
+    <div className={SIDEBAR_SECTION}>
+      <p className={SIDEBAR_SECTION_LABEL}>{label}</p>
+      <div className={SIDEBAR_SECTION_ROWS}>{children}</div>
     </div>
   );
 }
@@ -385,23 +398,10 @@ function Row({
   children: React.ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      className={`flex items-center gap-2.5 rounded-md py-1.5 text-[13px] transition-colors ${
-        indent ? "pl-8 pr-2" : "px-2"
-      } ${active ? "bg-ink-900 text-white" : "text-ink-700 hover:bg-ink-100"}`}
-    >
-      {Icon && (
-        <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-white" : "text-ink-400"}`} />
-      )}
+    <Link href={href} className={sidebarRowClass({ active, indent })}>
+      {Icon && <Icon className={sidebarIconClass(active)} />}
       <span className="min-w-0 flex-1 truncate">{children}</span>
-      {count !== undefined && (
-        <span
-          className={`shrink-0 font-mono text-[10.5px] tabular-nums ${active ? "text-white/70" : "text-ink-300"}`}
-        >
-          {count}
-        </span>
-      )}
+      {count !== undefined && <span className={sidebarCountClass(active)}>{count}</span>}
     </Link>
   );
 }
