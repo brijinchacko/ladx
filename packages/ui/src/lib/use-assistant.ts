@@ -104,8 +104,19 @@ export function useAssistant({
   storageKey = MODEL_KEY,
   memoryKey = null,
   memoryTurns = 40,
-  store = localAssistantStore,
+  store,
 }: UseAssistantOptions) {
+  /*
+   * Held stable, the same way LadxStudio holds its storage.
+   *
+   * The store is a dependency of the effects that read and write the thread,
+   * so a caller building one inline on each render would make those effects
+   * re-run every render: a read loop against the database on the desktop, and
+   * a thread that never settles. Callers should not have to know that.
+   */
+  const storeRef = useRef<AssistantStore>(store ?? localAssistantStore);
+  if (store && storeRef.current !== store) storeRef.current = store;
+  const memory = storeRef.current;
   const [turns, setTurns] = useState<AssistantTurn[]>([]);
   const [busy, setBusy] = useState(false);
   const [steps, setSteps] = useState<AssistStep[]>([]);
@@ -132,7 +143,7 @@ export function useAssistant({
     let live = true;
     (async () => {
       try {
-        const raw = await store.get(`ladx.ai.thread.${memoryKey}`);
+        const raw = await memory.get(`ladx.ai.thread.${memoryKey}`);
         if (!live) return;
         const parsed = raw ? JSON.parse(raw) : null;
         setTurns(
@@ -152,7 +163,7 @@ export function useAssistant({
     return () => {
       live = false;
     };
-  }, [memoryKey, store]);
+  }, [memoryKey, memory]);
 
   // Written back whenever the thread changes. Undo is deliberately not
   // restorable across a reload: the inverses describe a document as it was in
@@ -163,8 +174,8 @@ export function useAssistant({
     const keep = turns.slice(-memoryTurns).map((t) => ({ ...t, undoable: false }));
     // Not awaited: a thread that has not finished being written must not hold
     // up the next thing somebody types. The store swallows its own failures.
-    void store.set(`ladx.ai.thread.${memoryKey}`, JSON.stringify(keep));
-  }, [turns, memoryKey, memoryTurns, store]);
+    void memory.set(`ladx.ai.thread.${memoryKey}`, JSON.stringify(keep));
+  }, [turns, memoryKey, memoryTurns, memory]);
 
   /* ── which model ── */
 
@@ -178,14 +189,14 @@ export function useAssistant({
   // hydration mismatch.
   useEffect(() => {
     let live = true;
-    void store.get(storageKey).then((saved) => {
+    void memory.get(storageKey).then((saved) => {
       // Auto is a fine answer if nothing was saved or the read failed.
       if (live && saved) setModel(saved);
     });
     return () => {
       live = false;
     };
-  }, [storageKey, store]);
+  }, [storageKey, memory]);
 
   useEffect(() => {
     if (!modelsUrl) {
@@ -221,9 +232,9 @@ export function useAssistant({
       setModel(id);
       // Not awaited: the choice applies to the next question either way, and
       // failing to remember it is not worth interrupting somebody over.
-      void (id ? store.set(storageKey, id) : store.remove(storageKey));
+      void (id ? memory.set(storageKey, id) : memory.remove(storageKey));
     },
-    [storageKey, store],
+    [storageKey, memory],
   );
 
   const models: AssistantModels = useMemo(
@@ -336,8 +347,8 @@ export function useAssistant({
     setError(null);
     setSteps([]);
     setPending(null);
-    if (memoryKey) void store.remove(`ladx.ai.thread.${memoryKey}`);
-  }, [memoryKey, store]);
+    if (memoryKey) void memory.remove(`ladx.ai.thread.${memoryKey}`);
+  }, [memoryKey, memory]);
 
   /**
    * Put a turn in the transcript without running the model.
