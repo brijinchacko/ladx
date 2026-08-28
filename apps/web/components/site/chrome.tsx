@@ -1,5 +1,6 @@
 "use client";
 
+import FreeMenu, { FreeMenuMobile } from "@/components/site/free-menu";
 import HeaderAccount, { type HeaderUser } from "@/components/site/header-account";
 import ProductsMenu, { ProductsMenuMobile } from "@/components/site/products-menu";
 import { GROUP_META, GROUP_ORDER, productsIn } from "@/content/products";
@@ -8,10 +9,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+/*
+ * What is left once the two mega menus have taken their share.
+ *
+ * Free tools used to be a plain link here, first in the list, because it is
+ * what most first-time visitors are actually after. It is still first, and it
+ * is now a menu: one word in a nav bar cannot tell somebody who arrived from
+ * "free PLC programming software" that there is also CAD, an HMI builder, a
+ * converter and seventeen document templates behind it.
+ *
+ * Resources, Forum and Help appear inside that menu as well as here. That is
+ * deliberate rather than an oversight: they are two different questions, "what
+ * can I use for nothing" and "where is the reference", and answering only one
+ * of them would cost somebody the other.
+ */
 const NAV = [
-  // First, because it is what most first-time visitors are actually after and
-  // the only entry that leads somewhere they can use without signing up.
-  { href: "/free", label: "Free tools" },
   { href: "/resources", label: "Resources" },
   { href: "/forum", label: "Forum" },
   { href: "/help", label: "Help" },
@@ -60,6 +72,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">
+          <FreeMenu active={pathname === "/free"} />
           <ProductsMenu active={pathname.startsWith("/products")} />
           {NAV.map((item) => {
             const active = pathname.startsWith(item.href);
@@ -121,6 +134,7 @@ export function SiteHeader() {
 
       {open && (
         <nav className="border-t border-ink-100 bg-white px-5 py-3 md:hidden">
+          <FreeMenuMobile onNavigate={() => setOpen(false)} />
           <ProductsMenuMobile onNavigate={() => setOpen(false)} />
           {NAV.map((item) => (
             <Link
