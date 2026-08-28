@@ -17,8 +17,12 @@
  *
  * Bump it after the files are on the server, never before, and check the
  * checksums below at the same time.
+ *
+ * "On the server" also means after a restart. `next start` indexes public/
+ * once at startup, so an installer copied in afterwards is on disk and still
+ * 404s until the process comes back.
  */
-export const DESKTOP_VERSION = "0.1.0";
+export const DESKTOP_VERSION = "0.1.1";
 
 /** Where the installers are served from. */
 const BASE = "/downloads";
@@ -62,8 +66,8 @@ export const DESKTOP_BUILDS: DesktopBuild[] = [
     platform: "macOS",
     file: `LADX-Studio-${DESKTOP_VERSION}-universal.dmg`,
     href: `${BASE}/LADX-Studio-${DESKTOP_VERSION}-universal.dmg`,
-    size: "8.3 MB",
-    sha256: "856f3ac32f082fe67bbaffaa3718005ca2c267d60e9e4b9a4b8e0c985a17e3eb",
+    size: "8.4 MB",
+    sha256: "65d449382e87528c641a0b3764e7e2493f58529d2d2a0a05e226f2c7dd3f770a",
     requires: "macOS 11 or later. Apple Silicon and Intel in one download.",
     signed: false,
     pending: null,
@@ -74,7 +78,7 @@ export const DESKTOP_BUILDS: DesktopBuild[] = [
     file: `LADX-Studio-${DESKTOP_VERSION}-x64.msi`,
     href: `${BASE}/LADX-Studio-${DESKTOP_VERSION}-x64.msi`,
     size: "4.4 MB",
-    sha256: "85734cf732ead7257765633e960736ef22ea55358f0628319318191b0f8e9443",
+    sha256: "32142105bdf4ed9f786baacc15f883d213bab142e37bd8f2e6b6f43a40b22e3d",
     requires: "Windows 10 or later, 64 bit.",
     signed: false,
     pending: null,
