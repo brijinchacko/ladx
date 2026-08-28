@@ -215,9 +215,11 @@ function BuildCard({
             <p className="mt-3 flex gap-2 rounded-md bg-warning/5 px-2.5 py-2 text-[11.5px] leading-relaxed text-ink-600">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
               <span>
-                Not yet code signed, so {build.platform} will warn you the first time. On macOS:
-                right click the app and choose Open. Check the SHA-256 above if you would rather not
-                take our word for it.
+                Not code signed yet, so {build.platform} will warn you the first time.{" "}
+                {build.id === "mac"
+                  ? "Right click the app and choose Open, rather than double clicking it."
+                  : "SmartScreen shows More info, then Run anyway."}{" "}
+                Check the SHA-256 above if you would rather not take our word for it.
               </span>
             </p>
           )}

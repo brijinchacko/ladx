@@ -52,8 +52,8 @@ export const DESKTOP_BUILDS: DesktopBuild[] = [
     platform: "macOS",
     file: `LADX-Studio-${DESKTOP_VERSION}-universal.dmg`,
     href: `${BASE}/LADX-Studio-${DESKTOP_VERSION}-universal.dmg`,
-    size: "8.4 MB",
-    sha256: "7e4fa2099723de4f366eaa5e08ba14be150434515c49ec39091453834e862265",
+    size: "8.3 MB",
+    sha256: "856f3ac32f082fe67bbaffaa3718005ca2c267d60e9e4b9a4b8e0c985a17e3eb",
     requires: "macOS 11 or later. Apple Silicon and Intel in one download.",
     signed: false,
     pending: null,
@@ -61,14 +61,13 @@ export const DESKTOP_BUILDS: DesktopBuild[] = [
   {
     id: "windows",
     platform: "Windows",
-    file: null,
-    href: null,
-    size: null,
-    sha256: null,
+    file: `LADX-Studio-${DESKTOP_VERSION}-x64.msi`,
+    href: `${BASE}/LADX-Studio-${DESKTOP_VERSION}-x64.msi`,
+    size: "4.4 MB",
+    sha256: "85734cf732ead7257765633e960736ef22ea55358f0628319318191b0f8e9443",
     requires: "Windows 10 or later, 64 bit.",
     signed: false,
-    pending:
-      "The Windows installer is built on Windows, which the current release process does not yet run. It is next.",
+    pending: null,
   },
 ];
 
