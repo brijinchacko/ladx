@@ -66,3 +66,6 @@ apps/desktop/public/panel/
 # Copied from packages/ui/assets/brand by copy-brand.mjs on every build.
 apps/web/public/brand/
 apps/desktop/public/brand/
+
+# Built installers. Large binaries, uploaded to the server rather than committed.
+apps/web/public/downloads/

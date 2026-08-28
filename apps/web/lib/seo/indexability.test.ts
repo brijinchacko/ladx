@@ -96,6 +96,9 @@ describe("robots.txt keeps the private surface private", () => {
     "/convert",
     "/products",
     "/products/hmi",
+    // The desktop build. "Offline PLC software" is a query this page is the
+    // only answer to, and robots blocking it would waste the whole page.
+    "/download",
     "/resources",
     "/resources/plc-scan-cycle-explained",
     "/documents",

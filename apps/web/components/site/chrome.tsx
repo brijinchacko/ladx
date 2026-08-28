@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
  * of them would cost somebody the other.
  */
 const NAV = [
+  { href: "/download", label: "Download" },
   { href: "/resources", label: "Resources" },
   { href: "/forum", label: "Forum" },
   { href: "/help", label: "Help" },
@@ -174,6 +175,7 @@ export function SiteFooter() {
     {
       title: "Learn",
       links: [
+        { href: "/download", label: "Desktop app" },
         { href: "/resources", label: "Articles" },
         { href: "/forum", label: "Forum" },
         { href: "/ladder", label: "Try the simulator" },

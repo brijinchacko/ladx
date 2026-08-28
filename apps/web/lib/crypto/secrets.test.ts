@@ -15,7 +15,10 @@ beforeAll(() => {
   process.env.LADX_SECRETS_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 });
 
-const KEY = "sk-or-v1-cd1745fff7fcb0cb18369d2e171a341a9d0cfbe808bc5a758fee1729c46";
+// Shaped like a provider key and obviously not one. A realistic looking
+// fixture in a repository is a fixture somebody eventually reports as a leak,
+// and every hour spent proving it was fake is an hour wasted.
+const KEY = "sk-or-v1-000000000000000000000000000000000000000000000000000000000000fake";
 const USER = "11111111-1111-1111-1111-111111111111";
 const OTHER = "22222222-2222-2222-2222-222222222222";
 

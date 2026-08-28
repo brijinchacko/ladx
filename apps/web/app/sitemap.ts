@@ -50,6 +50,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     { url: `${SITE.url}/ladder`, changeFrequency: "monthly", priority: 0.9 },
+    // The desktop build. Somebody searching for offline or air gapped PLC
+    // software is looking for exactly this page and nothing else on the site
+    // answers them.
+    { url: `${SITE.url}/download`, changeFrequency: "monthly", priority: 0.9 },
     // The template library is the strongest thing here for search: an engineer
     // looking for a FAT protocol wants a file, and these pages hand them one.
     { url: `${SITE.url}/documents`, changeFrequency: "weekly", priority: 0.9 },
