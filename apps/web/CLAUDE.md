@@ -10,15 +10,26 @@ inference key and does no metering, there is no billing layer.
 
 - All API routes in `app/api/` use Next.js Route Handlers, not legacy pages/api.
 - Native auth: email + bcrypt + Postgres-backed sessions. Cookie name `ladx_session`. Helpers in `lib/auth/`. Middleware does a cheap cookie-presence check; full session validation happens in route handlers via `getCurrentUser()` / `getApiUser()`.
-- Protected routes are under `(app)/`. The middleware bounces unauthenticated HTML requests to `/sign-in?next=...` and returns `401` for `/api/*`.
+- Protected pages are under `(studio)/`, served at `/studio`. The middleware bounces unauthenticated HTML requests to `/sign-in?next=...` and returns `401` for `/api/*`.
 - Database via Drizzle. Schema in `lib/db/schema.ts`. Run `pnpm db:generate` after schema changes.
 - Streaming responses use Server-Sent Events via `lib/inference/stream.ts`.
 
-## Routes that need auth (Phase 1+)
-Anything under `(app)/` plus `/api/chat`, `/api/projects`, `/api/inference`, `/api/documents/*`.
+## Auth: the default is closed
 
-## Routes that don't
-`/api/activation` (uses licence key), and the public marketing routes.
+**Every** `/api/*` route requires a session unless it is on the public allow
+list in `middleware.ts`. Adding an API route does not mean adding it to a
+protected list; it means it is already protected, and making it public is the
+edit somebody has to justify.
+
+Public today: `/api/auth/*` (sign-in itself), `/api/activation` (a licence key
+rather than a session), `/api/contact`, `/api/indexnow` (does its own bearer
+check, so a deploy script can call it and a signed-in user cannot),
+`/api/metrics/ingest` (posted by the middleware with a derived token), and
+`/api/templates/*` (the template library is deliberately account free, and
+gating its download would make the most linkable pages on the site useless).
+
+Pages are the other way round: everything is public except `/studio`, which is
+one prefix rather than a list that grows with every tool.
 
 ## Things to never do
 - Don't load PLC project files into Next.js memory, use the Rust parser via subprocess. PLC projects can be 50MB+.
