@@ -216,7 +216,8 @@ function BuildCard({
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
               <span>
                 Not yet code signed, so {build.platform} will warn you the first time. On macOS:
-                right click the app and choose Open. Signing certificates are being bought.
+                right click the app and choose Open. Check the SHA-256 above if you would rather not
+                take our word for it.
               </span>
             </p>
           )}

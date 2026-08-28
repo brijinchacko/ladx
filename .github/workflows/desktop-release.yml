@@ -44,6 +44,13 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
 
+    # The action creates the draft release, and the default token is read only.
+    # Without this it builds both installers and then fails on the last step
+    # with "Resource not accessible by integration", which reads like a
+    # permissions problem with the repository rather than with the workflow.
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -71,24 +78,28 @@ jobs:
       # The shared packages are the desktop app, so their tests are its tests.
       - run: pnpm test
 
+      # Signing is deliberately not configured. See ADR 0004: the decision is to
+      # ship unsigned to named early customers, with a certificate bought before
+      # any public release.
+      #
+      # The variables are absent rather than wired to secrets that do not exist
+      # yet. A missing secret expands to an empty string, the variable is still
+      # set, and Tauri reads "set" as "sign": the macOS build got as far as
+      # linking and then died on "failed to import keychain certificate", which
+      # says nothing about the actual cause. When the certificates are bought,
+      # add these back:
+      #
+      #   APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY,
+      #   APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID
+      #   WINDOWS_CERTIFICATE, WINDOWS_CERTIFICATE_PASSWORD
+      #
+      # An unsigned macOS app is one Gatekeeper refuses to open until the person
+      # right clicks and chooses Open, and an unsigned Windows installer raises
+      # SmartScreen. Both are stated on the download page rather than left for
+      # the operating system to deliver.
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-          # macOS signing and notarisation. Absent, the build still runs and
-          # produces an app Gatekeeper will refuse to open, which is correct for
-          # an internal build and must never reach a customer.
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-
-          # Windows Authenticode. An OV certificate does not clear SmartScreen;
-          # see the ADR before assuming a signed build is a trusted one.
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         with:
           projectPath: apps/desktop
           tagName: desktop-v__VERSION__
@@ -98,6 +109,9 @@ jobs:
 
             Windows: the .msi installer.
             macOS: the .dmg, Intel and Apple Silicon in one download.
+
+            Not code signed yet, so both will warn on first run. On macOS,
+            right click the app and choose Open.
           # Drafted rather than published, so somebody looks at the artefacts
           # before anybody downloads them.
           releaseDraft: true
