@@ -1,8 +1,8 @@
 "use client";
 
-import LadderAi from "@/components/studio/ladder-ai";
+import { generateLadderViaApi } from "@/components/studio/generate-ladder";
 import LadderHome, { type LadderProgramRow } from "@/components/studio/ladder-home";
-import { LadxStudio, httpStorage } from "@ladx/studio";
+import { LadderAi, LadxStudio, httpStorage } from "@ladx/studio";
 import { ChevronLeft, FolderKanban, Maximize2, Minimize2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -131,6 +131,7 @@ export default function LadderClient({
               memoryKey={`ladder:${open}`}
               getProgram={() => program}
               onProgram={(next) => load(next)}
+              generate={generateLadderViaApi}
             />
           )}
         />

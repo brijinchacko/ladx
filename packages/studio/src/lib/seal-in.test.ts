@@ -1,6 +1,6 @@
-import { sealInWarnings } from "@/lib/ladder/seal-in";
-import type { LadxProgram } from "@ladx/studio";
 import { describe, expect, it } from "vitest";
+import { sealInWarnings } from "./seal-in";
+import type { LadxProgram } from "./types";
 
 /**
  * The check that catches the commonest generated defect.

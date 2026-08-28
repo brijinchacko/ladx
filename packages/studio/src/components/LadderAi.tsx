@@ -1,8 +1,14 @@
 "use client";
 
-import type { LadxProgram } from "@ladx/studio";
-import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@ladx/ui";
+import {
+  type AssistRunContext,
+  Assistant,
+  type ModelsSource,
+  RELAY_TITLES,
+  useAssistant,
+} from "@ladx/ui";
 import { useCallback } from "react";
+import type { LadxProgram } from "../lib/types";
 
 /**
  * Writing ladder from a description.
@@ -14,10 +20,17 @@ import { useCallback } from "react";
  * that does not.
  *
  * So three things happen to every generated program before it reaches the
- * editor. The server validates it with the editor's own validator and hands
- * back what it found rather than hiding it. Ids are minted server side, never
- * trusted from the model, because a duplicate id makes two instructions share
- * one one-shot. And it lands as an ordinary edit that History undoes.
+ * editor. It is validated with the editor's own validator and what that found
+ * is handed back rather than hidden. Ids are minted rather than trusted from
+ * the model, because a duplicate id makes two instructions share one one-shot.
+ * And it lands as an ordinary edit that History undoes.
+ *
+ * How the model is reached is injected. This component lived in the web app
+ * and posted to a web API route, so the desktop, which reaches a local Ollama
+ * instead, had no ladder assistant at all: the only way to give it one would
+ * have been a second copy of everything below, including the question about
+ * the stop button, which is the part here that is a safety difference rather
+ * than a convenience.
  *
  * It extends by default rather than replacing. Somebody with forty rungs open
  * who asks for an interlock means "add one", and a tool that answers by
@@ -26,12 +39,29 @@ import { useCallback } from "react";
  * The panel, the step list, the model picker and the questions are the shared
  * assistant, so this behaves exactly like the one in CAD and the HMI builder.
  */
+export interface LadderGenerateRequest {
+  prompt: string;
+  current: LadxProgram | null;
+  mode: "extend" | "replace";
+  model: string | null;
+  signal: AbortSignal;
+}
+
+export interface LadderGenerated {
+  program: LadxProgram;
+  problems: string[];
+  notes: string;
+  model?: string | null;
+}
+
 export default function LadderAi({
   getProgram,
   onProgram,
   onUndo,
   disabledReason,
   memoryKey,
+  generate,
+  modelsUrl = "/api/models",
 }: {
   /** The program as it stands, for context. */
   getProgram: () => LadxProgram | null;
@@ -48,9 +78,29 @@ export default function LadderAi({
   disabledReason?: string | null;
   /** What this conversation belongs to, so it is still here next time. */
   memoryKey?: string | null;
+  /**
+   * How a description becomes a program.
+   *
+   * Injected rather than assumed, so a surface says how it reaches a model
+   * instead of inheriting the web's answer. Everything else, the prompt and
+   * the checking, is shared: see lib/generate-ladder.
+   *
+   * Absent on a surface with no provider, which is the free public editor. The
+   * same arrangement the HMI assistant uses: the panel still opens, says why,
+   * and costs no canvas.
+   */
+  generate?: (req: LadderGenerateRequest) => Promise<LadderGenerated>;
+  /** Where the model list comes from: a URL on the web, a function on desktop. */
+  modelsUrl?: ModelsSource;
 }) {
   const run = useCallback(
     async (prompt: string, { step, ask, model, signal }: AssistRunContext) => {
+      if (!generate)
+        throw new Error(
+          disabledReason ??
+            "Writing a rung from a description needs a provider, and this surface has none.",
+        );
+
       step.start("read", "Reading the program");
       const current = getProgram();
       const rungs = current?.rungs.length ?? 0;
@@ -89,22 +139,13 @@ export default function LadderAi({
       }
 
       step.start("write", model ? `Asking ${model}` : "Asking the model");
-      const res = await fetch("/api/ladder/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: request, current, mode, model }),
-        signal,
-      });
-      const body = (await res.json()) as {
-        program?: LadxProgram;
-        problems?: string[];
-        notes?: string;
-        model?: string;
-        error?: string;
-      };
-      if (!res.ok || !body.program) {
-        step.fail(body.error ?? "The model did not return a program");
-        throw new Error(body.error ?? "Could not write that.");
+      let body: LadderGenerated;
+      try {
+        body = await generate({ prompt: request, current, mode, model, signal });
+      } catch (err) {
+        const why = err instanceof Error ? err.message : "Could not write that.";
+        step.fail(why);
+        throw new Error(why);
       }
       step.detail(body.model ? `${body.model} replied` : "Reply received");
 
@@ -156,12 +197,12 @@ export default function LadderAi({
         undoable: true,
       };
     },
-    [getProgram, onProgram],
+    [getProgram, onProgram, generate, disabledReason],
   );
 
   const a = useAssistant({
     run,
-    modelsUrl: disabledReason ? null : "/api/models",
+    modelsUrl: disabledReason ? null : modelsUrl,
     memoryKey,
   });
 

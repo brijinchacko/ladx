@@ -103,3 +103,25 @@ export type { ConversionNote, ConversionResult, Severity, Target } from "./lib/c
 // engine nor the converter is implemented twice.
 export { default as Monitor, type ProgramSource, type SaveRecord } from "./components/Monitor";
 export { default as ConvertWorkbench, type ConvertSource } from "./components/ConvertWorkbench";
+
+/*
+ * Generating a ladder program from a description.
+ *
+ * The prompt, the reply's shape and the assembly, shared so the web and the
+ * desktop write ladder the same way. The prompt carries safety rules; a second
+ * copy of it is a second copy that drifts.
+ */
+export {
+  ladderSystemPrompt,
+  ladderContext,
+  buildGeneratedLadder,
+  LadderReplyError,
+  generatedReply,
+  type GeneratedLadder,
+} from "./lib/generate-ladder";
+export { sealInWarnings } from "./lib/seal-in";
+export {
+  default as LadderAi,
+  type LadderGenerateRequest,
+  type LadderGenerated,
+} from "./components/LadderAi";

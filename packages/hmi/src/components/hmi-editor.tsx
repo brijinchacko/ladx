@@ -1,6 +1,7 @@
 "use client";
 import type { LadxProgram, Tag } from "@ladx/studio";
 import { DockPanel, DockStrip, type Side, focusModeLabel, useFocusMode } from "@ladx/studio";
+import type { ModelsSource } from "@ladx/ui";
 import {
   Bell,
   Loader2,
@@ -117,6 +118,14 @@ export interface HmiEditorProps {
   /** Shown in the prompt box when there is no model to talk to. */
   generateDisabledReason?: string | null;
   /**
+   * Where the list of choosable models comes from.
+   *
+   * A URL on the web, a function on the desktop, which reads what Ollama has
+   * installed. Null when there is no provider at all, in which case the
+   * assistant still drafts a screen without one.
+   */
+  models?: ModelsSource;
+  /**
    * Where an exported panel goes, when the surface has somewhere better than
    * the browser's downloads folder.
    *
@@ -144,6 +153,7 @@ export default function HmiEditor({
   ladderHref = null,
   onGenerate,
   generateDisabledReason = null,
+  models = "/api/models",
   onExport,
 }: HmiEditorProps) {
   /**
@@ -1476,7 +1486,7 @@ export default function HmiEditor({
           onGenerate={onGenerate}
           onApply={applyGenerated}
           onUndo={doUndo}
-          hasProvider={Boolean(onGenerate)}
+          models={onGenerate ? models : null}
           disabledReason={
             onGenerate
               ? generateDisabledReason

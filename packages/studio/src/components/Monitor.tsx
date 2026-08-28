@@ -1,6 +1,13 @@
 "use client";
 
-import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@ladx/ui";
+import {
+  type AskModel,
+  type AssistRunContext,
+  Assistant,
+  type ModelsSource,
+  RELAY_TITLES,
+  useAssistant,
+} from "@ladx/ui";
 import {
   Activity,
   CircleDot,
@@ -106,6 +113,8 @@ export default function Monitor({
   unreadable = [],
   ladderHref = "/studio/ladder",
   onSaveRecord,
+  askModel,
+  modelsUrl = "/api/models",
 }: {
   sources: ProgramSource[];
   companyName: string | null;
@@ -118,6 +127,17 @@ export default function Monitor({
   ladderHref?: string;
   /** Where a generated record is written. Omitted means this surface cannot store one. */
   onSaveRecord?: SaveRecord;
+  /**
+   * How the assistant reaches a model.
+   *
+   * Required, not defaulted. It used to be a hardcoded POST to a web API
+   * route, so the desktop rendered a working looking assistant that failed on
+   * every question against a route that does not exist there. A surface has to
+   * say how it reaches a model rather than inheriting the web's answer.
+   */
+  askModel: AskModel;
+  /** Where the model list comes from: a URL on the web, a function on desktop. */
+  modelsUrl?: ModelsSource;
 }) {
   /*
    * Focus and fullscreen.
@@ -444,27 +464,27 @@ export default function Monitor({
       ].join("\n");
 
       step.start("ask", model ? `Asking ${model}` : "Asking the model");
-      const res = await fetch("/api/assist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tool: "monitor", context, question, model }),
-        signal,
-      });
-      const b = (await res.json()) as { answer?: string; model?: string; error?: string };
-      if (!res.ok || !b.answer) {
-        step.fail(b.error ?? "No answer came back");
-        throw new Error(b.error ?? "Could not reach a model.");
+      let b: Awaited<ReturnType<AskModel>>;
+      try {
+        b = await askModel({ tool: "monitor", context, question, model, signal });
+      } catch (err) {
+        // Reported through the step list rather than only thrown, so the
+        // failure appears where the person was watching the work happen.
+        const why = err instanceof Error ? err.message : "No answer came back";
+        step.fail(why);
+        throw new Error(why);
       }
       step.detail(b.model ? `${b.model} replied` : "Reply received");
       // Nothing was changed, so nothing is offered as undoable. Saying so is the
       // point: this reads the program, it does not touch it.
       return { text: b.answer, undoable: false };
     },
-    [routine, tags, running, observedScanMs, rate, scans, source],
+    [routine, tags, running, observedScanMs, rate, scans, source, askModel],
   );
 
   const assist = useAssistant({
     run: runAssist,
+    modelsUrl,
     memoryKey: source ? `monitor:${source.projectId ?? source.name}` : null,
   });
 

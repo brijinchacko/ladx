@@ -1,4 +1,4 @@
-import type { LadxProgram } from "@ladx/studio";
+import type { LadxProgram } from "./types";
 
 /**
  * The seal-in mistake, caught before it reaches the editor.

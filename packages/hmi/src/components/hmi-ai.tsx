@@ -20,7 +20,13 @@
  * prompt and the drawing, which is the `run` below.
  */
 
-import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@ladx/ui";
+import {
+  type AssistRunContext,
+  Assistant,
+  type ModelsSource,
+  RELAY_TITLES,
+  useAssistant,
+} from "@ladx/ui";
 import { useCallback, useRef, useState } from "react";
 import type { GenContext, GenerateScreen, GeneratedScreen } from "../lib/generate";
 import { draftScreen } from "../lib/generate";
@@ -53,7 +59,7 @@ export default function HmiAi({
   onApply,
   onUndo,
   disabledReason,
-  hasProvider = true,
+  models = "/api/models",
   memoryKey,
 }: {
   /** Built by the editor each time, so it is never a screen or two behind. */
@@ -65,8 +71,17 @@ export default function HmiAi({
   onUndo?: () => void;
   /** Why the model is unavailable, if it is. */
   disabledReason?: string | null;
-  /** Whether to offer a model list at all. The desktop has no HTTP model API. */
-  hasProvider?: boolean;
+  /**
+   * Where the list of choosable models comes from.
+   *
+   * A URL on the web, a function on the desktop, null on a surface with no
+   * provider. This was a boolean called hasProvider, which conflated two
+   * different questions: whether a model can be reached at all, and whether it
+   * can be reached over HTTP. The desktop can do the first and not the second,
+   * so it answered true and then fetched a route that does not exist there,
+   * leaving the picker stuck on "Could not read the model list".
+   */
+  models?: ModelsSource;
   /** What this conversation belongs to, so it is still here next time. */
   memoryKey?: string | null;
 }) {
@@ -186,7 +201,7 @@ export default function HmiAi({
 
   const a = useAssistant({
     run,
-    modelsUrl: hasProvider ? "/api/models" : null,
+    modelsUrl: models,
     memoryKey,
   });
 
@@ -232,7 +247,7 @@ export default function HmiAi({
       busy={a.busy}
       steps={a.steps}
       error={a.error}
-      models={hasProvider ? a.models : undefined}
+      models={models ? a.models : undefined}
       question={a.question}
       onSend={a.send}
       onAnswer={a.answer}

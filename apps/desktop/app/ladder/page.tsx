@@ -1,8 +1,10 @@
 "use client";
 
 import { api } from "@/lib/api";
+import { localModels } from "@/lib/ask-model";
+import { generateLadderLocally } from "@/lib/generate-ladder";
 import { tauriStorage } from "@/lib/ladder-storage";
-import { LadxStudio } from "@ladx/studio";
+import { LadderAi, LadxStudio } from "@ladx/studio";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
@@ -70,6 +72,23 @@ function Ladder() {
         key={projectId}
         projectId={projectId}
         storage={tauriStorage()}
+        /*
+         * The ladder assistant, which this app did not have.
+         *
+         * It lived in the web app and posted to an API route, so bringing it
+         * here would have meant a second copy of the prompt, including the
+         * question it asks about the stop button. It is the same component
+         * now, reaching a local model instead.
+         */
+        bottomDock={({ program, load }) => (
+          <LadderAi
+            memoryKey={`ladder:${projectId}`}
+            getProgram={() => program}
+            onProgram={(next) => load(next)}
+            generate={generateLadderLocally}
+            modelsUrl={localModels}
+          />
+        )}
         /*
          * The HMI built on this program's tags. The desktop has no server to
          * resolve which application that is, so the /hmi page does it once the

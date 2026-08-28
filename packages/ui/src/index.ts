@@ -53,3 +53,9 @@ export type { RelayTool } from "./lib/assistant-brand";
 
 // The sidebar's appearance, shared so the web and the desktop cannot drift.
 export * from "./lib/sidebar";
+
+// How a tool reaches a model. Injected, never assumed.
+export * from "./lib/ask-model";
+
+// What the explaining assistants are told. Shared, so both surfaces answer alike.
+export * from "./lib/assist-prompts";

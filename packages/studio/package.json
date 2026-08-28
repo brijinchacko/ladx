@@ -17,6 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "zod": "^3.23.8",
     "jspdf": "^2.5.2",
     "lucide-react": "^0.451.0",
     "@ladx/ui": "workspace:*"

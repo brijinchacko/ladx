@@ -1,6 +1,13 @@
 "use client";
 
-import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@ladx/ui";
+import {
+  type AskModel,
+  type AssistRunContext,
+  Assistant,
+  type ModelsSource,
+  RELAY_TITLES,
+  useAssistant,
+} from "@ladx/ui";
 import {
   AlertTriangle,
   Check,
@@ -77,6 +84,8 @@ export default function ConvertWorkbench({
   ladderHref = "/studio/ladder",
   onSaveRecord,
   onExport,
+  askModel,
+  modelsUrl = "/api/models",
 }: {
   sources: ConvertSource[];
   companyName: string | null;
@@ -106,6 +115,17 @@ export default function ConvertWorkbench({
     label: string;
     save: (text: string, filename: string) => Promise<string>;
   };
+  /**
+   * How the assistant reaches a model.
+   *
+   * Required, not defaulted. It used to be a hardcoded POST to a web API
+   * route, so the desktop rendered a working looking assistant that failed on
+   * every question against a route that does not exist there. A surface has to
+   * say how it reaches a model rather than inheriting the web's answer.
+   */
+  askModel: AskModel;
+  /** Where the model list comes from: a URL on the web, a function on desktop. */
+  modelsUrl?: ModelsSource;
 }) {
   /*
    * Focus and fullscreen.
@@ -208,25 +228,25 @@ export default function ConvertWorkbench({
       ].join("\n");
 
       step.start("ask", model ? `Asking ${model}` : "Asking the model");
-      const res = await fetch("/api/assist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tool: "convert", context, question, model }),
-        signal,
-      });
-      const b = (await res.json()) as { answer?: string; model?: string; error?: string };
-      if (!res.ok || !b.answer) {
-        step.fail(b.error ?? "No answer came back");
-        throw new Error(b.error ?? "Could not reach a model.");
+      let b: Awaited<ReturnType<AskModel>>;
+      try {
+        b = await askModel({ tool: "convert", context, question, model, signal });
+      } catch (err) {
+        // Reported through the step list rather than only thrown, so the
+        // failure appears where the person was watching the work happen.
+        const why = err instanceof Error ? err.message : "No answer came back";
+        step.fail(why);
+        throw new Error(why);
       }
       step.detail(b.model ? `${b.model} replied` : "Reply received");
       return { text: b.answer, undoable: false };
     },
-    [current, source],
+    [current, source, askModel],
   );
 
   const assist = useAssistant({
     run: runAssist,
+    modelsUrl,
     memoryKey: source ? `convert:${source.projectId ?? source.name}` : null,
   });
 

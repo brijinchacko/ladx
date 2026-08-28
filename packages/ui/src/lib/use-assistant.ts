@@ -8,6 +8,7 @@ import type {
 } from "../components/assistant/assistant";
 import type { AssistStep } from "../components/assistant/steps";
 import { StepLog } from "../components/assistant/steps";
+import type { ModelList, ModelsSource } from "./ask-model";
 
 /**
  * The assistant's behaviour, once, for every tool.
@@ -45,8 +46,15 @@ export interface AssistResult {
 
 export interface UseAssistantOptions {
   run: (prompt: string, ctx: AssistRunContext) => Promise<AssistResult>;
-  /** Where model preferences are read from. Omit on a surface with no provider. */
-  modelsUrl?: string | null;
+  /**
+   * Where the list of choosable models comes from.
+   *
+   * A URL on the web, a function on the desktop, or null on a surface with no
+   * provider. It used to be a URL only, so the desktop fetched a route that
+   * does not exist in a static export and its model picker sat permanently on
+   * "Could not read the model list".
+   */
+  modelsUrl?: ModelsSource;
   /** Where the chosen model is remembered. One per tool would be surprising. */
   storageKey?: string;
   /**
@@ -172,8 +180,12 @@ export function useAssistant({
       return;
     }
     let cancelled = false;
-    fetch(modelsUrl)
-      .then((r) => (r.ok ? r.json() : null))
+    const load =
+      typeof modelsUrl === "function"
+        ? modelsUrl()
+        : fetch(modelsUrl).then((r) => (r.ok ? (r.json() as Promise<ModelList>) : null));
+
+    Promise.resolve(load)
       .then((d) => {
         if (cancelled || !d) return;
         setModelList(d.models ?? []);

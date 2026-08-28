@@ -1,3 +1,4 @@
+import { askModelViaApi } from "@/components/studio/ask-model";
 import { saveRecordViaApi } from "@/components/studio/save-record";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
@@ -50,6 +51,7 @@ export default async function StudioConvertPage({
       <ConvertWorkbench
         ladderHref="/studio/ladder"
         onSaveRecord={saveRecordViaApi}
+        askModel={askModelViaApi}
         unreadable={broken.map((b) => b.name)}
         initialProjectId={wanted && nameOf.has(wanted) ? wanted : null}
         sources={sources}

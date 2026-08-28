@@ -1,9 +1,9 @@
 "use client";
 
-import LadderAi from "@/components/studio/ladder-ai";
 import { CONSENT_EVENT, type ConsentState, hasConsent } from "@/lib/consent/consent";
 import {
   type FocusMode,
+  LadderAi,
   type LadxProgram,
   LadxStudio,
   type StudioProject,

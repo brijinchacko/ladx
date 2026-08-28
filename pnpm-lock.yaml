@@ -295,6 +295,9 @@ importers:
       lucide-react:
         specifier: ^0.451.0
         version: 0.451.0(react@19.2.5)
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
     devDependencies:
       '@types/node':
         specifier: ^22.7.5

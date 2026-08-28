@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@/lib/api";
+import { localModels } from "@/lib/ask-model";
 import { settingsLoad } from "@/lib/invoke";
 import { useProjectFolder } from "@/lib/project-folder";
 import {
@@ -201,6 +202,9 @@ function Hmi() {
         }
         onSave={async ({ id: appId, name, doc }) => api.saveHmi(appId, name, doc)}
         onGenerate={generate}
+        /* What Ollama has installed on this machine. The default is an HTTP
+           route, which a static export does not have. */
+        models={localModels}
         /*
          * A panel is a deliverable, so it belongs in the job folder under HMI
          * rather than in Downloads with everything else. With no project open
