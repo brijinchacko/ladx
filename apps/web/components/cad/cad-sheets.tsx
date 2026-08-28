@@ -112,7 +112,7 @@ export default function CadSheets({
   }
 
   return (
-    <aside ref={ref} className="flex w-52 shrink-0 flex-col border-r border-ink-100 bg-ink-50/40">
+    <div ref={ref} className="flex h-full flex-col bg-ink-50/40">
       <div className="flex shrink-0 items-center gap-1.5 border-b border-ink-100 px-2.5 py-2">
         <Files className="h-3.5 w-3.5 shrink-0 text-ink-400" />
         <span className="min-w-0 flex-1 truncate font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
@@ -204,6 +204,6 @@ export default function CadSheets({
           );
         })}
       </ul>
-    </aside>
+    </div>
   );
 }

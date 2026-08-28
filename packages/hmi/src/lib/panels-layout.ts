@@ -1,39 +1,26 @@
+import { type DockLayout, type DockPanelDef, createDock } from "@ladx/studio";
+
 /**
- * The HMI window layout, built on the same rules as the ladder editor's.
+ * The HMI window layout.
  *
- * A builder is a workshop, not a page: the panel canvas holds the centre and
- * everything else is a pane you can shut when you are not using it. The three
- * rules are the ones the ladder editor learned:
+ * This used to carry its own copy of the load, save, clamp and reset logic,
+ * written a second time from the ladder editor's. CAD was about to make it a
+ * third, so the rules moved to `@ladx/studio`'s dock and this file is now only
+ * the list of panels the builder has. What remains here is the part that is
+ * genuinely about the HMI; what left was the part that was about panels, and
+ * that is the half where a forgotten clamp leaves somebody with a pane one
+ * pixel wide.
  *
- *   A closed panel stays visible as something. Panes that vanish entirely get
- *   lost and people conclude the feature deleted their work, so closed panels
- *   become labelled tabs in a strip along the bottom.
- *
- *   The layout survives a refresh, or it is a setting nobody makes twice.
- *
- *   There is one obvious way back. Reset restores every default in one action,
- *   so no arrangement is a trap.
+ * The names below are kept as they were so the rest of the builder does not
+ * need to know this changed.
  */
 
 export type PanelId = "tree" | "tools" | "properties" | "assist";
-
-export interface PanelDef {
-  id: PanelId;
-  title: string;
-  side: "left" | "right" | "bottom";
-  /** Starting size in px: width for a side, height for the bottom. */
+export type PanelDef = DockPanelDef<PanelId>;
+export type Layout = DockLayout<PanelId>;
+export interface PanelState {
+  open: boolean;
   size: number;
-  min: number;
-  max: number;
-  blurb: string;
-  /**
-   * Whether it starts open.
-   *
-   * Everything a builder needs to draw is open by default. Assist is not:
-   * three panes plus a chat column is more chrome than canvas on a laptop, and
-   * a pane you did not ask for is one you close before you use it once.
-   */
-  defaultOpen?: boolean;
 }
 
 export const PANELS: PanelDef[] = [
@@ -72,74 +59,26 @@ export const PANELS: PanelDef[] = [
     min: 240,
     max: 480,
     blurb: "Draw a screen from a description, or straight from the tag table.",
+    /*
+     * Not open to begin with.
+     *
+     * Everything a builder needs to draw is; three panes plus a chat column is
+     * more chrome than canvas on a laptop, and a pane you did not ask for is
+     * one you close before you use it once.
+     */
     defaultOpen: false,
   },
 ];
 
-export interface PanelState {
-  open: boolean;
-  size: number;
-}
-export type Layout = Record<PanelId, PanelState>;
+export const hmiDock = createDock<PanelId>(PANELS, "ladx.hmi.layout.v1");
 
-export const DEFAULT_LAYOUT: Layout = Object.fromEntries(
-  PANELS.map((p) => [p.id, { open: p.defaultOpen ?? true, size: p.size }]),
-) as Layout;
+export const DEFAULT_LAYOUT: Layout = hmiDock.defaults;
 
-const KEY = "ladx.hmi.layout.v1";
-
-/**
- * Read the saved layout, defensively.
- *
- * Stored sizes are clamped rather than trusted: a panel dragged to 4000px in
- * an older build, or a hand-edited value, must not leave the canvas with no
- * room. A bad entry falls back to its default rather than taking the editor
- * down on load.
- */
-export function loadLayout(): Layout {
-  if (typeof window === "undefined") return DEFAULT_LAYOUT;
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (!raw) return DEFAULT_LAYOUT;
-    const parsed = JSON.parse(raw) as Partial<Record<PanelId, Partial<PanelState>>>;
-    const out = { ...DEFAULT_LAYOUT };
-    for (const p of PANELS) {
-      const got = parsed?.[p.id];
-      if (!got) continue;
-      out[p.id] = {
-        open: typeof got.open === "boolean" ? got.open : (p.defaultOpen ?? true),
-        size: clamp(typeof got.size === "number" ? got.size : p.size, p.min, p.max),
-      };
-    }
-    return out;
-  } catch {
-    return DEFAULT_LAYOUT;
-  }
-}
-
-export function saveLayout(layout: Layout): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(layout));
-  } catch {
-    // Private browsing, or a full quota. A layout that cannot be remembered is
-    // not worth an error in front of somebody drawing a screen.
-  }
-}
+export const loadLayout = hmiDock.load;
+export const saveLayout = hmiDock.save;
+export const isMoved = hmiDock.isMoved;
+export const panel = hmiDock.def;
 
 export function clamp(n: number, lo: number, hi: number): number {
   return Math.min(Math.max(n, lo), hi);
-}
-
-export function panel(id: PanelId): PanelDef {
-  return PANELS.find((p) => p.id === id) as PanelDef;
-}
-
-/** Whether the layout differs from the default, so Reset is offered only when it does. */
-export function isMoved(layout: Layout): boolean {
-  return PANELS.some(
-    (p) =>
-      layout[p.id].open !== DEFAULT_LAYOUT[p.id].open ||
-      layout[p.id].size !== DEFAULT_LAYOUT[p.id].size,
-  );
 }

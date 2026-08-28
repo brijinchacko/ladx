@@ -28,6 +28,7 @@ import {
   offsetEntity,
   trimLine,
 } from "@/lib/cad/operations";
+import { type CadPanelId, cadDock } from "@/lib/cad/panels";
 import { drawingToPdf } from "@/lib/cad/pdf";
 import {
   centreOf,
@@ -59,7 +60,14 @@ import {
   newId,
 } from "@/lib/cad/types";
 import { type Menu, MenuBar } from "@ladx/studio";
-import { focusModeLabel, useFocusMode } from "@ladx/studio";
+import {
+  type DockLayout,
+  DockPanel,
+  DockStrip,
+  type Side,
+  focusModeLabel,
+  useFocusMode,
+} from "@ladx/studio";
 import { Download, FileText, Maximize2, Minimize2, Save, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -206,9 +214,32 @@ export default function CadEditor({
   const clipboardRef = useRef<Entity[]>([]);
   const savedRef = useRef<Drawing>(seeded);
   const [dirty, setDirty] = useState(false);
-  const [showProperties, setShowProperties] = useState(true);
-  const [showSheets, setShowSheets] = useState(true);
-  const [showRail, setShowRail] = useState(true);
+  /**
+   * The panel layout, restored on mount rather than in the initial state.
+   *
+   * localStorage is not readable while the server renders, and seeding state
+   * from it directly makes the first client render disagree with the HTML,
+   * which React reports as a hydration mismatch and then throws the tree away.
+   */
+  const [layout, setLayout] = useState<DockLayout<CadPanelId>>(cadDock.defaults);
+  useEffect(() => setLayout(cadDock.load()), []);
+  const setPanel = useCallback(
+    (id: CadPanelId, next: Partial<DockLayout<CadPanelId>[CadPanelId]>) => {
+      setLayout((l) => {
+        const out = { ...l, [id]: { ...l[id], ...next } };
+        cadDock.save(out);
+        return out;
+      });
+    },
+    [],
+  );
+  const togglePanel = useCallback((id: CadPanelId) => {
+    setLayout((l) => {
+      const out = { ...l, [id]: { ...l[id], open: !l[id].open } };
+      cadDock.save(out);
+      return out;
+    });
+  }, []);
 
   /**
    * Focus mode.
@@ -1846,18 +1877,19 @@ export default function CadEditor({
           separator: true,
           onSelect: screen_.cycle,
         },
+        ...cadDock.panels.map((p, i) => ({
+          label: `${layout[p.id].open ? "Hide" : "Show"} ${p.title.toLowerCase()}`,
+          separator: i === 0,
+          onSelect: () => togglePanel(p.id),
+        })),
         {
-          label: showSheets ? "Hide sheets" : "Show sheets",
+          label: "Reset layout",
           separator: true,
-          onSelect: () => setShowSheets((v) => !v),
-        },
-        {
-          label: showProperties ? "Hide properties" : "Show properties",
-          onSelect: () => setShowProperties((p) => !p),
-        },
-        {
-          label: showRail ? "Hide library" : "Show library",
-          onSelect: () => setShowRail((v) => !v),
+          disabled: !cadDock.isMoved(layout),
+          onSelect: () => {
+            setLayout(cadDock.defaults);
+            cadDock.save(cadDock.defaults);
+          },
         },
       ],
     },
@@ -1931,6 +1963,94 @@ export default function CadEditor({
           Math.hypot(cursor.x - (pending[0] as Point).x, cursor.y - (pending[0] as Point).y),
         )
       : null;
+
+  /**
+   * One panel's contents, by id.
+   *
+   * Kept as a lookup rather than four conditionals in the layout, because the
+   * layout now decides where each panel goes and the same body has to render
+   * on the left or the right without being written twice.
+   */
+  const panelBody = (id: CadPanelId) => {
+    switch (id) {
+      case "sheets":
+        return (
+          <CadSheets
+            sheets={sheets}
+            currentId={drawingId}
+            projectId={projectId}
+            projectName={projectName ?? null}
+            onDirtyCheck={() => dirty}
+            onOpen={(pid) => router.push(`/studio/cad/${pid}`)}
+          />
+        );
+      case "properties":
+        return (
+          <div className="p-2.5">
+            <CadProperties
+              selected={selectedEntities}
+              layers={drawing.layers}
+              onChange={replaceEntity}
+              onChangeLayer={moveSelectedToLayer}
+            />
+          </div>
+        );
+      case "library":
+        return (
+          <CadRail
+            layers={drawing.layers}
+            activeLayer={layer}
+            onActivateLayer={setLayer}
+            onLayerFlag={setLayerFlag}
+            onInsertSymbol={insertSymbol}
+            onInsertSheet={insertSheet}
+            onInsertTemplate={insertTemplate}
+          />
+        );
+      case "command":
+        return (
+          <CadCommandLine
+            prompt={promptText}
+            onCommand={runCommand}
+            onCoordinate={runCoordinate}
+            onEnter={() => {
+              if (tool === "polyline") finishPolyline(false);
+              else if (tool === "hatch") finishHatch();
+              else if (cmdHistory[0]) {
+                const repeat = findCommand(cmdHistory[0]);
+                if (repeat) runCommand(repeat);
+              }
+            }}
+            history={cmdHistory}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  /**
+   * The open panels currently docked to one side.
+   *
+   * Panels keep the order they are declared in, so moving one across and back
+   * puts it where it was rather than at the end of whichever side it lands on.
+   */
+  const panelsOn = (side: Side) =>
+    cadDock.panels
+      .filter((p) => layout[p.id].open && cadDock.sideOf(layout, p.id) === side)
+      .map((p) => (
+        <DockPanel
+          key={p.id}
+          dock={cadDock}
+          id={p.id}
+          layout={layout}
+          onResize={(size) => setPanel(p.id, { size })}
+          onClose={() => setPanel(p.id, { open: false })}
+          onMove={(to) => setPanel(p.id, { side: to })}
+        >
+          {panelBody(p.id)}
+        </DockPanel>
+      ));
 
   return (
     <div
@@ -2079,16 +2199,7 @@ export default function CadEditor({
       />
 
       <div className="flex min-h-0 flex-1">
-        {showSheets && !focus && (
-          <CadSheets
-            sheets={sheets}
-            currentId={drawingId}
-            projectId={projectId}
-            projectName={projectName ?? null}
-            onDirtyCheck={() => dirty}
-            onOpen={(id) => router.push(`/studio/cad/${id}`)}
-          />
-        )}
+        {panelsOn("left")}
 
         {/* canvas */}
         <div ref={wrapRef} className="relative min-h-0 flex-1 bg-white">
@@ -2147,50 +2258,19 @@ export default function CadEditor({
           </div>
         </div>
 
-        {showProperties && !focus && (
-          <aside className="flex w-56 shrink-0 flex-col border-l border-ink-100 bg-ink-50/40">
-            <div className="shrink-0 border-b border-ink-100 px-2.5 py-2">
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
-                Properties
-              </span>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-2.5">
-              <CadProperties
-                selected={selectedEntities}
-                layers={drawing.layers}
-                onChange={replaceEntity}
-                onChangeLayer={moveSelectedToLayer}
-              />
-            </div>
-          </aside>
-        )}
-
-        {showRail && !focus && (
-          <CadRail
-            layers={drawing.layers}
-            activeLayer={layer}
-            onActivateLayer={setLayer}
-            onLayerFlag={setLayerFlag}
-            onInsertSymbol={insertSymbol}
-            onInsertSheet={insertSheet}
-            onInsertTemplate={insertTemplate}
-          />
-        )}
+        {panelsOn("right")}
       </div>
 
-      <CadCommandLine
-        prompt={promptText}
-        onCommand={runCommand}
-        onCoordinate={runCoordinate}
-        onEnter={() => {
-          if (tool === "polyline") finishPolyline(false);
-          else if (tool === "hatch") finishHatch();
-          else if (cmdHistory[0]) {
-            const repeat = findCommand(cmdHistory[0]);
-            if (repeat) runCommand(repeat);
-          }
+      {panelsOn("bottom")}
+
+      <DockStrip
+        dock={cadDock}
+        layout={layout}
+        onOpen={(id) => setPanel(id, { open: true })}
+        onReset={() => {
+          setLayout(cadDock.defaults);
+          cadDock.save(cadDock.defaults);
         }}
-        history={cmdHistory}
       />
 
       {/* Hidden without an account. Generation needs a provider key that

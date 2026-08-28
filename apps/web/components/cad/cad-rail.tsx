@@ -8,7 +8,7 @@ import {
 import { type CadSymbol, symbolsByFamily } from "@/lib/cad/symbols";
 import { SHEETS, type SheetSize } from "@/lib/cad/titleblock";
 import type { Layer } from "@/lib/cad/types";
-import { Eye, EyeOff, Lock, LockOpen, PanelRight, StickyNote } from "lucide-react";
+import { Eye, EyeOff, Lock, LockOpen, StickyNote } from "lucide-react";
 import { useState } from "react";
 
 type Tab = "sheets" | "schematic" | "panel" | "layers";
@@ -39,25 +39,13 @@ export default function CadRail({
   onInsertSheet: (s: SheetSize) => void;
   onInsertTemplate: (t: DrawingTemplate) => void;
 }) {
-  const [open, setOpen] = useState(true);
+  // Closing is the dock's job now, so the rail no longer keeps its own idea of
+  // whether it is open. A panel that could be hidden two ways ended up hidden
+  // by one of them and reopened by neither.
   const [tab, setTab] = useState<Tab>("sheets");
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Show the symbol library"
-        title="Show the symbol library"
-        className="flex w-9 shrink-0 items-start justify-center border-l border-ink-100 bg-ink-50/40 pt-3 text-ink-400 transition-colors hover:text-ink-900"
-      >
-        <PanelRight className="h-4 w-4" />
-      </button>
-    );
-  }
-
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-l border-ink-100 bg-ink-50/40">
+    <div className="flex h-full flex-col bg-ink-50/40">
       <div className="flex shrink-0 items-center gap-0.5 border-b border-ink-100 p-1.5">
         {(
           [
@@ -78,14 +66,6 @@ export default function CadRail({
             {t.label}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          aria-label="Hide the rail"
-          className="flex h-6 w-6 items-center justify-center rounded text-ink-300 transition-colors hover:bg-ink-100 hover:text-ink-700"
-        >
-          <PanelRight className="h-3.5 w-3.5" />
-        </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
@@ -230,6 +210,6 @@ export default function CadRail({
           </>
         )}
       </div>
-    </aside>
+    </div>
   );
 }
