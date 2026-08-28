@@ -4,10 +4,31 @@ import GanttChart, { type GanttGroup, type Zoom, ZOOM } from "@/components/studi
 import type { GanttTask } from "@/lib/platform/gantt";
 import { PHASES } from "@/lib/platform/lifecycle";
 import { csvToPlan, planToCsv } from "@/lib/platform/plan-csv";
-import { CalendarRange, Download, Loader2, RotateCcw, Upload } from "lucide-react";
+import {
+  type PlanOp,
+  type PlanTask,
+  applyOp,
+  checkOps,
+  describeOp,
+  health,
+  inverseOf,
+  patchFor,
+  todayIso,
+} from "@/lib/platform/plan-ops";
+import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
+import {
+  CalendarRange,
+  Download,
+  Loader2,
+  Plus,
+  RotateCcw,
+  Search,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface ProjectRow {
   id: string;
@@ -42,11 +63,37 @@ export default function PlannerWorkspace({
   initialClientId?: string | null;
 }) {
   const router = useRouter();
+
+  /**
+   * A local copy of the plan, edited in place.
+   *
+   * Every change used to go to the server and then refresh the whole page,
+   * which on a drag meant the bar snapped back, the page re-rendered, and the
+   * bar reappeared where it now belonged. On a plan of any size that is a
+   * visible stutter per drag, and dragging is the main thing this tool is for.
+   *
+   * Now the change lands here first and the request follows. If the request
+   * fails the local copy is put back, because a plan that looks changed and is
+   * not is worse than one that refused.
+   */
+  const [plan, setPlan] = useState<(PlanTask & { projectName?: string | null })[]>(tasks);
+  // Reset when the server sends a new set: a navigation, or a refresh after an
+  // operation this screen does not model, like adding a task.
+  useEffect(() => setPlan(tasks), [tasks]);
+
   const [zoom, setZoom] = useState<Zoom>("week");
   const [projectId, setProjectId] = useState<string>(initialProjectId ?? "");
   const [clientId, setClientId] = useState<string>(initialClientId ?? "");
   const [hideDone, setHideDone] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  /** Multi-select, for doing the same thing to many tasks at once. */
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState("");
+  /** Narrowed to what is late, or due this week, or has no dates. */
+  const [lens, setLens] = useState<"all" | "late" | "soon" | "unscheduled">("all");
+  const [today] = useState(todayIso);
+  /** The inverse of the last batch, so any change is one click from undone. */
+  const [undoStack, setUndoStack] = useState<PlanOp[]>([]);
   const [busy, setBusy] = useState(false);
   const [importNote, setImportNote] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -56,15 +103,32 @@ export default function PlannerWorkspace({
     [projects, clientId],
   );
 
+  /** What is late, due within the week, or has no dates at all. */
+  const state = useMemo(() => health(plan, today), [plan, today]);
+
   const shown = useMemo(() => {
     const ids = new Set(visibleProjects.map((p) => p.id));
-    return tasks.filter(
+    const q = query.trim().toLowerCase();
+    const lensIds =
+      lens === "all"
+        ? null
+        : new Set(
+            (lens === "late" ? state.late : lens === "soon" ? state.soon : state.unscheduled).map(
+              (t) => t.id,
+            ),
+          );
+    return plan.filter(
       (t) =>
         ids.has(t.projectId) &&
         (!projectId || t.projectId === projectId) &&
-        (!hideDone || t.status !== "done"),
+        (!hideDone || t.status !== "done") &&
+        (!lensIds || lensIds.has(t.id)) &&
+        (!q ||
+          t.title.toLowerCase().includes(q) ||
+          (t.owner ?? "").toLowerCase().includes(q) ||
+          (t.projectName ?? "").toLowerCase().includes(q)),
     );
-  }, [tasks, visibleProjects, projectId, hideDone]);
+  }, [plan, visibleProjects, projectId, hideDone, query, lens, state]);
 
   // One project: group by phase, which is the shape of the job. Several: group
   // by project, because phase names repeat across them and would interleave.
@@ -86,6 +150,7 @@ export default function PlannerWorkspace({
   }, [projectId, visibleProjects, shown]);
 
   const undated = shown.filter((t) => !t.startsOn && !t.dueOn).length;
+  const selectedIds = useMemo(() => shown.filter((t) => checked.has(t.id)), [shown, checked]);
 
   /**
    * Lay a working-day draft over undated tasks.
@@ -183,23 +248,266 @@ export default function PlannerWorkspace({
     }
   }
 
-  async function patch(taskId: string, body: Record<string, unknown>) {
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task) return;
-    setBusy(true);
-    try {
-      await fetch(`/api/projects/${task.projectId}/tasks/${taskId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+  /**
+   * Every change to the plan, through one path.
+   *
+   * A drag, a bulk action and anything the assistant proposes all end up here,
+   * which is what keeps them consistent: the same validation, the same
+   * optimistic update, the same undo. The alternative is three code paths
+   * computing the same edit, and the screen and the database disagreeing after
+   * one of them.
+   *
+   * The local copy moves first and the requests follow. Anything that fails is
+   * put back, because a plan that looks changed and is not is worse than one
+   * that refused.
+   */
+  const runOps = useCallback(
+    async (ops: PlanOp[]): Promise<{ applied: number; failed: number }> => {
+      if (ops.length === 0) return { applied: 0, failed: 0 };
+      const byId = new Map(plan.map((t) => [t.id, t]));
+
+      // Inverses captured from the plan as it is now, before anything moves.
+      // Recomputing them afterwards cannot work: once a shift has happened
+      // there is no telling a task that moved from one that was already there.
+      const inverses: PlanOp[] = [];
+      for (const op of ops) {
+        if (!("taskId" in op)) continue;
+        const t = byId.get(op.taskId);
+        if (!t) continue;
+        const back = inverseOf(op, t);
+        if (back) inverses.push(back);
+      }
+
+      setPlan((current) => {
+        const map = new Map(current.map((t) => [t.id, t]));
+        for (const op of ops) {
+          if (!("taskId" in op)) continue;
+          const t = map.get(op.taskId);
+          if (!t) continue;
+          if (op.kind === "delete") map.delete(op.taskId);
+          else map.set(op.taskId, applyOp(op, t));
+        }
+        return [...map.values()];
       });
-      router.refresh();
-    } finally {
-      setBusy(false);
-    }
+
+      setBusy(true);
+      let applied = 0;
+      let failed = 0;
+      const structural = ops.some((o) => o.kind === "add" || o.kind === "delete");
+      try {
+        for (const op of ops) {
+          try {
+            if (op.kind === "add") {
+              const res = await fetch(`/api/projects/${op.projectId}/tasks`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: op.title,
+                  phase: op.phase,
+                  startsOn: op.startsOn ?? null,
+                  dueOn: op.dueOn ?? null,
+                  owner: op.owner ?? null,
+                }),
+              });
+              res.ok ? applied++ : failed++;
+              continue;
+            }
+            const t = byId.get(op.taskId);
+            if (!t) {
+              failed++;
+              continue;
+            }
+            if (op.kind === "delete") {
+              const res = await fetch(`/api/projects/${t.projectId}/tasks/${t.id}`, {
+                method: "DELETE",
+              });
+              res.ok ? applied++ : failed++;
+              continue;
+            }
+            const patchBody = patchFor(op, t);
+            if (!patchBody) {
+              failed++;
+              continue;
+            }
+            const res = await fetch(`/api/projects/${t.projectId}/tasks/${t.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(patchBody),
+            });
+            res.ok ? applied++ : failed++;
+          } catch {
+            failed++;
+          }
+        }
+      } finally {
+        setBusy(false);
+      }
+
+      // Something failed, so the local copy and the database disagree. The
+      // server is right; ask for it again rather than guessing which half
+      // landed.
+      if (failed > 0) router.refresh();
+      // Creating or deleting needs the server's ids, which nothing here can
+      // invent.
+      else if (structural) router.refresh();
+      else if (inverses.length > 0) setUndoStack(inverses);
+
+      return { applied, failed };
+    },
+    [plan, router],
+  );
+
+  const undoLast = useCallback(async () => {
+    if (undoStack.length === 0) return;
+    const back = undoStack;
+    setUndoStack([]);
+    await runOps(back);
+  }, [undoStack, runOps]);
+
+  /** One task, one field. What the detail bar and the chart use. */
+  const patch = useCallback(
+    (taskId: string, body: Record<string, unknown>) => {
+      const t = plan.find((x) => x.id === taskId);
+      if (!t) return;
+      const op: PlanOp | null =
+        "startsOn" in body || "dueOn" in body
+          ? {
+              kind: "setDates",
+              taskId,
+              startsOn: (body.startsOn as string | null) ?? null,
+              dueOn: (body.dueOn as string | null) ?? null,
+            }
+          : "status" in body
+            ? { kind: "setStatus", taskId, status: body.status as PlanTask["status"] }
+            : "owner" in body
+              ? { kind: "setOwner", taskId, owner: (body.owner as string | null) ?? null }
+              : "dependsOn" in body
+                ? { kind: "link", taskId, dependsOn: (body.dependsOn as string | null) ?? null }
+                : null;
+      if (op) void runOps([op]);
+    },
+    [plan, runOps],
+  );
+
+  /**
+   * Changing the plan from a sentence.
+   *
+   * The one place in LADX where a model edits a document in bulk, and the
+   * safeguards are the reason it is allowed to. It emits operations from a
+   * fixed vocabulary and nothing else; every one is checked here against the
+   * plan on screen before anything is sent, so an invented task id, a status
+   * that does not exist or a dependency loop cannot get through; and the whole
+   * batch is one click from undone.
+   */
+  const runAssist = useCallback(
+    async (question: string, { step, model, signal }: AssistRunContext) => {
+      step.start("read", "Reading the plan on screen");
+      step.detail(
+        `${shown.length} task${shown.length === 1 ? "" : "s"}, ${state.late.length} late, ${state.soon.length} due this week, ${state.unscheduled.length} undated`,
+      );
+      if (shown.length === 0) {
+        step.fail("Nothing on the timeline");
+        throw new Error("There is nothing on screen to change. Widen the filters first.");
+      }
+
+      step.start("ask", model ? `Asking ${model}` : "Asking the model");
+      const res = await fetch("/api/planner/assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tasks: shown.map((t) => ({
+            id: t.id,
+            title: t.title,
+            phase: t.phase,
+            status: t.status,
+            startsOn: t.startsOn,
+            dueOn: t.dueOn,
+            owner: t.owner,
+            projectId: t.projectId,
+            projectName: t.projectName ?? null,
+          })),
+          question,
+          today,
+          model,
+        }),
+        signal,
+      });
+      const b = (await res.json()) as {
+        ops?: PlanOp[];
+        summary?: string;
+        model?: string;
+        error?: string;
+      };
+      if (!res.ok || !Array.isArray(b.ops)) {
+        step.fail(b.error ?? "No changes came back");
+        throw new Error(b.error ?? "Could not reach a model.");
+      }
+      step.detail(
+        `${b.model ? `${b.model} replied, ` : ""}${b.ops.length} change${b.ops.length === 1 ? "" : "s"} proposed`,
+      );
+
+      step.start("check", "Checking each change against the plan");
+      const { ops, problems } = checkOps(b.ops, shown, new Set(visibleProjects.map((p) => p.id)));
+      step.detail(
+        problems.length === 0
+          ? `All ${ops.length} can be made`
+          : `${ops.length} can be made, ${problems.length} cannot`,
+      );
+
+      if (ops.length === 0) {
+        // An empty result with a summary is the model asking a question, which
+        // it is told to do rather than guess at an ambiguous selection.
+        return {
+          text: b.summary || "Nothing to change from that. Try naming the tasks or the phase.",
+          problems: problems.map((p) => `${p.what}: ${p.why}`),
+          undoable: false,
+        };
+      }
+
+      step.start("apply", "Changing the plan");
+      const { applied, failed } = await runOps(ops);
+      step.detail(`${applied} applied${failed ? `, ${failed} refused by the server` : ""}`);
+
+      return {
+        text: [
+          b.summary || `${applied} change${applied === 1 ? "" : "s"} made.`,
+          applied > 0 ? "Undo in the header puts it all back." : "",
+          ops
+            .slice(0, 6)
+            .map((o) => describeOp(o, shown))
+            .join("; "),
+          ops.length > 6 ? `and ${ops.length - 6} more.` : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+        problems: problems.map((p) => `${p.what}: ${p.why}`),
+        undoable: applied > 0,
+      };
+    },
+    [shown, state, today, visibleProjects, runOps],
+  );
+
+  const assist = useAssistant({ run: runAssist });
+
+  /** The same thing to every selected task. */
+  const bulk = useCallback(
+    (make: (id: string) => PlanOp) => {
+      const ops = selectedIds.map((t) => make(t.id));
+      void runOps(ops);
+      setChecked(new Set());
+    },
+    [selectedIds, runOps],
+  );
+
+  async function addTask() {
+    const target = projectId || visibleProjects[0]?.id;
+    if (!target) return;
+    const title = window.prompt("What is the task?");
+    if (!title?.trim()) return;
+    await runOps([{ kind: "add", projectId: target, title: title.trim(), phase: "requirements" }]);
   }
 
-  const selectedTask = selected ? tasks.find((t) => t.id === selected) : null;
+  const selectedTask = selected ? plan.find((t) => t.id === selected) : null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -248,6 +556,16 @@ export default function PlannerWorkspace({
           ))}
         </div>
 
+        <label className="relative flex items-center">
+          <Search className="pointer-events-none absolute left-1.5 h-3 w-3 text-ink-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Find a task, owner or project"
+            className="w-52 rounded-md border border-ink-200 bg-white py-1 pr-2 pl-6 text-[12.5px] outline-none focus:border-ink-500"
+          />
+        </label>
+
         <label className="flex items-center gap-1.5 text-[12.5px] text-ink-600">
           <input
             type="checkbox"
@@ -257,6 +575,29 @@ export default function PlannerWorkspace({
           />
           Hide done
         </label>
+
+        <button
+          type="button"
+          onClick={() => void addTask()}
+          disabled={visibleProjects.length === 0}
+          title="Add a task to this project"
+          className="flex items-center gap-1 rounded-md border border-ink-200 bg-white px-2 py-1 text-[12px] text-ink-700 transition-colors hover:border-ink-400 disabled:opacity-40"
+        >
+          <Plus className="h-3 w-3" />
+          Task
+        </button>
+
+        {undoStack.length > 0 && (
+          <button
+            type="button"
+            onClick={() => void undoLast()}
+            title="Put the last change back"
+            className="flex items-center gap-1 rounded-md border border-teal-500/50 bg-teal-50 px-2 py-1 text-[12px] text-teal-800 transition-colors hover:border-teal-600"
+          >
+            <RotateCcw className="h-3 w-3" />
+            Undo {undoStack.length} change{undoStack.length === 1 ? "" : "s"}
+          </button>
+        )}
 
         {undated > 0 && (
           <button
@@ -312,6 +653,118 @@ export default function PlannerWorkspace({
           </Link>
         )}
       </div>
+
+      {/*
+        What is late, and what is about to be.
+        
+        The question a planner is opened to answer, and it was not on screen:
+        you had to read the bars against the today line and work it out. Each
+        one narrows the timeline to exactly those tasks, so seeing the number
+        and acting on it are the same click.
+      */}
+      <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-ink-100 border-b px-3 py-1.5">
+        {(
+          [
+            { id: "all", label: `All ${plan.length}`, tone: "text-ink-600", n: plan.length },
+            {
+              id: "late",
+              label: `${state.late.length} late`,
+              tone: "text-[#B4531A]",
+              n: state.late.length,
+            },
+            {
+              id: "soon",
+              label: `${state.soon.length} due this week`,
+              tone: "text-[#8A6A1F]",
+              n: state.soon.length,
+            },
+            {
+              id: "unscheduled",
+              label: `${state.unscheduled.length} undated`,
+              tone: "text-ink-500",
+              n: state.unscheduled.length,
+            },
+          ] as const
+        ).map((l) => (
+          <button
+            key={l.id}
+            type="button"
+            onClick={() => setLens(lens === l.id ? "all" : l.id)}
+            disabled={l.n === 0 && l.id !== "all"}
+            className={`rounded-full border px-2.5 py-0.5 text-[12px] transition-colors disabled:opacity-40 ${
+              lens === l.id
+                ? "border-ink-900 bg-ink-900 text-white"
+                : `border-ink-200 bg-white ${l.tone} hover:border-ink-400`
+            }`}
+          >
+            {l.label}
+          </button>
+        ))}
+        <span className="ml-2 text-[11.5px] text-ink-400">
+          {shown.length === plan.length
+            ? "Showing everything"
+            : `Showing ${shown.length} of ${plan.length}`}
+        </span>
+      </div>
+
+      {selectedIds.length > 0 && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-ink-100 border-b bg-teal-50/50 px-3 py-1.5">
+          <span className="font-medium text-[12.5px] text-ink-900">
+            {selectedIds.length} selected
+          </span>
+          <button
+            type="button"
+            onClick={() => bulk((id) => ({ kind: "shift", taskId: id, days: 7 }))}
+            className={chip}
+          >
+            A week later
+          </button>
+          <button
+            type="button"
+            onClick={() => bulk((id) => ({ kind: "shift", taskId: id, days: -7 }))}
+            className={chip}
+          >
+            A week earlier
+          </button>
+          <button
+            type="button"
+            onClick={() => bulk((id) => ({ kind: "setStatus", taskId: id, status: "done" }))}
+            className={chip}
+          >
+            Mark done
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const who = window.prompt("Assign these to whom? Leave empty to unassign.");
+              if (who === null) return;
+              bulk((id) => ({ kind: "setOwner", taskId: id, owner: who.trim() || null }));
+            }}
+            className={chip}
+          >
+            Assign
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!window.confirm(`Delete ${selectedIds.length} tasks? This cannot be undone.`))
+                return;
+              bulk((id) => ({ kind: "delete", taskId: id }));
+            }}
+            className="flex items-center gap-1 rounded-md border border-[#E4B4A8] bg-white px-2 py-0.5 text-[12px] text-[#7A2E12] transition-colors hover:border-[#B4531A]"
+          >
+            <Trash2 className="h-3 w-3" />
+            Delete
+          </button>
+          <button
+            type="button"
+            onClick={() => setChecked(new Set())}
+            className="ml-auto text-[12px] text-ink-500 hover:text-ink-900"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
 
       {importNote && (
         <p className="flex items-center gap-3 border-b border-ink-100 bg-ink-50/60 px-3 py-1.5 text-[12px] text-ink-600">
@@ -417,23 +870,93 @@ export default function PlannerWorkspace({
             </div>
           </div>
         ) : (
-          <GanttChart
-            groups={groups}
-            zoom={zoom}
-            selectedId={selected}
-            onSelect={setSelected}
-            onReschedule={(id, startsOn, dueOn) => patch(id, { startsOn, dueOn })}
-            onLink={(id, dependsOn) => patch(id, { dependsOn })}
-            onSchedule={scheduleUndated}
-          />
+          <>
+            {/* Select what is on screen, so a bulk action follows the filters
+                rather than needing every bar clicked. */}
+            <div className="flex items-center gap-3 px-3 py-1.5">
+              <label className="flex items-center gap-1.5 text-[12px] text-ink-500">
+                <input
+                  type="checkbox"
+                  checked={shown.length > 0 && selectedIds.length === shown.length}
+                  onChange={(e) =>
+                    setChecked(e.target.checked ? new Set(shown.map((t) => t.id)) : new Set())
+                  }
+                  className="h-3 w-3"
+                />
+                Select these {shown.length}
+              </label>
+              {selected && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setChecked((c) => {
+                      const next = new Set(c);
+                      next.has(selected) ? next.delete(selected) : next.add(selected);
+                      return next;
+                    })
+                  }
+                  className="text-[12px] text-ink-500 hover:text-ink-900"
+                >
+                  {checked.has(selected) ? "Unselect" : "Select"} the open task
+                </button>
+              )}
+            </div>
+            <GanttChart
+              groups={groups}
+              zoom={zoom}
+              selectedId={selected}
+              onSelect={setSelected}
+              onReschedule={(id, startsOn, dueOn) => patch(id, { startsOn, dueOn })}
+              onLink={(id, dependsOn) => patch(id, { dependsOn })}
+              onSchedule={scheduleUndated}
+            />
+          </>
         )}
       </div>
+
+      {/*
+        The assistant, and the only one in LADX that edits a document in bulk.
+
+        Every change it makes goes through the same runner a drag does, is
+        checked against the plan on screen first, and is one click from undone.
+      */}
+      <Assistant
+        toolId="planner"
+        title="Change the plan"
+        placeholder="Push everything in commissioning back two weeks"
+        suggestions={[
+          "What is late?",
+          "Push commissioning back two weeks",
+          "Assign everything undated to me",
+          "Mark the requirements tasks done",
+        ]}
+        turns={assist.turns}
+        busy={assist.busy}
+        steps={assist.steps}
+        error={assist.error}
+        models={assist.models}
+        question={assist.question}
+        onSend={assist.send}
+        onAnswer={assist.answer}
+        onStop={assist.stop}
+        onUndo={
+          undoStack.length > 0
+            ? () => {
+                void undoLast();
+                assist.markUndone();
+              }
+            : undefined
+        }
+        footnote="It changes the plan you can see, after checking every change against it. Everything is undoable, and it cannot touch a task that is filtered out."
+      />
     </div>
   );
 }
 
 const select =
   "rounded-md border border-ink-200 bg-white px-2 py-1 text-[12.5px] outline-none focus:border-ink-500";
+const chip =
+  "rounded-md border border-ink-200 bg-white px-2 py-0.5 text-[12px] text-ink-700 transition-colors hover:border-ink-400";
 const dateBox =
   "rounded-md border border-ink-200 bg-white px-1.5 py-0.5 text-[12px] outline-none focus:border-ink-500";
 

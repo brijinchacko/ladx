@@ -256,13 +256,13 @@ export default function Assistant({
 
   if (frame.mode === "minimised") {
     return (
-      <div className="flex shrink-0 items-center gap-2 border-ink-100 border-t bg-ink-50/60 px-3 py-1.5">
+      <div className="flex shrink-0 items-center gap-2 border-teal-500/40 border-t bg-teal-50/60 px-3 py-1">
         <button
           type="button"
-          onClick={() => setMode("docked")}
-          className="flex items-center gap-1.5 text-[12.5px] text-ink-600 transition-colors hover:text-ink-900"
+          onClick={() => setMode("floating")}
+          className="flex items-center gap-1.5 font-medium text-[12px] text-teal-800 transition-colors hover:text-ink-900"
         >
-          <Sparkles className="h-3.5 w-3.5 text-teal-600" />
+          <Sparkles className="h-3 w-3 text-teal-600" />
           {title}
           <ChevronUp className="h-3 w-3 opacity-60" />
         </button>
@@ -280,10 +280,18 @@ export default function Assistant({
 
   return (
     <div
+      /*
+       * Marked as ours, wherever it is.
+       *
+       * A floating panel with the same grey chrome as everything else reads as
+       * a stray dialog. The teal edge and header are the brand's, and they are
+       * doing a job rather than decorating: this thing moves, so it has to be
+       * recognisable at a glance in the corner of a drawing it is sitting on.
+       */
       className={
         floating
-          ? "fixed z-40 flex flex-col overflow-hidden rounded-lg border border-ink-200 bg-white shadow-[0_18px_50px_-20px_rgba(15,26,36,0.45)]"
-          : "flex h-64 shrink-0 flex-col border-ink-100 border-t bg-white"
+          ? "fixed z-40 flex flex-col overflow-hidden rounded-lg border border-teal-500/60 bg-white shadow-[0_16px_44px_-18px_rgba(15,26,36,0.5)] ring-1 ring-teal-500/20"
+          : "flex h-56 shrink-0 flex-col border-teal-500/50 border-t-2 bg-white"
       }
       style={
         floating ? { left: frame.x, top: frame.y, width: frame.w, height: frame.h } : undefined
@@ -295,13 +303,13 @@ export default function Assistant({
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
-        className={`flex shrink-0 items-center gap-2 border-ink-100 border-b bg-ink-50/60 px-2 py-1.5 ${
+        className={`flex shrink-0 items-center gap-1.5 border-teal-500/25 border-b bg-teal-50/70 px-1.5 py-1 ${
           floating ? "cursor-grab active:cursor-grabbing" : "cursor-grab"
         }`}
       >
-        <GripVertical className="h-3.5 w-3.5 shrink-0 text-ink-300" />
-        <Sparkles className="h-3.5 w-3.5 shrink-0 text-teal-600" />
-        <span className="font-medium text-[12.5px] text-ink-900">{title}</span>
+        <GripVertical className="h-3 w-3 shrink-0 text-teal-600/50" />
+        <Sparkles className="h-3 w-3 shrink-0 text-teal-600" />
+        <span className="truncate font-medium text-[12px] text-ink-900">{title}</span>
 
         {models && (
           <div className="relative" onPointerDown={(e) => e.stopPropagation()}>
@@ -407,7 +415,7 @@ export default function Assistant({
       </div>
 
       {/* the conversation */}
-      <div ref={logRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-2.5">
+      <div ref={logRef} className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-2.5 py-2">
         {turns.length === 0 && !busy && (
           <div>
             <p className="text-[12.5px] text-ink-500 leading-relaxed">
@@ -499,9 +507,9 @@ export default function Assistant({
       </div>
 
       {/* composer */}
-      <div className="shrink-0 px-2.5 pb-2">
+      <div className="shrink-0 px-2 pb-1.5">
         {controls && <div className="mb-2">{controls}</div>}
-        <div className="flex items-end gap-2 rounded-xl border border-ink-200 bg-white p-1.5 focus-within:border-ink-400">
+        <div className="flex items-end gap-1.5 rounded-lg border border-ink-200 bg-white p-1 focus-within:border-teal-500">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -517,13 +525,13 @@ export default function Assistant({
             placeholder={disabledReason ?? (question ? "Your answer" : placeholder)}
             rows={1}
             disabled={busy || Boolean(disabledReason)}
-            className="max-h-28 min-h-[26px] flex-1 resize-none border-0 bg-transparent px-1.5 py-1 text-[13px] outline-none placeholder:text-ink-400 disabled:opacity-60"
+            className="max-h-24 min-h-[24px] flex-1 resize-none border-0 bg-transparent px-1.5 py-0.5 text-[12.5px] outline-none placeholder:text-ink-400 disabled:opacity-60"
           />
           {busy && onStop ? (
             <button
               type="button"
               onClick={onStop}
-              className="flex h-7 shrink-0 items-center gap-1.5 rounded-lg border border-ink-300 px-2.5 font-medium text-[12px] text-ink-700"
+              className="flex h-6 shrink-0 items-center gap-1 rounded-md border border-ink-300 px-2 font-medium text-[11.5px] text-ink-700"
             >
               <X className="h-3 w-3" />
               Stop
@@ -533,14 +541,14 @@ export default function Assistant({
               type="button"
               onClick={send}
               disabled={!input.trim() || busy || Boolean(disabledReason)}
-              className="flex h-7 shrink-0 items-center gap-1.5 rounded-lg bg-ink-900 px-2.5 font-medium text-[12px] text-white transition-opacity hover:opacity-90 disabled:opacity-30"
+              className="flex h-6 shrink-0 items-center gap-1 rounded-md bg-teal-600 px-2 font-medium text-[11.5px] text-white transition-opacity hover:opacity-90 disabled:opacity-30"
             >
               <Sparkles className="h-3 w-3" />
               {question ? "Answer" : "Send"}
             </button>
           )}
         </div>
-        <p className="mt-1 text-center text-[10.5px] text-ink-400 leading-snug">
+        <p className="mt-1 text-center text-[10px] text-ink-400 leading-tight">
           {footnote ??
             "LADX can make mistakes, and how good the result is depends heavily on the model. Check everything before it reaches a panel."}
         </p>

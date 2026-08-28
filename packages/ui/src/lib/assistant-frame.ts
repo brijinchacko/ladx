@@ -26,8 +26,8 @@ export interface Frame {
   mode: AssistantMode;
 }
 
-export const MIN_W = 300;
-export const MIN_H = 220;
+export const MIN_W = 280;
+export const MIN_H = 190;
 
 /**
  * How much of the panel must remain on screen.
@@ -40,16 +40,26 @@ const KEEP_VISIBLE = 120;
 const HEADER = 34;
 
 export function defaultFrame(vw: number, vh: number): Frame {
-  const w = Math.min(400, Math.max(MIN_W, vw - 80));
-  const h = Math.min(460, Math.max(MIN_H, vh - 160));
+  /*
+   * Small, and floating.
+   *
+   * It started docked, on the reasoning that a floating panel is a surprise on
+   * first use. That was the wrong trade: docked means it takes a strip off the
+   * bottom of every tool whether or not it is being used, and the strip is
+   * exactly where the work usually is. Floating, small, and out of the way in
+   * the corner costs nothing until somebody wants it, and it can be dragged
+   * anywhere from there.
+   */
+  const w = Math.min(340, Math.max(MIN_W, vw - 64));
+  const h = Math.min(400, Math.max(MIN_H, vh - 140));
   return {
     // Bottom right, which is where a floating helper is expected and where it
-    // overlaps least on a left-to-right drawing.
-    x: Math.max(16, vw - w - 24),
-    y: Math.max(16, vh - h - 72),
+    // overlaps least on a left to right drawing.
+    x: Math.max(12, vw - w - 20),
+    y: Math.max(12, vh - h - 56),
     w,
     h,
-    mode: "docked",
+    mode: "floating",
   };
 }
 

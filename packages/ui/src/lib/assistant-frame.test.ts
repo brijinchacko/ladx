@@ -158,7 +158,11 @@ describe("what comes back from storage", () => {
 
   it("ignores a mode that is not one", () => {
     store.set("ladx.assistant.frame.hmi.v1", JSON.stringify({ ...frame(), mode: "fullscreen" }));
-    expect(loadFrame("hmi", 1440, 900).mode).toBe("docked");
+    expect(loadFrame("hmi", 1440, 900).mode).toBe(defaultFrame(1440, 900).mode);
+  });
+
+  it("floats by default, rather than taking a strip off every tool", () => {
+    expect(defaultFrame(1440, 900).mode).toBe("floating");
   });
 
   it("ignores a NaN that JSON let through", () => {
