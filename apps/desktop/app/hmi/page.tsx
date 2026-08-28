@@ -13,6 +13,7 @@ import {
   emptyDoc,
   firstJsonObject,
   normaliseScreen,
+  readDoc,
   screenSystemPrompt,
   screenUserPrompt,
 } from "@ladx/hmi";
@@ -248,12 +249,10 @@ function safeParse(json: string): unknown {
 }
 
 function parseDoc(json: string, name: string): HmiDoc {
-  const parsed = safeParse(json) as HmiDoc | null;
-  // A document written by an older build, or a partial write, must not take
-  // the editor down: fall back to an empty application rather than nothing.
-  return parsed && Array.isArray(parsed.screens) && parsed.screens.length > 0
-    ? parsed
-    : emptyDoc(name);
+  // readDoc repairs rather than validates. The old check here was that
+  // `screens` was a non-empty array, which a document with a screen missing
+  // its size passes on the way to throwing inside the first render.
+  return readDoc(safeParse(json), name);
 }
 
 function countScreens(json: string): number {

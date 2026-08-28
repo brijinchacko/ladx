@@ -595,3 +595,82 @@ export function emptyDoc(
     connection: { protocol: "simulated", pollMs: 250, timeoutMs: 3000 },
   };
 }
+
+/**
+ * A stored document, made safe to open.
+ *
+ * The store holds whatever was written to it: a document from an older build,
+ * a partial write, a row somebody edited by hand. Both surfaces used to guard
+ * this with one shallow check, that `screens` was a non-empty array, and then
+ * handed the result straight to the editor. A screen inside that array missing
+ * its `size` gets as far as the first render and throws reading `.width`,
+ * which the app shows as "Application error: a client-side exception has
+ * occurred" and no way back to the list.
+ *
+ * So this repairs rather than validates. Anything unreadable becomes an empty
+ * application, and anything readable but incomplete is filled in: an old
+ * document opening with a default background is a document somebody can still
+ * work on, and that is the whole point of keeping their file openable.
+ */
+export function readDoc(parsed: unknown, fallbackName = "Untitled HMI"): HmiDoc {
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return emptyDoc(fallbackName);
+  }
+  const d = parsed as Partial<HmiDoc>;
+  if (!Array.isArray(d.screens) || d.screens.length === 0) {
+    return emptyDoc(d.name || fallbackName);
+  }
+
+  const defaultSize = isSize(d.defaultSize) ? d.defaultSize : { width: 800, height: 480 };
+
+  const screens = d.screens
+    .filter((s): s is Screen => Boolean(s) && typeof s === "object")
+    .map((s, i) => ({
+      ...s,
+      id: s.id || `s${i + 1}`,
+      name: s.name || `Screen ${i + 1}`,
+      slug: s.slug || slugify(s.name || `screen-${i + 1}`),
+      size: isSize(s.size) ? s.size : defaultSize,
+      background: s.background || "#E8EAEC",
+      widgets: Array.isArray(s.widgets) ? s.widgets : [],
+    }));
+
+  // Every screen was unusable, so there is nothing to open.
+  const [first] = screens;
+  if (!first) return emptyDoc(d.name || fallbackName);
+
+  return {
+    version: 1,
+    name: d.name || fallbackName,
+    defaultSize,
+    symbolStyle: d.symbolStyle,
+    screens,
+    homeSlug: d.homeSlug && screens.some((s) => s.slug === d.homeSlug) ? d.homeSlug : first.slug,
+    tags: Array.isArray(d.tags) ? d.tags : [],
+    alarms: Array.isArray(d.alarms) ? d.alarms : [],
+    popupPriorities: Array.isArray(d.popupPriorities) ? d.popupPriorities : ["critical"],
+    trends: Array.isArray(d.trends) ? d.trends : [],
+    faceplates: Array.isArray(d.faceplates) ? d.faceplates : [],
+    recipes: Array.isArray(d.recipes) ? d.recipes : [],
+    role: d.role ?? "engineer",
+    connection: d.connection ?? { protocol: "simulated", pollMs: 250, timeoutMs: 3000 },
+  };
+}
+
+function isSize(v: unknown): v is ScreenSize {
+  return (
+    Boolean(v) &&
+    typeof v === "object" &&
+    typeof (v as ScreenSize).width === "number" &&
+    typeof (v as ScreenSize).height === "number"
+  );
+}
+
+function slugify(s: string): string {
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "screen"
+  );
+}

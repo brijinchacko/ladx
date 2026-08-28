@@ -4,7 +4,7 @@ import { db } from "@/lib/db/client";
 import { SCRATCH, loadProgram } from "@/lib/db/ladder";
 import { hmiProjects } from "@/lib/db/schema";
 import { getProject } from "@/lib/platform/queries";
-import { type HmiDoc, emptyDoc } from "@ladx/hmi";
+import { type HmiDoc, readDoc } from "@ladx/hmi";
 import type { LadxProgram } from "@ladx/studio";
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
@@ -41,11 +41,11 @@ export default async function HmiEditorPage({ params }: { params: Promise<{ id: 
     : null;
 
   // A document from an older build, or one that failed a partial write, must
-  // not take the editor down: fall back to an empty application rather than
-  // rendering nothing.
-  const doc = (row.doc as HmiDoc | null) ?? null;
-  const safe: HmiDoc =
-    doc && Array.isArray(doc.screens) && doc.screens.length > 0 ? doc : emptyDoc(row.name);
+  // not take the editor down. readDoc repairs rather than validates: the check
+  // here used to be that `screens` was a non-empty array, which a document
+  // holding a screen with no size passes on its way to throwing inside the
+  // first render, and the person sees a blank page with no way back.
+  const safe: HmiDoc = readDoc(row.doc, row.name);
 
   return (
     <HmiEditorClient
