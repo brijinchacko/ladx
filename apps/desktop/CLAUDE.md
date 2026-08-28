@@ -42,6 +42,25 @@ const result = await invoke("parse_project", { path: "/path/to/file" });
 
 ## Things to never do
 - Don't cache PLC project parses to disk in cleartext. Encrypt with a per-install key.
-- Don't add localStorage / sessionStorage / IndexedDB. Use Tauri filesystem APIs.
+- Don't put the person's work in localStorage / sessionStorage / IndexedDB.
+  Anything that is theirs goes through a Tauri command: the SQLite database for
+  records, the project folder for documents. Webview storage is not the project
+  folder, is not backed up with it, does not travel on the memory stick at
+  handover, and is cleared by things that have nothing to do with LADX.
+
+  Window state is the exception, and it is deliberate rather than an oversight.
+  Where the assistant panel is docked, how the tool panes are laid out, and
+  whether a tool is in focus mode all belong to the window they are in, not to
+  the job, so they stay in browser storage on both surfaces. Following
+  somebody's screen layout onto another machine would be wrong even if it were
+  free. See `packages/ui/src/lib/assistant-store.ts` for where the line is
+  drawn. On the window side of it: `assistant-frame.ts` (where the assistant is
+  docked), `dock.ts` and `panels.ts` (which panes are open and how wide),
+  `focus-mode.ts`, and `tour.ts` (whether the guided tour has been seen).
+
+  Not everything that looks like a preference is window state. Which Ollama
+  model is the default, where projects live and which one was last open are all
+  in `settings.json` through Tauri, because they follow the person rather than
+  the window.
 - Don't write to `%APPDATA%\ladX\` from the frontend directly. Always go through Tauri commands.
 - Don't bundle Ollama. The model weights alone are 5-20GB. User installs Ollama separately.
