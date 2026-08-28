@@ -8,7 +8,7 @@
  */
 
 /** The desktop app's own SemVer, matching apps/desktop/src-tauri/tauri.conf.json. */
-export const DESKTOP_VERSION = "0.1.0";
+export const DESKTOP_VERSION = "0.1.1";
 
 /** Where the installers are served from. */
 const BASE = "/downloads";

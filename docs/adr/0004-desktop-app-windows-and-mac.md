@@ -154,9 +154,16 @@ schema for the surfaces that have never run on desktop.
 
 ## Versioning
 
-The desktop app gets its own SemVer, published in three places that have to
-agree: `apps/desktop/src-tauri/tauri.conf.json` (the source of truth for Tauri),
-`apps/desktop/package.json`, and the workspace `Cargo.toml`.
+The desktop app gets its own SemVer, in two places that have to agree:
+`apps/desktop/src-tauri/tauri.conf.json`, which is what Tauri stamps into the
+installer and the About box, and `apps/desktop/package.json`.
+
+**Not the workspace `Cargo.toml`.** That was named here originally and was
+never true: it has said `0.0.0` throughout, including while the app shipped as
+`0.1.0`. It is right that it did. That version belongs to the shared Rust
+crates, `ladx-types`, `ladx-parsers`, `ladx-validator` and the rest, which are
+libraries with their own lifecycle; tying them to the desktop app's release
+number would mean bumping every one of them for a fix to a button.
 
 **Scheme.** `MAJOR.MINOR.PATCH`, and it means what it says:
 
