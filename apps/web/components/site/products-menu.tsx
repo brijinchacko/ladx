@@ -91,39 +91,44 @@ export default function ProductsMenu({ active }: { active: boolean }) {
 }
 
 /**
- * The same thing for the mobile sheet.
+ * The same thing on a phone, as chips.
  *
- * A hover panel has no meaning on a phone, so the products are simply listed
- * under their group headings, inline in the drawer. Collapsing them behind an
- * accordion would save a screen of scrolling and cost the one thing the menu is
- * for, which is seeing that there are ten of these and how they relate.
+ * Ten products with a line of description each is most of a screen before the
+ * free tools above it are counted. The names alone still show how many there
+ * are and how they group, which is what the menu is for; what each one does is
+ * on its own page. Anything not yet live is greyed rather than hidden, so the
+ * shape of the product is honest without needing a label per chip.
  */
 export function ProductsMenuMobile({ onNavigate }: { onNavigate: () => void }) {
   return (
-    <div className="py-1">
-      <Link
-        href="/products"
-        onClick={onNavigate}
-        className="block py-2 font-semibold text-[15px] text-ink-900"
-      >
-        Products
-      </Link>
+    <div>
+      <div className="flex items-baseline justify-between">
+        <p className="font-mono text-[10px] text-ink-400 uppercase tracking-[0.14em]">Products</p>
+        <Link
+          href="/products"
+          onClick={onNavigate}
+          className="text-[12px] text-ink-400 hover:text-teal-700"
+        >
+          All {PRODUCTS.length}
+        </Link>
+      </div>
       {GROUP_ORDER.map((g) => (
-        <div key={g} className="mt-1 mb-2 border-ink-100 border-l pl-3">
-          <p className="mt-1 mb-1 font-mono text-[10px] text-ink-400 uppercase tracking-[0.14em]">
-            {GROUP_META[g].title}
-          </p>
-          {productsIn(g).map((p) => (
-            <Link
-              key={p.slug}
-              href={`/products/${p.slug}`}
-              onClick={onNavigate}
-              className="block py-1.5 text-[14px] text-ink-600"
-            >
-              {p.name}
-              <span className="ml-2 text-[12px] text-ink-400">{p.menuLine}</span>
-            </Link>
-          ))}
+        <div key={g} className="mt-2">
+          <p className="mb-0.5 text-[11px] text-ink-400">{GROUP_META[g].title}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {productsIn(g).map((p) => (
+              <Link
+                key={p.slug}
+                href={`/products/${p.slug}`}
+                onClick={onNavigate}
+                className={`rounded-full border px-2.5 py-1 text-[13px] active:border-teal-600 ${
+                  p.state === "live" ? "border-ink-200 text-ink-700" : "border-ink-100 text-ink-400"
+                }`}
+              >
+                {p.name}
+              </Link>
+            ))}
+          </div>
         </div>
       ))}
     </div>

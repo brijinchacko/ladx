@@ -70,38 +70,46 @@ export default function FreeMenu({ active }: { active: boolean }) {
 }
 
 /**
- * The same thing in the mobile sheet.
+ * The same thing on a phone, as chips rather than rows.
  *
- * A hover panel means nothing on a phone, so the groups are listed inline.
- * Collapsing them behind an accordion would save a screen of scrolling and cost
- * the one thing the menu is for, which is seeing how much of this is free.
+ * The desktop menu earns its one line of description per tool because there is
+ * room beside the name. On a phone that description wraps to two lines, and
+ * eight tools plus eight descriptions plus the products menu underneath was
+ * three screens of scrolling to reach Help.
+ *
+ * Chips fit four or five names to a line, so the whole thing is one screen and
+ * the group headings still do the work of saying what each set is for. The
+ * descriptions are one tap away on the page itself, which is where somebody
+ * comparing tools is going anyway.
  */
 export function FreeMenuMobile({ onNavigate }: { onNavigate: () => void }) {
   return (
-    <div className="py-1">
-      <Link
-        href="/free"
-        onClick={onNavigate}
-        className="block py-2 font-semibold text-[15px] text-ink-900"
-      >
-        Free tools
-      </Link>
+    <div>
+      <div className="flex items-baseline justify-between">
+        <p className="font-mono text-[10px] text-ink-400 uppercase tracking-[0.14em]">Free tools</p>
+        <Link
+          href="/free"
+          onClick={onNavigate}
+          className="text-[12px] text-ink-400 hover:text-teal-700"
+        >
+          All {FREE_SOFTWARE.length}
+        </Link>
+      </div>
       {FREE_GROUP_ORDER.map((g) => (
-        <div key={g} className="mt-1 mb-2 border-ink-100 border-l pl-3">
-          <p className="mt-1 mb-1 font-mono text-[10px] text-ink-400 uppercase tracking-[0.14em]">
-            {FREE_GROUP_META[g].title}
-          </p>
-          {freeToolsIn(g).map((t) => (
-            <Link
-              key={t.name}
-              href={t.href}
-              onClick={onNavigate}
-              className="block py-1.5 text-[14px] text-ink-600"
-            >
-              {t.name}
-              <span className="ml-2 text-[12px] text-ink-400">{t.menuLine}</span>
-            </Link>
-          ))}
+        <div key={g} className="mt-2">
+          <p className="mb-0.5 text-[11px] text-ink-400">{FREE_GROUP_META[g].title}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {freeToolsIn(g).map((t) => (
+              <Link
+                key={t.name}
+                href={t.href}
+                onClick={onNavigate}
+                className="rounded-full border border-ink-200 px-2.5 py-1 text-[13px] text-ink-700 active:border-teal-600"
+              >
+                {t.name}
+              </Link>
+            ))}
+          </div>
         </div>
       ))}
     </div>

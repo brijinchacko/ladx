@@ -133,19 +133,30 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <nav className="border-t border-ink-100 bg-white px-5 py-3 md:hidden">
+        /*
+          Capped and scrollable, rather than as long as it happens to be.
+          
+          It used to push the page down by its own height, so on a phone the
+          nav ran past the bottom of the screen and reaching Help meant
+          scrolling the document rather than the menu. Bounded to the space
+          below the header, it scrolls itself and the last item is always
+          reachable.
+        */
+        <nav className="max-h-[calc(100dvh-4rem)] space-y-4 overflow-y-auto border-ink-100 border-t bg-white px-5 py-3 md:hidden">
           <FreeMenuMobile onNavigate={() => setOpen(false)} />
           <ProductsMenuMobile onNavigate={() => setOpen(false)} />
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setOpen(false)}
-              className="block py-2 text-[15px] text-ink-700"
-            >
-              {item.label}
-            </Link>
-          ))}
+          <div className="flex flex-wrap gap-x-5 gap-y-1 border-ink-100 border-t pt-3">
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="py-1 text-[14px] text-ink-700"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </nav>
       )}
     </header>

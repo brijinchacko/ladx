@@ -79,15 +79,26 @@ export default function ResourcesPage() {
         </p>
       </header>
 
-      {/* Topic jump list. Fifty articles need a way in that is not scrolling. */}
-      <nav aria-label="Topics" className="mb-14 flex flex-wrap gap-2 border-y border-ink-100 py-4">
+      {/*
+        Topic jump list, and on a phone the only practical way in.
+        
+        A hundred articles is thirty screens of scrolling, so the bar sticks to
+        the top and scrolls sideways rather than wrapping to six rows. Sticky
+        matters more than it sounds: without it, changing your mind about which
+        topic you wanted means scrolling back to the top past everything you
+        just rejected.
+      */}
+      <nav
+        aria-label="Topics"
+        className="-mx-5 sticky top-16 z-20 mb-10 flex gap-2 overflow-x-auto border-ink-100 border-y bg-white/95 px-5 py-3 backdrop-blur-sm sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:py-4"
+      >
         {topics.map((topic) => {
           const count = POSTS.filter((p) => p.topic === topic).length;
           return (
             <a
               key={topic}
               href={`#${slugifyTopic(topic)}`}
-              className="flex items-center gap-2 border border-ink-200 px-2.5 py-1.5 text-[13px] text-ink-600 transition-colors hover:border-ink-400 hover:text-ink-900"
+              className="flex shrink-0 items-center gap-2 border border-ink-200 px-2.5 py-1.5 text-[13px] text-ink-600 transition-colors hover:border-ink-400 hover:text-ink-900"
             >
               {topic}
               <span className="font-mono text-[10.5px] tabular-nums text-ink-400">{count}</span>
@@ -127,14 +138,14 @@ export default function ResourcesPage() {
         const posts = rest.filter((p) => p.topic === topic);
         if (!posts.length) return null;
         return (
-          <section key={topic} id={slugifyTopic(topic)} className="mb-16 scroll-mt-24">
+          <section key={topic} id={slugifyTopic(topic)} className="mb-10 scroll-mt-32 sm:mb-16">
             <h2 className="mb-6 flex items-baseline gap-3 border-b border-ink-100 pb-3 font-display text-[1.3rem] font-bold tracking-[-0.012em] text-ink-900">
               {topic}
               <span className="font-mono text-[11px] font-normal tabular-nums text-ink-400">
                 {posts.length}
               </span>
             </h2>
-            <ul className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-x-10 gap-y-6 sm:grid-cols-2 sm:gap-y-10 lg:grid-cols-3">
               {posts.map((post) => (
                 <li key={post.slug}>
                   {/*
@@ -155,13 +166,24 @@ export default function ResourcesPage() {
                     <h3 className="font-display text-[1.05rem] font-bold leading-snug tracking-[-0.01em] text-ink-900 group-hover:text-teal-700">
                       {post.title}
                     </h3>
-                    <p className="mt-2 text-[13.5px] leading-relaxed text-ink-500">
+                    {/*
+                      Two lines of summary on a phone, all of it above that.
+                      
+                      A card carrying a title, a summary, the question it
+                      answers and a reading time is four blocks, and a hundred
+                      of them in one column is thirty screens. The question is
+                      the first thing to go: it restates the summary in the
+                      reader's own words, which is worth its space on a wide
+                      screen scanning three columns and is repetition on a
+                      narrow one.
+                    */}
+                    <p className="mt-2 line-clamp-2 text-[13.5px] text-ink-500 leading-relaxed sm:line-clamp-none">
                       {post.summary}
                     </p>
-                    <p className="mt-2.5 font-mono text-[11px] leading-snug text-ink-400">
+                    <p className="mt-2.5 hidden font-mono text-[11px] text-ink-400 leading-snug sm:block">
                       {post.intent}
                     </p>
-                    <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-300">
+                    <p className="mt-1.5 font-mono text-[10.5px] text-ink-300 uppercase tracking-[0.1em] sm:mt-2">
                       {post.minutes} min read
                     </p>
                   </Link>
