@@ -1,0 +1,104 @@
+# Building LADX Studio for Windows and macOS.
+#
+# Built on the target rather than cross compiled. A signed and notarised macOS
+# app cannot be produced from Linux, and attempting it wastes a day before you
+# find that out.
+#
+# Signing is off until the certificates exist. The build runs and produces
+# installers either way, which is the point: the pipeline is proved first and
+# the certificates are dropped in when they are bought. An unsigned installer is
+# fine for internal testing and is not fine for a customer, so the release step
+# says which it is.
+#
+# See docs/adr/0004-desktop-app-windows-and-mac.md.
+
+name: Desktop release
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "alpha, beta or stable"
+        required: true
+        default: alpha
+        type: choice
+        options: [alpha, beta, stable]
+  push:
+    tags:
+      - "desktop-v*"
+
+jobs:
+  build:
+    strategy:
+      # Every platform runs even when one fails, so a Windows problem does not
+      # hide a macOS one and cost a second round trip.
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            # One download for Intel and Apple Silicon. Two is a support
+            # question we should not create.
+            args: "--target universal-apple-darwin"
+          - platform: windows-latest
+            args: ""
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          # Both halves of the universal binary, on macOS only.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./apps/desktop/src-tauri -> target"
+
+      - run: pnpm install --frozen-lockfile
+
+      # The shared packages are the desktop app, so their tests are its tests.
+      - run: pnpm test
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # macOS signing and notarisation. Absent, the build still runs and
+          # produces an app Gatekeeper will refuse to open, which is correct for
+          # an internal build and must never reach a customer.
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+          # Windows Authenticode. An OV certificate does not clear SmartScreen;
+          # see the ADR before assuming a signed build is a trusted one.
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tagName: desktop-v__VERSION__
+          releaseName: "LADX Studio __VERSION__"
+          releaseBody: |
+            Runs entirely on this machine. Inference is a local Ollama model.
+
+            Windows: the .msi installer.
+            macOS: the .dmg, Intel and Apple Silicon in one download.
+          # Drafted rather than published, so somebody looks at the artefacts
+          # before anybody downloads them.
+          releaseDraft: true
+          prerelease: ${{ github.event.inputs.channel != 'stable' }}
+          args: ${{ matrix.args }}

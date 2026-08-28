@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "ladX Studio",
-  "version": "0.0.0",
+  "productName": "LADX Studio",
+  "version": "0.1.0",
   "identifier": "ai.ladx.studio",
   "build": {
     "beforeDevCommand": "pnpm --filter=@ladx/desktop dev:next",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "ladX Studio",
+        "title": "LADX Studio",
         "width": 1280,
         "height": 800,
         "minWidth": 960,
@@ -27,7 +27,17 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png"]
+    "targets": ["msi", "nsis", "dmg", "app"],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png"],
+    "copyright": "LADX",
+    "category": "DeveloperTool",
+    "shortDescription": "PLC programming, HMI and panel drawings, offline.",
+    "longDescription": "Ladder logic with a scan accurate simulator, an HMI and SCADA builder, panel drawings and format conversion. Runs entirely on this machine: inference is a local Ollama model and nothing is sent anywhere.",
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    },
+    "windows": {
+      "allowDowngrades": false
+    }
   }
 }
