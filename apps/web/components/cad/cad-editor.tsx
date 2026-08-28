@@ -67,7 +67,7 @@ import {
   focusModeLabel,
   useFocusMode,
 } from "@ladx/studio";
-import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
+import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@ladx/ui";
 import { Download, FileText, Maximize2, Minimize2, Save, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -2320,7 +2320,7 @@ export default function CadEditor({
       {
         <Assistant
           toolId="cad"
-          title="Draw with LADX"
+          title={RELAY_TITLES.cad}
           placeholder="A DIN rail with twelve terminals at 6 mm pitch, labelled X1:1 to X1:12"
           suggestions={[
             "A 600 by 400 back plate with two DIN rails",
@@ -2345,7 +2345,15 @@ export default function CadEditor({
               ? null
               : "Drawing from a description needs a provider key, which belongs to an account. Sign up and connect one in Settings."
           }
-          footnote="LADX can make mistakes, and how good the result is depends heavily on the model. Check every dimension before the drawing is issued."
+          actions={[
+            {
+              id: "clear",
+              label: "Start the conversation again",
+              hint: "The drawing is untouched. Only the thread goes.",
+              onSelect: assist.reset,
+            },
+          ]}
+          footnote="Relay can make mistakes, and how good the result is depends heavily on the model. Check every dimension before the drawing is issued."
         />
       }
     </div>

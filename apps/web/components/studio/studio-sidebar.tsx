@@ -173,63 +173,69 @@ export default function StudioSidebar({
         </button>
       </div>
 
-      {/*
-        Home and Projects.
-
-        The two places work starts from, given equal weight at the top because
-        that is what they are: a question you want answered now, and a job you
-        are part way through. Everything below is reached from one of them.
-      */}
-      <div className="px-3">
-        <div className="flex gap-1">
-          <TopTab
-            href="/studio"
-            icon={House}
-            active={pathname === "/studio" || pathname.startsWith("/studio/c/")}
-          >
-            Home
-          </TopTab>
-          <TopTab
-            href="/studio/projects"
-            icon={FolderKanban}
-            active={isActive("/studio/projects")}
-            count={projects.length || undefined}
-          >
-            Projects
-          </TopTab>
-        </div>
-      </div>
-
-      {/* New, which means whichever of the two you are standing in. */}
-      <div className="px-3 py-3">
+      {/* New, one action, meaning whichever of the two you are standing in. */}
+      <div className="px-3 py-2.5">
         <NewButton onProjects={isActive("/studio/projects")} />
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 pb-3">
-        {/* the work */}
-        <Section label="Workspace">
-          {projects.slice(0, 5).map((p) => (
-            <ProjectRow
-              key={p.id}
-              project={p}
-              active={pathname === `/studio/projects/${p.id}`}
-              menuOpen={menuFor === p.id}
-              onMenu={() => setMenuFor(menuFor === p.id ? null : p.id)}
-              onClose={() => setMenuFor(null)}
-            />
-          ))}
-          {projects.length === 0 && (
-            <p className="px-2 py-1 text-[12px] leading-snug text-ink-400">
-              No projects yet. New starts one.
-            </p>
-          )}
+        {/*
+          Where you can go, before what you have been doing.
+
+          These four were spread across a tab pair and a section that also held
+          five recent projects, so a place you navigate to and a thing you were
+          working on sat in the same list looking like the same kind of item.
+          They are not: one is a destination and the other is a memory of what
+          you did, and mixing them is why the pane read as a pile.
+        */}
+        <div className="mb-4 space-y-px">
+          <Row
+            href="/studio"
+            active={pathname === "/studio" || pathname.startsWith("/studio/c/")}
+            icon={House}
+          >
+            Home
+          </Row>
+          <Row
+            href="/studio/projects"
+            active={isActive("/studio/projects")}
+            icon={FolderKanban}
+            count={projects.length || undefined}
+          >
+            Projects
+          </Row>
           <Row href="/studio/planner" active={isActive("/studio/planner")} icon={CalendarRange}>
             Planner
           </Row>
           <Row href="/studio/clients" active={isActive("/studio/clients")} icon={Users}>
             Clients
           </Row>
-        </Section>
+        </div>
+
+        {/* What you were last working on, as a list of names rather than as
+            navigation dressed up to look like it. */}
+        {projects.length > 0 && (
+          <Section label="Recent projects">
+            {projects.slice(0, 5).map((p) => (
+              <ProjectRow
+                key={p.id}
+                project={p}
+                active={pathname === `/studio/projects/${p.id}`}
+                menuOpen={menuFor === p.id}
+                onMenu={() => setMenuFor(menuFor === p.id ? null : p.id)}
+                onClose={() => setMenuFor(null)}
+              />
+            ))}
+            {projects.length > 5 && (
+              <Link
+                href="/studio/projects"
+                className="block rounded-md px-2 py-1 text-[12.5px] text-ink-400 transition-colors hover:bg-ink-50 hover:text-ink-700"
+              >
+                All {projects.length} projects
+              </Link>
+            )}
+          </Section>
+        )}
 
         {/* the tools, all of which open inside this shell */}
         <Section label="Tools">
@@ -260,45 +266,6 @@ export default function StudioSidebar({
         <AccountMenu userName={userName} userEmail={userEmail} />
       </div>
     </aside>
-  );
-}
-
-/**
- * Home or Projects.
- *
- * A pair rather than a list, and at the top rather than among the tools,
- * because these are the two modes the application has. Chat is for a question
- * that has no file behind it yet; a project is for work that does. Everything
- * else in this pane belongs to one of them.
- */
-function TopTab({
-  href,
-  icon: Icon,
-  active,
-  count,
-  children,
-}: {
-  href: string;
-  icon: typeof House;
-  active: boolean;
-  count?: number;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[13px] transition-colors ${
-        active
-          ? "bg-white text-ink-900 shadow-sm ring-1 ring-ink-200"
-          : "text-ink-500 hover:bg-ink-100 hover:text-ink-900"
-      }`}
-    >
-      <Icon className="h-3.5 w-3.5 shrink-0" />
-      {children}
-      {count !== undefined && (
-        <span className="font-mono text-[10.5px] tabular-nums opacity-50">{count}</span>
-      )}
-    </Link>
   );
 }
 

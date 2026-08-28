@@ -38,9 +38,14 @@ export type {
   AssistantModels,
   AssistantModelOption,
   AssistantQuestion,
+  AssistantAction,
+  RunMode,
+  RunModeControl,
 } from "./components/assistant/assistant";
 export { Steps, StepLog } from "./components/assistant/steps";
 export type { AssistStep, StepState } from "./components/assistant/steps";
 export { useAssistant } from "./lib/use-assistant";
 export type { AssistRunContext, AssistResult, UseAssistantOptions } from "./lib/use-assistant";
 export * from "./lib/assistant-frame";
+export { ASSISTANT, RELAY_TITLES } from "./lib/assistant-brand";
+export type { RelayTool } from "./lib/assistant-brand";

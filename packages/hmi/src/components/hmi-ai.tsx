@@ -20,8 +20,7 @@
  * prompt and the drawing, which is the `run` below.
  */
 
-import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
-import { Wand2 } from "lucide-react";
+import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@ladx/ui";
 import { useCallback, useRef, useState } from "react";
 import type { GenContext, GenerateScreen, GeneratedScreen } from "../lib/generate";
 import { draftScreen } from "../lib/generate";
@@ -219,7 +218,7 @@ export default function HmiAi({
   return (
     <Assistant
       toolId="hmi"
-      title="Assist"
+      title={RELAY_TITLES.hmi}
       placeholder="A tank mimic with a level bar and a pump that turns green when it runs"
       suggestions={SUGGESTIONS}
       turns={a.turns}
@@ -240,31 +239,44 @@ export default function HmiAi({
           : undefined
       }
       disabledReason={disabledReason}
+      /*
+       * The plus, rather than a row of buttons above the box.
+       *
+       * "From tag table" is the deterministic version of what the model does,
+       * and it belongs with the other ways of bringing something in rather than
+       * competing with the prompt for space.
+       */
+      actions={[
+        {
+          id: "draft",
+          label: "Lay it out from the tag table",
+          hint: "Every tag as a control, no model involved. Every binding real by construction.",
+          onSelect: draft,
+        },
+      ]}
+      /*
+       * Add or replace, as its own control rather than as the run mode.
+       *
+       * It was briefly wired to Auto and Manual, which was wrong: those mean
+       * how much the assistant does on its own, and this means where the
+       * result lands. Two different questions sharing one control is how
+       * somebody presses Manual expecting to review a change and gets their
+       * screen replaced instead.
+       */
       controls={
-        <div className="flex items-center gap-1.5">
-          <div className="flex overflow-hidden rounded-md border border-ink-200">
-            {(["extend", "replace"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className={`px-2 py-1 text-[11.5px] transition-colors ${
-                  mode === m ? "bg-ink-900 text-white" : "bg-white text-ink-500 hover:text-ink-900"
-                }`}
-              >
-                {m === "extend" ? "Add to screen" : "Replace screen"}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={draft}
-            title="Lay every tag in the program out as a control, with no model involved."
-            className="ml-auto flex items-center gap-1 rounded-md border border-ink-200 bg-white px-2 py-1 text-[11.5px] text-ink-600 transition-colors hover:border-ink-400 hover:text-ink-900"
-          >
-            <Wand2 className="h-3 w-3" />
-            From tag table
-          </button>
+        <div className="flex overflow-hidden rounded-md border border-ink-200">
+          {(["extend", "replace"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className={`flex-1 px-2 py-1 text-[11px] transition-colors ${
+                mode === m ? "bg-ink-900 text-white" : "bg-white text-ink-500 hover:text-ink-900"
+              }`}
+            >
+              {m === "extend" ? "Add to screen" : "Replace screen"}
+            </button>
+          ))}
         </div>
       }
     />

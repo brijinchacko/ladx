@@ -1,6 +1,6 @@
 "use client";
 
-import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
+import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@ladx/ui";
 import {
   Activity,
   CircleDot,
@@ -779,7 +779,7 @@ export default function Monitor({
       */}
       <Assistant
         toolId="monitor"
-        title="Ask about the logic"
+        title={RELAY_TITLES.monitor}
         placeholder="Why is the conveyor not starting?"
         suggestions={[
           "Why is this rung not conducting?",

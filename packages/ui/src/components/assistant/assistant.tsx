@@ -1,25 +1,34 @@
 "use client";
 
 import {
+  Check,
   ChevronDown,
   ChevronUp,
   Cpu,
   GripVertical,
   PanelBottom,
+  PanelLeft,
+  PanelRight,
+  PanelTop,
+  Plus,
   Sparkles,
   Square,
   Undo2,
   X,
 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { ASSISTANT } from "../../lib/assistant-brand";
 import {
   type AssistantMode,
+  DOCK_EDGES,
+  type DockEdge,
   type Frame,
   MIN_H,
   MIN_W,
   clampFrame,
   defaultFrame,
   hasStoredFrame,
+  isDocked,
   loadFrame,
   saveFrame,
 } from "../../lib/assistant-frame";
@@ -99,6 +108,24 @@ export interface AssistantQuestion {
   options?: string[];
 }
 
+/** Something the plus button can do: bring a file in, load an example, run the deterministic path. */
+export interface AssistantAction {
+  id: string;
+  label: string;
+  hint?: string;
+  onSelect: () => void;
+}
+
+export type RunMode = "auto" | "manual";
+
+export interface RunModeControl {
+  value: RunMode;
+  onChange: (m: RunMode) => void;
+  /** What each one means here, since it differs by tool. */
+  autoHint: string;
+  manualHint: string;
+}
+
 export interface AssistantProps {
   /** Where this tool's frame is remembered. One per tool. */
   toolId: string;
@@ -118,11 +145,33 @@ export interface AssistantProps {
   onUndo?: () => void;
   /** Tool-specific controls above the composer, e.g. add-or-replace. */
   controls?: ReactNode;
+  /**
+   * What the plus button offers.
+   *
+   * Whatever this tool can bring in or start: a file to read, an example to
+   * load, the deterministic version of what the model does. A plus that opens
+   * an empty menu is worse than no plus, so it is only drawn when there is
+   * something in it.
+   */
+  actions?: AssistantAction[];
+  /**
+   * How much it is allowed to do on its own.
+   *
+   * Auto applies what it produces; Manual proposes and waits. The distinction
+   * matters most where a change is hard to see: forty tasks redated across a
+   * plan is not something to discover afterwards. Absent means the tool has
+   * only one mode and the control is not drawn.
+   */
+  runMode?: RunModeControl;
   /** Shown under the composer. */
   footnote?: string;
   /** Why it cannot run, if it cannot. */
   disabledReason?: string | null;
 }
+
+/** A header control: white on the solid header, lit when it is the current one. */
+const ctl =
+  "flex h-5 w-5 items-center justify-center rounded text-white/80 transition-colors hover:bg-white/20 hover:text-white";
 
 export default function Assistant({
   toolId,
@@ -140,12 +189,15 @@ export default function Assistant({
   onStop,
   onUndo,
   controls,
+  actions,
+  runMode,
   footnote,
   disabledReason,
 }: AssistantProps) {
   const [frame, setFrame] = useState<Frame | null>(null);
   const [input, setInput] = useState("");
   const [modelsOpen, setModelsOpen] = useState(false);
+  const [plusOpen, setPlusOpen] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
 
   /*
@@ -256,27 +308,82 @@ export default function Assistant({
 
   if (frame.mode === "minimised") {
     return (
-      <div className="flex shrink-0 items-center gap-2 border-teal-500/40 border-t bg-teal-50/60 px-3 py-1">
+      <div className="flex shrink-0 items-center gap-2 bg-teal-600 px-3 py-1 text-white">
         <button
           type="button"
           onClick={() => setMode("floating")}
-          className="flex items-center gap-1.5 font-medium text-[12px] text-teal-800 transition-colors hover:text-ink-900"
+          className="flex items-center gap-1.5 font-semibold text-[12px] text-white transition-opacity hover:opacity-80"
         >
-          <Sparkles className="h-3 w-3 text-teal-600" />
+          <Sparkles className="h-3 w-3" />
           {title}
-          <ChevronUp className="h-3 w-3 opacity-60" />
+          <ChevronUp className="h-3 w-3 opacity-70" />
         </button>
         {turns.length > 0 && (
-          <span className="font-mono text-[10.5px] text-ink-400">
+          <span className="font-mono text-[10.5px] text-white/70">
             {turns.filter((t) => t.role === "you").length} asked
           </span>
         )}
-        {busy && <span className="font-mono text-[10.5px] text-teal-700">working…</span>}
+        {busy && <span className="font-mono text-[10.5px] text-white">working…</span>}
       </div>
     );
   }
 
   const floating = frame.mode === "floating";
+  const edge: DockEdge | null = isDocked(frame.mode) ? frame.mode : null;
+
+  /*
+   * A docked panel is pinned to a viewport edge, not placed in the layout.
+   *
+   * The obvious alternative is to render it in the host's flex container, so
+   * the content shrinks to make room. That cannot work from here: this
+   * component sits wherever the tool mounted it, usually at the bottom of a
+   * column, so "dock left" and "dock right" would render in exactly the same
+   * place and the control would appear broken. Pinning to the edge behaves the
+   * same in all five tools without any of them having to restructure.
+   *
+   * It overlays rather than pushes, which is the honest cost. It is small, it
+   * is one keypress from minimised, and floating exists for when it is in the
+   * way, which is a better trade than the panel not going where it was sent.
+   *
+   * The same stored size serves all four edges: the axis that matters changes
+   * and the other is ignored, so a panel dragged wide on the right is not
+   * suddenly a different height on the bottom.
+   */
+  const thickness = {
+    w: Math.max(MIN_W, Math.min(frame.w, 560)),
+    h: Math.max(MIN_H, Math.min(frame.h, 460)),
+  };
+  const dockedStyle: React.CSSProperties =
+    edge === "left"
+      ? { left: 0, top: 0, bottom: 0, width: thickness.w }
+      : edge === "right"
+        ? { right: 0, top: 0, bottom: 0, width: thickness.w }
+        : edge === "top"
+          ? { left: 0, right: 0, top: 0, height: thickness.h }
+          : { left: 0, right: 0, bottom: 0, height: thickness.h };
+
+  const dockedClass =
+    edge === "left"
+      ? "border-teal-600 border-r-2"
+      : edge === "right"
+        ? "border-teal-600 border-l-2"
+        : edge === "top"
+          ? "border-teal-600 border-b-2"
+          : "border-teal-600 border-t-2";
+
+  /** Where the next press of the dock control puts it. */
+  const nextEdge: DockEdge =
+    edge === null
+      ? "bottom"
+      : (DOCK_EDGES[(DOCK_EDGES.indexOf(edge) + 1) % DOCK_EDGES.length] ?? "bottom");
+  const EdgeIcon =
+    nextEdge === "bottom"
+      ? PanelBottom
+      : nextEdge === "right"
+        ? PanelRight
+        : nextEdge === "left"
+          ? PanelLeft
+          : PanelTop;
 
   return (
     <div
@@ -290,11 +397,11 @@ export default function Assistant({
        */
       className={
         floating
-          ? "fixed z-40 flex flex-col overflow-hidden rounded-lg border border-teal-500/60 bg-white shadow-[0_16px_44px_-18px_rgba(15,26,36,0.5)] ring-1 ring-teal-500/20"
-          : "flex h-56 shrink-0 flex-col border-teal-500/50 border-t-2 bg-white"
+          ? "fixed z-40 flex flex-col overflow-hidden rounded-md border-2 border-teal-600 bg-white shadow-[0_16px_44px_-18px_rgba(15,26,36,0.5)]"
+          : `fixed z-40 flex min-h-0 flex-col bg-white shadow-[0_0_36px_-12px_rgba(15,26,36,0.4)] ${dockedClass}`
       }
       style={
-        floating ? { left: frame.x, top: frame.y, width: frame.w, height: frame.h } : undefined
+        floating ? { left: frame.x, top: frame.y, width: frame.w, height: frame.h } : dockedStyle
       }
     >
       {/* header, and the drag handle */}
@@ -303,13 +410,13 @@ export default function Assistant({
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
-        className={`flex shrink-0 items-center gap-1.5 border-teal-500/25 border-b bg-teal-50/70 px-1.5 py-1 ${
+        className={`flex shrink-0 items-center gap-1.5 bg-teal-600 px-1.5 py-1 text-white ${
           floating ? "cursor-grab active:cursor-grabbing" : "cursor-grab"
         }`}
       >
-        <GripVertical className="h-3 w-3 shrink-0 text-teal-600/50" />
-        <Sparkles className="h-3 w-3 shrink-0 text-teal-600" />
-        <span className="truncate font-medium text-[12px] text-ink-900">{title}</span>
+        <GripVertical className="h-3 w-3 shrink-0 text-white/50" />
+        <Sparkles className="h-3 w-3 shrink-0 text-white" />
+        <span className="truncate font-semibold text-[12px] text-white">{title}</span>
 
         {models && (
           <div className="relative" onPointerDown={(e) => e.stopPropagation()}>
@@ -317,17 +424,17 @@ export default function Assistant({
               type="button"
               onClick={() => setModelsOpen((v) => !v)}
               title={`${models.source}. Click to change the model.`}
-              className="flex max-w-[190px] items-center gap-1 rounded-sm border border-ink-200 bg-white px-1.5 py-0.5 text-ink-600 transition-colors hover:border-ink-400 hover:text-ink-900"
+              className="flex max-w-[150px] items-center gap-1 rounded-sm bg-white/15 px-1.5 py-0.5 text-white/90 transition-colors hover:bg-white/25 hover:text-white"
             >
-              <Cpu className="h-3 w-3 shrink-0" />
-              <span className="truncate font-mono text-[10.5px]">
+              <Cpu className="h-2.5 w-2.5 shrink-0" />
+              <span className="truncate font-mono text-[10px]">
                 {models.loading
                   ? "loading…"
                   : (models.options.find((o) => o.id === models.value)?.label ??
                     models.value ??
                     "Auto")}
               </span>
-              <ChevronDown className="h-2.5 w-2.5 shrink-0 opacity-60" />
+              <ChevronDown className="h-2.5 w-2.5 shrink-0 opacity-70" />
             </button>
 
             {modelsOpen && (
@@ -380,34 +487,45 @@ export default function Assistant({
           </div>
         )}
 
-        <div className="ml-auto flex shrink-0 items-center gap-1">
+        <div className="ml-auto flex shrink-0 items-center gap-0.5">
           {onUndo && turns.some((t) => t.undoable) && (
             <button
               type="button"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={onUndo}
               title="Take back the last thing it produced."
-              className="flex items-center gap-1 px-1 text-[11.5px] text-ink-500 transition-colors hover:text-ink-900"
+              className="flex items-center gap-1 px-1 text-[11px] text-white/80 transition-colors hover:text-white"
             >
               <Undo2 className="h-3 w-3" />
               Undo
             </button>
           )}
+          {/* Cycles bottom, right, left, top, so all four edges are reachable
+              without a menu, and floating is the separate control beside it. */}
           <button
             type="button"
             onPointerDown={(e) => e.stopPropagation()}
-            onClick={() => setMode(floating ? "docked" : "floating")}
-            title={floating ? "Dock it to the bottom." : "Float it, and drag it anywhere."}
-            className="flex h-5 w-5 items-center justify-center rounded text-ink-400 transition-colors hover:bg-ink-200 hover:text-ink-900"
+            onClick={() => setMode(nextEdge)}
+            title={`Dock it to the ${nextEdge}.`}
+            className={ctl}
           >
-            {floating ? <PanelBottom className="h-3.5 w-3.5" /> : <Square className="h-3 w-3" />}
+            <EdgeIcon className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => setMode("floating")}
+            title="Float it, and drag it anywhere."
+            className={`${ctl} ${floating ? "bg-white/25" : ""}`}
+          >
+            <Square className="h-3 w-3" />
           </button>
           <button
             type="button"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => setMode("minimised")}
             title="Put it away. It comes back from the bar."
-            className="flex h-5 w-5 items-center justify-center rounded text-ink-400 transition-colors hover:bg-ink-200 hover:text-ink-900"
+            className={ctl}
           >
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
@@ -509,48 +627,127 @@ export default function Assistant({
       {/* composer */}
       <div className="shrink-0 px-2 pb-1.5">
         {controls && <div className="mb-2">{controls}</div>}
-        <div className="flex items-end gap-1.5 rounded-lg border border-ink-200 bg-white p-1 focus-within:border-teal-500">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-              // The tools underneath bind almost every single key to a command,
-              // so a keystroke meant for this box must not also draw a contact.
-              e.stopPropagation();
-            }}
-            placeholder={disabledReason ?? (question ? "Your answer" : placeholder)}
-            rows={1}
-            disabled={busy || Boolean(disabledReason)}
-            className="max-h-24 min-h-[24px] flex-1 resize-none border-0 bg-transparent px-1.5 py-0.5 text-[12.5px] outline-none placeholder:text-ink-400 disabled:opacity-60"
-          />
-          {busy && onStop ? (
-            <button
-              type="button"
-              onClick={onStop}
-              className="flex h-6 shrink-0 items-center gap-1 rounded-md border border-ink-300 px-2 font-medium text-[11.5px] text-ink-700"
-            >
-              <X className="h-3 w-3" />
-              Stop
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={send}
-              disabled={!input.trim() || busy || Boolean(disabledReason)}
-              className="flex h-6 shrink-0 items-center gap-1 rounded-md bg-teal-600 px-2 font-medium text-[11.5px] text-white transition-opacity hover:opacity-90 disabled:opacity-30"
-            >
-              <Sparkles className="h-3 w-3" />
-              {question ? "Answer" : "Send"}
-            </button>
+        <div className="rounded-md border border-ink-200 bg-white focus-within:border-teal-600">
+          <div className="flex items-end gap-1 p-1">
+            {/*
+              The plus, for what this tool can bring in: a file, an example, the
+              deterministic version of what the model does. Drawn only when
+              there is something in it, because a plus that opens an empty menu
+              is worse than no plus.
+            */}
+            {actions && actions.length > 0 && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPlusOpen((v) => !v)}
+                  title="Bring something in"
+                  aria-expanded={plusOpen}
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-900"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+                {plusOpen && (
+                  <div className="absolute bottom-full left-0 z-50 mb-1 w-60 overflow-hidden rounded-md border border-ink-200 bg-white py-1 shadow-lg">
+                    {actions.map((a) => (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => {
+                          setPlusOpen(false);
+                          a.onSelect();
+                        }}
+                        className="block w-full px-2.5 py-1.5 text-left transition-colors hover:bg-ink-50"
+                      >
+                        <span className="block text-[12.5px] text-ink-800">{a.label}</span>
+                        {a.hint && (
+                          <span className="block text-[11px] text-ink-400 leading-snug">
+                            {a.hint}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+                // The tools underneath bind almost every single key to a command,
+                // so a keystroke meant for this box must not also draw a contact.
+                e.stopPropagation();
+              }}
+              placeholder={disabledReason ?? (question ? "Your answer" : placeholder)}
+              rows={1}
+              disabled={busy || Boolean(disabledReason)}
+              className="max-h-24 min-h-[24px] flex-1 resize-none border-0 bg-transparent px-1 py-0.5 text-[12.5px] outline-none placeholder:text-ink-400 disabled:opacity-60"
+            />
+            {busy && onStop ? (
+              <button
+                type="button"
+                onClick={onStop}
+                className="flex h-6 shrink-0 items-center gap-1 rounded px-2 font-medium text-[11.5px] text-ink-700 ring-1 ring-ink-300"
+              >
+                <X className="h-3 w-3" />
+                Stop
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={send}
+                disabled={!input.trim() || busy || Boolean(disabledReason)}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-teal-600 text-white transition-opacity hover:opacity-90 disabled:opacity-25"
+                title={question ? "Answer" : "Send"}
+              >
+                <Sparkles className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+
+          {/*
+            The mode strip, along the bottom of the composer.
+
+            Arranged the way a terminal assistant does it: inside the box, small,
+            always visible, so what it is about to be allowed to do is readable
+            without opening anything. Auto applies what it produces; Manual
+            proposes and waits. That distinction matters most where a change is
+            hard to see afterwards.
+          */}
+          {runMode && (
+            <div className="flex items-center gap-1 border-ink-100 border-t px-1 py-0.5">
+              {[
+                { id: "auto" as const, label: "Auto", hint: runMode.autoHint },
+                { id: "manual" as const, label: "Manual", hint: runMode.manualHint },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => runMode.onChange(m.id)}
+                  title={m.hint}
+                  className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10.5px] transition-colors ${
+                    runMode.value === m.id
+                      ? "bg-teal-600 font-medium text-white"
+                      : "text-ink-500 hover:bg-ink-100"
+                  }`}
+                >
+                  {runMode.value === m.id && <Check className="h-2.5 w-2.5" />}
+                  {m.label}
+                </button>
+              ))}
+              <span className="ml-auto truncate pr-1 text-[10px] text-ink-400">
+                {runMode.value === "auto" ? runMode.autoHint : runMode.manualHint}
+              </span>
+            </div>
           )}
         </div>
         <p className="mt-1 text-center text-[10px] text-ink-400 leading-tight">
           {footnote ??
-            "LADX can make mistakes, and how good the result is depends heavily on the model. Check everything before it reaches a panel."}
+            `${ASSISTANT.name} can make mistakes, and how good the result is depends heavily on the model. Check everything before it reaches a panel.`}
         </p>
       </div>
 

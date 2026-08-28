@@ -1,6 +1,6 @@
 "use client";
 
-import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
+import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@ladx/ui";
 import {
   AlertTriangle,
   Check,
@@ -609,7 +609,7 @@ export default function ConvertWorkbench({
           */}
           <Assistant
             toolId="convert"
-            title="Ask about this conversion"
+            title={RELAY_TITLES.convert}
             placeholder="What do I do about the timer note?"
             suggestions={[
               "What do I have to do by hand here?",
@@ -625,6 +625,20 @@ export default function ConvertWorkbench({
             onSend={assist.send}
             onAnswer={assist.answer}
             onStop={assist.stop}
+            actions={[
+              {
+                id: "open",
+                label: "Open a program",
+                hint: "L5X from Studio 5000, PLCopen XML, or a LADX export.",
+                onSelect: () => fileRef.current?.click(),
+              },
+              {
+                id: "download",
+                label: "Download every target at once",
+                hint: "What a migration actually needs, rather than one at a time.",
+                onSelect: downloadAll,
+              },
+            ]}
             footnote="It explains the conversion and what is left to do. It changes nothing, and it can be wrong: the output is a starting point that a person has to verify."
           />
         </>

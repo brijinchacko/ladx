@@ -15,7 +15,7 @@ import {
   patchFor,
   todayIso,
 } from "@/lib/platform/plan-ops";
-import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
+import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@ladx/ui";
 import {
   CalendarRange,
   Download,
@@ -94,6 +94,19 @@ export default function PlannerWorkspace({
   const [today] = useState(todayIso);
   /** The inverse of the last batch, so any change is one click from undone. */
   const [undoStack, setUndoStack] = useState<PlanOp[]>([]);
+  /**
+   * Whether a proposed change is applied or held for review.
+   *
+   * Real here in a way it is not in the other tools. A generated rung is on
+   * screen and can be read; forty tasks silently redated across three projects
+   * is not something to discover afterwards, and the person who has to explain
+   * the new dates is whoever pressed the button. Auto is the default because
+   * most requests are small and obvious, and Manual is one click away for the
+   * ones that are not.
+   */
+  const [runMode, setRunMode] = useState<"auto" | "manual">("auto");
+  /** What was proposed and is waiting, in Manual. */
+  const [proposed, setProposed] = useState<{ ops: PlanOp[]; summary: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [importNote, setImportNote] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -464,6 +477,29 @@ export default function PlannerWorkspace({
         };
       }
 
+      if (runMode === "manual") {
+        // Held rather than applied. Accepted from the bar above the timeline,
+        // because that is next to the thing it would change.
+        step.start("hold", "Holding for you to accept");
+        step.detail(`${ops.length} change${ops.length === 1 ? "" : "s"} ready`);
+        setProposed({ ops, summary: b.summary || "" });
+        return {
+          text: [
+            b.summary || `${ops.length} change${ops.length === 1 ? "" : "s"} proposed.`,
+            "Nothing has changed yet. Accept or discard it above the timeline.",
+            ops
+              .slice(0, 6)
+              .map((o) => describeOp(o, shown))
+              .join("; "),
+            ops.length > 6 ? `and ${ops.length - 6} more.` : "",
+          ]
+            .filter(Boolean)
+            .join(" "),
+          problems: problems.map((p) => `${p.what}: ${p.why}`),
+          undoable: false,
+        };
+      }
+
       step.start("apply", "Changing the plan");
       const { applied, failed } = await runOps(ops);
       step.detail(`${applied} applied${failed ? `, ${failed} refused by the server` : ""}`);
@@ -484,7 +520,7 @@ export default function PlannerWorkspace({
         undoable: applied > 0,
       };
     },
-    [shown, state, today, visibleProjects, runOps],
+    [shown, state, today, visibleProjects, runOps, runMode],
   );
 
   const assist = useAssistant({ run: runAssist });
@@ -707,6 +743,48 @@ export default function PlannerWorkspace({
         </span>
       </div>
 
+      {/*
+        A held change, and the two things you can do with it.
+
+        Above the timeline rather than in the assistant, because the decision is
+        about the plan and this is where the plan is. What it would do is spelled
+        out rather than summarised as a count: "twelve changes" is not something
+        anybody can accept responsibly.
+      */}
+      {proposed && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-teal-600 border-b-2 bg-teal-50 px-3 py-2">
+          <span className="font-medium text-[12.5px] text-ink-900">
+            {proposed.summary ||
+              `${proposed.ops.length} change${proposed.ops.length === 1 ? "" : "s"} proposed`}
+          </span>
+          <span className="max-w-xl truncate text-[12px] text-ink-600">
+            {proposed.ops
+              .slice(0, 4)
+              .map((o) => describeOp(o, plan))
+              .join("; ")}
+            {proposed.ops.length > 4 ? ` and ${proposed.ops.length - 4} more` : ""}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              const ops = proposed.ops;
+              setProposed(null);
+              void runOps(ops);
+            }}
+            className="ml-auto rounded-md bg-teal-600 px-2.5 py-1 font-medium text-[12px] text-white transition-opacity hover:opacity-90"
+          >
+            Accept {proposed.ops.length}
+          </button>
+          <button
+            type="button"
+            onClick={() => setProposed(null)}
+            className="text-[12px] text-ink-500 hover:text-ink-900"
+          >
+            Discard
+          </button>
+        </div>
+      )}
+
       {selectedIds.length > 0 && (
         <div className="flex shrink-0 flex-wrap items-center gap-2 border-ink-100 border-b bg-teal-50/50 px-3 py-1.5">
           <span className="font-medium text-[12.5px] text-ink-900">
@@ -922,7 +1000,7 @@ export default function PlannerWorkspace({
       */}
       <Assistant
         toolId="planner"
-        title="Change the plan"
+        title={RELAY_TITLES.planner}
         placeholder="Push everything in commissioning back two weeks"
         suggestions={[
           "What is late?",
@@ -939,6 +1017,33 @@ export default function PlannerWorkspace({
         onSend={assist.send}
         onAnswer={assist.answer}
         onStop={assist.stop}
+        runMode={{
+          value: runMode,
+          onChange: setRunMode,
+          autoHint: "Applies the change",
+          manualHint: "Proposes, waits for you",
+        }}
+        actions={[
+          {
+            id: "task",
+            label: "Add a task",
+            hint: "To the project on screen.",
+            onSelect: () => void addTask(),
+          },
+          {
+            id: "schedule",
+            label: `Schedule the ${undated} undated`,
+            hint: "A working day draft over anything with no dates. Leaves dated work alone.",
+            onSelect: () => void scheduleUndated(),
+          },
+          {
+            id: "import",
+            label: "Read a plan back from a spreadsheet",
+            hint: "Matched on id, so a file that went out and came back updates rather than duplicates.",
+            onSelect: () => fileRef.current?.click(),
+          },
+          { id: "export", label: "Export what is on screen", onSelect: exportCsv },
+        ]}
         onUndo={
           undoStack.length > 0
             ? () => {

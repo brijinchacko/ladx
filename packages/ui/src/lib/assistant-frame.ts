@@ -15,7 +15,24 @@
  * into, not the one it was saved from.
  */
 
-export type AssistantMode = "floating" | "docked" | "minimised";
+/**
+ * Where it sits.
+ *
+ * Four edges and floating, because which one is right depends entirely on the
+ * tool and on the screen. A schematic is read across its width, so the bottom
+ * is the cheapest edge to give up; a ladder is read down, so the right is. On a
+ * wide monitor a side dock costs nothing and floating is fussy; on a laptop the
+ * opposite. Picking one for everybody would be wrong for most of them.
+ */
+export type AssistantMode = "floating" | "bottom" | "left" | "right" | "top" | "minimised";
+
+/** The docked edges, in the order the control cycles through them. */
+export const DOCK_EDGES = ["bottom", "right", "left", "top"] as const;
+export type DockEdge = (typeof DOCK_EDGES)[number];
+
+export function isDocked(mode: AssistantMode): mode is DockEdge {
+  return mode === "bottom" || mode === "right" || mode === "left" || mode === "top";
+}
 
 export interface Frame {
   /** Viewport pixels from the left and top. Only meaningful while floating. */
@@ -97,9 +114,18 @@ export function loadFrame(toolId: string, vw: number, vh: number): Frame {
     const s = JSON.parse(raw) as Partial<Frame>;
     const num = (v: unknown, d: number) => (typeof v === "number" && Number.isFinite(v) ? v : d);
     const mode: AssistantMode =
-      s.mode === "floating" || s.mode === "docked" || s.mode === "minimised"
+      s.mode === "floating" ||
+      s.mode === "minimised" ||
+      s.mode === "bottom" ||
+      s.mode === "right" ||
+      s.mode === "left" ||
+      s.mode === "top"
         ? s.mode
-        : fallback.mode;
+        : // "docked" was the only edge before there were four. Anything else,
+          // including that, falls back rather than rendering nowhere.
+          s.mode === "docked"
+          ? "bottom"
+          : fallback.mode;
     return clampFrame(
       {
         x: num(s.x, fallback.x),

@@ -1,7 +1,7 @@
 "use client";
 
 import type { LadxProgram } from "@ladx/studio";
-import { type AssistRunContext, Assistant, useAssistant } from "@ladx/ui";
+import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@ladx/ui";
 import { useCallback } from "react";
 
 /**
@@ -161,7 +161,7 @@ export default function LadderAi({
   return (
     <Assistant
       toolId="ladder"
-      title="Write with LADX"
+      title={RELAY_TITLES.ladder}
       placeholder="A motor with start, stop and a seal-in, and a lamp that comes on after five seconds"
       suggestions={[
         "Motor start/stop with a seal-in and an E-stop",
@@ -186,7 +186,15 @@ export default function LadderAi({
           : undefined
       }
       disabledReason={disabledReason}
-      footnote="LADX can make mistakes, and how good the result is depends heavily on the model. Simulate everything before it reaches a controller."
+      actions={[
+        {
+          id: "clear",
+          label: "Start the conversation again",
+          hint: "The program is untouched. Only the thread goes.",
+          onSelect: a.reset,
+        },
+      ]}
+      footnote="Relay can make mistakes, and how good the result is depends heavily on the model. Simulate everything before it reaches a controller."
     />
   );
 }
