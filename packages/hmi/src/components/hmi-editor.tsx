@@ -27,6 +27,7 @@ import {
 import { expandInstance } from "../lib/faceplates";
 import type { GenContext, GenerateScreen, GeneratedScreen } from "../lib/generate";
 import { defaultSize, draftScreen } from "../lib/generate";
+import { Historian } from "../lib/historian";
 import {
   type History,
   emptyHistory,
@@ -59,6 +60,7 @@ import { sanitiseSvg } from "../lib/svg-import";
 import { SYMBOL_CATEGORIES, searchSymbols, symbolsIn } from "../lib/symbols";
 import type { Action, AlarmDef, AlarmPriority, HmiDoc, Widget, WidgetKind } from "../lib/types";
 import AlarmPopup from "./alarm-popup";
+import HistoryPanel from "./history-panel";
 import HmiAi from "./hmi-ai";
 import { ContextMenu, type Menu, MenuBar, Panel, PanelDock, ProjectTree } from "./hmi-chrome";
 import HmiSetup from "./hmi-setup";
@@ -171,6 +173,7 @@ export default function HmiEditor({
   const screen_ = useFocusMode({ key: "ladx.hmi.mode.v1" });
   const focus = screen_.immersive;
   const [setupOpen, setSetupOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [importNote, setImportNote] = useState<string | null>(null);
   /**
    * Popups the operator has closed.
@@ -261,6 +264,16 @@ export default function HmiEditor({
    * loop of all places.
    */
   const trendsRef = useRef<Map<string, TrendBuffer>>(new Map());
+  /**
+   * One recording per trend, kept separately from the ring.
+   *
+   * The ring is what the trend widget draws and is deliberately short. This is
+   * the run somebody reviews afterwards, so unlike the ring it is not cleared
+   * when the panel stops: stopping is usually the moment before looking at
+   * what just happened, and a recording that vanishes exactly then would be
+   * worse than not keeping one.
+   */
+  const historiansRef = useRef<Map<string, Historian>>(new Map());
   const lastSampleRef = useRef<Map<string, number>>(new Map());
   const [trendTick, setTrendTick] = useState(0);
   /**
@@ -335,7 +348,7 @@ export default function HmiEditor({
           ring = new TrendBuffer(want);
           trendsRef.current.set(tr.id, ring);
         }
-        ring.push({
+        const sample = {
           t: now,
           v: tr.pens.map((pen) =>
             resolveNumber(
@@ -345,7 +358,19 @@ export default function HmiEditor({
               evalCtx,
             ),
           ),
-        });
+        };
+        ring.push(sample);
+
+        // The same sample into the recording. Rebuilt when the pens change,
+        // because a recording whose columns mean something different halfway
+        // through is worse than one that starts again.
+        const pens = tr.pens.map((pen) => pen.label ?? pen.target.tag);
+        let hist = historiansRef.current.get(tr.id);
+        if (!hist || hist.pens.length !== pens.length) {
+          hist = new Historian(pens);
+          historiansRef.current.set(tr.id, hist);
+        }
+        hist.push(sample);
       }
       setTrendTick((n) => n + 1);
 
@@ -1207,6 +1232,11 @@ export default function HmiEditor({
           disabled: !running,
           onSelect: () => fire([{ kind: "ackAll" }]),
         },
+        { label: "", separator: true },
+        {
+          label: "Recorded run\u2026",
+          onSelect: () => setHistoryOpen(true),
+        },
       ],
     },
   ];
@@ -1747,6 +1777,18 @@ export default function HmiEditor({
           saveLayout(DEFAULT_LAYOUT);
         }}
       />
+
+      {historyOpen && (
+        <HistoryPanel
+          trends={doc.trends}
+          historians={historiansRef.current}
+          onClear={(id) => {
+            historiansRef.current.delete(id);
+            setTrendTick((n) => n + 1);
+          }}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
 
       {setupOpen && (
         <HmiSetup

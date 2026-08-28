@@ -22,6 +22,7 @@ export * from "./lib/runtime";
 export * from "./lib/svg-import";
 export * from "./lib/generate";
 export * from "./lib/faceplates";
+export * from "./lib/historian";
 
 /* the drawings */
 export * from "./lib/symbols";

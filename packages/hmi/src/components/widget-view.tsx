@@ -480,26 +480,41 @@ export default function WidgetView({
                 />
               ))}
               {pens.map((pen, pi) => {
-                const pts = samples
-                  .map((s, i) => {
-                    const v = s.v[pi];
-                    if (v === null || v === undefined) return null;
-                    const x = samples.length < 2 ? 0 : (i / (samples.length - 1)) * width;
-                    const y = height - ((v - lo) / (hi - lo || 1)) * height;
-                    return `${x.toFixed(1)},${Math.max(0, Math.min(height, y)).toFixed(1)}`;
-                  })
-                  .filter(Boolean)
-                  .join(" ");
-                if (!pts) return null;
+                /*
+                 * Broken into segments at every unreadable sample rather than
+                 * having the nulls filtered out. Filtering them joins the line
+                 * across the gap, which draws a confident straight run through
+                 * the one stretch where nothing was known, and reads as steady.
+                 */
+                const segments: string[][] = [];
+                let current: string[] = [];
+                samples.forEach((s, i) => {
+                  const v = s.v[pi];
+                  if (v === null || v === undefined || !Number.isFinite(v)) {
+                    if (current.length > 0) segments.push(current);
+                    current = [];
+                    return;
+                  }
+                  const x = samples.length < 2 ? 0 : (i / (samples.length - 1)) * width;
+                  const y = height - ((v - lo) / (hi - lo || 1)) * height;
+                  current.push(`${x.toFixed(1)},${Math.max(0, Math.min(height, y)).toFixed(1)}`);
+                });
+                if (current.length > 0) segments.push(current);
+
                 return (
-                  <polyline
-                    key={pen.label ?? pi}
-                    points={pts}
-                    fill="none"
-                    stroke={pen.colour ?? "#3FBFB5"}
-                    strokeWidth="1.6"
-                    strokeLinejoin="round"
-                  />
+                  <g key={pen.label ?? pi}>
+                    {segments.map((seg) => (
+                      <polyline
+                        key={seg[0]}
+                        points={seg.length === 1 ? `${seg[0]} ${seg[0]}` : seg.join(" ")}
+                        fill="none"
+                        stroke={pen.colour ?? "#3FBFB5"}
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    ))}
+                  </g>
                 );
               })}
             </svg>

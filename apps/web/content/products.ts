@@ -356,6 +356,10 @@ export const PRODUCTS: Product[] = [
         p: "Press run and the ladder solves, the HMI writes land at the top of the scan the way a real controller reads them, the trends fill and the alarms evaluate. A start button on glass starts the motor in the logic. Nothing is mocked.",
       },
       {
+        h: "The run is recorded, and the spike survives",
+        p: "Every trend also records, and the recording outlives pressing Stop, because stopping is usually the moment before somebody wants to look at what just happened. Older samples are compacted to a minimum and a maximum per interval rather than an average: an average removes the excursion, and the excursion is the reason the recording was opened. Export is CSV with the low and the high in separate columns.",
+      },
+      {
         h: "Screens from a description",
         p: "Describe the screen and it is drawn against your real tag table, then checked: every binding resolved against the tags that exist, every rectangle clamped to the glass, and a warning if a stop button was written the wrong way round. Or lay the whole tag table out with no model at all.",
       },
@@ -367,12 +371,13 @@ export const PRODUCTS: Product[] = [
     limits: [
       "It does not talk to plant equipment. The runtime is the simulator, which is what makes a screen testable at a desk; the driver settings are recorded for handover, not dialled.",
       "It does not deploy to a panel. There is no download to a TP1500 or a PanelView, and an application is exported as its own document rather than as a vendor project file.",
+      "It is not a plant historian. A run is recorded, reviewed and exported, but that is a record of a simulated test held in the browser for the session, not months of instrument data.",
       "Scripting is a small expression language over tags, not a programming language. It has no property access, no functions of its own and no way to reach the page, which is deliberate.",
     ],
     intent: "Is there an HMI or SCADA builder that uses the PLC's own tag table?",
     answer:
       "LADX HMI binds screens directly to the ladder program's tag table rather than a second list kept in step by hand, so a screen cannot reference a tag the program renamed. Pick the panel size, draw the mimic from eighty seven symbols, define alarms to ISA-18.2, and press run: the same scan engine that drives the simulator drives the screen.",
-    updated: "2026-08-25",
+    updated: "2026-08-28",
     faq: [
       {
         q: "Can I design an HMI screen without the PLC hardware?",

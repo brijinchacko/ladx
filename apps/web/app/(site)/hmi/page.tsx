@@ -78,6 +78,7 @@ export default function HmiPage() {
               "Eighty seven process symbols",
               "ISA-18.2 alarm state machine",
               "Runs against real ladder logic",
+              "Records a run and exports it as CSV",
               "Fourteen real panel sizes",
             ],
             updated: "2026-08-26",
@@ -131,13 +132,31 @@ export default function HmiPage() {
         </p>
 
         <h2 className="mt-12 font-display text-[1.3rem] font-bold tracking-[-0.012em] text-ink-900">
+          The run is recorded, and the spike survives
+        </h2>
+        <p className="mt-3 text-[15.5px] leading-relaxed text-ink-600">
+          A trend on the screen shows the last few minutes, because that is what an operator needs.
+          The question afterwards is different: what was it doing at the moment it tripped, and that
+          moment has usually scrolled off the end. So every trend also records, and the recording
+          survives pressing Stop, which is the exact moment somebody wants to look at it.
+        </p>
+        <p className="mt-3 text-[15.5px] leading-relaxed text-ink-600">
+          Older samples are compacted, and how they are compacted is the part that matters. An
+          average per interval quietly removes the excursion, and the excursion is the reason
+          anybody opened the recording; a one second spike inside a five minute average leaves a
+          flat line through the failure. Each interval keeps its minimum and its maximum instead, so
+          the chart draws a band and the spike is still there. Export is CSV with the low and the
+          high in separate columns and timestamps in UTC.
+        </p>
+
+        <h2 className="mt-12 font-display text-[1.3rem] font-bold tracking-[-0.012em] text-ink-900">
           What it will not do
         </h2>
         <ul className="mt-3 space-y-2.5">
           {[
             "It does not talk to plant equipment. The runtime is the simulator, which is what makes a screen testable at a desk.",
             "It does not deploy to a panel. There is no download to a TP1500 or a PanelView.",
-            "It is not a historian. Trends are a rolling buffer, not stored history you can query next month.",
+            "It is not a plant historian. A run can be recorded, reviewed and exported as CSV, but that is a record of a simulated test held in the browser, not months of instrument data you can query next year.",
             "Scripting is a small expression language over tags, deliberately not a programming language.",
           ].map((l) => (
             <li key={l} className="flex gap-3 text-[15px] leading-relaxed text-ink-600">
