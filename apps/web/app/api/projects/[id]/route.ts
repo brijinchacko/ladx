@@ -5,9 +5,9 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { projects } from "@/lib/db/schema";
-import { mergeBrief } from "@/lib/platform/brief";
 import { deliverablesFor } from "@/lib/platform/scope";
 import { getStorage } from "@/lib/storage";
+import { mergeBrief } from "@ladx/documents";
 import { and, eq } from "drizzle-orm";
 
 async function findOwnedProject(userId: string, id: string) {

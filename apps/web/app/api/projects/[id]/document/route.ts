@@ -4,15 +4,15 @@
 // content comes from a saved document row when there is one (so edits stick),
 // otherwise from the template filled with the project, client and company.
 
-import { getTemplate } from "@/content/templates";
-import { fillTemplate } from "@/content/templates";
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents } from "@/lib/db/schema";
-import { autoFillValues, renderDocument, withDesignBasis } from "@/lib/platform/document";
 import { getClient, getCompany, getProject } from "@/lib/platform/queries";
-import { renderDocx } from "@/lib/platform/render-docx";
-import { renderPdf } from "@/lib/platform/render-pdf";
+import { getTemplate } from "@ladx/documents";
+import { fillTemplate } from "@ladx/documents";
+import { autoFillValues, renderDocument, withDesignBasis } from "@ladx/documents";
+import { renderDocx } from "@ladx/documents";
+import { renderPdf } from "@ladx/documents";
 import { and, eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 

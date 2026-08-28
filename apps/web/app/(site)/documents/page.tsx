@@ -1,12 +1,12 @@
 import { Eyebrow, GridField, Sq } from "@/components/site/squares";
+import { SITE, breadcrumbSchema, faqSchema, jsonLd } from "@/lib/seo/schema";
 import {
   CATEGORY_BLURB,
   CATEGORY_ORDER,
   TEMPLATES,
   fileCount,
   templatesByCategory,
-} from "@/content/templates";
-import { SITE, breadcrumbSchema, faqSchema, jsonLd } from "@/lib/seo/schema";
+} from "@ladx/documents";
 import Link from "next/link";
 
 export const metadata = {

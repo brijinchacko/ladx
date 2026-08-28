@@ -1,8 +1,8 @@
 "use client";
 
-import { getTemplate } from "@/content/templates";
 import { PHASES } from "@/lib/platform/lifecycle";
 import { ALL_SLUGS, SCOPE_PRESETS, presetFor } from "@/lib/platform/scope";
+import { getTemplate } from "@ladx/documents";
 import { Check } from "lucide-react";
 
 /**

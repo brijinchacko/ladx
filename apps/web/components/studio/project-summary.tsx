@@ -1,9 +1,9 @@
 "use client";
 
 import ScopePicker from "@/components/studio/scope-picker";
-import type { ProjectBrief } from "@/lib/platform/brief";
-import { briefProgress } from "@/lib/platform/brief";
 import { ALL_SLUGS, presetFor } from "@/lib/platform/scope";
+import type { ProjectBrief } from "@ladx/documents";
+import { briefProgress } from "@ladx/documents";
 import { Check, FileText, Loader2, PencilRuler, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

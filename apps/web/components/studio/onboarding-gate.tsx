@@ -1,7 +1,7 @@
 "use client";
 
 import ProjectOnboarding from "@/components/studio/project-onboarding";
-import type { ProjectBrief } from "@/lib/platform/brief";
+import type { ProjectBrief } from "@ladx/documents";
 import { Wand2 } from "lucide-react";
 import { useState } from "react";
 

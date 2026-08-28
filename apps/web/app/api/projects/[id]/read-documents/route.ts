@@ -8,9 +8,9 @@
 
 import { getApiUser } from "@/lib/auth/server";
 import { complete, firstJsonObject } from "@/lib/inference/complete";
-import { BRIEF_FIELDS, type BriefKey, sanitizeBrief } from "@/lib/platform/brief";
 import { getProject } from "@/lib/platform/queries";
 import { ProviderError } from "@/lib/providers";
+import { BRIEF_FIELDS, type BriefKey, sanitizeBrief } from "@ladx/documents";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 

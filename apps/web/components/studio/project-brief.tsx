@@ -7,7 +7,7 @@ import {
   type ProjectBrief,
   briefField,
   briefProgress,
-} from "@/lib/platform/brief";
+} from "@ladx/documents";
 import { Check, ChevronDown, Loader2, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";

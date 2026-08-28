@@ -1,11 +1,12 @@
 import AttachProject from "@/components/studio/attach-project";
-import DocumentEditor from "@/components/studio/document-editor";
+import { saveDocumentViaApi } from "@/components/studio/document-host";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
-import { getTemplate } from "@/content/templates";
 import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents, projects } from "@/lib/db/schema";
 import { listProjects } from "@/lib/platform/queries";
+import { DocumentEditor } from "@ladx/documents";
+import { getTemplate } from "@ladx/documents";
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -96,6 +97,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
         }
       />
       <DocumentEditor
+        onSave={saveDocumentViaApi}
         documentId={doc.id}
         projectId={doc.projectId}
         initialTitle={doc.title}

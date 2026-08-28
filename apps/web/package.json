@@ -22,6 +22,7 @@
     "@aws-sdk/s3-request-presigner": "^3.665.0",
     "@ladx/cad": "workspace:*",
     "@ladx/design-system": "workspace:*",
+    "@ladx/documents": "workspace:*",
     "@ladx/hmi": "workspace:*",
     "@ladx/studio": "workspace:*",
     "@ladx/types": "workspace:*",

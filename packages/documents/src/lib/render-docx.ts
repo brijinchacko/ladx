@@ -1,4 +1,3 @@
-import type { Client, CompanyProfile, Project } from "@/lib/db/schema";
 import {
   AlignmentType,
   BorderStyle,
@@ -15,6 +14,7 @@ import {
 } from "docx";
 import type { Block, Inline } from "./doc-ast";
 import { parseDocument, tableHasHeader } from "./doc-ast";
+import type { DocCompany, DocParty, DocProject } from "./document";
 
 /**
  * The document as a real .docx.
@@ -166,9 +166,9 @@ export async function renderDocx(input: {
   title: string;
   abbr: string;
   markdown: string;
-  company: CompanyProfile | null;
-  client: Client | null;
-  project: Project;
+  company: DocCompany | null;
+  client: DocParty | null;
+  project: DocProject;
 }): Promise<Buffer> {
   const { title, abbr, markdown, company, client, project } = input;
 

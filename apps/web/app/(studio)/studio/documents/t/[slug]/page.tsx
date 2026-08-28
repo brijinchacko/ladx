@@ -1,8 +1,8 @@
 import UseTemplate from "@/components/studio/use-template";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
-import { getTemplate } from "@/content/templates";
 import { requireUser } from "@/lib/auth/server";
 import { listProjects } from "@/lib/platform/queries";
+import { getTemplate } from "@ladx/documents";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 

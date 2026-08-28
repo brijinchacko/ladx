@@ -1,6 +1,6 @@
 "use client";
 
-import { PLACEHOLDER_LABELS, type Placeholder, type TemplateFile } from "@/content/templates";
+import { PLACEHOLDER_LABELS, type Placeholder, type TemplateFile } from "@ladx/documents";
 import { useMemo, useState } from "react";
 
 const FIELDS: Placeholder[] = [

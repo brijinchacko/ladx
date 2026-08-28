@@ -1,4 +1,4 @@
-import { getTemplate } from "@/content/templates";
+import { getTemplate } from "@ladx/documents";
 
 /**
  * The automation project lifecycle.

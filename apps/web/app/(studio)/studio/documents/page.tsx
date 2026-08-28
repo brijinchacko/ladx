@@ -1,7 +1,7 @@
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
-import { CATEGORY_ORDER, TEMPLATES, templatesByCategory } from "@/content/templates";
 import { requireUser } from "@/lib/auth/server";
 import { listProjects } from "@/lib/platform/queries";
+import { CATEGORY_ORDER, TEMPLATES, templatesByCategory } from "@ladx/documents";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";

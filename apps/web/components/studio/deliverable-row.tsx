@@ -1,7 +1,7 @@
 "use client";
 
 import { BriefPrompt } from "@/components/studio/project-brief";
-import type { BriefKey, ProjectBrief } from "@/lib/platform/brief";
+import type { BriefKey, ProjectBrief } from "@ladx/documents";
 import { FileText, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

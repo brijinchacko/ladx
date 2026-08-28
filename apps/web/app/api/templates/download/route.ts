@@ -1,4 +1,4 @@
-import { type Placeholder, fillTemplate, getTemplate } from "@/content/templates";
+import { type Placeholder, fillTemplate, getTemplate } from "@ladx/documents";
 import { type NextRequest, NextResponse } from "next/server";
 
 /**

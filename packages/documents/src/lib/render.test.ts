@@ -1,12 +1,12 @@
-import type { Client, CompanyProfile, Project } from "@/lib/db/schema";
 import { describe, expect, it } from "vitest";
 import { parseDocument, parseInline, spansToText } from "./doc-ast";
+import type { DocCompany, DocParty, DocProject } from "./document";
 import { renderDocx } from "./render-docx";
 import { renderPdf } from "./render-pdf";
 
-const project = { id: "p", name: "Line 4 Filler", code: "LX-2601" } as Project;
-const company = { name: "Wartens Automation", city: "Leeds" } as CompanyProfile;
-const client = { name: "Acme Foods", city: "Wakefield" } as Client;
+const project = { id: "p", name: "Line 4 Filler", code: "LX-2601" } as DocProject;
+const company = { name: "Wartens Automation", city: "Leeds" } as DocCompany;
+const client = { name: "Acme Foods", city: "Wakefield" } as DocParty;
 
 const SAMPLE = `# Functional Design Specification
 ## Line 4 Filler

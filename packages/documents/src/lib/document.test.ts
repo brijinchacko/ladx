@@ -1,12 +1,17 @@
-import type { Client, CompanyProfile, Project } from "@/lib/db/schema";
 import { describe, expect, it } from "vitest";
-import { autoFillValues, markdownToHtml, renderDocument } from "./document";
+import {
+  type DocCompany,
+  type DocParty,
+  type DocProject,
+  autoFillValues,
+  markdownToHtml,
+  renderDocument,
+} from "./document";
 
-const project = {
-  id: "p1",
+const project: DocProject = {
   name: "Line 4 Filler",
   code: "LX-2601",
-} as Project;
+};
 
 describe("markdownToHtml", () => {
   it("renders a table", () => {
@@ -49,8 +54,8 @@ describe("autoFillValues", () => {
   it("maps project, client and company onto the placeholders", () => {
     const values = autoFillValues({
       project,
-      client: { name: "Acme Foods" } as Client,
-      company: { name: "Wartens" } as CompanyProfile,
+      client: { name: "Acme Foods" } as DocParty,
+      company: { name: "Wartens" } as DocCompany,
       author: "J Chacko",
       templateAbbr: "FDS",
     });
@@ -64,7 +69,7 @@ describe("autoFillValues", () => {
 
   it("leaves the document number blank when the project has no code", () => {
     const values = autoFillValues({
-      project: { ...project, code: null } as Project,
+      project: { ...project, code: null } as DocProject,
       client: null,
       company: null,
       author: "x",
@@ -89,7 +94,7 @@ describe("renderDocument", () => {
       company: {
         name: "Wartens",
         logo: "data:image/png;base64,ABC123",
-      } as CompanyProfile,
+      } as DocCompany,
       client: null,
       project,
     });
@@ -102,7 +107,7 @@ describe("renderDocument", () => {
       template,
       fileBody: "Body",
       values: {},
-      company: { name: "Wartens", logo: null } as CompanyProfile,
+      company: { name: "Wartens", logo: null } as DocCompany,
       client: null,
       project,
     });
@@ -115,7 +120,7 @@ describe("renderDocument", () => {
       template,
       fileBody: "Body",
       values: {},
-      company: { name: "<img src=x onerror=alert(1)>", logo: null } as CompanyProfile,
+      company: { name: "<img src=x onerror=alert(1)>", logo: null } as DocCompany,
       client: null,
       project,
     });
@@ -128,8 +133,8 @@ describe("renderDocument", () => {
       template,
       fileBody: "Body",
       values: {},
-      company: { name: "Wartens" } as CompanyProfile,
-      client: { name: "Acme Foods", city: "Leeds" } as Client,
+      company: { name: "Wartens" } as DocCompany,
+      client: { name: "Acme Foods", city: "Leeds" } as DocParty,
       project,
     });
     expect(html).toContain("Prepared for");
@@ -145,9 +150,9 @@ describe("renderDocument", () => {
       template,
       fileBody: "Body",
       values: {},
-      company: { name: "Wartens" } as CompanyProfile,
-      client: { name: "Acme Foods" } as Client,
-      project: { ...project, site: "Wakefield, packing hall" } as Project,
+      company: { name: "Wartens" } as DocCompany,
+      client: { name: "Acme Foods" } as DocParty,
+      project: { ...project, site: "Wakefield, packing hall" } as DocProject,
     });
     expect(html).toMatch(/Prepared for[\s\S]{0,400}Wakefield, packing hall/);
   });
@@ -159,9 +164,9 @@ describe("renderDocument", () => {
       template,
       fileBody: "Body",
       values: {},
-      company: { name: "Wartens" } as CompanyProfile,
+      company: { name: "Wartens" } as DocCompany,
       client: null,
-      project: { ...project, site: "Wakefield, packing hall" } as Project,
+      project: { ...project, site: "Wakefield, packing hall" } as DocProject,
     });
     expect(html).toContain("Wakefield, packing hall");
   });
@@ -183,7 +188,7 @@ describe("renderDocument", () => {
       template,
       fileBody: "Body",
       values: {},
-      company: { name: "Wartens" } as CompanyProfile,
+      company: { name: "Wartens" } as DocCompany,
       client: null,
       project,
     });

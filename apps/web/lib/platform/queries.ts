@@ -8,7 +8,7 @@ import {
   companyProfiles,
   projects,
 } from "@/lib/db/schema";
-import type { ProjectBrief } from "@/lib/platform/brief";
+import type { ProjectBrief } from "@ladx/documents";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { PhaseId } from "./lifecycle";
 

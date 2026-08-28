@@ -1,8 +1,8 @@
 "use client";
 
-import { markdownToHtml } from "@/lib/platform/document";
 import { Download, Eye, FileText, Pencil, Save, SplitSquareHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { markdownToHtml } from "../lib/document";
 
 type Mode = "edit" | "split" | "preview";
 
@@ -24,12 +24,24 @@ export default function DocumentEditor({
   initialTitle,
   initialContent,
   templateAbbr,
+  onSave,
 }: {
   documentId: string;
   projectId: string | null;
   initialTitle: string;
   initialContent: string;
   templateAbbr: string | null;
+  /**
+   * Where the document is written.
+   *
+   * Required, so a surface says where rather than inheriting the web's answer.
+   * This posted to an API route, which is right on the web and impossible on
+   * the desktop, where documents are files in a project folder and there is no
+   * server to post to.
+   *
+   * Returns whether it landed, so the editor can say "Saved" only when it did.
+   */
+  onSave: (doc: { id: string; title: string; content: string }) => Promise<boolean>;
 }) {
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
@@ -54,12 +66,8 @@ export default function DocumentEditor({
     setSaving(true);
     setStatus(null);
     try {
-      const res = await fetch(`/api/documents/${documentId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content }),
-      });
-      if (res.ok) {
+      const ok = await onSave({ id: documentId, title, content }).catch(() => false);
+      if (ok) {
         savedRef.current = { title, content };
         setStatus("Saved");
       } else {

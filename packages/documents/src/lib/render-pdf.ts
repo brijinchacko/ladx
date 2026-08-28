@@ -1,7 +1,7 @@
-import type { Client, CompanyProfile, Project } from "@/lib/db/schema";
 import { jsPDF } from "jspdf";
 import type { Block, Inline } from "./doc-ast";
 import { parseDocument, spansToText, tableHasHeader } from "./doc-ast";
+import type { DocCompany, DocParty, DocProject } from "./document";
 
 /**
  * The document as a PDF.
@@ -241,9 +241,9 @@ export function renderPdf(input: {
   title: string;
   abbr: string;
   markdown: string;
-  company: CompanyProfile | null;
-  client: Client | null;
-  project: Project;
+  company: DocCompany | null;
+  client: DocParty | null;
+  project: DocProject;
 }): Buffer {
   const { title, abbr, markdown, company, client, project } = input;
   const doc = new jsPDF({ unit: "mm", format: "a4" });

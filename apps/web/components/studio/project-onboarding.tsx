@@ -7,7 +7,7 @@ import {
   type BriefKey,
   type ProjectBrief,
   briefField,
-} from "@/lib/platform/brief";
+} from "@ladx/documents";
 import { ArrowLeft, ArrowRight, Check, FileUp, Loader2, Sparkles, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";

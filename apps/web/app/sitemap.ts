@@ -1,8 +1,8 @@
 import { POSTS } from "@/content/posts";
 import { PRODUCTS } from "@/content/products";
-import { TEMPLATES } from "@/content/templates";
 import { CATEGORIES as FORUM_CATEGORIES } from "@/lib/forum/categories";
 import { SITE } from "@/lib/seo/schema";
+import { TEMPLATES } from "@ladx/documents";
 import type { MetadataRoute } from "next";
 
 /**

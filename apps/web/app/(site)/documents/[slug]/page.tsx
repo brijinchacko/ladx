@@ -1,6 +1,6 @@
 import { Eyebrow, Sq } from "@/components/site/squares";
-import { TEMPLATES, getTemplate } from "@/content/templates";
 import { SITE, breadcrumbSchema, jsonLd } from "@/lib/seo/schema";
+import { TEMPLATES, getTemplate } from "@ladx/documents";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import DownloadForm from "./download-form";

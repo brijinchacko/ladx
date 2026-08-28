@@ -1,12 +1,12 @@
 // GET  /api/documents?projectId=…|clientId=…   list
 // POST /api/documents                          create, generated or uploaded
 
-import { fillTemplate, getTemplate } from "@/content/templates";
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents } from "@/lib/db/schema";
-import { autoFillValues, withDesignBasis } from "@/lib/platform/document";
 import { getClient, getCompany, getProject } from "@/lib/platform/queries";
+import { fillTemplate, getTemplate } from "@ladx/documents";
+import { autoFillValues, withDesignBasis } from "@ladx/documents";
 import { and, desc, eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";

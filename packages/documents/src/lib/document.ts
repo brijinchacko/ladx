@@ -1,6 +1,52 @@
-import { type DocTemplate, type Placeholder, fillTemplate } from "@/content/templates";
-import type { Client, CompanyProfile, Project } from "@/lib/db/schema";
-import { type ProjectBrief, designBasisSection } from "@/lib/platform/brief";
+import { type DocTemplate, type Placeholder, fillTemplate } from "../templates";
+import { type ProjectBrief, designBasisSection } from "./brief";
+
+/**
+ * Who the document is for and who it is from.
+ *
+ * Deliberately narrow, and not the database's row types. The renderer used
+ * seven fields between the three of them, and taking whole Drizzle rows meant
+ * this file could only run where Postgres was: the desktop's project, client
+ * and company come from a project folder on disk.
+ *
+ * Every field is optional except a name, because a document has to render
+ * before somebody has finished filling in their company details. A letterhead
+ * with a missing VAT number is a letterhead; a renderer that throws is not.
+ */
+export interface DocProject {
+  name: string;
+  code?: string | null;
+  site?: string | null;
+}
+
+/** A postal address, as it appears on a letterhead or in front matter. */
+export interface DocAddress {
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  region?: string | null;
+  postcode?: string | null;
+  country?: string | null;
+}
+
+/** The client the document is for. */
+export interface DocParty extends DocAddress {
+  name: string;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+}
+
+/** The company issuing it, whose details become the letterhead. */
+export interface DocCompany extends DocAddress {
+  name: string;
+  logo?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  registrationNumber?: string | null;
+  vatNumber?: string | null;
+}
 
 /**
  * Turning a template into a finished, branded document.
@@ -26,9 +72,9 @@ import { type ProjectBrief, designBasisSection } from "@/lib/platform/brief";
  * your company once, your client once, and every document is filled from them.
  */
 export function autoFillValues(input: {
-  project: Project;
-  client: Client | null;
-  company: CompanyProfile | null;
+  project: DocProject;
+  client: DocParty | null;
+  company: DocCompany | null;
   author: string;
   templateAbbr: string;
 }): Partial<Record<Placeholder, string>> {
@@ -227,7 +273,7 @@ export function markdownToHtml(md: string): string {
 
 /* ─────────────────────────── letterhead ─────────────────────────── */
 
-function companyAddressLines(c: CompanyProfile | null): string[] {
+function companyAddressLines(c: DocAddress | null): string[] {
   if (!c) return [];
   return [
     c.addressLine1,
@@ -237,7 +283,7 @@ function companyAddressLines(c: CompanyProfile | null): string[] {
   ].filter((l): l is string => Boolean(l?.trim()));
 }
 
-function clientAddressLines(c: Client | null): string[] {
+function clientAddressLines(c: DocAddress | null): string[] {
   if (!c) return [];
   return [
     c.addressLine1,
@@ -271,9 +317,9 @@ export function renderDocument(input: {
   /** The template file to render (a template can have several). */
   fileBody: string;
   values: Partial<Record<Placeholder, string>>;
-  company: CompanyProfile | null;
-  client: Client | null;
-  project: Project;
+  company: DocCompany | null;
+  client: DocParty | null;
+  project: DocProject;
 }): string {
   const { template, fileBody, values, company, client, project } = input;
   const docTitle = template?.title ?? input.docTitle ?? "Document";

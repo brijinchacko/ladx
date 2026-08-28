@@ -6,7 +6,7 @@
 // - Per-user queries are common, so user_id columns are always indexed.
 // - audit_log is append-only and partitioned by month at scale (post-MVP).
 
-import type { ProjectBrief } from "@/lib/platform/brief";
+import type { ProjectBrief } from "@ladx/documents";
 import { sql } from "drizzle-orm";
 import {
   bigint,
