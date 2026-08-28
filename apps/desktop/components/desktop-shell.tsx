@@ -42,6 +42,7 @@ import {
   GitCompareArrows,
   Grid2x2Check,
   House,
+  Library,
   type MessageSquare,
   MessageSquarePlus,
   MonitorCog,
@@ -57,8 +58,7 @@ import type { ReactNode } from "react";
  * The tools, in the web app's order.
  *
  * Ladder first because it is where most work starts, then the ones you open
- * from a program rather than instead of one. Documents and Knowledge are still to
- * come and are absent rather than disabled: a greyed row that never becomes
+ * from a program rather than instead of one. Knowledge is still to come and is absent rather than disabled: a greyed row that never becomes
  * available is a promise the app is not keeping.
  */
 const TOOLS = [
@@ -67,6 +67,7 @@ const TOOLS = [
   { href: "/cad", label: "CAD", icon: PencilRuler },
   { href: "/hmi", label: "HMI/SCADA", icon: MonitorCog },
   { href: "/convert", label: "Convert", icon: GitCompareArrows },
+  { href: "/documents", label: "Documents", icon: Library },
 ];
 
 export function DesktopShell({

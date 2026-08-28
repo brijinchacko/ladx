@@ -17,6 +17,7 @@
   "dependencies": {
     "@ladx/cad": "workspace:*",
     "@ladx/design-system": "workspace:*",
+    "@ladx/documents": "workspace:*",
     "@ladx/hmi": "workspace:*",
     "@ladx/studio": "workspace:*",
     "@ladx/types": "workspace:*",

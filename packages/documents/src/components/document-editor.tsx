@@ -6,6 +6,26 @@ import { markdownToHtml } from "../lib/document";
 
 type Mode = "edit" | "split" | "preview";
 
+/** What a document can be handed over as. */
+export type DocFormat = "pdf" | "docx" | "html" | "md";
+
+const LABELS: Record<DocFormat, string> = {
+  pdf: "PDF",
+  docx: "Word",
+  html: "HTML",
+  md: "MD",
+};
+
+/**
+ * All four, unless a surface says otherwise.
+ *
+ * A surface may not be able to do all of them, and the honest answer is to
+ * offer fewer rather than a button that does nothing. The desktop cannot
+ * produce .docx: the library is written for Node and its published build
+ * throws a SyntaxError when a browser evaluates it.
+ */
+const ALL_FORMATS: DocFormat[] = ["pdf", "docx", "html", "md"];
+
 /**
  * Editing a generated document.
  *
@@ -25,6 +45,7 @@ export default function DocumentEditor({
   initialContent,
   templateAbbr,
   onSave,
+  exportAs,
 }: {
   documentId: string;
   projectId: string | null;
@@ -42,6 +63,27 @@ export default function DocumentEditor({
    * Returns whether it landed, so the editor can say "Saved" only when it did.
    */
   onSave: (doc: { id: string; title: string; content: string }) => Promise<boolean>;
+  /**
+   * How the four export formats are offered.
+   *
+   * Two surfaces do genuinely different things, so this is a choice rather
+   * than two optional props that could both be set. The web links to a route
+   * that renders and downloads; the desktop renders in process and writes the
+   * file into the project folder, because that folder is the handover pack and
+   * a browser download is not.
+   *
+   * Absent means no export controls, which is honest. It used to build a link
+   * to a web API route unconditionally, so the desktop showed four buttons
+   * that navigated to a 404.
+   */
+  exportAs?:
+    | { kind: "link"; href: (format: DocFormat) => string; formats?: DocFormat[] }
+    | {
+        kind: "save";
+        label: string;
+        save: (format: DocFormat) => Promise<string>;
+        formats?: DocFormat[];
+      };
 }) {
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
@@ -91,10 +133,19 @@ export default function DocumentEditor({
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  const downloadBase = projectId ? `/api/projects/${projectId}/document?doc=${documentId}` : null;
+  const [exported, setExported] = useState<string | null>(null);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      {exported && (
+        <p
+          className="shrink-0 truncate border-ink-100 border-b bg-ink-50/60 px-4 py-1.5 text-[11.5px] text-ink-600"
+          title={exported}
+        >
+          {exported}
+        </p>
+      )}
+
       {/* bar */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-4 py-2">
         <input
@@ -133,28 +184,41 @@ export default function DocumentEditor({
           })}
         </div>
 
-        {downloadBase && (
+        {exportAs && (
           <div className="flex items-center gap-1">
-            {(
-              [
-                { fmt: "pdf", label: "PDF" },
-                { fmt: "docx", label: "Word" },
-                { fmt: "html", label: "HTML" },
-                { fmt: "md", label: "MD" },
-              ] as const
-            ).map((f) => (
-              <a
-                key={f.fmt}
-                href={`${downloadBase}&format=${f.fmt}`}
-                target="_blank"
-                rel="noreferrer"
-                title={`Download as ${f.label}`}
-                className="flex h-7 items-center gap-1 rounded-md border border-ink-200 bg-white px-2 font-mono text-[11px] text-ink-600 transition-colors hover:border-ink-400 hover:text-ink-900"
-              >
-                {f.fmt === "pdf" && <Download className="h-3 w-3" />}
-                {f.label}
-              </a>
-            ))}
+            {(exportAs.formats ?? ALL_FORMATS).map((fmt) =>
+              exportAs.kind === "link" ? (
+                <a
+                  key={fmt}
+                  href={exportAs.href(fmt)}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={`Download as ${LABELS[fmt]}`}
+                  className="flex h-7 items-center gap-1 rounded-md border border-ink-200 bg-white px-2 font-mono text-[11px] text-ink-600 transition-colors hover:border-ink-400 hover:text-ink-900"
+                >
+                  {fmt === "pdf" && <Download className="h-3 w-3" />}
+                  {LABELS[fmt]}
+                </a>
+              ) : (
+                <button
+                  key={fmt}
+                  type="button"
+                  title={`${exportAs.label} as ${LABELS[fmt]}`}
+                  onClick={() =>
+                    void exportAs
+                      .save(fmt)
+                      .then((path) => setExported(`Saved to ${path}`))
+                      .catch((err) =>
+                        setExported(err instanceof Error ? err.message : "Could not save that."),
+                      )
+                  }
+                  className="flex h-7 items-center gap-1 rounded-md border border-ink-200 bg-white px-2 font-mono text-[11px] text-ink-600 transition-colors hover:border-ink-400 hover:text-ink-900"
+                >
+                  {fmt === "pdf" && <Download className="h-3 w-3" />}
+                  {LABELS[fmt]}
+                </button>
+              ),
+            )}
           </div>
         )}
 

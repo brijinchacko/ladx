@@ -430,7 +430,9 @@ function Contents({ project }: { project: ProjectFolder }) {
       {files === null && !error && <p className="text-[13px] text-ink-500">Reading…</p>}
       {files && files.length === 0 && (
         <p className="text-[13px] text-ink-500">
-          Empty so far. Anything Convert, Ladder or the HMI builder produces is filed in here.
+          Empty so far. Anything the tools produce is filed in here: drawings under Drawings,
+          exported programs under Programs, panels under HMI, documents where that kind of document
+          goes.
         </p>
       )}
 

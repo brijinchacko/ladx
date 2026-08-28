@@ -7,6 +7,8 @@ const config: NextConfig = {
   reactStrictMode: true,
   images: { unoptimized: true },
   transpilePackages: [
+    "@ladx/cad",
+    "@ladx/documents",
     "@ladx/hmi",
     "@ladx/studio",
     "@ladx/ui",

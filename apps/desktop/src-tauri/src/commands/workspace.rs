@@ -110,20 +110,31 @@ pub async fn open_project_folder(app: tauri::AppHandle) -> Result<Option<Project
 /// The caller says what kind of thing it is and the layout decides where it
 /// goes, so nothing writing a file has to know the folder names. Two callers
 /// deciding separately is how a project ends up with drawings in three places.
+///
+/// `base64` says whether `contents` is encoded rather than text. Most of what
+/// goes into a project is text: markdown, ST, PLCopen XML, a panel's HTML. A
+/// PDF and a .docx are not, and this command takes a string, so those arrive
+/// encoded. Without decoding them the project ended up holding a PDF-shaped
+/// text file that nothing could open.
 #[tauri::command]
 pub async fn save_into_project(
     project: String,
     kind: String,
     filename: String,
     contents: String,
+    base64: Option<bool>,
 ) -> Result<String, String> {
-    let path = workspace::put(
-        &PathBuf::from(project),
-        &kind,
-        &filename,
-        contents.as_bytes(),
-    )
-    .map_err(|e| e.to_string())?;
+    let bytes = if base64.unwrap_or(false) {
+        use base64::Engine as _;
+        base64::engine::general_purpose::STANDARD
+            .decode(contents.as_bytes())
+            .map_err(|e| format!("that file could not be decoded: {e}"))?
+    } else {
+        contents.into_bytes()
+    };
+
+    let path = workspace::put(&PathBuf::from(project), &kind, &filename, &bytes)
+        .map_err(|e| e.to_string())?;
     Ok(path.to_string_lossy().to_string())
 }
 
@@ -337,6 +348,7 @@ mod tests {
             "scl".to_string(),
             "Main.scl".to_string(),
             "// converted\n".to_string(),
+            None,
         )
         .await
         .unwrap();
@@ -347,6 +359,60 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(read.as_deref(), Some("// converted\n"));
+    }
+
+    #[tokio::test]
+    async fn a_base64_file_is_written_as_bytes_rather_than_as_text() {
+        // A PDF arrives encoded because the command takes a string. Written
+        // verbatim it would be a PDF-shaped text file that nothing opens.
+        let tmp = Temp::new("b64");
+        let project = make(&tmp.0, "Encoded").path;
+
+        // "%PDF-1.4" in base64.
+        let written = save_into_project(
+            project.clone(),
+            "handover".to_string(),
+            "Report.pdf".to_string(),
+            "JVBERi0xLjQ=".to_string(),
+            Some(true),
+        )
+        .await
+        .unwrap();
+
+        let bytes = std::fs::read(&written).unwrap();
+        assert_eq!(bytes, b"%PDF-1.4");
+    }
+
+    #[tokio::test]
+    async fn text_is_still_written_verbatim() {
+        let tmp = Temp::new("plain");
+        let project = make(&tmp.0, "Plain").path;
+        let written = save_into_project(
+            project,
+            "spec".to_string(),
+            "Notes.md".to_string(),
+            "# Heading".to_string(),
+            None,
+        )
+        .await
+        .unwrap();
+        assert_eq!(std::fs::read_to_string(&written).unwrap(), "# Heading");
+    }
+
+    #[tokio::test]
+    async fn base64_that_is_not_base64_says_so() {
+        let tmp = Temp::new("badb64");
+        let project = make(&tmp.0, "Bad").path;
+        let err = save_into_project(
+            project,
+            "spec".to_string(),
+            "x.pdf".to_string(),
+            "not base64 at all!!".to_string(),
+            Some(true),
+        )
+        .await
+        .unwrap_err();
+        assert!(err.contains("could not be decoded"), "{err}");
     }
 
     #[tokio::test]
@@ -366,9 +432,15 @@ mod tests {
         let tmp = Temp::new("files");
         let project = make(&tmp.0, "Files").path;
         for (kind, name) in [("scl", "Main.scl"), ("panel", "Line4.html"), ("fds", "FDS.md")] {
-            save_into_project(project.clone(), kind.to_string(), name.to_string(), "x".to_string())
-                .await
-                .unwrap();
+            save_into_project(
+                project.clone(),
+                kind.to_string(),
+                name.to_string(),
+                "x".to_string(),
+                None,
+            )
+            .await
+            .unwrap();
         }
 
         let files = list_project_files(project).await.unwrap();

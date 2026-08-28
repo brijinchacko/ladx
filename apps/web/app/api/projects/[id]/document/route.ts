@@ -8,11 +8,17 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents } from "@/lib/db/schema";
 import { getClient, getCompany, getProject } from "@/lib/platform/queries";
-import { getTemplate } from "@ladx/documents";
-import { fillTemplate } from "@ladx/documents";
-import { autoFillValues, renderDocument, withDesignBasis } from "@ladx/documents";
-import { renderDocx } from "@ladx/documents";
-import { renderPdf } from "@ladx/documents";
+import {
+  autoFillValues,
+  fillTemplate,
+  getTemplate,
+  renderDocument,
+  withDesignBasis,
+} from "@ladx/documents";
+// Their own modules: both are large and docx is written for Node, so the
+// barrel does not carry them into anything that only wanted a template.
+import { renderDocx } from "@ladx/documents/lib/render-docx";
+import { renderPdf } from "@ladx/documents/lib/render-pdf";
 import { and, eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 

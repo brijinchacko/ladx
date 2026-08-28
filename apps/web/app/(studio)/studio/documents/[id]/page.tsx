@@ -98,6 +98,12 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
       />
       <DocumentEditor
         onSave={saveDocumentViaApi}
+        /* The route renders and downloads; this surface has one to link to. */
+        exportAs={{
+          kind: "link",
+          href: (format) =>
+            `/api/projects/${row.doc.projectId}/document?doc=${row.doc.id}&format=${format}`,
+        }}
         documentId={doc.id}
         projectId={doc.projectId}
         initialTitle={doc.title}

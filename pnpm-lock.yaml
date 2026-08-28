@@ -29,6 +29,9 @@ importers:
       '@ladx/design-system':
         specifier: workspace:*
         version: link:../../packages/design-system
+      '@ladx/documents':
+        specifier: workspace:*
+        version: link:../../packages/documents
       '@ladx/hmi':
         specifier: workspace:*
         version: link:../../packages/hmi

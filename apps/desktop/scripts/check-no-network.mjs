@@ -52,6 +52,18 @@ const ALLOWED_HOSTS = [
   // `output("blob")`, which is asserted by a test in @ladx/cad so this stays
   // dead rather than becoming true quietly.
   "cdnjs.cloudflare.com",
+  // OOXML and Dublin Core namespace URIs, stamped into every .docx by the docx
+  // library. Namespaces again: identifiers, and nothing resolves them.
+  "schemas.openxmlformats.org",
+  "schemas.microsoft.com",
+  "purl.org",
+  // Links inside library error messages, none of them fetched: docx points at
+  // a Microsoft forum thread when a compression level is out of range, JSZip
+  // at its own docs when a file is not a zip, and the bundler at an
+  // explanation of requiring a CJS module.
+  "answers.microsoft.com",
+  "stuk.github.io",
+  "rolldown.rs",
 ];
 
 /**

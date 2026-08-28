@@ -17,7 +17,18 @@
 export * from "./lib/doc-ast";
 export * from "./lib/brief";
 export * from "./lib/document";
-export * from "./lib/render-docx";
-export * from "./lib/render-pdf";
+
+/*
+ * The DOCX and PDF writers are deliberately not re-exported here.
+ *
+ * Both pull a large library, and `docx` in particular is written for Node: put
+ * in a browser bundle it fails to parse, which took the whole page down rather
+ * than only the button nobody had pressed. Anything importing this barrel for
+ * a template or the markdown parser would have paid that price.
+ *
+ * Import them from "@ladx/documents/lib/render-pdf" and
+ * "@ladx/documents/lib/render-docx", and on a client surface do it with a
+ * dynamic import at the point somebody actually asks for the format.
+ */
 export * from "./templates";
-export { default as DocumentEditor } from "./components/document-editor";
+export { default as DocumentEditor, type DocFormat } from "./components/document-editor";

@@ -251,8 +251,18 @@ something to generate them with. It is `packages/cad` now rather than a folder
 in the web app, drawings live in their own SQLite table, and generation goes to
 the local Ollama.
 
-Documents is what remains of this phase. It needs the template engine and PDF
-generation, which is `jspdf` and already client side.
+**Documents shipped in `0.3.0`, and Phase 2 is complete.** It works differently
+from every other surface here and deliberately: a document is not a row, it is
+a markdown file in the project folder, filed where that kind of document
+belongs. That folder is the handover pack, and a deliverable that only this
+application can read is not a deliverable.
+
+One thing had to be dropped. `.docx` export is offered on the web and not on
+the desktop: the `docx` library is written for Node and its published build
+throws a SyntaxError the moment a browser evaluates it, which is what a Tauri
+webview is. Transpiling it does not help. PDF, HTML and markdown all work, so
+the desktop offers three formats rather than four buttons where one does
+nothing. Worth revisiting if the library ever ships a browser build.
 
 ### Phase 3, `0.3.0` to `1.0.0`: the workspace
 

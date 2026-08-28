@@ -282,6 +282,13 @@ export async function saveIntoProject(opts: {
   kind: DocumentKind | string;
   filename: string;
   contents: string;
+  /**
+   * Whether `contents` is base64 rather than text.
+   *
+   * Most of what goes into a project is text. A PDF and a .docx are not, and
+   * this carries a string, so those go encoded and the Rust side decodes them.
+   */
+  base64?: boolean;
 }): Promise<string> {
   return tauriInvoke<string>("save_into_project", opts);
 }

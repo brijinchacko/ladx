@@ -162,14 +162,24 @@ function blockToDocx(block: Block): (Paragraph | Table)[] {
   }
 }
 
-export async function renderDocx(input: {
+export interface DocxInput {
   title: string;
   abbr: string;
   markdown: string;
   company: DocCompany | null;
   client: DocParty | null;
   project: DocProject;
-}): Promise<Buffer> {
+}
+
+/**
+ * The document, built but not packed.
+ *
+ * Packing is where the two surfaces differ and everything before it is the
+ * same. The web renders in a route and wants a Buffer; the desktop renders in
+ * the browser, where there is no Buffer at all, and wants a Blob. Writing this
+ * twice would be two documents that slowly stop matching.
+ */
+function buildDocx(input: DocxInput): Document {
   const { title, abbr, markdown, company, client, project } = input;
 
   const header: (Paragraph | Table)[] = [];
@@ -263,5 +273,20 @@ export async function renderDocx(input: {
     ],
   });
 
-  return Packer.toBuffer(doc);
+  return doc;
+}
+
+/**
+ * A .docx as Node bytes, for a server rendering one in a route.
+ *
+ * `Packer.toBuffer` needs Node: there is no Buffer in a browser, and calling
+ * this there fails at the last step after doing all the work.
+ */
+export async function renderDocx(input: DocxInput): Promise<Buffer> {
+  return Packer.toBuffer(buildDocx(input));
+}
+
+/** The same document as a Blob, for a surface with no Node under it. */
+export async function renderDocxBlob(input: DocxInput): Promise<Blob> {
+  return Packer.toBlob(buildDocx(input));
 }
