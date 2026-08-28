@@ -9,13 +9,27 @@ import {
   focusModeLabel,
   useFocusMode,
 } from "@ladx/studio";
-import { type AssistRunContext, Assistant, RELAY_TITLES, useAssistant } from "@ladx/ui";
+import {
+  type AssistRunContext,
+  Assistant,
+  type AssistantStore,
+  type ModelsSource,
+  RELAY_TITLES,
+  useAssistant,
+} from "@ladx/ui";
 import { Download, FileText, Maximize2, Minimize2, Save, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type CommandSpec, findCommand, parseCoordinate, resolveCoordinate } from "../lib/commands";
 import { type DrawingTemplate, buildDrawingFromTemplate } from "../lib/drawing-templates";
 import { readDxf, writeDxf } from "../lib/dxf";
+import {
+  type CadRoutes,
+  type CadStore,
+  type GenerateDrawing,
+  type GeneratedGeometry,
+  STUDIO_ROUTES,
+} from "../lib/host";
 import {
   arrayPolar,
   arrayRectangular,
@@ -111,7 +125,7 @@ type Drag =
  * which writes to the browser and has no account behind it. Returns whether it
  * landed, so the editor knows when to stop showing unsaved.
  */
-export type SaveDrawing = (input: { id: string; name: string; data: Drawing }) => Promise<boolean>;
+export type SaveDrawing = CadStore["save"];
 
 export default function CadEditor({
   drawingId,
@@ -122,8 +136,12 @@ export default function CadEditor({
   sheets = [],
   projectId = null,
   projects = [],
-  onSave,
-  canGenerate = true,
+  store,
+  generate,
+  routes = STUDIO_ROUTES,
+  onChanged,
+  models = "/api/models",
+  assistantStore,
 }: {
   drawingId: string;
   initial: Drawing;
@@ -136,16 +154,30 @@ export default function CadEditor({
   projectId?: string | null;
   /** Every project this user has, so a sheet can be filed without leaving. */
   projects?: { id: string; name: string }[];
-  /** Defaults to the API route, which is what the signed-in editor wants. */
-  onSave?: SaveDrawing;
   /**
-   * Whether to offer AI drawing.
+   * Where drawings live.
    *
-   * False without an account, because generation needs a provider key that
-   * belongs to a user. Offering a button that always answers "sign in" is
-   * worse than not offering it.
+   * Required, so a surface says where rather than inheriting the web's
+   * answer. The desktop has no API routes at all, and a component that
+   * silently assumed otherwise is the bug this repository has hit four times.
    */
-  canGenerate?: boolean;
+  store: CadStore;
+  /**
+   * Building geometry from a description.
+   *
+   * Absent where there is nothing to build it with: the free editor has no
+   * account and therefore no provider key, and offering a button that always
+   * answers "sign in" is worse than not offering it.
+   */
+  generate?: GenerateDrawing;
+  /** Where this surface mounts its own pages. */
+  routes?: CadRoutes;
+  /** The sheet list changed, so whoever supplied it should read it again. */
+  onChanged?: () => void;
+  /** Where the model list comes from: a URL on the web, a function on desktop. */
+  models?: ModelsSource;
+  /** Where the assistant's conversation is kept. The browser's storage by default. */
+  assistantStore?: AssistantStore;
 }) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1305,29 +1337,15 @@ export default function CadEditor({
     setSaving(true);
     setStatus(null);
     try {
-      if (onSave) {
-        const ok = await onSave({ id: drawingId, name, data: drawing });
-        if (ok) {
-          // The same two lines the API path does. `dirty` is computed against
-          // savedRef, so clearing the flag without moving the reference makes
-          // the next edit compare against a drawing from before the save and
-          // report no change.
-          savedRef.current = drawing;
-          setDirty(false);
-        }
-        setStatus(ok ? "Saved" : "Could not save");
-        return;
-      }
-      const res = await fetch(`/api/cad/${drawingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, data: drawing }),
-      });
-      if (res.ok) {
+      const ok = await store.save({ id: drawingId, name, data: drawing }).catch(() => false);
+      if (ok) {
+        // `dirty` is computed against savedRef, so clearing the flag without
+        // moving the reference makes the next edit compare against a drawing
+        // from before the save and report no change.
         savedRef.current = drawing;
         setDirty(false);
       }
-      setStatus(res.ok ? "Saved" : "Could not save");
+      setStatus(ok ? "Saved" : "Could not save");
     } finally {
       setSaving(false);
       setTimeout(() => setStatus(null), 2500);
@@ -1567,28 +1585,22 @@ export default function CadEditor({
         step.detail(answer);
       }
 
+      if (!generate) throw new Error("This editor has no way to reach a model.");
+
       step.start("draw", model ? `Asking ${model}` : "Asking the model");
-      const res = await fetch("/api/cad/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      let body: GeneratedGeometry;
+      try {
+        body = await generate({
           prompt: request,
           layers: drawing.layers.map((l) => l.name),
           context: sheetSummary(),
           model,
-        }),
-        signal,
-      });
-      const body = (await res.json()) as {
-        entities?: { type: string; symbol?: string; at?: Point; layer?: string }[];
-        summary?: string;
-        model?: string;
-        dropped?: number;
-        error?: string;
-      };
-      if (!res.ok || !body.entities) {
-        step.fail(body.error ?? "The model did not return any geometry");
-        throw new Error(body.error ?? "Could not draw that.");
+          signal,
+        });
+      } catch (err) {
+        const why = err instanceof Error ? err.message : "Could not draw that.";
+        step.fail(why);
+        throw new Error(why);
       }
       step.detail(body.model ? `${body.model} replied` : "Reply received");
 
@@ -1646,29 +1658,39 @@ export default function CadEditor({
         undoable: true,
       };
     },
-    [drawing, commit, sheetSummary, layer],
+    [drawing, commit, sheetSummary, layer, generate],
   );
 
   // Keyed to the drawing, so coming back to this sheet brings back the
   // conversation about this sheet.
-  const assist = useAssistant({ run: runAssist, memoryKey: `cad:${drawingId}` });
+  const assist = useAssistant({
+    run: runAssist,
+    memoryKey: `cad:${drawingId}`,
+    /*
+     * Not asked for at all where there is nothing to pick.
+     *
+     * The free editor has no account, so this used to fetch a model list and
+     * get a 401 on every load: a console error on a page that is working
+     * exactly as intended, and the pane offering a picker for models nobody
+     * can reach.
+     */
+    modelsUrl: generate ? models : null,
+    store: assistantStore,
+  });
 
   /* ── filing this sheet against a project ── */
 
   const attachToProject = useCallback(
     async (target: string) => {
-      const res = await fetch(`/api/cad/${drawingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: target || null }),
-      });
-      if (res.ok) router.refresh();
-      else {
+      try {
+        await store.setProject(drawingId, target || null);
+        onChanged?.();
+      } catch {
         setStatus("Could not change the project.");
         setTimeout(() => setStatus(null), 3000);
       }
     },
-    [drawingId, router],
+    [drawingId, store, onChanged],
   );
 
   /*
@@ -1703,7 +1725,7 @@ export default function CadEditor({
     {
       label: "File",
       items: [
-        { label: "New sheet", onSelect: () => router.push("/studio/cad") },
+        { label: "New sheet", onSelect: () => router.push(routes.list) },
         { label: "Save", shortcut: "Cmd S", onSelect: () => void save(), disabled: saving },
         { label: "Import DXF…", separator: true, onSelect: () => importRef.current?.click() },
         { label: "Export DXF", onSelect: exportDxf },
@@ -1712,7 +1734,8 @@ export default function CadEditor({
         {
           label: "Close",
           separator: true,
-          onSelect: () => router.push(projectId ? `/studio/projects/${projectId}` : "/studio/cad"),
+          onSelect: () =>
+            router.push(projectId && routes.project ? routes.project(projectId) : routes.list),
         },
       ],
     },
@@ -1948,7 +1971,7 @@ export default function CadEditor({
       items: [
         {
           label: "Open the project",
-          onSelect: () => router.push(`/studio/projects/${projectId}`),
+          onSelect: () => router.push((projectId && routes.project?.(projectId)) || routes.list),
           disabled: !projectId,
         },
         {
@@ -2009,7 +2032,10 @@ export default function CadEditor({
             projectId={projectId}
             projectName={projectName ?? null}
             onDirtyCheck={() => dirty}
-            onOpen={(pid) => router.push(`/studio/cad/${pid}`)}
+            onOpen={(pid) => router.push(routes.sheet(pid))}
+            store={store}
+            routes={routes}
+            onChanged={() => onChanged?.()}
           />
         );
       case "properties":
@@ -2333,7 +2359,7 @@ export default function CadEditor({
             assist.markUndone();
           }}
           disabledReason={
-            canGenerate
+            generate
               ? null
               : "Drawing from a description needs a provider key, which belongs to an account. Sign up and connect one in Settings."
           }

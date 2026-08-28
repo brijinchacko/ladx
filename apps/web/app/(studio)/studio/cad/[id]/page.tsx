@@ -1,3 +1,4 @@
+import { cadStoreViaApi, generateDrawingViaApi } from "@/components/studio/cad-host";
 import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { cadDrawings, clients, projects } from "@/lib/db/schema";
@@ -69,6 +70,8 @@ export default async function CadPage({ params }: { params: Promise<{ id: string
         company: company?.name ?? undefined,
         drawnBy: user.displayName ?? user.email.split("@")[0],
       }}
+      store={cadStoreViaApi}
+      generate={generateDrawingViaApi}
     />
   );
 }

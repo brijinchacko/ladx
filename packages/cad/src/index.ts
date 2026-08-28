@@ -13,6 +13,7 @@
 
 export { default as CadEditor } from "./components/cad-editor";
 export * from "./lib/types";
+export * from "./lib/host";
 export * from "./lib/commands";
 export * from "./lib/operations";
 export * from "./lib/drawing-templates";

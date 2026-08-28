@@ -3,6 +3,7 @@
 import { FilePlus2, Files, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import type { CadRoutes, CadStore } from "../lib/host";
 
 export interface SheetRow {
   id: string;
@@ -29,6 +30,9 @@ export default function CadSheets({
   projectName,
   onOpen,
   onDirtyCheck,
+  store,
+  routes,
+  onChanged,
 }: {
   sheets: SheetRow[];
   currentId: string;
@@ -38,6 +42,18 @@ export default function CadSheets({
   onOpen: (id: string) => void;
   /** True when there is unsaved work. Asked before leaving a sheet. */
   onDirtyCheck: () => boolean;
+  /** Where sheets live. */
+  store: CadStore;
+  /** Where this surface mounts its own pages. */
+  routes: CadRoutes;
+  /**
+   * The list changed, so whoever supplied it should read it again.
+   *
+   * A callback rather than router.refresh() here: that only means anything on
+   * a surface whose list came from a server render, and the desktop's comes
+   * from its own database.
+   */
+  onChanged: () => void;
 }) {
   const router = useRouter();
   const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -58,18 +74,15 @@ export default function CadSheets({
   async function addSheet() {
     setBusy(true);
     try {
-      const res = await fetch("/api/cad", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "New sheet",
-          projectId,
-          data: { version: 1, layers: [], entities: [] },
-        }),
+      const { id } = await store.create({
+        name: "New sheet",
+        projectId,
+        data: { version: 1, layers: [], entities: [] },
       });
-      if (!res.ok) return;
-      const { id } = (await res.json()) as { id: string };
       go(id);
+    } catch {
+      // Nothing was created, so there is nothing to open. The button comes
+      // back and the person can try again.
     } finally {
       setBusy(false);
     }
@@ -90,25 +103,21 @@ export default function CadSheets({
     const name = draft.trim();
     setRenaming(null);
     if (!name) return;
-    await fetch(`/api/cad/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
-    router.refresh();
+    await store.rename(id, name);
+    onChanged();
   }
 
   async function remove(id: string, name: string) {
     if (!window.confirm(`Delete the sheet "${name}"? This cannot be undone.`)) return;
     setMenuFor(null);
-    await fetch(`/api/cad/${id}`, { method: "DELETE" });
+    await store.remove(id);
     if (id === currentId) {
       const next = sheets.find((s) => s.id !== id);
       if (next) onOpen(next.id);
-      else router.push("/studio/cad");
+      else router.push(routes.list);
       return;
     }
-    router.refresh();
+    onChanged();
   }
 
   return (

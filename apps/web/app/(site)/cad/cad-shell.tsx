@@ -2,8 +2,8 @@
 
 import { CONSENT_EVENT, hasConsent } from "@/lib/consent/consent";
 import { CadEditor } from "@ladx/cad";
-import { type Drawing, emptyDrawing } from "@ladx/cad";
-import { useCallback, useEffect, useState } from "react";
+import { type CadStore, type Drawing, emptyDrawing } from "@ladx/cad";
+import { useEffect, useMemo, useState } from "react";
 
 /** A fixed id, so a reload reopens the same drawing. */
 const KEY = "ladx.cad.scratch.v1";
@@ -50,16 +50,41 @@ export default function CadShell() {
     return () => window.removeEventListener(CONSENT_EVENT, read);
   }, []);
 
-  const save = useCallback(async ({ data }: { id: string; name: string; data: Drawing }) => {
-    if (!hasConsent("functional")) return false;
-    try {
-      window.localStorage.setItem(KEY, JSON.stringify(data));
-      return true;
-    } catch {
-      // Private browsing, or a full quota.
-      return false;
-    }
-  }, []);
+  /**
+   * One drawing, in the browser, and nothing else.
+   *
+   * There is no account here, so there are no sheets to create, rename or file
+   * under a project. Those throw rather than failing quietly: the editor keeps
+   * them behind controls this surface does not show, and if one ever became
+   * reachable, saying so beats a button that appears to work.
+   */
+  const store: CadStore = useMemo(
+    () => ({
+      async save({ data }) {
+        if (!hasConsent("functional")) return false;
+        try {
+          window.localStorage.setItem(KEY, JSON.stringify(data));
+          return true;
+        } catch {
+          // Private browsing, or a full quota.
+          return false;
+        }
+      },
+      async create() {
+        throw new Error("Sheets need an account. Sign up to keep a set of drawings.");
+      },
+      async rename() {
+        throw new Error("Sheets need an account.");
+      },
+      async remove() {
+        throw new Error("Sheets need an account.");
+      },
+      async setProject() {
+        throw new Error("Projects need an account.");
+      },
+    }),
+    [],
+  );
 
   if (!initial) {
     return <p className="p-8 text-[13px] text-ink-500">Loading the drawing board…</p>;
@@ -77,8 +102,8 @@ export default function CadShell() {
         drawingId="scratch"
         initial={initial}
         name="Untitled drawing"
-        onSave={save}
-        canGenerate={false}
+        store={store}
+        routes={{ list: "/cad", sheet: () => "/cad" }}
       />
     </>
   );
