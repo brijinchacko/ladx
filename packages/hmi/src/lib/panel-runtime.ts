@@ -388,10 +388,31 @@ export function usePanelRuntime({
     [trendTick, running, clockNow, doc.trends, outstanding],
   );
 
+  /**
+   * Acknowledge one alarm.
+   *
+   * Separate from the `ackAll` action because a popup acknowledges the alarm
+   * it is showing. Acknowledging everything because the operator dealt with
+   * one of them is how an unacknowledged alarm on another screen gets silently
+   * cleared by somebody who never saw it.
+   */
+  const ackOne = useCallback((id: string) => {
+    const now = Date.now();
+    const next = { ...alarmRef.current };
+    const cur = next[id];
+    if (!cur) return;
+    next[id] = acknowledge(cur, now);
+    alarmRef.current = next;
+    setAlarmState(next);
+  }, []);
+
   return {
+    /** The controller's tags as declared, before the run moved any of them. */
+    plcTags,
     /** The tag space, for anything binding by hand. */
     space,
     liveTags,
+    ackOne,
     ctx,
     alarmState,
     outstanding,
