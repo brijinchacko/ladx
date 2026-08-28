@@ -2,6 +2,7 @@
 
 import { api } from "@/lib/api";
 import { askModelLocally, localModels } from "@/lib/ask-model";
+import { desktopAssistantStore } from "@/lib/assistant-store";
 import {
   type LadxProgram,
   Monitor,
@@ -65,6 +66,7 @@ export default function MonitorPage() {
       /* Ollama on this machine, never an API route: a static export has none. */
       askModel={askModelLocally}
       modelsUrl={localModels}
+      assistantStore={desktopAssistantStore}
       sources={sources}
       companyName={null}
       author=""

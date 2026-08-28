@@ -1,7 +1,7 @@
 "use client";
 import type { LadxProgram, Tag } from "@ladx/studio";
 import { DockPanel, DockStrip, type Side, focusModeLabel, useFocusMode } from "@ladx/studio";
-import type { ModelsSource } from "@ladx/ui";
+import type { AssistantStore, ModelsSource } from "@ladx/ui";
 import {
   Bell,
   Loader2,
@@ -126,6 +126,14 @@ export interface HmiEditorProps {
    */
   models?: ModelsSource;
   /**
+   * Where the assistant's conversation is kept.
+   *
+   * The browser's own storage by default; the desktop passes one backed by
+   * its database, so a webview reset does not take the reasoning behind a
+   * screen with it.
+   */
+  assistantStore?: AssistantStore;
+  /**
    * Where an exported panel goes, when the surface has somewhere better than
    * the browser's downloads folder.
    *
@@ -154,6 +162,7 @@ export default function HmiEditor({
   onGenerate,
   generateDisabledReason = null,
   models = "/api/models",
+  assistantStore,
   onExport,
 }: HmiEditorProps) {
   /**
@@ -1487,6 +1496,7 @@ export default function HmiEditor({
           onApply={applyGenerated}
           onUndo={doUndo}
           models={onGenerate ? models : null}
+          store={assistantStore}
           disabledReason={
             onGenerate
               ? generateDisabledReason

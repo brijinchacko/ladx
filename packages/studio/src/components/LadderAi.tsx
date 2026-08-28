@@ -3,6 +3,7 @@
 import {
   type AssistRunContext,
   Assistant,
+  type AssistantStore,
   type ModelsSource,
   RELAY_TITLES,
   useAssistant,
@@ -62,6 +63,7 @@ export default function LadderAi({
   memoryKey,
   generate,
   modelsUrl = "/api/models",
+  store,
 }: {
   /** The program as it stands, for context. */
   getProgram: () => LadxProgram | null;
@@ -92,6 +94,8 @@ export default function LadderAi({
   generate?: (req: LadderGenerateRequest) => Promise<LadderGenerated>;
   /** Where the model list comes from: a URL on the web, a function on desktop. */
   modelsUrl?: ModelsSource;
+  /** Where the conversation is kept. The browser's storage by default. */
+  store?: AssistantStore;
 }) {
   const run = useCallback(
     async (prompt: string, { step, ask, model, signal }: AssistRunContext) => {
@@ -204,6 +208,7 @@ export default function LadderAi({
     run,
     modelsUrl: disabledReason ? null : modelsUrl,
     memoryKey,
+    store,
   });
 
   return (

@@ -4,6 +4,7 @@ import {
   type AskModel,
   type AssistRunContext,
   Assistant,
+  type AssistantStore,
   type ModelsSource,
   RELAY_TITLES,
   useAssistant,
@@ -86,6 +87,7 @@ export default function ConvertWorkbench({
   onExport,
   askModel,
   modelsUrl = "/api/models",
+  assistantStore,
 }: {
   sources: ConvertSource[];
   companyName: string | null;
@@ -126,6 +128,14 @@ export default function ConvertWorkbench({
   askModel: AskModel;
   /** Where the model list comes from: a URL on the web, a function on desktop. */
   modelsUrl?: ModelsSource;
+  /**
+   * Where the conversation is kept.
+   *
+   * The browser's own storage by default. The desktop passes one backed by
+   * its database, because a webview reset should not take somebody's
+   * reasoning about a machine with it.
+   */
+  assistantStore?: AssistantStore;
 }) {
   /*
    * Focus and fullscreen.
@@ -247,6 +257,7 @@ export default function ConvertWorkbench({
   const assist = useAssistant({
     run: runAssist,
     modelsUrl,
+    store: assistantStore,
     memoryKey: source ? `convert:${source.projectId ?? source.name}` : null,
   });
 

@@ -9,6 +9,7 @@ import type {
 import type { AssistStep } from "../components/assistant/steps";
 import { StepLog } from "../components/assistant/steps";
 import type { ModelList, ModelsSource } from "./ask-model";
+import { type AssistantStore, localAssistantStore } from "./assistant-store";
 
 /**
  * The assistant's behaviour, once, for every tool.
@@ -79,6 +80,15 @@ export interface UseAssistantOptions {
    * which is the right end to lose.
    */
   memoryTurns?: number;
+  /**
+   * Where the thread and the chosen model are kept.
+   *
+   * Defaults to the browser's own storage, which is right for the web and
+   * wrong for the desktop: a conversation about why an interlock is written
+   * the way it is should not live somewhere that a webview reset clears and
+   * that never travels with the project.
+   */
+  store?: AssistantStore;
 }
 
 interface Pending {
@@ -94,6 +104,7 @@ export function useAssistant({
   storageKey = MODEL_KEY,
   memoryKey = null,
   memoryTurns = 40,
+  store = localAssistantStore,
 }: UseAssistantOptions) {
   const [turns, setTurns] = useState<AssistantTurn[]>([]);
   const [busy, setBusy] = useState(false);
@@ -118,27 +129,30 @@ export function useAssistant({
       setTurns([]);
       return;
     }
-    try {
-      const raw = window.localStorage.getItem(`ladx.ai.thread.${memoryKey}`);
-      if (!raw) {
-        setTurns([]);
-        return;
+    let live = true;
+    (async () => {
+      try {
+        const raw = await store.get(`ladx.ai.thread.${memoryKey}`);
+        if (!live) return;
+        const parsed = raw ? JSON.parse(raw) : null;
+        setTurns(
+          Array.isArray(parsed)
+            ? parsed.filter(
+                (t: unknown): t is AssistantTurn =>
+                  Boolean(t) &&
+                  typeof (t as AssistantTurn).id === "string" &&
+                  typeof (t as AssistantTurn).text === "string",
+              )
+            : [],
+        );
+      } catch {
+        if (live) setTurns([]);
       }
-      const parsed = JSON.parse(raw);
-      setTurns(
-        Array.isArray(parsed)
-          ? parsed.filter(
-              (t: unknown): t is AssistantTurn =>
-                Boolean(t) &&
-                typeof (t as AssistantTurn).id === "string" &&
-                typeof (t as AssistantTurn).text === "string",
-            )
-          : [],
-      );
-    } catch {
-      setTurns([]);
-    }
-  }, [memoryKey]);
+    })();
+    return () => {
+      live = false;
+    };
+  }, [memoryKey, store]);
 
   // Written back whenever the thread changes. Undo is deliberately not
   // restorable across a reload: the inverses describe a document as it was in
@@ -146,14 +160,11 @@ export function useAssistant({
   // changed is worse than not offering.
   useEffect(() => {
     if (!memoryKey) return;
-    try {
-      const keep = turns.slice(-memoryTurns).map((t) => ({ ...t, undoable: false }));
-      window.localStorage.setItem(`ladx.ai.thread.${memoryKey}`, JSON.stringify(keep));
-    } catch {
-      // Private browsing, or a full quota. The thread still works for this
-      // visit, which is what it did before it was remembered at all.
-    }
-  }, [turns, memoryKey, memoryTurns]);
+    const keep = turns.slice(-memoryTurns).map((t) => ({ ...t, undoable: false }));
+    // Not awaited: a thread that has not finished being written must not hold
+    // up the next thing somebody types. The store swallows its own failures.
+    void store.set(`ladx.ai.thread.${memoryKey}`, JSON.stringify(keep));
+  }, [turns, memoryKey, memoryTurns, store]);
 
   /* ── which model ── */
 
@@ -166,13 +177,15 @@ export function useAssistant({
   // Restored on the client only; reading storage during a server render is a
   // hydration mismatch.
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(storageKey);
-      if (saved) setModel(saved);
-    } catch {
-      // Auto is a fine answer.
-    }
-  }, [storageKey]);
+    let live = true;
+    void store.get(storageKey).then((saved) => {
+      // Auto is a fine answer if nothing was saved or the read failed.
+      if (live && saved) setModel(saved);
+    });
+    return () => {
+      live = false;
+    };
+  }, [storageKey, store]);
 
   useEffect(() => {
     if (!modelsUrl) {
@@ -206,14 +219,11 @@ export function useAssistant({
   const chooseModel = useCallback(
     (id: string | null) => {
       setModel(id);
-      try {
-        if (id) window.localStorage.setItem(storageKey, id);
-        else window.localStorage.removeItem(storageKey);
-      } catch {
-        // It still applies for this session.
-      }
+      // Not awaited: the choice applies to the next question either way, and
+      // failing to remember it is not worth interrupting somebody over.
+      void (id ? store.set(storageKey, id) : store.remove(storageKey));
     },
-    [storageKey],
+    [storageKey, store],
   );
 
   const models: AssistantModels = useMemo(
@@ -326,14 +336,8 @@ export function useAssistant({
     setError(null);
     setSteps([]);
     setPending(null);
-    if (memoryKey) {
-      try {
-        window.localStorage.removeItem(`ladx.ai.thread.${memoryKey}`);
-      } catch {
-        // Nothing was stored, so nothing to clear.
-      }
-    }
-  }, [memoryKey]);
+    if (memoryKey) void store.remove(`ladx.ai.thread.${memoryKey}`);
+  }, [memoryKey, store]);
 
   /**
    * Put a turn in the transcript without running the model.

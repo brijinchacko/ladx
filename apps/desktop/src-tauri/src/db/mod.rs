@@ -6,6 +6,7 @@
 //! holds metadata + manifest JSON + chat threads.
 
 pub mod conversations;
+pub mod kv;
 pub mod designs;
 pub mod projects;
 pub use projects::*;

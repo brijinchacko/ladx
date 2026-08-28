@@ -59,3 +59,7 @@ export * from "./lib/ask-model";
 
 // What the explaining assistants are told. Shared, so both surfaces answer alike.
 export * from "./lib/assist-prompts";
+
+// Where the assistant keeps what it remembers. Injected, so the desktop can
+// put a conversation somewhere that survives a webview being cleared.
+export * from "./lib/assistant-store";

@@ -2,6 +2,7 @@
 
 import { api } from "@/lib/api";
 import { localModels } from "@/lib/ask-model";
+import { desktopAssistantStore } from "@/lib/assistant-store";
 import { settingsLoad } from "@/lib/invoke";
 import { useProjectFolder } from "@/lib/project-folder";
 import {
@@ -206,6 +207,7 @@ function Hmi() {
         /* What Ollama has installed on this machine. The default is an HTTP
            route, which a static export does not have. */
         models={localModels}
+        assistantStore={desktopAssistantStore}
         /*
          * A panel is a deliverable, so it belongs in the job folder under HMI
          * rather than in Downloads with everything else. With no project open

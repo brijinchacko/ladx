@@ -66,6 +66,7 @@ impl ProjectsDb {
         // about.
         super::conversations::apply_schema(&conn)?;
         super::designs::apply_schema(&conn)?;
+        super::kv::apply_schema(&conn)?;
         Ok(Self {
             conn: Mutex::new(conn),
         })

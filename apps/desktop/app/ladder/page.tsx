@@ -2,6 +2,7 @@
 
 import { api } from "@/lib/api";
 import { localModels } from "@/lib/ask-model";
+import { desktopAssistantStore } from "@/lib/assistant-store";
 import { generateLadderLocally } from "@/lib/generate-ladder";
 import { tauriStorage } from "@/lib/ladder-storage";
 import { LadderAi, LadxStudio } from "@ladx/studio";
@@ -87,6 +88,7 @@ function Ladder() {
             onProgram={(next) => load(next)}
             generate={generateLadderLocally}
             modelsUrl={localModels}
+            store={desktopAssistantStore}
           />
         )}
         /*

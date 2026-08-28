@@ -4,6 +4,7 @@ pub mod chat;
 pub mod conversations;
 pub mod designs;
 pub mod licence;
+pub mod memory;
 pub mod ollama;
 pub mod projects;
 pub mod settings;

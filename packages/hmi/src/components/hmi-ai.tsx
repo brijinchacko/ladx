@@ -23,6 +23,7 @@
 import {
   type AssistRunContext,
   Assistant,
+  type AssistantStore,
   type ModelsSource,
   RELAY_TITLES,
   useAssistant,
@@ -61,6 +62,7 @@ export default function HmiAi({
   disabledReason,
   models = "/api/models",
   memoryKey,
+  store,
 }: {
   /** Built by the editor each time, so it is never a screen or two behind. */
   context: () => GenContext;
@@ -84,6 +86,8 @@ export default function HmiAi({
   models?: ModelsSource;
   /** What this conversation belongs to, so it is still here next time. */
   memoryKey?: string | null;
+  /** Where that conversation is kept. The browser's storage by default. */
+  store?: AssistantStore;
 }) {
   const [mode, setMode] = useState<"extend" | "replace">("extend");
   // Read inside `run` rather than closed over, so a mode changed after pressing
@@ -202,6 +206,7 @@ export default function HmiAi({
   const a = useAssistant({
     run,
     modelsUrl: models,
+    store,
     memoryKey,
   });
 

@@ -4,6 +4,7 @@ import {
   type AskModel,
   type AssistRunContext,
   Assistant,
+  type AssistantStore,
   type ModelsSource,
   RELAY_TITLES,
   useAssistant,
@@ -115,6 +116,7 @@ export default function Monitor({
   onSaveRecord,
   askModel,
   modelsUrl = "/api/models",
+  assistantStore,
 }: {
   sources: ProgramSource[];
   companyName: string | null;
@@ -138,6 +140,14 @@ export default function Monitor({
   askModel: AskModel;
   /** Where the model list comes from: a URL on the web, a function on desktop. */
   modelsUrl?: ModelsSource;
+  /**
+   * Where the conversation is kept.
+   *
+   * The browser's own storage by default. The desktop passes one backed by
+   * its database, because a webview reset should not take somebody's
+   * reasoning about a machine with it.
+   */
+  assistantStore?: AssistantStore;
 }) {
   /*
    * Focus and fullscreen.
@@ -485,6 +495,7 @@ export default function Monitor({
   const assist = useAssistant({
     run: runAssist,
     modelsUrl,
+    store: assistantStore,
     memoryKey: source ? `monitor:${source.projectId ?? source.name}` : null,
   });
 
