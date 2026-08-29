@@ -34,6 +34,7 @@ import {
   publishDockInset,
   saveFrame,
 } from "../../lib/assistant-frame";
+import { ThinkingMark } from "../brand/thinking-mark";
 import { AiMark } from "./mark";
 import { type AssistStep, Steps } from "./steps";
 
@@ -616,7 +617,10 @@ export default function Assistant({
           </div>
         )}
         {busy && steps.length === 0 && (
-          <p className="text-[12px] text-ink-500">Working. On the free tier this takes a moment.</p>
+          <p className="flex items-center gap-2 text-[12px] text-ink-500">
+            <ThinkingMark size={14} className="text-teal-600" />
+            Working. On the free tier this takes a moment.
+          </p>
         )}
 
         {question && (

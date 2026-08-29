@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertCircle, Check, Loader2 } from "lucide-react";
+import { AlertCircle, Check } from "lucide-react";
+import { ThinkingMark } from "../brand/thinking-mark";
 
 /**
  * What it is doing, while it does it.
@@ -34,7 +35,7 @@ export function Steps({ steps }: { steps: AssistStep[] }) {
       {steps.map((s) => (
         <li key={s.id} className="flex gap-2">
           <span className="mt-[3px] flex h-3.5 w-3.5 shrink-0 items-center justify-center">
-            {s.state === "doing" && <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-600" />}
+            {s.state === "doing" && <ThinkingMark size={14} className="text-teal-600" />}
             {s.state === "done" && <Check className="h-3.5 w-3.5 text-teal-600" />}
             {s.state === "failed" && <AlertCircle className="h-3.5 w-3.5 text-[#B4531A]" />}
             {s.state === "skipped" && (

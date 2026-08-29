@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>LADX</title>
+  <rect width="512" height="512" rx="114" ry="114" fill="#0F1A24"/>
+  <g transform="translate(92.1600 138.3713) scale(1.680410)" fill="#35B6BA">
+    <polygon points="1,0 35,0 195,140 161,140"/>
+    <polygon points="160,0 194,0 34,140 0,140"/>
+  </g>
+</svg>

@@ -12,6 +12,16 @@ export {
   DialogDescription,
 } from "./components/ui/dialog";
 export { Logo, type LogoProps } from "./components/brand/logo";
+export {
+  XMark,
+  AppIcon,
+  ICON_GROUND,
+  ICON_MARK,
+  X_GEOMETRY,
+  type XMarkProps,
+  type AppIconProps,
+} from "./components/brand/x-mark";
+export { ThinkingMark, type ThinkingMarkProps } from "./components/brand/thinking-mark";
 export { ChatMessage, type ChatMessageProps } from "./components/chat/message";
 export {
   Composer,

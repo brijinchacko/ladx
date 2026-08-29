@@ -27,13 +27,18 @@ if (flag === -1 || !process.argv[flag + 1]) {
 const to = resolve(process.cwd(), process.argv[flag + 1], "brand");
 
 await mkdir(to, { recursive: true });
-const files = await readdir(from);
+
+// Artwork only. The folder also holds the master SVG and the script that
+// generates the rasters from it, and neither belongs in a public directory:
+// one is a build tool and the other is a file nothing asks for.
+const PUBLISHED = /\.(png|jpg|webp|avif)$/i;
+const files = (await readdir(from)).filter((f) => PUBLISHED.test(f));
 await Promise.all(files.map((f) => copyFile(resolve(from, f), resolve(to, f))));
 
 // Named rather than counted: a silent "copied 0 files" is how a missing asset
 // ships, and a missing wordmark is visible on every screen of the product.
 if (files.length === 0) {
-  console.error("copy-brand: nothing in assets/brand");
+  console.error("copy-brand: no artwork in assets/brand");
   process.exit(1);
 }
 console.log(`brand: ${files.join(", ")} -> ${to}`);

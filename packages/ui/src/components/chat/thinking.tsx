@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ThinkingMark } from "../brand/thinking-mark";
 
 /**
  * What LADX shows while it is thinking.
@@ -10,10 +11,11 @@ import { useEffect, useState } from "react";
  * A static spinner says "busy"; this says "working, and still working", which
  * is the difference between waiting and wondering whether it heard you.
  *
- * Two parts. Three dots that breathe, so there is always motion. And a line of
- * text that advances through stages if the wait runs long, because after four
- * seconds a person wants evidence that something is still happening rather than
- * the same word they read at the start.
+ * Two parts. The mark, turning, so there is always motion and it is LADX's own
+ * rather than a browser spinner. And a line of text that advances through
+ * stages if the wait runs long, because after four seconds a person wants
+ * evidence that something is still happening rather than the same word they
+ * read at the start.
  */
 
 const STAGES: { after: number; label: string }[] = [
@@ -37,15 +39,7 @@ export function Thinking({ label }: { label?: string }) {
 
   return (
     <div className="flex items-center gap-2.5" aria-live="polite" aria-busy="true">
-      <span className="flex items-center gap-1" aria-hidden="true">
-        {[0, 1, 2].map((n) => (
-          <span
-            key={n}
-            className="h-1.5 w-1.5 rounded-full bg-teal-600 [animation:ladx-think_1.2s_ease-in-out_infinite]"
-            style={{ animationDelay: `${n * 0.18}s` }}
-          />
-        ))}
-      </span>
+      <ThinkingMark size={15} className="text-teal-600" />
       <span className="text-[13px] text-ink-400">{stage}</span>
       <span className="sr-only">LADX is generating a reply.</span>
     </div>

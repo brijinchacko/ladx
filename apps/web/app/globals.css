@@ -123,45 +123,12 @@
 }
 
 /*
- * Chat motion.
+ * Reduced motion for the two animations this app owns.
  *
- * Defined here rather than in the component because Tailwind's arbitrary
- * animation syntax needs the keyframes to exist in the stylesheet. Both are
- * suppressed under reduced motion: a caret that blinks and dots that pulse are
- * decoration, and the thinking state is announced to assistive technology in
- * words anyway.
+ * The chat and assistant keyframes moved to @ladx/design-system, which both
+ * apps import; these two are the web's own.
  */
-@keyframes ladx-think {
-  0%,
-  80%,
-  100% {
-    opacity: 0.25;
-    transform: translateY(0);
-  }
-  40% {
-    opacity: 1;
-    transform: translateY(-2px);
-  }
-}
-
-@keyframes ladx-caret {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  50.01%,
-  100% {
-    opacity: 0;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  [class*="ladx-think"],
-  [class*="ladx-caret"] {
-    animation: none !important;
-    opacity: 0.6;
-  }
-
   /* The alarm ticker and the pipe flow. Both are decoration over information
      that is also present without them: the alarm is in the list, and the pipe
      still shows its colour. Somebody who has asked for less motion should not
