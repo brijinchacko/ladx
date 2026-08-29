@@ -4,6 +4,7 @@
 //! Siemens TIA XML, TwinCAT, and CODESYS.
 
 pub mod l5x;
+pub mod l5x_ir;
 pub mod plcopen;
 
 use ladx_types::{ParseResult, Project, ProjectManifest, ProjectStats, VendorKind};
