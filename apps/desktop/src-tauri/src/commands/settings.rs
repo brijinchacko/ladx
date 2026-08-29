@@ -106,6 +106,33 @@ mod feature_tests {
         assert!(s.features.enabled.is_empty(), "nothing switches itself on");
     }
 
+    /// The shape actually on disk on an existing install.
+    ///
+    /// Taken from a real settings.json rather than invented: three fields, from
+    /// before `sidebarCollapsed`, `checkForUpdates` and `features` existed.
+    /// Every field this struct has gained since has to tolerate being absent,
+    /// and the only way to know is to load the file people really have.
+    #[test]
+    fn the_three_field_file_a_real_install_has_still_loads() {
+        let real = r#"{
+  "defaultModel": null,
+  "workspaceDir": "/Users/someone/Documents/Ladx Test",
+  "lastProject": "/Users/someone/Documents/Ladx Test/TEST"
+}"#;
+        let s: StudioSettings = serde_json::from_str(real).expect("a real settings file must load");
+        assert_eq!(s.workspace_dir.as_deref(), Some("/Users/someone/Documents/Ladx Test"));
+        assert_eq!(s.default_model, None);
+        assert!(!s.sidebar_collapsed);
+        assert!(!s.check_for_updates, "updates stay off when the file does not mention them");
+        assert!(s.features.enabled.is_empty());
+
+        // And writing it back does not lose the two paths that matter.
+        let round = serde_json::to_string(&s).unwrap();
+        let back: StudioSettings = serde_json::from_str(&round).unwrap();
+        assert_eq!(back.workspace_dir, s.workspace_dir);
+        assert_eq!(back.last_project, s.last_project);
+    }
+
     #[test]
     fn flags_round_trip_through_the_settings_file() {
         let mut s = StudioSettings::default();
