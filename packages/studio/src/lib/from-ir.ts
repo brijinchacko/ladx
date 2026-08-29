@@ -204,17 +204,43 @@ function toRung(rung: IrRung, where: string, dropped: DroppedInstruction[]) {
   };
 }
 
-function tagType(dt: { kind: string }): TagType {
+/**
+ * The editor has four types and the IR has more, so some tags arrive as
+ * something they are not.
+ *
+ * `INT` is the least wrong home for a number the editor cannot hold, and it is
+ * still wrong: a REAL setpoint of 75.5 becomes 75, and a scaled analogue value
+ * becomes nonsense. So the loss is reported rather than performed quietly. The
+ * tag is kept rather than dropped because the logic references it, and a rung
+ * pointing at a tag that does not exist is a worse thing to hand somebody than
+ * a tag with the wrong type and a note saying so.
+ */
+function tagType(dt: { kind: string }): { type: TagType; lost?: string } {
   switch (dt.kind) {
     case "bool":
-      return "BOOL";
+      return { type: "BOOL" };
     case "timer":
-      return "TIMER";
+      return { type: "TIMER" };
     case "counter":
-      return "COUNTER";
+      return { type: "COUNTER" };
+    case "int":
+    case "dint":
+      return { type: "INT" };
+    case "real":
+      return {
+        type: "INT",
+        lost: "This is a REAL. The ladder editor has no floating point type, so it is shown as an INT and anything after the decimal point will be lost here. The project file still has it as a REAL.",
+      };
+    case "string":
+      return {
+        type: "INT",
+        lost: "This is a STRING. The ladder editor cannot show text, so it appears as an INT.",
+      };
     default:
-      // The editor has only four types, and everything numeric is INT to it.
-      return "INT";
+      return {
+        type: "INT",
+        lost: `This is a ${dt.kind}. The ladder editor has no type for it, so it appears as an INT.`,
+      };
   }
 }
 
@@ -245,15 +271,19 @@ export function ladxProgramFromIr(project: IrProject): FromIrResult {
     });
   }
 
-  const tags: Tag[] = project.tags.map((t) => ({
-    name: t.name,
-    type: tagType(t.data_type),
-    value: 0,
-    address: t.address ?? undefined,
-    comment: t.comment ?? undefined,
-    isInput: t.field?.direction === "input" || undefined,
-    isOutput: t.field?.direction === "output" || undefined,
-  }));
+  const tags: Tag[] = project.tags.map((t) => {
+    const { type, lost } = tagType(t.data_type);
+    if (lost) dropped.push({ where: `Tag ${t.name}`, what: t.data_type.kind, why: lost });
+    return {
+      name: t.name,
+      type,
+      value: 0,
+      address: t.address ?? undefined,
+      comment: t.comment ?? undefined,
+      isInput: t.field?.direction === "input" || undefined,
+      isOutput: t.field?.direction === "output" || undefined,
+    };
+  });
 
   // The entry point goes first, because routines[0] is the one the editor
   // treats as Main and a project that opens on a subroutine reads as broken.

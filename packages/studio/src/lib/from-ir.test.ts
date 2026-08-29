@@ -206,3 +206,60 @@ describe("opening an IR project in the editor", () => {
     expect(ladxProgramFromIr(p).program.scanMs).toBe(20);
   });
 });
+
+describe("types the editor cannot hold", () => {
+  /**
+   * A REAL shown as an INT is a truncated value, and truncating somebody's
+   * setpoint without telling them is the kind of quiet wrong that surfaces on
+   * a commissioning day.
+   */
+  it("says so when a REAL is shown as an INT rather than doing it quietly", () => {
+    const p = project([]);
+    p.tags = [
+      {
+        name: "SP_Temp",
+        data_type: { kind: "real" },
+        address: null,
+        initial_value: null,
+        comment: null,
+        field: null,
+      },
+    ] as never;
+
+    const { program, dropped } = ladxProgramFromIr(p);
+
+    // Kept, because the logic references it and a rung pointing at a tag that
+    // does not exist is worse than a tag with the wrong type.
+    expect(program.tags[0]?.name).toBe("SP_Temp");
+    expect(program.tags[0]?.type).toBe("INT");
+
+    const note = dropped.find((d) => d.where === "Tag SP_Temp");
+    expect(note?.why).toContain("decimal point");
+    expect(note?.why).toContain("still has it as a REAL");
+  });
+
+  it("says nothing about a type it can hold exactly", () => {
+    const p = project([]);
+    p.tags = [
+      {
+        name: "Motor",
+        data_type: { kind: "bool" },
+        address: null,
+        initial_value: null,
+        comment: null,
+        field: null,
+      },
+      {
+        name: "Count",
+        data_type: { kind: "dint" },
+        address: null,
+        initial_value: null,
+        comment: null,
+        field: null,
+      },
+    ] as never;
+
+    const { dropped } = ladxProgramFromIr(p);
+    expect(dropped).toEqual([]);
+  });
+});
