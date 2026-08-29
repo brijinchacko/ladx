@@ -70,9 +70,15 @@ try {
 } catch {
   console.error(
     `\nNo latest.json in ${TAG}.\n
-tauri-action only writes one when update signing is configured, so this release
-was built before TAURI_SIGNING_PRIVATE_KEY existed, or the secret is missing.
-Nothing can update from it. Cut another release.\n`,
+Nothing can update from that release. Two things have to be true for one to
+exist, and both have caught us out:
+
+  1. bundle.createUpdaterArtifacts is true in tauri.conf.json. Tauri 2 builds
+     no update package at all without it, and the build still succeeds, so the
+     only symptom is this file being absent.
+  2. TAURI_SIGNING_PRIVATE_KEY and its password are set as repository secrets.
+
+Fix whichever is missing and cut another release.\n`,
   );
   process.exit(1);
 }

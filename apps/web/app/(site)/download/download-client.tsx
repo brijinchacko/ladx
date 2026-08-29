@@ -120,7 +120,10 @@ export default function DownloadClient() {
             </li>
             <li className="flex gap-2">
               <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" />
-              <span>A licence key, entered once. That check is the only call it ever makes.</span>
+              <span>
+                A licence key, entered once. That and the update check, which is off unless you
+                switch it on, are the only times it uses the network.
+              </span>
             </li>
             <li className="flex gap-2">
               <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" />
@@ -145,6 +148,14 @@ export default function DownloadClient() {
             Everything LADX does
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
+
+          <h2 className="mt-6 mb-2 font-semibold text-ink-900">Updates</h2>
+          <p className="text-[13.5px] leading-relaxed text-ink-600">
+            Off until you turn them on, in Settings. On, LADX asks this site once per launch whether
+            there is a newer version, and every update is signed so one that is not gets refused
+            before anything is written. On a machine that is not supposed to reach the internet,
+            leave it off and download from here when you want a new version.
+          </p>
         </div>
       </section>
 
