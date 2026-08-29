@@ -44,10 +44,23 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
 
-    # The action creates the draft release, and the default token is read only.
-    # Without this it builds both installers and then fails on the last step
-    # with "Resource not accessible by integration", which reads like a
-    # permissions problem with the repository rather than with the workflow.
+    # Asked for, but not sufficient on its own, and the difference has cost two
+    # twenty minute builds now.
+    #
+    # This repository's default token is read only, and a job cannot raise
+    # itself above that: the key below is honoured up to the repository
+    # setting, not past it. Uploading assets to a release that already exists
+    # works anyway. Creating one does not, and the action does that only when
+    # it cannot find a draft for the tag, so the failure appears at the very
+    # last step of a build that otherwise went perfectly, as "Resource not
+    # accessible by integration".
+    #
+    # So the draft is made first, by hand, and this only ever uploads into it:
+    #
+    #   gh release create desktop-vX.Y.Z --draft --title "LADX Studio X.Y.Z" --notes "..."
+    #
+    # Then push the tag. Every release that has worked was made that way; the
+    # one that was not is the one that failed.
     permissions:
       contents: write
 
