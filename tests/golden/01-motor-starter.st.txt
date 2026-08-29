@@ -1,0 +1,10 @@
+project: Motor starter
+entry_point: Some("Main")
+scan_ms: Some(100)
+source_vendor: None
+
+=== POU Main (Program) ===
+(* Motor seal-in. Start latches through the coil's own contact. *)
+Motor := (Start_PB OR Motor) AND Stop_PB AND Overload_OK;
+
+

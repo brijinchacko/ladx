@@ -1,0 +1,13 @@
+project: Reversing motor
+entry_point: Some("Main")
+scan_ms: Some(100)
+source_vendor: None
+
+=== POU Main (Program) ===
+(* Forward, interlocked against reverse. *)
+Fwd := (Fwd_PB OR Fwd) AND Stop_PB AND NOT Rev;
+
+(* Reverse, interlocked against forward. *)
+Rev := (Rev_PB OR Rev) AND Stop_PB AND NOT Fwd;
+
+

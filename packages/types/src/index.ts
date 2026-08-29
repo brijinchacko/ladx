@@ -38,8 +38,13 @@ export type { OpCode } from "./generated/ir/OpCode";
 export type { Operand } from "./generated/ir/Operand";
 export type { VendorDetail } from "./generated/ir/VendorDetail";
 export type { DataTypeDef } from "./generated/ir/DataTypeDef";
+export type { FieldDevice } from "./generated/ir/FieldDevice";
+export type { IoDirection } from "./generated/ir/IoDirection";
 // `Tag` and `DataType` exist in both crates with different shapes; the IR ones
 // are aliased rather than re-exported bare, so a wrong import is a type error
 // instead of a surprise at runtime.
 export type { Tag as IrTag } from "./generated/ir/Tag";
 export type { DataType as IrDataType } from "./generated/ir/DataType";
+// Same reason: @ladx/studio has a `DeviceKind` of its own spelled in
+// SCREAMING_CASE. Two enums, same name, different members.
+export type { DeviceKind as IrDeviceKind } from "./generated/ir/DeviceKind";

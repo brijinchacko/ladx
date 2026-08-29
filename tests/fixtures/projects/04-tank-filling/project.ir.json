@@ -1,0 +1,262 @@
+{
+  "ir_version": 1,
+  "name": "Tank filling",
+  "source_vendor": null,
+  "pous": [
+    {
+      "name": "Main",
+      "kind": "Program",
+      "body": {
+        "language": "ladder",
+        "rungs": [
+          {
+            "id": "r5",
+            "comment": "Low level in auto starts a fill.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i1",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Auto_Sel"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i2",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "EStop_OK"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i3",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "LSL_Tank"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i4",
+                "op": "setCoil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Filling"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r10",
+            "comment": "High level, E-stop or leaving auto all stop it.",
+            "logic": {
+              "kind": "parallel",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i6",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "LSH_Tank"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i7",
+                    "op": "contactNegated",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "EStop_OK"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i8",
+                    "op": "contactNegated",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Auto_Sel"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i9",
+                "op": "resetCoil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Filling"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r13",
+            "comment": null,
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i11",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Filling"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i12",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Fill_Valve"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          }
+        ]
+      },
+      "local_tags": [],
+      "comment": null
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auto_Sel",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.0",
+      "initial_value": null,
+      "comment": "Auto/manual selector",
+      "field": {
+        "direction": "input",
+        "kind": "selector"
+      }
+    },
+    {
+      "name": "LSL_Tank",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.1",
+      "initial_value": null,
+      "comment": "Low level float",
+      "field": {
+        "direction": "input",
+        "kind": "sensor"
+      }
+    },
+    {
+      "name": "LSH_Tank",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.2",
+      "initial_value": null,
+      "comment": "High level float",
+      "field": {
+        "direction": "input",
+        "kind": "sensor"
+      }
+    },
+    {
+      "name": "EStop_OK",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.3",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNc"
+      }
+    },
+    {
+      "name": "Fill_Valve",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.0",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "output",
+        "kind": "motor"
+      }
+    },
+    {
+      "name": "Filling",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": null,
+      "initial_value": null,
+      "comment": "Internal state",
+      "field": null
+    }
+  ],
+  "data_types": [],
+  "entry_point": "Main",
+  "scan_ms": 100
+}

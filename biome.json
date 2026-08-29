@@ -17,7 +17,9 @@
       "**/lib/db/migrations/meta/**",
       "**/generated/**",
       "**/*.generated.*",
-      "**/src-tauri/gen/**"
+      "**/src-tauri/gen/**",
+      "tests/fixtures/**",
+      "tests/golden/**"
     ]
   },
   "formatter": {

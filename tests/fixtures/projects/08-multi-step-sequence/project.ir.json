@@ -1,0 +1,589 @@
+{
+  "ir_version": 1,
+  "name": "Drill station sequence",
+  "source_vendor": null,
+  "pous": [
+    {
+      "name": "Main",
+      "kind": "Program",
+      "body": {
+        "language": "ladder",
+        "rungs": [
+          {
+            "id": "r4",
+            "comment": "The sequence only runs in auto with safety healthy.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i1",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Auto_Sel"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i2",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "EStop_OK"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i3",
+                "op": "call",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Sequence"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r7",
+            "comment": "E-stop returns the sequence to idle.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i5",
+                    "op": "contactNegated",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "EStop_OK"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i6",
+                "op": "move",
+                "operands": [
+                  {
+                    "kind": "number",
+                    "value": 0.0
+                  },
+                  {
+                    "kind": "tag",
+                    "name": "Step"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          }
+        ]
+      },
+      "local_tags": [],
+      "comment": null
+    },
+    {
+      "name": "Sequence",
+      "kind": "Program",
+      "body": {
+        "language": "ladder",
+        "rungs": [
+          {
+            "id": "r12",
+            "comment": "Idle to clamp.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i8",
+                    "op": "equal",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Step"
+                      },
+                      {
+                        "kind": "number",
+                        "value": 0.0
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i9",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Start_PB"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i10",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Part_Present"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i11",
+                "op": "move",
+                "operands": [
+                  {
+                    "kind": "number",
+                    "value": 10.0
+                  },
+                  {
+                    "kind": "tag",
+                    "name": "Step"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r15",
+            "comment": null,
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i13",
+                    "op": "equal",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Step"
+                      },
+                      {
+                        "kind": "number",
+                        "value": 10.0
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i14",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Clamp"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r19",
+            "comment": "Clamped, start drilling.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i16",
+                    "op": "equal",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Step"
+                      },
+                      {
+                        "kind": "number",
+                        "value": 10.0
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i17",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Clamp_Closed"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i18",
+                "op": "move",
+                "operands": [
+                  {
+                    "kind": "number",
+                    "value": 20.0
+                  },
+                  {
+                    "kind": "tag",
+                    "name": "Step"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r23",
+            "comment": null,
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i20",
+                    "op": "equal",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Step"
+                      },
+                      {
+                        "kind": "number",
+                        "value": 20.0
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i21",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Drill"
+                  }
+                ],
+                "vendor": null
+              },
+              {
+                "id": "i22",
+                "op": "timerOn",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Dwell"
+                  },
+                  {
+                    "kind": "number",
+                    "value": 3000.0
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r27",
+            "comment": "Dwell complete, retract.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i24",
+                    "op": "equal",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Step"
+                      },
+                      {
+                        "kind": "number",
+                        "value": 20.0
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i25",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Dwell.DN"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i26",
+                "op": "move",
+                "operands": [
+                  {
+                    "kind": "number",
+                    "value": 30.0
+                  },
+                  {
+                    "kind": "tag",
+                    "name": "Step"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r31",
+            "comment": "Home, back to idle.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i28",
+                    "op": "equal",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Step"
+                      },
+                      {
+                        "kind": "number",
+                        "value": 30.0
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i29",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Drill_Home"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i30",
+                "op": "move",
+                "operands": [
+                  {
+                    "kind": "number",
+                    "value": 0.0
+                  },
+                  {
+                    "kind": "tag",
+                    "name": "Step"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          }
+        ]
+      },
+      "local_tags": [],
+      "comment": "Step sequence, called from Main."
+    }
+  ],
+  "tags": [
+    {
+      "name": "Start_PB",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.0",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNo"
+      }
+    },
+    {
+      "name": "Auto_Sel",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.1",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "selector"
+      }
+    },
+    {
+      "name": "EStop_OK",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.2",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNc"
+      }
+    },
+    {
+      "name": "Part_Present",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.3",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "sensor"
+      }
+    },
+    {
+      "name": "Clamp_Closed",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.4",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "sensor"
+      }
+    },
+    {
+      "name": "Drill_Home",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.5",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "sensor"
+      }
+    },
+    {
+      "name": "Clamp",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.0",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "output",
+        "kind": "motor"
+      }
+    },
+    {
+      "name": "Drill",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.1",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "output",
+        "kind": "motor"
+      }
+    },
+    {
+      "name": "Step",
+      "data_type": {
+        "kind": "int"
+      },
+      "address": null,
+      "initial_value": null,
+      "comment": "0 idle, 10 clamp, 20 drill, 30 retract",
+      "field": null
+    },
+    {
+      "name": "Dwell",
+      "data_type": {
+        "kind": "timer"
+      },
+      "address": null,
+      "initial_value": null,
+      "comment": null,
+      "field": null
+    }
+  ],
+  "data_types": [],
+  "entry_point": "Main",
+  "scan_ms": 100
+}

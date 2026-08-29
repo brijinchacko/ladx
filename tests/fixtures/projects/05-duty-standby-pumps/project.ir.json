@@ -1,0 +1,300 @@
+{
+  "ir_version": 1,
+  "name": "Duty standby pumps",
+  "source_vendor": null,
+  "pous": [
+    {
+      "name": "Main",
+      "kind": "Program",
+      "body": {
+        "language": "ladder",
+        "rungs": [
+          {
+            "id": "r6",
+            "comment": "P1 runs when it is duty, or when P2 has failed.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i1",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Run_Req"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i2",
+                    "op": "contactNegated",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "P1_Fault"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "parallel",
+                  "children": [
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i3",
+                        "op": "contactNegated",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "Duty_Is_P2"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    },
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i4",
+                        "op": "contact",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "P2_Fault"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i5",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Pump_1"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r12",
+            "comment": "P2 runs when it is duty, or when P1 has failed.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i7",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Run_Req"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i8",
+                    "op": "contactNegated",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "P2_Fault"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "parallel",
+                  "children": [
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i9",
+                        "op": "contact",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "Duty_Is_P2"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    },
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i10",
+                        "op": "contact",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "P1_Fault"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i11",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Pump_2"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r15",
+            "comment": "Alternate on each demand.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i13",
+                    "op": "risingEdge",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Run_Req"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i14",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Duty_Is_P2"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          }
+        ]
+      },
+      "local_tags": [],
+      "comment": null
+    }
+  ],
+  "tags": [
+    {
+      "name": "Run_Req",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.0",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "selector"
+      }
+    },
+    {
+      "name": "P1_Fault",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.1",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "sensor"
+      }
+    },
+    {
+      "name": "P2_Fault",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.2",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "sensor"
+      }
+    },
+    {
+      "name": "Duty_Is_P2",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": null,
+      "initial_value": null,
+      "comment": "Alternation flag, toggled on each start",
+      "field": null
+    },
+    {
+      "name": "Pump_1",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.0",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "output",
+        "kind": "motor"
+      }
+    },
+    {
+      "name": "Pump_2",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.1",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "output",
+        "kind": "motor"
+      }
+    }
+  ],
+  "data_types": [],
+  "entry_point": "Main",
+  "scan_ms": 100
+}

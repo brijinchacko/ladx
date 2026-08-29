@@ -1,0 +1,436 @@
+{
+  "ir_version": 1,
+  "name": "Alarm handling",
+  "source_vendor": null,
+  "pous": [
+    {
+      "name": "Main",
+      "kind": "Program",
+      "body": {
+        "language": "ladder",
+        "rungs": [
+          {
+            "id": "r3",
+            "comment": "Latch Alm_EStop.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i1",
+                    "op": "contactNegated",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "EStop_OK"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i2",
+                "op": "setCoil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Alm_EStop"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r6",
+            "comment": "Latch Alm_Guard.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i4",
+                    "op": "contactNegated",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Guard_Closed"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i5",
+                "op": "setCoil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Alm_Guard"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r9",
+            "comment": "Latch Alm_Motor.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i7",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Motor_Fault"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i8",
+                "op": "setCoil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Alm_Motor"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r14",
+            "comment": "One reset clears all three.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i10",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Reset_PB"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i11",
+                "op": "resetCoil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Alm_EStop"
+                  }
+                ],
+                "vendor": null
+              },
+              {
+                "id": "i12",
+                "op": "resetCoil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Alm_Guard"
+                  }
+                ],
+                "vendor": null
+              },
+              {
+                "id": "i13",
+                "op": "resetCoil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Alm_Motor"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r19",
+            "comment": "Summary.",
+            "logic": {
+              "kind": "parallel",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i15",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Alm_EStop"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i16",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Alm_Guard"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i17",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Alm_Motor"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i18",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Any_Alarm"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r24",
+            "comment": "Horn for 30 seconds, then silences itself.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i20",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Any_Alarm"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i21",
+                    "op": "contactNegated",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Horn_Timer.DN"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i22",
+                "op": "timerOn",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Horn_Timer"
+                  },
+                  {
+                    "kind": "number",
+                    "value": 30000.0
+                  }
+                ],
+                "vendor": null
+              },
+              {
+                "id": "i23",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Alarm_Horn"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          }
+        ]
+      },
+      "local_tags": [],
+      "comment": null
+    }
+  ],
+  "tags": [
+    {
+      "name": "EStop_OK",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.0",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNc"
+      }
+    },
+    {
+      "name": "Guard_Closed",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.1",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "sensor"
+      }
+    },
+    {
+      "name": "Motor_Fault",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.2",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "sensor"
+      }
+    },
+    {
+      "name": "Reset_PB",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.3",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNo"
+      }
+    },
+    {
+      "name": "Alm_EStop",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": null,
+      "initial_value": null,
+      "comment": "E-stop pressed",
+      "field": null
+    },
+    {
+      "name": "Alm_Guard",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": null,
+      "initial_value": null,
+      "comment": "Guard open",
+      "field": null
+    },
+    {
+      "name": "Alm_Motor",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": null,
+      "initial_value": null,
+      "comment": "Motor fault",
+      "field": null
+    },
+    {
+      "name": "Any_Alarm",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.0",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "output",
+        "kind": "lamp"
+      }
+    },
+    {
+      "name": "Alarm_Horn",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.1",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "output",
+        "kind": "lamp"
+      }
+    },
+    {
+      "name": "Horn_Timer",
+      "data_type": {
+        "kind": "timer"
+      },
+      "address": null,
+      "initial_value": null,
+      "comment": null,
+      "field": null
+    }
+  ],
+  "data_types": [],
+  "entry_point": "Main",
+  "scan_ms": 100
+}

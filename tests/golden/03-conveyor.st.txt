@@ -1,0 +1,21 @@
+project: Conveyor with jam detection
+entry_point: Some("Main")
+scan_ms: Some(100)
+source_vendor: None
+
+=== POU Main (Program) ===
+(* Run, dropped by a jam. *)
+Conveyor := (Start_PB OR Conveyor) AND Stop_PB AND EStop_OK AND NOT Jam_Alarm;
+
+(* Product blocking the discharge photocell while running. *)
+Jam_Timer(IN := PE_Discharge AND Conveyor, PT := 5000);
+
+(* Latched, so it needs a deliberate reset. *)
+IF Jam_Timer.DN THEN
+  Jam_Alarm := TRUE;
+END_IF;
+
+
+--- notes ---
+Note { rung_id: "r11", severity: Info, message: "Jam_Timer becomes a TON instance and must be declared" }
+

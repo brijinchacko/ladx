@@ -1,0 +1,43 @@
+project: Alarm handling
+entry_point: Some("Main")
+scan_ms: Some(100)
+source_vendor: None
+
+=== POU Main (Program) ===
+(* Latch Alm_EStop. *)
+IF NOT EStop_OK THEN
+  Alm_EStop := TRUE;
+END_IF;
+
+(* Latch Alm_Guard. *)
+IF NOT Guard_Closed THEN
+  Alm_Guard := TRUE;
+END_IF;
+
+(* Latch Alm_Motor. *)
+IF Motor_Fault THEN
+  Alm_Motor := TRUE;
+END_IF;
+
+(* One reset clears all three. *)
+IF Reset_PB THEN
+  Alm_EStop := FALSE;
+END_IF;
+IF Reset_PB THEN
+  Alm_Guard := FALSE;
+END_IF;
+IF Reset_PB THEN
+  Alm_Motor := FALSE;
+END_IF;
+
+(* Summary. *)
+Any_Alarm := (Alm_EStop OR Alm_Guard OR Alm_Motor);
+
+(* Horn for 30 seconds, then silences itself. *)
+Horn_Timer(IN := Any_Alarm AND NOT Horn_Timer.DN, PT := 30000);
+Alarm_Horn := Any_Alarm AND NOT Horn_Timer.DN;
+
+
+--- notes ---
+Note { rung_id: "r24", severity: Info, message: "Horn_Timer becomes a TON instance and must be declared" }
+

@@ -1,0 +1,16 @@
+project: PID temperature loop
+entry_point: Some("Main")
+scan_ms: Some(100)
+source_vendor: Some(Rockwell)
+
+=== POU Main (Program) ===
+(* Temperature loop. LADX does not model PID natively. *)
+(* PID(PV_Temp, SP_Temp, CV_Heater) under: Loop_Enable *)
+
+(* High temperature indication at 80 degrees. *)
+Temp_High := PV_Temp > 80;
+
+
+--- notes ---
+Note { rung_id: "r3", severity: NeedsDecision, message: "PID has no Structured Text equivalent; preserved as a comment" }
+

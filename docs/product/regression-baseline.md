@@ -13,22 +13,22 @@ Run on macOS 15 (arm64), Node 22, pnpm 9, Rust stable.
 |---|---|---|
 | Lint | `pnpm lint` | pass, 538 files |
 | Types | `pnpm typecheck` | pass, 10/10 packages |
-| Rust core | `pnpm test:rust:core` | **79 passed**, 0 failed |
+| Rust core | `pnpm test:rust:core` | **82 passed**, 0 failed |
 | JS/TS | `pnpm test` | **860 passed**, 0 failed, 45 files |
 | Build | `pnpm build` | pass, 3/3 |
 | Desktop frontend | `pnpm --filter=@ladx/desktop build` | pass |
 | Desktop crate | `cargo test -p ladx-studio` | **60 passed**, 0 failed |
 | Desktop crate | `cargo check -p ladx-studio` | pass, 5 warnings |
 
-**999 tests green.**
+**1,002 tests green.**
 
 ## Where the tests actually are
 
-Rust, 79 total:
+Rust, 82 total:
 
 | Crate | Tests |
 |---|---|
-| `ladx-ir` | 51 |
+| `ladx-ir` | 54 |
 | `ladx-types` | 21 (incl. binding export) |
 | `ladx-validator` | 4 |
 | `ladx-parsers` | 3 |
@@ -60,6 +60,17 @@ Worth stating plainly, because a green run is easy to over-read.
 - The 5 `cargo check` warnings in the desktop crate are pre-existing dead code
   (`base_url`, `Folder::phase` and three others). They are not touched by this
   programme and are not counted as regressions either way.
+
+## A correction
+
+This file first recorded 82 as 79, and `ladx-ir` as 51 rather than 54. The
+total came from summing the `test result` lines with `awk` and it undercounted;
+the per-crate table was read off a garbled terminal paste. Corrected here from
+a clean per-crate run.
+
+Noted rather than quietly edited, because the whole use of a baseline is that
+the numbers in it can be trusted, and one that has been silently adjusted is
+worth less than one with a visible correction.
 
 ## Re-running
 

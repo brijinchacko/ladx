@@ -1,0 +1,196 @@
+{
+  "ir_version": 1,
+  "name": "PID temperature loop",
+  "source_vendor": "Rockwell",
+  "pous": [
+    {
+      "name": "Main",
+      "kind": "Program",
+      "body": {
+        "language": "ladder",
+        "rungs": [
+          {
+            "id": "r3",
+            "comment": "Temperature loop. LADX does not model PID natively.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i1",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Loop_Enable"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i2",
+                "op": "unsupported",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "PV_Temp"
+                  },
+                  {
+                    "kind": "tag",
+                    "name": "SP_Temp"
+                  },
+                  {
+                    "kind": "tag",
+                    "name": "CV_Heater"
+                  }
+                ],
+                "vendor": {
+                  "original_mnemonic": "PID",
+                  "attributes": [
+                    [
+                      "Kp",
+                      "2.5"
+                    ],
+                    [
+                      "Ki",
+                      "0.4"
+                    ],
+                    [
+                      "Kd",
+                      "0.0"
+                    ],
+                    [
+                      "UpdateTime",
+                      "0.1"
+                    ],
+                    [
+                      "ControlMode",
+                      "Reverse"
+                    ]
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "r6",
+            "comment": "High temperature indication at 80 degrees.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i4",
+                    "op": "greater",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "PV_Temp"
+                      },
+                      {
+                        "kind": "number",
+                        "value": 80.0
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i5",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Temp_High"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          }
+        ]
+      },
+      "local_tags": [],
+      "comment": null
+    }
+  ],
+  "tags": [
+    {
+      "name": "PV_Temp",
+      "data_type": {
+        "kind": "real"
+      },
+      "address": "IW64",
+      "initial_value": null,
+      "comment": "Process temperature",
+      "field": {
+        "direction": "input",
+        "kind": "analogValue"
+      }
+    },
+    {
+      "name": "SP_Temp",
+      "data_type": {
+        "kind": "real"
+      },
+      "address": null,
+      "initial_value": {
+        "kind": "number",
+        "value": 75.0
+      },
+      "comment": "Setpoint",
+      "field": null
+    },
+    {
+      "name": "CV_Heater",
+      "data_type": {
+        "kind": "real"
+      },
+      "address": "QW64",
+      "initial_value": null,
+      "comment": "Heater output",
+      "field": {
+        "direction": "output",
+        "kind": "analogValue"
+      }
+    },
+    {
+      "name": "Loop_Enable",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.0",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "selector"
+      }
+    },
+    {
+      "name": "Temp_High",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.2",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "output",
+        "kind": "lamp"
+      }
+    }
+  ],
+  "data_types": [],
+  "entry_point": "Main",
+  "scan_ms": 100
+}

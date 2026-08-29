@@ -1,0 +1,47 @@
+project: Drill station sequence
+entry_point: Some("Main")
+scan_ms: Some(100)
+source_vendor: None
+
+=== POU Main (Program) ===
+(* The sequence only runs in auto with safety healthy. *)
+IF Auto_Sel AND EStop_OK THEN
+  Sequence();
+END_IF;
+
+(* E-stop returns the sequence to idle. *)
+IF NOT EStop_OK THEN
+  Step := 0;
+END_IF;
+
+
+=== POU Sequence (Program) ===
+(* Idle to clamp. *)
+IF Step = 0 AND Start_PB AND Part_Present THEN
+  Step := 10;
+END_IF;
+
+Clamp := Step = 10;
+
+(* Clamped, start drilling. *)
+IF Step = 10 AND Clamp_Closed THEN
+  Step := 20;
+END_IF;
+
+Drill := Step = 20;
+Dwell(IN := Step = 20, PT := 3000);
+
+(* Dwell complete, retract. *)
+IF Step = 20 AND Dwell.DN THEN
+  Step := 30;
+END_IF;
+
+(* Home, back to idle. *)
+IF Step = 30 AND Drill_Home THEN
+  Step := 0;
+END_IF;
+
+
+--- notes ---
+Note { rung_id: "r23", severity: Info, message: "Dwell becomes a TON instance and must be declared" }
+

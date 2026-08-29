@@ -1,0 +1,158 @@
+{
+  "ir_version": 1,
+  "name": "Motor starter",
+  "source_vendor": null,
+  "pous": [
+    {
+      "name": "Main",
+      "kind": "Program",
+      "body": {
+        "language": "ladder",
+        "rungs": [
+          {
+            "id": "r6",
+            "comment": "Motor seal-in. Start latches through the coil's own contact.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "parallel",
+                  "children": [
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i1",
+                        "op": "contact",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "Start_PB"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    },
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i2",
+                        "op": "contact",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "Motor"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i3",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Stop_PB"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i4",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Overload_OK"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i5",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Motor"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          }
+        ]
+      },
+      "local_tags": [],
+      "comment": null
+    }
+  ],
+  "tags": [
+    {
+      "name": "Start_PB",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.0",
+      "initial_value": null,
+      "comment": "Start pushbutton",
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNo"
+      }
+    },
+    {
+      "name": "Stop_PB",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.1",
+      "initial_value": null,
+      "comment": "Stop pushbutton, wired NC",
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNc"
+      }
+    },
+    {
+      "name": "Overload_OK",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.2",
+      "initial_value": null,
+      "comment": "Motor overload contact, closed when healthy",
+      "field": {
+        "direction": "input",
+        "kind": "sensor"
+      }
+    },
+    {
+      "name": "Motor",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.0",
+      "initial_value": null,
+      "comment": "Motor contactor",
+      "field": {
+        "direction": "output",
+        "kind": "motor"
+      }
+    }
+  ],
+  "data_types": [],
+  "entry_point": "Main",
+  "scan_ms": 100
+}

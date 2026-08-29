@@ -25,4 +25,19 @@ tags: Array<Tag>,
 /**
  * User-defined types (UDTs / STRUCTs).
  */
-data_types: Array<DataTypeDef>, };
+data_types: Array<DataTypeDef>, 
+/**
+ * Which POU the controller executes, by name.
+ *
+ * Every platform has one and none of them agree what to call it, so it is
+ * named here rather than inferred from position. A list where the first
+ * entry is special reads fine until something sorts it.
+ */
+entry_point: string | null, 
+/**
+ * Target scan period in milliseconds, where the source states one.
+ *
+ * Carried because timer behaviour is only meaningful against a scan rate,
+ * so dropping it would quietly change what a converted program does.
+ */
+scan_ms: number | null, };

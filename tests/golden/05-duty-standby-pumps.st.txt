@@ -1,0 +1,19 @@
+project: Duty standby pumps
+entry_point: Some("Main")
+scan_ms: Some(100)
+source_vendor: None
+
+=== POU Main (Program) ===
+(* P1 runs when it is duty, or when P2 has failed. *)
+Pump_1 := Run_Req AND NOT P1_Fault AND (NOT Duty_Is_P2 OR P2_Fault);
+
+(* P2 runs when it is duty, or when P1 has failed. *)
+Pump_2 := Run_Req AND NOT P2_Fault AND (Duty_Is_P2 OR P1_Fault);
+
+(* Alternate on each demand. *)
+Duty_Is_P2 := R_TRIG_Run_Req.Q;
+
+
+--- notes ---
+Note { rung_id: "r15", severity: NeedsDecision, message: "one-shot on Run_Req needs an edge-detect block and its own instance variable; emitted as a call that must be declared" }
+

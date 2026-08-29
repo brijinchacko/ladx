@@ -59,6 +59,19 @@ pub struct IrProject {
     pub tags: Vec<Tag>,
     /// User-defined types (UDTs / STRUCTs).
     pub data_types: Vec<DataTypeDef>,
+    /// Which POU the controller executes, by name.
+    ///
+    /// Every platform has one and none of them agree what to call it, so it is
+    /// named here rather than inferred from position. A list where the first
+    /// entry is special reads fine until something sorts it.
+    #[serde(default)]
+    pub entry_point: Option<String>,
+    /// Target scan period in milliseconds, where the source states one.
+    ///
+    /// Carried because timer behaviour is only meaningful against a scan rate,
+    /// so dropping it would quietly change what a converted program does.
+    #[serde(default)]
+    pub scan_ms: Option<u32>,
 }
 
 impl IrProject {
@@ -70,6 +83,8 @@ impl IrProject {
             pous: Vec::new(),
             tags: Vec::new(),
             data_types: Vec::new(),
+            entry_point: None,
+            scan_ms: None,
         }
     }
 }
@@ -378,6 +393,57 @@ pub struct Tag {
     pub address: Option<String>,
     pub initial_value: Option<Operand>,
     pub comment: Option<String>,
+    /// What this tag is wired to in the plant, when it is wired to anything.
+    ///
+    /// Absent for internal tags, which is most of them. Present for the ones
+    /// that cross into the real world, and those are the ones an I/O list, a
+    /// wiring schedule and an HMI binding are all built from, so losing it on
+    /// import would mean deriving it back by guesswork later.
+    #[serde(default)]
+    pub field: Option<FieldDevice>,
+}
+
+/// A tag that corresponds to something physical.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../types/src/generated/ir/")]
+pub struct FieldDevice {
+    pub direction: IoDirection,
+    /// What kind of thing it is, where that is known.
+    ///
+    /// It decides more than it looks like it does. A start button is momentary
+    /// and springs back, which is the whole reason a seal-in exists; a selector
+    /// stays where it is put. Simulation, generated HMI controls and generated
+    /// tests all need to tell those apart.
+    #[serde(default)]
+    pub kind: Option<DeviceKind>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../types/src/generated/ir/")]
+#[serde(rename_all = "camelCase")]
+pub enum IoDirection {
+    Input,
+    Output,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../types/src/generated/ir/")]
+#[serde(rename_all = "camelCase")]
+pub enum DeviceKind {
+    /// Momentary, normally open. A start button.
+    PushbuttonNo,
+    /// Momentary, normally closed. A stop or an E-stop.
+    PushbuttonNc,
+    /// Maintained. Auto/manual.
+    Selector,
+    /// Proximity, photocell, float.
+    Sensor,
+    /// Indicator.
+    Lamp,
+    /// Contactor or starter.
+    Motor,
+    /// Analog.
+    AnalogValue,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
@@ -427,4 +493,78 @@ pub fn migrate(mut project: IrProject) -> Result<IrProject, IrError> {
     // Future: match on project.ir_version and step forward one version at a time.
     project.ir_version = IR_VERSION;
     Ok(project)
+}
+
+#[cfg(test)]
+mod extension_tests {
+    use super::*;
+
+    /// The fields added for the ladder editor's model are optional on the
+    /// wire, so a document written before they existed still reads.
+    ///
+    /// Worth a test rather than a reading of the derive: the IR is about to
+    /// become the thing everything else is stored as, and a silently failing
+    /// deserialise would present as a project that will not open.
+    #[test]
+    fn a_document_without_the_new_fields_still_loads() {
+        let old = r#"{
+            "ir_version": 1,
+            "name": "Older",
+            "source_vendor": null,
+            "pous": [],
+            "tags": [{
+                "name": "Start_PB",
+                "data_type": {"kind": "bool"},
+                "address": "I0.0",
+                "initial_value": null,
+                "comment": null
+            }],
+            "data_types": []
+        }"#;
+        let p: IrProject = serde_json::from_str(old).expect("old document should still parse");
+        assert_eq!(p.entry_point, None);
+        assert_eq!(p.scan_ms, None);
+        assert_eq!(p.tags[0].field, None);
+        assert_eq!(p.tags[0].address.as_deref(), Some("I0.0"));
+    }
+
+    #[test]
+    fn the_new_fields_round_trip() {
+        let mut p = IrProject::new("Motor starter");
+        p.entry_point = Some("Main".into());
+        p.scan_ms = Some(100);
+        p.tags.push(Tag {
+            name: "Start_PB".into(),
+            data_type: DataType::Bool,
+            address: Some("I0.0".into()),
+            initial_value: None,
+            comment: Some("Start pushbutton".into()),
+            field: Some(FieldDevice {
+                direction: IoDirection::Input,
+                kind: Some(DeviceKind::PushbuttonNo),
+            }),
+        });
+
+        let json = serde_json::to_string(&p).unwrap();
+        let back: IrProject = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, p);
+    }
+
+    /// A start button and a selector are not interchangeable, and the
+    /// difference is the reason a seal-in exists. If the IR flattened them the
+    /// generated simulation, HMI control and tests would all be wrong in the
+    /// same way.
+    #[test]
+    fn momentary_and_maintained_devices_stay_distinct() {
+        assert_ne!(DeviceKind::PushbuttonNo, DeviceKind::Selector);
+        assert_ne!(DeviceKind::PushbuttonNo, DeviceKind::PushbuttonNc);
+    }
+
+    #[test]
+    fn an_entry_point_survives_migration() {
+        let mut p = IrProject::new("P");
+        p.entry_point = Some("Main".into());
+        let out = migrate(p).unwrap();
+        assert_eq!(out.entry_point.as_deref(), Some("Main"));
+    }
 }

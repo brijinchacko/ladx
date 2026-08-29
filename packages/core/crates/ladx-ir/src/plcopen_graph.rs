@@ -119,6 +119,22 @@ fn emit(
 
 /* ─────────────────────────── graph → tree ──────────────────────────── */
 
+/// The open ends of a graph, i.e. what feeds the output element.
+///
+/// An element nothing else consumes is a loose end, and every loose end runs
+/// into the coil. Any exporter writing TC6 needs this to fill the output's
+/// `connectionPointIn`, and every caller of [`graph_to_tree`] needs it to ask
+/// the question at all, so it belongs here rather than being re-derived.
+pub fn ends_of(elements: &[GraphElement]) -> Vec<u32> {
+    let consumed: BTreeSet<u32> = elements.iter().flat_map(|e| e.inputs.iter().copied()).collect();
+    elements
+        .iter()
+        .map(|e| e.local_id)
+        .filter(|id| !consumed.contains(id))
+        .collect()
+}
+
+
 /// Rebuild the condition tree from TC6 elements.
 ///
 /// `output_inputs` is what feeds the coil, i.e. the `connectionPointIn` of the
@@ -358,18 +374,6 @@ mod tests {
                 vendor: None,
             },
         }
-    }
-
-    /// The output element's inputs are whatever the last emitted ids were.
-    fn ends_of(elements: &[GraphElement]) -> Vec<u32> {
-        // Anything nothing else consumes is an open end feeding the coil.
-        let consumed: BTreeSet<u32> =
-            elements.iter().flat_map(|e| e.inputs.iter().copied()).collect();
-        elements
-            .iter()
-            .map(|e| e.local_id)
-            .filter(|id| !consumed.contains(id))
-            .collect()
     }
 
     fn round_trip(logic: Logic) -> Logic {

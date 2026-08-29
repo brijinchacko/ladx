@@ -1,0 +1,254 @@
+{
+  "ir_version": 1,
+  "name": "Reversing motor",
+  "source_vendor": null,
+  "pous": [
+    {
+      "name": "Main",
+      "kind": "Program",
+      "body": {
+        "language": "ladder",
+        "rungs": [
+          {
+            "id": "r6",
+            "comment": "Forward, interlocked against reverse.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "parallel",
+                  "children": [
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i1",
+                        "op": "contact",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "Fwd_PB"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    },
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i2",
+                        "op": "contact",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "Fwd"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i3",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Stop_PB"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i4",
+                    "op": "contactNegated",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Rev"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i5",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Fwd"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r12",
+            "comment": "Reverse, interlocked against forward.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "parallel",
+                  "children": [
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i7",
+                        "op": "contact",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "Rev_PB"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    },
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i8",
+                        "op": "contact",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "Rev"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i9",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Stop_PB"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i10",
+                    "op": "contactNegated",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Fwd"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i11",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Rev"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          }
+        ]
+      },
+      "local_tags": [],
+      "comment": null
+    }
+  ],
+  "tags": [
+    {
+      "name": "Fwd_PB",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.0",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNo"
+      }
+    },
+    {
+      "name": "Rev_PB",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.1",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNo"
+      }
+    },
+    {
+      "name": "Stop_PB",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.2",
+      "initial_value": null,
+      "comment": "Wired NC",
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNc"
+      }
+    },
+    {
+      "name": "Fwd",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.0",
+      "initial_value": null,
+      "comment": "Forward contactor",
+      "field": {
+        "direction": "output",
+        "kind": "motor"
+      }
+    },
+    {
+      "name": "Rev",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.1",
+      "initial_value": null,
+      "comment": "Reverse contactor",
+      "field": {
+        "direction": "output",
+        "kind": "motor"
+      }
+    }
+  ],
+  "data_types": [],
+  "entry_point": "Main",
+  "scan_ms": 100
+}

@@ -1,0 +1,19 @@
+project: Tank filling
+entry_point: Some("Main")
+scan_ms: Some(100)
+source_vendor: None
+
+=== POU Main (Program) ===
+(* Low level in auto starts a fill. *)
+IF Auto_Sel AND EStop_OK AND LSL_Tank THEN
+  Filling := TRUE;
+END_IF;
+
+(* High level, E-stop or leaving auto all stop it. *)
+IF (LSH_Tank OR NOT EStop_OK OR NOT Auto_Sel) THEN
+  Filling := FALSE;
+END_IF;
+
+Fill_Valve := Filling;
+
+

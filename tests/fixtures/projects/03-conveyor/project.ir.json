@@ -1,0 +1,298 @@
+{
+  "ir_version": 1,
+  "name": "Conveyor with jam detection",
+  "source_vendor": null,
+  "pous": [
+    {
+      "name": "Main",
+      "kind": "Program",
+      "body": {
+        "language": "ladder",
+        "rungs": [
+          {
+            "id": "r7",
+            "comment": "Run, dropped by a jam.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "parallel",
+                  "children": [
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i1",
+                        "op": "contact",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "Start_PB"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    },
+                    {
+                      "kind": "element",
+                      "instruction": {
+                        "id": "i2",
+                        "op": "contact",
+                        "operands": [
+                          {
+                            "kind": "tag",
+                            "name": "Conveyor"
+                          }
+                        ],
+                        "vendor": null
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i3",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Stop_PB"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i4",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "EStop_OK"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i5",
+                    "op": "contactNegated",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Jam_Alarm"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i6",
+                "op": "coil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Conveyor"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r11",
+            "comment": "Product blocking the discharge photocell while running.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i8",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "PE_Discharge"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                },
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i9",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Conveyor"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i10",
+                "op": "timerOn",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Jam_Timer"
+                  },
+                  {
+                    "kind": "number",
+                    "value": 5000.0
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          },
+          {
+            "id": "r14",
+            "comment": "Latched, so it needs a deliberate reset.",
+            "logic": {
+              "kind": "series",
+              "children": [
+                {
+                  "kind": "element",
+                  "instruction": {
+                    "id": "i12",
+                    "op": "contact",
+                    "operands": [
+                      {
+                        "kind": "tag",
+                        "name": "Jam_Timer.DN"
+                      }
+                    ],
+                    "vendor": null
+                  }
+                }
+              ]
+            },
+            "outputs": [
+              {
+                "id": "i13",
+                "op": "setCoil",
+                "operands": [
+                  {
+                    "kind": "tag",
+                    "name": "Jam_Alarm"
+                  }
+                ],
+                "vendor": null
+              }
+            ]
+          }
+        ]
+      },
+      "local_tags": [],
+      "comment": null
+    }
+  ],
+  "tags": [
+    {
+      "name": "Start_PB",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.0",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNo"
+      }
+    },
+    {
+      "name": "Stop_PB",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.1",
+      "initial_value": null,
+      "comment": "Wired NC",
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNc"
+      }
+    },
+    {
+      "name": "EStop_OK",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.2",
+      "initial_value": null,
+      "comment": "E-stop string, closed when healthy",
+      "field": {
+        "direction": "input",
+        "kind": "pushbuttonNc"
+      }
+    },
+    {
+      "name": "PE_Discharge",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "I0.3",
+      "initial_value": null,
+      "comment": "Photocell at the discharge end",
+      "field": {
+        "direction": "input",
+        "kind": "sensor"
+      }
+    },
+    {
+      "name": "Conveyor",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.0",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "output",
+        "kind": "motor"
+      }
+    },
+    {
+      "name": "Jam_Alarm",
+      "data_type": {
+        "kind": "bool"
+      },
+      "address": "Q0.1",
+      "initial_value": null,
+      "comment": null,
+      "field": {
+        "direction": "output",
+        "kind": "lamp"
+      }
+    },
+    {
+      "name": "Jam_Timer",
+      "data_type": {
+        "kind": "timer"
+      },
+      "address": null,
+      "initial_value": null,
+      "comment": "Product present too long",
+      "field": null
+    }
+  ],
+  "data_types": [],
+  "entry_point": "Main",
+  "scan_ms": 100
+}
