@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RSLogix5000Content SchemaRevision="1.0" TargetType="Controller">
+  <Controller Name="Reversing motor">
+    <Tags>
+      <Tag Name="Fwd_PB" DataType="BOOL" AliasFor="I0.0"/>
+      <Tag Name="Rev_PB" DataType="BOOL" AliasFor="I0.1"/>
+      <Tag Name="Stop_PB" DataType="BOOL" AliasFor="I0.2">
+        <Description><![CDATA[Wired NC]]></Description>
+      </Tag>
+      <Tag Name="Fwd" DataType="BOOL" AliasFor="Q0.0">
+        <Description><![CDATA[Forward contactor]]></Description>
+      </Tag>
+      <Tag Name="Rev" DataType="BOOL" AliasFor="Q0.1">
+        <Description><![CDATA[Reverse contactor]]></Description>
+      </Tag>
+    </Tags>
+    <Programs>
+      <Program Name="MainProgram" MainRoutineName="Main">
+        <Tags>
+        </Tags>
+        <Routines>
+          <Routine Name="Main" Type="RLL">
+            <RLLContent>
+              <Rung Number="0" Type="N">
+                <Comment><![CDATA[Forward, interlocked against reverse.]]></Comment>
+                <Text><![CDATA[[XIC(Fwd_PB),XIC(Fwd)]XIC(Stop_PB)XIO(Rev)OTE(Fwd);]]></Text>
+              </Rung>
+              <Rung Number="1" Type="N">
+                <Comment><![CDATA[Reverse, interlocked against forward.]]></Comment>
+                <Text><![CDATA[[XIC(Rev_PB),XIC(Rev)]XIC(Stop_PB)XIO(Fwd)OTE(Rev);]]></Text>
+              </Rung>
+            </RLLContent>
+          </Routine>
+        </Routines>
+      </Program>
+    </Programs>
+  </Controller>
+</RSLogix5000Content>

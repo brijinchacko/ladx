@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RSLogix5000Content SchemaRevision="1.0" TargetType="Controller">
+  <Controller Name="Drill station sequence">
+    <Tags>
+      <Tag Name="Start_PB" DataType="BOOL" AliasFor="I0.0"/>
+      <Tag Name="Auto_Sel" DataType="BOOL" AliasFor="I0.1"/>
+      <Tag Name="EStop_OK" DataType="BOOL" AliasFor="I0.2"/>
+      <Tag Name="Part_Present" DataType="BOOL" AliasFor="I0.3"/>
+      <Tag Name="Clamp_Closed" DataType="BOOL" AliasFor="I0.4"/>
+      <Tag Name="Drill_Home" DataType="BOOL" AliasFor="I0.5"/>
+      <Tag Name="Clamp" DataType="BOOL" AliasFor="Q0.0"/>
+      <Tag Name="Drill" DataType="BOOL" AliasFor="Q0.1"/>
+      <Tag Name="Step" DataType="INT">
+        <Description><![CDATA[0 idle, 10 clamp, 20 drill, 30 retract]]></Description>
+      </Tag>
+      <Tag Name="Dwell" DataType="TIMER"/>
+    </Tags>
+    <Programs>
+      <Program Name="MainProgram" MainRoutineName="Main">
+        <Tags>
+        </Tags>
+        <Routines>
+          <Routine Name="Main" Type="RLL">
+            <RLLContent>
+              <Rung Number="0" Type="N">
+                <Comment><![CDATA[The sequence only runs in auto with safety healthy.]]></Comment>
+                <Text><![CDATA[XIC(Auto_Sel)XIC(EStop_OK)JSR(Sequence);]]></Text>
+              </Rung>
+              <Rung Number="1" Type="N">
+                <Comment><![CDATA[E-stop returns the sequence to idle.]]></Comment>
+                <Text><![CDATA[XIO(EStop_OK)MOV(0,Step);]]></Text>
+              </Rung>
+            </RLLContent>
+          </Routine>
+          <Routine Name="Sequence" Type="RLL">
+            <RLLContent>
+              <Rung Number="0" Type="N">
+                <Comment><![CDATA[Idle to clamp.]]></Comment>
+                <Text><![CDATA[EQU(Step,0)XIC(Start_PB)XIC(Part_Present)MOV(10,Step);]]></Text>
+              </Rung>
+              <Rung Number="1" Type="N">
+                <Text><![CDATA[EQU(Step,10)OTE(Clamp);]]></Text>
+              </Rung>
+              <Rung Number="2" Type="N">
+                <Comment><![CDATA[Clamped, start drilling.]]></Comment>
+                <Text><![CDATA[EQU(Step,10)XIC(Clamp_Closed)MOV(20,Step);]]></Text>
+              </Rung>
+              <Rung Number="3" Type="N">
+                <Text><![CDATA[EQU(Step,20)OTE(Drill)TON(Dwell,3000);]]></Text>
+              </Rung>
+              <Rung Number="4" Type="N">
+                <Comment><![CDATA[Dwell complete, retract.]]></Comment>
+                <Text><![CDATA[EQU(Step,20)XIC(Dwell.DN)MOV(30,Step);]]></Text>
+              </Rung>
+              <Rung Number="5" Type="N">
+                <Comment><![CDATA[Home, back to idle.]]></Comment>
+                <Text><![CDATA[EQU(Step,30)XIC(Drill_Home)MOV(0,Step);]]></Text>
+              </Rung>
+            </RLLContent>
+          </Routine>
+        </Routines>
+      </Program>
+    </Programs>
+  </Controller>
+</RSLogix5000Content>

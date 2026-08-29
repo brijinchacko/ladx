@@ -177,6 +177,8 @@ pub fn parse_to_ir(bytes: &[u8]) -> Result<L5xImport> {
                                 body: PouBody::Ladder { rungs: Vec::new() },
                                 local_tags: Vec::new(),
                                 comment: get(&attrs, "Description").map(str::to_string),
+                                // An AOI is controller scope, not inside a program.
+                                container: None,
                             });
                         }
                     }
@@ -210,12 +212,7 @@ pub fn parse_to_ir(bytes: &[u8]) -> Result<L5xImport> {
                     "Program" => {
                         ctx.program = get(&attrs, "Name").map(str::to_string);
                         if let Some(m) = get(&attrs, "MainRoutineName") {
-                            // Qualified, because two programs may each have a
-                            // routine called MainRoutine and the IR is flat.
-                            main_routine = Some(match &ctx.program {
-                                Some(p) => format!("{p}/{m}"),
-                                None => m.to_string(),
-                            });
+                            main_routine = Some(m.to_string());
                         }
                     }
 
@@ -434,6 +431,8 @@ fn finish_rung(ctx: &mut Ctx, report: &mut ConversionReport) {
 
 fn finish_routine(ctx: &mut Ctx, project: &mut IrProject, report: &mut ConversionReport) {
     let Some(routine) = ctx.routine.take() else { return };
+    // Reported with the program in front so a person can find it, while the
+    // POU keeps its own name and records the program separately.
     let qualified = match &ctx.program {
         Some(p) => format!("{p}/{routine}"),
         None => routine.clone(),
@@ -477,11 +476,12 @@ fn finish_routine(ctx: &mut Ctx, project: &mut IrProject, report: &mut Conversio
     };
 
     project.pous.push(Pou {
-        name: qualified,
+        name: routine,
         kind: PouKind::Program,
         body,
         local_tags: Vec::new(),
         comment: None,
+        container: ctx.program.clone(),
     });
     ctx.rungs.clear();
     ctx.st_lines.clear();
@@ -575,14 +575,17 @@ mod tests {
         assert_eq!(p.name, "LineFour");
         assert_eq!(p.source_vendor, Some(Vendor::Rockwell));
         // Qualified, because two programs may each have a MainRoutine.
-        assert_eq!(p.entry_point.as_deref(), Some("MainProgram/MainRoutine"));
+        assert_eq!(p.entry_point.as_deref(), Some("MainRoutine"));
     }
 
     /// The whole point of the module: rung logic, not rung names.
     #[test]
     fn it_reads_rung_logic_rather_than_just_counting_rungs() {
         let p = parsed().project;
-        let main = p.pous.iter().find(|x| x.name == "MainProgram/MainRoutine").unwrap();
+        let main = p.pous.iter().find(|x| x.name == "MainRoutine").unwrap();
+        // The program is recorded beside the name rather than folded into it,
+        // so the POU keeps one identity across a write and a read.
+        assert_eq!(main.container.as_deref(), Some("MainProgram"));
         let PouBody::Ladder { rungs } = &main.body else { panic!("expected ladder") };
         assert_eq!(rungs.len(), 3);
 
@@ -626,7 +629,7 @@ mod tests {
     #[test]
     fn structured_text_is_carried_through() {
         let p = parsed().project;
-        let calc = p.pous.iter().find(|x| x.name == "MainProgram/Calc").unwrap();
+        let calc = p.pous.iter().find(|x| x.name == "Calc").unwrap();
         let PouBody::StructuredText { source } = &calc.body else { panic!("expected ST") };
         assert!(source.contains("Scratch := Scratch + 1;"));
         assert!(source.contains("END_IF;"));
@@ -651,7 +654,7 @@ mod tests {
             .project
             .pous
             .iter()
-            .find(|x| x.name == "MainProgram/MainRoutine")
+            .find(|x| x.name == "MainRoutine")
             .unwrap();
         let PouBody::Ladder { rungs } = &main.body else { panic!() };
         // Searched across the whole rung rather than just the outputs, and the

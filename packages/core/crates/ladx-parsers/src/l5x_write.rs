@@ -121,21 +121,16 @@ pub fn write(project: &IrProject) -> Result<L5xExport> {
             aois.push(pou);
             continue;
         }
-        let (program, _) = unqualify(&pou.name);
-        programs.entry(program.unwrap_or("MainProgram")).or_default().push(pou);
+        programs.entry(pou.container.as_deref().unwrap_or("MainProgram")).or_default().push(pou);
     }
 
     w.write_event(Event::Start(start("Programs", &[])))?;
     for (program, pous) in &programs {
-        // The entry point is stored qualified, so it only names a routine in
-        // this program if the halves match.
-        let main = project
-            .entry_point
-            .as_deref()
-            .and_then(|e| match unqualify(e) {
-                (Some(p), r) if p == *program => Some(r.to_string()),
-                _ => None,
-            });
+        // The entry point names a routine; it belongs on the program that
+        // actually contains a POU of that name.
+        let main = project.entry_point.as_deref().and_then(|e| {
+            pous.iter().any(|p| p.name == e).then(|| e.to_string())
+        });
 
         let mut attrs: Vec<(&str, &str)> = vec![("Name", program)];
         if let Some(m) = &main {
@@ -240,7 +235,7 @@ fn write_routine<W: std::io::Write>(
     pou: &Pou,
     report: &mut ConversionReport,
 ) -> Result<()> {
-    let (_, name) = unqualify(&pou.name);
+    let name = pou.name.as_str();
 
     match &pou.body {
         PouBody::Ladder { rungs } => {
@@ -378,8 +373,8 @@ mod tests {
                 .unwrap_or_default()
         };
 
-        let before = rungs_of(&first, "MainProgram/MainRoutine");
-        let after = rungs_of(&second, "MainProgram/MainRoutine");
+        let before = rungs_of(&first, "MainRoutine");
+        let after = rungs_of(&second, "MainRoutine");
         assert!(!before.is_empty(), "the fixture should have rungs");
         assert_eq!(after, before, "rung text changed across the round trip");
     }
@@ -395,7 +390,7 @@ mod tests {
         let motor = second.tags.iter().find(|t| t.name == "Motor").unwrap();
         assert_eq!(motor.comment.as_deref(), Some("Motor contactor"));
 
-        let main = second.pous.iter().find(|p| p.name == "MainProgram/MainRoutine").unwrap();
+        let main = second.pous.iter().find(|p| p.name == "MainRoutine").unwrap();
         let PouBody::Ladder { rungs } = &main.body else { panic!() };
         assert_eq!(rungs[0].comment.as_deref(), Some("Motor seal-in"));
     }
@@ -408,7 +403,7 @@ mod tests {
         assert!(written.xml.contains("PID(Loop,PV,CV)"), "PID missing from the export");
 
         let second = l5x_ir::parse_to_ir(written.xml.as_bytes()).unwrap().project;
-        let main = second.pous.iter().find(|p| p.name == "MainProgram/MainRoutine").unwrap();
+        let main = second.pous.iter().find(|p| p.name == "MainRoutine").unwrap();
         let PouBody::Ladder { rungs } = &main.body else { panic!() };
         let found = rungs.iter().any(|r| {
             r.logic

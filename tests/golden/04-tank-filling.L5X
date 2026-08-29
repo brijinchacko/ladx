@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RSLogix5000Content SchemaRevision="1.0" TargetType="Controller">
+  <Controller Name="Tank filling">
+    <Tags>
+      <Tag Name="Auto_Sel" DataType="BOOL" AliasFor="I0.0">
+        <Description><![CDATA[Auto/manual selector]]></Description>
+      </Tag>
+      <Tag Name="LSL_Tank" DataType="BOOL" AliasFor="I0.1">
+        <Description><![CDATA[Low level float]]></Description>
+      </Tag>
+      <Tag Name="LSH_Tank" DataType="BOOL" AliasFor="I0.2">
+        <Description><![CDATA[High level float]]></Description>
+      </Tag>
+      <Tag Name="EStop_OK" DataType="BOOL" AliasFor="I0.3"/>
+      <Tag Name="Fill_Valve" DataType="BOOL" AliasFor="Q0.0"/>
+      <Tag Name="Filling" DataType="BOOL">
+        <Description><![CDATA[Internal state]]></Description>
+      </Tag>
+    </Tags>
+    <Programs>
+      <Program Name="MainProgram" MainRoutineName="Main">
+        <Tags>
+        </Tags>
+        <Routines>
+          <Routine Name="Main" Type="RLL">
+            <RLLContent>
+              <Rung Number="0" Type="N">
+                <Comment><![CDATA[Low level in auto starts a fill.]]></Comment>
+                <Text><![CDATA[XIC(Auto_Sel)XIC(EStop_OK)XIC(LSL_Tank)OTL(Filling);]]></Text>
+              </Rung>
+              <Rung Number="1" Type="N">
+                <Comment><![CDATA[High level, E-stop or leaving auto all stop it.]]></Comment>
+                <Text><![CDATA[[XIC(LSH_Tank),XIO(EStop_OK),XIO(Auto_Sel)]OTU(Filling);]]></Text>
+              </Rung>
+              <Rung Number="2" Type="N">
+                <Text><![CDATA[XIC(Filling)OTE(Fill_Valve);]]></Text>
+              </Rung>
+            </RLLContent>
+          </Routine>
+        </Routines>
+      </Program>
+    </Programs>
+  </Controller>
+</RSLogix5000Content>

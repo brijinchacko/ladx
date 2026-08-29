@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RSLogix5000Content SchemaRevision="1.0" TargetType="Controller">
+  <Controller Name="Motor starter">
+    <Tags>
+      <Tag Name="Start_PB" DataType="BOOL" AliasFor="I0.0">
+        <Description><![CDATA[Start pushbutton]]></Description>
+      </Tag>
+      <Tag Name="Stop_PB" DataType="BOOL" AliasFor="I0.1">
+        <Description><![CDATA[Stop pushbutton, wired NC]]></Description>
+      </Tag>
+      <Tag Name="Overload_OK" DataType="BOOL" AliasFor="I0.2">
+        <Description><![CDATA[Motor overload contact, closed when healthy]]></Description>
+      </Tag>
+      <Tag Name="Motor" DataType="BOOL" AliasFor="Q0.0">
+        <Description><![CDATA[Motor contactor]]></Description>
+      </Tag>
+    </Tags>
+    <Programs>
+      <Program Name="MainProgram" MainRoutineName="Main">
+        <Tags>
+        </Tags>
+        <Routines>
+          <Routine Name="Main" Type="RLL">
+            <RLLContent>
+              <Rung Number="0" Type="N">
+                <Comment><![CDATA[Motor seal-in. Start latches through the coil's own contact.]]></Comment>
+                <Text><![CDATA[[XIC(Start_PB),XIC(Motor)]XIC(Stop_PB)XIC(Overload_OK)OTE(Motor);]]></Text>
+              </Rung>
+            </RLLContent>
+          </Routine>
+        </Routines>
+      </Program>
+    </Programs>
+  </Controller>
+</RSLogix5000Content>

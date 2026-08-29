@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RSLogix5000Content SchemaRevision="1.0" TargetType="Controller">
+  <Controller Name="Alarm handling">
+    <Tags>
+      <Tag Name="EStop_OK" DataType="BOOL" AliasFor="I0.0"/>
+      <Tag Name="Guard_Closed" DataType="BOOL" AliasFor="I0.1"/>
+      <Tag Name="Motor_Fault" DataType="BOOL" AliasFor="I0.2"/>
+      <Tag Name="Reset_PB" DataType="BOOL" AliasFor="I0.3"/>
+      <Tag Name="Alm_EStop" DataType="BOOL">
+        <Description><![CDATA[E-stop pressed]]></Description>
+      </Tag>
+      <Tag Name="Alm_Guard" DataType="BOOL">
+        <Description><![CDATA[Guard open]]></Description>
+      </Tag>
+      <Tag Name="Alm_Motor" DataType="BOOL">
+        <Description><![CDATA[Motor fault]]></Description>
+      </Tag>
+      <Tag Name="Any_Alarm" DataType="BOOL" AliasFor="Q0.0"/>
+      <Tag Name="Alarm_Horn" DataType="BOOL" AliasFor="Q0.1"/>
+      <Tag Name="Horn_Timer" DataType="TIMER"/>
+    </Tags>
+    <Programs>
+      <Program Name="MainProgram" MainRoutineName="Main">
+        <Tags>
+        </Tags>
+        <Routines>
+          <Routine Name="Main" Type="RLL">
+            <RLLContent>
+              <Rung Number="0" Type="N">
+                <Comment><![CDATA[Latch Alm_EStop.]]></Comment>
+                <Text><![CDATA[XIO(EStop_OK)OTL(Alm_EStop);]]></Text>
+              </Rung>
+              <Rung Number="1" Type="N">
+                <Comment><![CDATA[Latch Alm_Guard.]]></Comment>
+                <Text><![CDATA[XIO(Guard_Closed)OTL(Alm_Guard);]]></Text>
+              </Rung>
+              <Rung Number="2" Type="N">
+                <Comment><![CDATA[Latch Alm_Motor.]]></Comment>
+                <Text><![CDATA[XIC(Motor_Fault)OTL(Alm_Motor);]]></Text>
+              </Rung>
+              <Rung Number="3" Type="N">
+                <Comment><![CDATA[One reset clears all three.]]></Comment>
+                <Text><![CDATA[XIC(Reset_PB)OTU(Alm_EStop)OTU(Alm_Guard)OTU(Alm_Motor);]]></Text>
+              </Rung>
+              <Rung Number="4" Type="N">
+                <Comment><![CDATA[Summary.]]></Comment>
+                <Text><![CDATA[[XIC(Alm_EStop),XIC(Alm_Guard),XIC(Alm_Motor)]OTE(Any_Alarm);]]></Text>
+              </Rung>
+              <Rung Number="5" Type="N">
+                <Comment><![CDATA[Horn for 30 seconds, then silences itself.]]></Comment>
+                <Text><![CDATA[XIC(Any_Alarm)XIO(Horn_Timer.DN)TON(Horn_Timer,30000)OTE(Alarm_Horn);]]></Text>
+              </Rung>
+            </RLLContent>
+          </Routine>
+        </Routines>
+      </Program>
+    </Programs>
+  </Controller>
+</RSLogix5000Content>

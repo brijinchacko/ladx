@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RSLogix5000Content SchemaRevision="1.0" TargetType="Controller">
+  <Controller Name="PID temperature loop">
+    <Tags>
+      <Tag Name="PV_Temp" DataType="REAL" AliasFor="IW64">
+        <Description><![CDATA[Process temperature]]></Description>
+      </Tag>
+      <Tag Name="SP_Temp" DataType="REAL">
+        <Description><![CDATA[Setpoint]]></Description>
+      </Tag>
+      <Tag Name="CV_Heater" DataType="REAL" AliasFor="QW64">
+        <Description><![CDATA[Heater output]]></Description>
+      </Tag>
+      <Tag Name="Loop_Enable" DataType="BOOL" AliasFor="I0.0"/>
+      <Tag Name="Temp_High" DataType="BOOL" AliasFor="Q0.2"/>
+    </Tags>
+    <Programs>
+      <Program Name="MainProgram" MainRoutineName="Main">
+        <Tags>
+        </Tags>
+        <Routines>
+          <Routine Name="Main" Type="RLL">
+            <RLLContent>
+              <Rung Number="0" Type="N">
+                <Comment><![CDATA[Temperature loop. LADX does not model PID natively.]]></Comment>
+                <Text><![CDATA[XIC(Loop_Enable)PID(PV_Temp,SP_Temp,CV_Heater);]]></Text>
+              </Rung>
+              <Rung Number="1" Type="N">
+                <Comment><![CDATA[High temperature indication at 80 degrees.]]></Comment>
+                <Text><![CDATA[GRT(PV_Temp,80)OTE(Temp_High);]]></Text>
+              </Rung>
+            </RLLContent>
+          </Routine>
+        </Routines>
+      </Program>
+    </Programs>
+  </Controller>
+</RSLogix5000Content>

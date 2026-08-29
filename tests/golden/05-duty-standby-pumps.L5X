@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RSLogix5000Content SchemaRevision="1.0" TargetType="Controller">
+  <Controller Name="Duty standby pumps">
+    <Tags>
+      <Tag Name="Run_Req" DataType="BOOL" AliasFor="I0.0"/>
+      <Tag Name="P1_Fault" DataType="BOOL" AliasFor="I0.1"/>
+      <Tag Name="P2_Fault" DataType="BOOL" AliasFor="I0.2"/>
+      <Tag Name="Duty_Is_P2" DataType="BOOL">
+        <Description><![CDATA[Alternation flag, toggled on each start]]></Description>
+      </Tag>
+      <Tag Name="Pump_1" DataType="BOOL" AliasFor="Q0.0"/>
+      <Tag Name="Pump_2" DataType="BOOL" AliasFor="Q0.1"/>
+    </Tags>
+    <Programs>
+      <Program Name="MainProgram" MainRoutineName="Main">
+        <Tags>
+        </Tags>
+        <Routines>
+          <Routine Name="Main" Type="RLL">
+            <RLLContent>
+              <Rung Number="0" Type="N">
+                <Comment><![CDATA[P1 runs when it is duty, or when P2 has failed.]]></Comment>
+                <Text><![CDATA[XIC(Run_Req)XIO(P1_Fault)[XIO(Duty_Is_P2),XIC(P2_Fault)]OTE(Pump_1);]]></Text>
+              </Rung>
+              <Rung Number="1" Type="N">
+                <Comment><![CDATA[P2 runs when it is duty, or when P1 has failed.]]></Comment>
+                <Text><![CDATA[XIC(Run_Req)XIO(P2_Fault)[XIC(Duty_Is_P2),XIC(P1_Fault)]OTE(Pump_2);]]></Text>
+              </Rung>
+              <Rung Number="2" Type="N">
+                <Comment><![CDATA[Alternate on each demand.]]></Comment>
+                <Text><![CDATA[ONS(Run_Req)OTE(Duty_Is_P2);]]></Text>
+              </Rung>
+            </RLLContent>
+          </Routine>
+        </Routines>
+      </Program>
+    </Programs>
+  </Controller>
+</RSLogix5000Content>

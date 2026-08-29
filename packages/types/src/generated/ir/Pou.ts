@@ -7,4 +7,19 @@ export type Pou = { name: string, kind: PouKind, body: PouBody,
 /**
  * POU-scope tags, locals, and for a function block its interface.
  */
-local_tags: Array<Tag>, comment: string | null, };
+local_tags: Array<Tag>, comment: string | null, 
+/**
+ * What this POU lives inside, where the platform has such a thing.
+ *
+ * Rockwell nests routines in programs and two programs may each own a
+ * routine called MainRoutine, so something has to disambiguate them. The
+ * first attempt folded the program into the name, as `MainProgram/Main`,
+ * and that was wrong in a way that only showed up on a round trip: a POU
+ * written out and read back came home under a different name, because the
+ * exporter had to invent a program for anything that arrived without one.
+ * A name that changes when a file is written is not an identity.
+ *
+ * Kept beside the name instead. `None` means the source had no such
+ * concept, which is true of a program built in LADX's own editor.
+ */
+container: string | null, };

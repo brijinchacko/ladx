@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RSLogix5000Content SchemaRevision="1.0" TargetType="Controller">
+  <Controller Name="Conveyor with jam detection">
+    <Tags>
+      <Tag Name="Start_PB" DataType="BOOL" AliasFor="I0.0"/>
+      <Tag Name="Stop_PB" DataType="BOOL" AliasFor="I0.1">
+        <Description><![CDATA[Wired NC]]></Description>
+      </Tag>
+      <Tag Name="EStop_OK" DataType="BOOL" AliasFor="I0.2">
+        <Description><![CDATA[E-stop string, closed when healthy]]></Description>
+      </Tag>
+      <Tag Name="PE_Discharge" DataType="BOOL" AliasFor="I0.3">
+        <Description><![CDATA[Photocell at the discharge end]]></Description>
+      </Tag>
+      <Tag Name="Conveyor" DataType="BOOL" AliasFor="Q0.0"/>
+      <Tag Name="Jam_Alarm" DataType="BOOL" AliasFor="Q0.1"/>
+      <Tag Name="Jam_Timer" DataType="TIMER">
+        <Description><![CDATA[Product present too long]]></Description>
+      </Tag>
+    </Tags>
+    <Programs>
+      <Program Name="MainProgram" MainRoutineName="Main">
+        <Tags>
+        </Tags>
+        <Routines>
+          <Routine Name="Main" Type="RLL">
+            <RLLContent>
+              <Rung Number="0" Type="N">
+                <Comment><![CDATA[Run, dropped by a jam.]]></Comment>
+                <Text><![CDATA[[XIC(Start_PB),XIC(Conveyor)]XIC(Stop_PB)XIC(EStop_OK)XIO(Jam_Alarm)OTE(Conveyor);]]></Text>
+              </Rung>
+              <Rung Number="1" Type="N">
+                <Comment><![CDATA[Product blocking the discharge photocell while running.]]></Comment>
+                <Text><![CDATA[XIC(PE_Discharge)XIC(Conveyor)TON(Jam_Timer,5000);]]></Text>
+              </Rung>
+              <Rung Number="2" Type="N">
+                <Comment><![CDATA[Latched, so it needs a deliberate reset.]]></Comment>
+                <Text><![CDATA[XIC(Jam_Timer.DN)OTL(Jam_Alarm);]]></Text>
+              </Rung>
+            </RLLContent>
+          </Routine>
+        </Routines>
+      </Program>
+    </Programs>
+  </Controller>
+</RSLogix5000Content>
