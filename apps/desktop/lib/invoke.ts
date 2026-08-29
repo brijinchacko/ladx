@@ -60,6 +60,8 @@ export interface StudioSettings {
   workspaceDir?: string | null;
   lastProject?: string | null;
   sidebarCollapsed?: boolean;
+  /** Whether to look for a new version on launch. Off unless asked for. */
+  checkForUpdates?: boolean;
 }
 
 export async function settingsLoad(): Promise<StudioSettings> {
@@ -325,4 +327,8 @@ export async function setLastProject(project: string | null): Promise<void> {
 
 export async function setSidebarCollapsed(collapsed: boolean): Promise<void> {
   await tauriInvoke<void>("set_sidebar_collapsed", { collapsed });
+}
+
+export async function setCheckForUpdates(enabled: boolean): Promise<void> {
+  await tauriInvoke<void>("set_check_for_updates", { enabled });
 }

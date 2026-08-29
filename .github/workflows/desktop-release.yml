@@ -100,6 +100,15 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # Update signing. Separate from code signing above and not optional:
+          # the app carries the matching public key and refuses a package that
+          # is not signed with this, which is what stops the update endpoint
+          # becoming a way to hand somebody a different program. Without these
+          # the build still produces installers, but no .sig files and no
+          # latest.json, so nothing can update.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
           tagName: desktop-v__VERSION__
@@ -112,6 +121,9 @@ jobs:
 
             Not code signed yet, so both will warn on first run. On macOS,
             right click the app and choose Open.
+
+            Updates are signed separately and are off until switched on in
+            Settings.
           # Drafted rather than published, so somebody looks at the artefacts
           # before anybody downloads them.
           releaseDraft: true

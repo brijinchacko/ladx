@@ -235,6 +235,20 @@ pub fn get_workspace_dir(state: tauri::State<'_, AppState>) -> Result<Option<Str
     Ok(crate::commands::settings::settings_load(state)?.workspace_dir)
 }
 
+/// Turn the update check on or off.
+///
+/// Its own command rather than a whole-settings write from the frontend, for
+/// the same reason as the others: two of those in flight and one field loses.
+#[tauri::command]
+pub fn set_check_for_updates(
+    state: tauri::State<'_, AppState>,
+    enabled: bool,
+) -> Result<(), String> {
+    let mut settings = crate::commands::settings::settings_load(state.clone())?;
+    settings.check_for_updates = enabled;
+    crate::commands::settings::settings_save(state, settings)
+}
+
 /// Remember whether the sidebar is collapsed.
 #[tauri::command]
 pub fn set_sidebar_collapsed(

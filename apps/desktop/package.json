@@ -24,6 +24,7 @@
     "@ladx/ui": "workspace:*",
     "@tauri-apps/api": "^2.0.3",
     "@tauri-apps/plugin-opener": "^2.0.0",
+    "@tauri-apps/plugin-updater": "^2.0.0",
     "lucide-react": "^0.451.0",
     "next": "^15.5.0",
     "react": "^19.0.0",

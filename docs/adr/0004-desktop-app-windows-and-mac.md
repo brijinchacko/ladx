@@ -84,6 +84,28 @@ Both cannot be true. The options:
 rather than quietly. A customer who has air gapped the machine leaves it off and
 loses nothing they were promised.
 
+**Decided, 2026-08-29, and built.** Opt in, off by default, exactly as above.
+`tauri-plugin-updater` checks `https://ladx.ai/downloads/latest.json` once per
+launch when the switch in Settings is on, and never otherwise; a "Check now"
+button asks once without turning anything on, because "is there a new version"
+is a fair question without agreeing to be asked every launch.
+
+The manifest is served from ladx.ai rather than the GitHub release, because the
+repository is private and its assets need a token an updater cannot carry.
+`scripts/publish-desktop-update.mjs` rewrites the manifest tauri-action
+produces and refuses to write one that names a file it did not download.
+
+Update packages are signed with a key separate from any code signing
+certificate, and the public half is compiled into the app. An unsigned or
+wrongly signed package is refused before anything is written to disk, which is
+what stops the endpoint becoming a way to hand somebody a different program
+than the one they installed. The private key is a CI secret; there is a copy
+outside the repository, and losing both would mean no existing install could
+ever update again.
+
+`apps/desktop/CLAUDE.md` is reworded to match: no outbound call the person has
+not asked for, two of them, and loopback is not outbound.
+
 ### 3. Localhost is not "outbound", and that has to be written down
 
 The assistant needs a model. On desktop that is Ollama on `127.0.0.1:11434`. A

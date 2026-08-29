@@ -30,6 +30,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let handle = app.handle();
             let state = state::AppState::build(handle).map_err(|e| e.to_string())?;
@@ -87,6 +88,7 @@ pub fn run() {
             commands::workspace::get_workspace_dir,
             commands::workspace::set_last_project,
             commands::workspace::set_sidebar_collapsed,
+            commands::workspace::set_check_for_updates,
             commands::memory::memory_get,
             commands::memory::memory_set,
             commands::memory::memory_remove,

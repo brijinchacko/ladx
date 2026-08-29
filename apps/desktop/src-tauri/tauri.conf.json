@@ -45,5 +45,14 @@
     "windows": {
       "allowDowngrades": false
     }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": ["https://ladx.ai/downloads/latest.json"],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFFODREOTdCMkU4ODEzMzMKUldRekU0Z3VlOW1FcnBKb2cwM0FGODFxV0FZcjgxV0lBZkt0SmFtOVRwRnJGdk8vYVExcXRrTUoK",
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

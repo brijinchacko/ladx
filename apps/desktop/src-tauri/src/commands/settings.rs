@@ -34,6 +34,15 @@ pub struct StudioSettings {
     /// where it is stored, not what it does.
     #[serde(default)]
     pub sidebar_collapsed: bool,
+    /// Whether to look for a new version on launch.
+    ///
+    /// Off unless somebody turns it on, and that default is the whole point.
+    /// This app is sold on making no outbound call, and a plant that has air
+    /// gapped the machine has to be able to trust that without reading the
+    /// source. Somebody who wants fixes delivered can say so; nobody has it
+    /// decided for them.
+    #[serde(default)]
+    pub check_for_updates: bool,
 }
 
 #[tauri::command]

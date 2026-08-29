@@ -6,9 +6,11 @@ import {
   licenceActivate,
   licenceStatus,
   ollamaModels,
+  setCheckForUpdates,
   settingsLoad,
   settingsSave,
 } from "@/lib/invoke";
+import { type UpdateFound, lookForUpdate } from "@/lib/updates";
 import { Button, Input } from "@ladx/ui";
 import { type FormEvent, useEffect, useState } from "react";
 
@@ -171,8 +173,135 @@ export default function SettingsPage() {
             <p className="text-sm text-ink-500">Checking…</p>
           )}
         </section>
+
+        <UpdatesSection />
       </div>
     </div>
+  );
+}
+
+/**
+ * Updates, off unless somebody turns them on.
+ *
+ * The default is the product rather than a preference. This app is sold on
+ * making no outbound call, and a plant that has air gapped the machine has to
+ * be able to rely on that without reading the source. So the switch says
+ * plainly what turning it on does, and the button beside it checks once
+ * without turning anything on, because "is there a new version" is a fair
+ * question to ask without agreeing to be asked every launch.
+ */
+function UpdatesSection() {
+  const [enabled, setEnabled] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [found, setFound] = useState<UpdateFound | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [installing, setInstalling] = useState(false);
+
+  useEffect(() => {
+    settingsLoad()
+      .then((s) => setEnabled(Boolean(s.checkForUpdates)))
+      .catch(() => {});
+  }, []);
+
+  const toggle = async (next: boolean) => {
+    setEnabled(next);
+    await setCheckForUpdates(next).catch(() => {});
+  };
+
+  const checkNow = async () => {
+    setChecking(true);
+    setNote(null);
+    setFound(null);
+    try {
+      const update = await lookForUpdate(true);
+      if (update) setFound(update);
+      else setNote("You are on the latest version.");
+    } catch (err) {
+      setNote(
+        err instanceof Error
+          ? `Could not check: ${err.message}`
+          : "Could not reach ladx.ai to check.",
+      );
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  return (
+    <section className="space-y-4 rounded-lg border border-ink-100 p-6">
+      <div>
+        <h2 className="text-lg font-semibold">Updates</h2>
+        <p className="mt-1 text-sm text-ink-500">
+          Off by default, and it stays off until you say otherwise. Turned on, LADX asks ladx.ai
+          once per launch whether there is a newer version. That and the licence check are the only
+          times this application uses the network. Every update is signed, and one that is not is
+          refused before anything is written to disk.
+        </p>
+      </div>
+
+      <label className="flex items-start gap-3" htmlFor="check-updates">
+        <input
+          id="check-updates"
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => void toggle(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0"
+        />
+        <span className="text-sm text-ink-700">
+          Look for a new version when LADX starts
+          <span className="mt-0.5 block text-xs text-ink-500">
+            Leave this off on a machine that is not supposed to reach the internet.
+          </span>
+        </span>
+      </label>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => void checkNow()}
+          disabled={checking || installing}
+          className="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:bg-ink-50 disabled:opacity-50"
+        >
+          {checking ? "Checking…" : "Check now"}
+        </button>
+        {note && <p className="text-xs text-ink-500">{note}</p>}
+      </div>
+
+      {found && (
+        <div className="rounded-md border border-teal-500/40 bg-teal-500/5 p-4">
+          <p className="text-sm font-medium text-ink-900">
+            Version {found.version} is available
+            {found.date ? ` · ${found.date.slice(0, 10)}` : ""}
+          </p>
+          {found.notes && (
+            <p className="mt-1 whitespace-pre-wrap text-[12.5px] leading-relaxed text-ink-600">
+              {found.notes}
+            </p>
+          )}
+          <button
+            type="button"
+            disabled={installing}
+            onClick={() => {
+              setInstalling(true);
+              found
+                .install()
+                .catch((err) =>
+                  setNote(
+                    err instanceof Error ? err.message : "The update could not be installed.",
+                  ),
+                )
+                .finally(() => setInstalling(false));
+            }}
+            className="mt-3 rounded-md bg-teal-500 px-3 py-2 text-sm font-medium text-white hover:bg-teal-600 disabled:opacity-50"
+          >
+            {installing ? "Installing…" : "Download and install"}
+          </button>
+          <p className="mt-2 text-[11.5px] text-ink-500">
+            LADX closes and reopens itself once it is done. Save your work first.
+          </p>
+        </div>
+      )}
+    </section>
   );
 }
 

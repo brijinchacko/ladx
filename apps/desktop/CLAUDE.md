@@ -4,9 +4,24 @@ Windows-first desktop app. **Air-gapped capable.** Ollama for inference.
 
 ## CRITICAL, Network policy
 
-The desktop app makes EXACTLY ONE outbound HTTP call in its entire lifetime: a licence activation check against `https://auth.ladx.ai/activate`. No telemetry, no analytics, no model downloads, no anything else.
+**The desktop app makes no outbound call the person has not asked for.** There
+are exactly two, both deliberate, and everything else is forbidden: no
+telemetry, no analytics, no model downloads, no anything else.
 
-If you find yourself adding `fetch()` or `reqwest::get()` to anything in this app, stop and read this rule again. There is almost certainly a different way.
+1. **Licence activation**, once, against `https://auth.ladx.ai/activate`.
+2. **The update check**, against `https://ladx.ai/downloads/latest.json`, and
+   only when somebody has turned it on in Settings. It is off by default and
+   the default is the product: a plant that has air gapped the machine has to
+   be able to rely on that without reading the source.
+
+Loopback is not outbound. Ollama on `127.0.0.1:11434` leaves no machine, and
+the rule was never written about it; `lib/ask-model.ts` and the chat stream
+both go there through Tauri commands.
+
+If you find yourself adding `fetch()` or `reqwest::get()` to anything else in
+this app, stop and read this again. There is almost certainly a different way,
+and `scripts/check-no-network.mjs` fails the build if the shipped bundle names
+a host that is not on its list.
 
 ## Tauri command pattern
 
