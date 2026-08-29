@@ -29,6 +29,15 @@ export type { FeatureFlag } from "./generated/FeatureFlag";
 export type { FeatureSet } from "./generated/FeatureSet";
 export type { Maturity } from "./generated/Maturity";
 
+// ── Vendor integrations ──────────────────────────────────────────────────
+// Generated from `ladx-vendor`. "Not installed" is an ordinary answer here
+// rather than an error, so the UI reads these rather than catching
+// something.
+export type { Availability } from "./generated/vendor/Availability";
+export type { UnusableReason } from "./generated/vendor/UnusableReason";
+export type { VendorCapabilities } from "./generated/vendor/VendorCapabilities";
+export type { VendorStatus } from "./generated/vendor/VendorStatus";
+
 // ── LADX IR ──────────────────────────────────────────────────────────────
 // Generated from the `ladx-ir` crate into ./generated/ir/. Namespaced in its
 // own directory because ts-rs writes one flat file per type name, so two
