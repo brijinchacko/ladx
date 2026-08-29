@@ -381,6 +381,9 @@ importers:
 
   packages/studio:
     dependencies:
+      '@ladx/types':
+        specifier: workspace:*
+        version: link:../types
       '@ladx/ui':
         specifier: workspace:*
         version: link:../ui

@@ -125,3 +125,6 @@ export {
   type LadderGenerateRequest,
   type LadderGenerated,
 } from "./components/LadderAi";
+
+export { ladxProgramFromIr } from "./lib/from-ir";
+export type { FromIrResult, DroppedInstruction } from "./lib/from-ir";
