@@ -3,6 +3,8 @@
 import {
   type ActivationRecord,
   type OllamaModelsResponse,
+  featureSet,
+  featuresList,
   licenceActivate,
   licenceStatus,
   ollamaModels,
@@ -11,6 +13,7 @@ import {
   settingsSave,
 } from "@/lib/invoke";
 import { type UpdateFound, lookForUpdate } from "@/lib/updates";
+import type { FeatureDescriptor, Maturity } from "@ladx/types";
 import { Button, Input } from "@ladx/ui";
 import { type FormEvent, useEffect, useState } from "react";
 
@@ -175,6 +178,7 @@ export default function SettingsPage() {
         </section>
 
         <UpdatesSection />
+        <CapabilitiesSection />
       </div>
     </div>
   );
@@ -324,4 +328,119 @@ function formatBytes(b: number): string {
     i++;
   }
   return `${v.toFixed(1)} ${units[i]}`;
+}
+
+/**
+ * Capabilities that are not finished, and are off until somebody says so.
+ *
+ * The honest version of a feature flag screen. Each row says what turning it on
+ * gets you and how far along it actually is, because the failure mode here is
+ * not a lie but an omission: something ships, it works on our own fixtures, and
+ * nothing on screen distinguishes that from working against real vendor
+ * software.
+ *
+ * The list is built from the registry in Rust rather than written out again
+ * here, so a capability added to the code appears here without anyone
+ * remembering to add it twice.
+ */
+function CapabilitiesSection() {
+  const [flags, setFlags] = useState<FeatureDescriptor[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    featuresList()
+      .then(setFlags)
+      .catch((e) => setError(e instanceof Error ? e.message : "Could not read the list."));
+  }, []);
+
+  const toggle = async (d: FeatureDescriptor, next: boolean) => {
+    setBusy(d.id);
+    setError(null);
+    try {
+      setFlags(await featureSet(d.flag, next));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not change that.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <section className="space-y-4 rounded-lg border border-ink-100 p-6">
+      <div>
+        <h2 className="text-lg font-semibold">Unfinished capabilities</h2>
+        <p className="mt-1 text-sm text-ink-500">
+          Work in progress, switched off. Turning one on changes what LADX will attempt; it does not
+          make the feature finished, and nothing here has been proved against real vendor software.
+          Everything already in the app keeps working either way.
+        </p>
+      </div>
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
+
+      {flags === null ? (
+        <p className="text-sm text-ink-500">Loading…</p>
+      ) : (
+        <ul className="space-y-3">
+          {flags.map((d) => (
+            <li key={d.id} className="flex items-start gap-3">
+              <input
+                id={`flag-${d.id}`}
+                type="checkbox"
+                checked={d.enabled}
+                disabled={busy === d.id}
+                onChange={(e) => void toggle(d, e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0"
+              />
+              <label htmlFor={`flag-${d.id}`} className="min-w-0 flex-1 cursor-pointer">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-ink-900">{d.label}</span>
+                  <MaturityTag maturity={d.maturity} />
+                </span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-ink-500">
+                  {d.summary}
+                </span>
+                <span className="mt-0.5 block font-mono text-[11px] text-ink-400">{d.id}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/**
+ * How far along something is, said on the row rather than in a changelog.
+ *
+ * "Validated" is deliberately hard to earn: it means a named version of real
+ * vendor software imported and compiled what LADX produced. Our own tests
+ * cannot grant it.
+ */
+function MaturityTag({ maturity }: { maturity: Maturity }) {
+  const style: Record<Maturity, string> = {
+    planned: "border-ink-200 bg-ink-50 text-ink-500",
+    experimental: "border-amber-300 bg-amber-50 text-amber-800",
+    available: "border-teal-300 bg-teal-50 text-teal-700",
+    validated: "border-teal-500 bg-teal-500/10 text-teal-800",
+  };
+  const label: Record<Maturity, string> = {
+    planned: "Not built yet",
+    experimental: "Experimental",
+    available: "Available",
+    validated: "Validated",
+  };
+  return (
+    <span
+      className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${style[maturity]}`}
+      title={
+        maturity === "validated"
+          ? "Proved against real vendor software, with the version recorded."
+          : "Not proved against real vendor software."
+      }
+    >
+      {label[maturity]}
+    </span>
+  );
 }

@@ -78,17 +78,27 @@ pub fn settings_save(
     state: tauri::State<'_, AppState>,
     settings: StudioSettings,
 ) -> Result<(), String> {
-    let path = &state.paths.settings_json;
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
-    let json = serde_json::to_string_pretty(&settings).map_err(|e| e.to_string())?;
-    std::fs::write(path, json).map_err(|e| e.to_string())?;
+    write(&state, &settings)?;
     state
         .audit
         .log("user", "settings_saved", settings.default_model.as_deref())
         .ok();
     Ok(())
+}
+
+/// Put the settings back on disk, for code that is not a command.
+///
+/// The counterpart to [`load`]. Split out for the same reason: anything
+/// changing one setting should not have to go through the command layer, and
+/// two places writing this file would be two places to get the directory
+/// creation wrong.
+pub fn write(state: &tauri::State<'_, AppState>, settings: &StudioSettings) -> Result<(), String> {
+    let path = &state.paths.settings_json;
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    let json = serde_json::to_string_pretty(settings).map_err(|e| e.to_string())?;
+    std::fs::write(path, json).map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
@@ -153,4 +163,45 @@ mod feature_tests {
         assert!(back.features.is_on(FeatureFlag::VendorSiemens));
         assert!(!back.features.is_on(FeatureFlag::VendorRockwell));
     }
+}
+
+/// Every capability that can be switched on, and whether it is.
+///
+/// Built from the registry in `ladx-types` rather than listed again here, so a
+/// flag added to the code appears on the screen without anybody remembering to
+/// add it twice.
+#[tauri::command]
+pub fn features_list(
+    state: tauri::State<'_, AppState>,
+) -> Result<Vec<ladx_types::FeatureDescriptor>, String> {
+    let settings = load(&state)?;
+    Ok(ladx_types::describe_all(&settings.features))
+}
+
+/// Turn one capability on or off.
+///
+/// Written through the same settings file as everything else, so it survives a
+/// restart and is visible to anybody who opens the file.
+#[tauri::command]
+pub fn feature_set(
+    state: tauri::State<'_, AppState>,
+    flag: ladx_types::FeatureFlag,
+    enabled: bool,
+) -> Result<Vec<ladx_types::FeatureDescriptor>, String> {
+    let mut settings = load(&state)?;
+    if enabled {
+        settings.features.enable(flag);
+    } else {
+        settings.features.disable(flag);
+    }
+    write(&state, &settings)?;
+    state
+        .audit
+        .log(
+            "user",
+            if enabled { "feature_enabled" } else { "feature_disabled" },
+            Some(flag.id()),
+        )
+        .ok();
+    Ok(ladx_types::describe_all(&settings.features))
 }

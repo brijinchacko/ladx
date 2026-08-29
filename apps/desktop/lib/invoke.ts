@@ -1,6 +1,7 @@
 // Typed wrappers around Tauri commands. Frontend code calls these, // never `fetch()` to public domains (per ADR-005 / network policy).
 // Talking to Ollama on localhost is the Rust side's responsibility.
 
+import type { FeatureDescriptor, FeatureFlag } from "@ladx/types";
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 
 export const invoke = tauriInvoke;
@@ -331,4 +332,24 @@ export async function setSidebarCollapsed(collapsed: boolean): Promise<void> {
 
 export async function setCheckForUpdates(enabled: boolean): Promise<void> {
   await tauriInvoke<void>("set_check_for_updates", { enabled });
+}
+
+// ----- capabilities that can be switched on before they are finished -----
+
+/**
+ * The list comes from Rust, labels and all.
+ *
+ * Deliberately not re-declared here beyond the shape: the registry in
+ * `ladx-types` is the only place a flag is named, so a screen built from this
+ * cannot fall behind the code that gates on it.
+ */
+export async function featuresList(): Promise<FeatureDescriptor[]> {
+  return tauriInvoke<FeatureDescriptor[]>("features_list");
+}
+
+export async function featureSet(
+  flag: FeatureFlag,
+  enabled: boolean,
+): Promise<FeatureDescriptor[]> {
+  return tauriInvoke<FeatureDescriptor[]>("feature_set", { flag, enabled });
 }

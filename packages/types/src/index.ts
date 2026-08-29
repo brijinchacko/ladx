@@ -28,6 +28,7 @@ export type { VendorKind } from "./generated/VendorKind";
 export type { FeatureFlag } from "./generated/FeatureFlag";
 export type { FeatureSet } from "./generated/FeatureSet";
 export type { Maturity } from "./generated/Maturity";
+export type { FeatureDescriptor } from "./generated/FeatureDescriptor";
 
 // ── Vendor integrations ──────────────────────────────────────────────────
 // Generated from `ladx-vendor`. "Not installed" is an ordinary answer here

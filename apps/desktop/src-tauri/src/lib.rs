@@ -49,6 +49,8 @@ pub fn run() {
             commands::chat::ollama_chat_stream,
             commands::settings::settings_load,
             commands::settings::settings_save,
+            commands::settings::features_list,
+            commands::settings::feature_set,
             commands::projects::pick_and_parse_project,
             commands::projects::list_projects,
             commands::projects::get_project,

@@ -115,6 +115,36 @@ impl FeatureFlag {
         }
     }
 
+    /// What turning this on actually does, in a sentence somebody can act on.
+    ///
+    /// Written for the person deciding whether to switch it on, so it says what
+    /// they get and what is not finished, rather than naming the module.
+    pub fn summary(self) -> &'static str {
+        match self {
+            FeatureFlag::VendorSiemens => {
+                "Read and write TIA Portal projects through Siemens Openness. \
+                 Needs TIA Portal installed on this machine."
+            }
+            FeatureFlag::VendorRockwell => {
+                "Read an L5X for its logic rather than just its tag and routine names, \
+                 and write one back out. Not yet tested against Studio 5000."
+            }
+            FeatureFlag::EngineeringIo => "Build and check an I/O list against the project.",
+            FeatureFlag::EngineeringHardware => "Record racks, modules and networks.",
+            FeatureFlag::EngineeringAlarms => "Find alarm conditions in the logic and review them.",
+            FeatureFlag::EngineeringAnalysis => {
+                "Analyse a project for duplicate coils, unused tags and unreachable logic."
+            }
+            FeatureFlag::EngineeringDiff => "Compare two projects and describe what changed.",
+            FeatureFlag::MemoryProject => "Remember decisions and conventions for one project.",
+            FeatureFlag::MemoryCompany => "Reuse standards across every project.",
+            FeatureFlag::DocumentsAutogenerate => {
+                "Generate documents from what is actually in the project."
+            }
+            FeatureFlag::HmiVendorExport => "Export screens to a vendor HMI format.",
+        }
+    }
+
     /// Where this stands today.
     ///
     /// Every flag starts `Planned`, and moving one is a deliberate edit made
@@ -126,6 +156,37 @@ impl FeatureFlag {
         // is the edit that needs thought, not claiming less.
         Maturity::Planned
     }
+}
+
+/// One flag, as the settings screen needs it.
+///
+/// Built from the registry rather than written out again in TypeScript, so the
+/// list on screen cannot fall behind the list the code gates on.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../types/src/generated/")]
+#[serde(rename_all = "camelCase")]
+pub struct FeatureDescriptor {
+    pub flag: FeatureFlag,
+    pub id: String,
+    pub label: String,
+    pub summary: String,
+    pub maturity: Maturity,
+    pub enabled: bool,
+}
+
+/// Every flag, with whether it is currently on.
+pub fn describe_all(set: &FeatureSet) -> Vec<FeatureDescriptor> {
+    FeatureFlag::ALL
+        .iter()
+        .map(|f| FeatureDescriptor {
+            flag: *f,
+            id: f.id().to_string(),
+            label: f.label().to_string(),
+            summary: f.summary().to_string(),
+            maturity: f.maturity(),
+            enabled: set.is_on(*f),
+        })
+        .collect()
 }
 
 /// Which capabilities are on.
@@ -216,6 +277,35 @@ mod tests {
                 flag.id()
             );
         }
+    }
+
+    /// The screen is built from the registry, so a flag added to one is added to
+    /// the other. A list written twice is a list that drifts.
+    #[test]
+    fn every_flag_appears_on_the_settings_screen() {
+        let mut set = FeatureSet::default();
+        set.enable(FeatureFlag::VendorRockwell);
+        let described = describe_all(&set);
+
+        assert_eq!(described.len(), FeatureFlag::ALL.len());
+        for f in FeatureFlag::ALL {
+            let d = described.iter().find(|d| d.flag == f).expect("every flag is described");
+            assert_eq!(d.id, f.id());
+            assert!(!d.label.is_empty(), "{} has no label", f.id());
+            assert!(!d.summary.is_empty(), "{} has no summary", f.id());
+        }
+
+        let rockwell = described.iter().find(|d| d.flag == FeatureFlag::VendorRockwell).unwrap();
+        assert!(rockwell.enabled);
+        assert!(described.iter().filter(|d| d.enabled).count() == 1);
+    }
+
+    /// The Rockwell summary must not imply it has been proved against Studio
+    /// 5000, because it has not.
+    #[test]
+    fn the_rockwell_summary_does_not_overclaim() {
+        let s = FeatureFlag::VendorRockwell.summary();
+        assert!(s.contains("Not yet tested"), "got: {s}");
     }
 
     #[test]
