@@ -54,6 +54,10 @@ pub fn run() {
             commands::projects::get_project,
             commands::projects::delete_project,
             commands::validator::validate_st,
+            // Behind vendor.rockwell. Reads the logic rather than the names,
+            // and is not what the project picker uses.
+            commands::vendor::l5x_import,
+            commands::vendor::l5x_export,
             commands::autofix::auto_fix_st,
             commands::ai::ai_complete,
             commands::conversations::ensure_conversation,

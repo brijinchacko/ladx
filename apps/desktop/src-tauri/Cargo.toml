@@ -34,6 +34,7 @@ ladx-types = { workspace = true }
 ladx-inference = { workspace = true }
 ladx-audit = { workspace = true }
 ladx-parsers = { workspace = true }
+ladx-ir = { workspace = true }
 ladx-validator = { workspace = true }
 rusqlite = { version = "0.32", features = ["bundled"] }
 

@@ -9,4 +9,5 @@ pub mod ollama;
 pub mod projects;
 pub mod settings;
 pub mod validator;
+pub mod vendor;
 pub mod workspace;

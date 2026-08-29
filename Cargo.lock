@@ -2202,6 +2202,7 @@ dependencies = [
  "futures-util",
  "ladx-audit",
  "ladx-inference",
+ "ladx-ir",
  "ladx-parsers",
  "ladx-types",
  "ladx-validator",

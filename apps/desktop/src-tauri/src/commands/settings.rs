@@ -53,14 +53,24 @@ pub struct StudioSettings {
     pub features: ladx_types::FeatureSet,
 }
 
-#[tauri::command]
-pub fn settings_load(state: tauri::State<'_, AppState>) -> Result<StudioSettings, String> {
+/// The settings, for code that is not a command.
+///
+/// Split out so that anything needing to check a feature flag can read them
+/// without going through the command layer. Reading fresh each time is
+/// deliberate: somebody who turns a flag on expects it to take effect, and a
+/// value cached at boot would make the toggle look broken.
+pub fn load(state: &tauri::State<'_, AppState>) -> Result<StudioSettings, String> {
     let path = &state.paths.settings_json;
     if !path.exists() {
         return Ok(StudioSettings::default());
     }
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
     serde_json::from_slice(&bytes).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn settings_load(state: tauri::State<'_, AppState>) -> Result<StudioSettings, String> {
+    load(&state)
 }
 
 #[tauri::command]
