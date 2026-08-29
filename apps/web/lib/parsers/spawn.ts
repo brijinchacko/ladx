@@ -7,7 +7,7 @@ import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { ParseResult } from "@ladx/types";
+import type { ConversionReport, IrProject, ParseResult } from "@ladx/types";
 
 const exec = promisify(execFile);
 
@@ -48,4 +48,33 @@ export async function parseProjectFile(localPath: string): Promise<ParseResult> 
     maxBuffer: 32 * 1024 * 1024,
   });
   return JSON.parse(stdout) as ParseResult;
+}
+
+/**
+ * The same file, read for its logic rather than its names.
+ *
+ * A separate call rather than an option on the one above, because the two
+ * return different things and the existing shape is what the project picker
+ * consumes. Adding a field to that would be a change every caller has to
+ * tolerate for the sake of one that wants it.
+ *
+ * Rockwell L5X only today. The binary refuses anything else by name rather
+ * than failing somewhere deeper.
+ */
+export async function parseProjectToIr(localPath: string): Promise<IrImport> {
+  const bin = ladxParserBinary();
+  const { stdout } = await exec(bin, ["--ir", localPath], {
+    timeout: 30_000,
+    // Larger than the manifest path: this carries every rung in the project,
+    // and a big line is thousands of them.
+    maxBuffer: 128 * 1024 * 1024,
+  });
+  return JSON.parse(stdout) as IrImport;
+}
+
+export interface IrImport {
+  project: IrProject;
+  report: ConversionReport;
+  /** One line, for showing without making somebody read the whole report. */
+  summary: string;
 }

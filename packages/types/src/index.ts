@@ -54,6 +54,11 @@ export type { OpCode } from "./generated/ir/OpCode";
 export type { Operand } from "./generated/ir/Operand";
 export type { VendorDetail } from "./generated/ir/VendorDetail";
 export type { DataTypeDef } from "./generated/ir/DataTypeDef";
+// How well something survived a conversion. Shared by every importer and
+// exporter, so a report reads the same whatever produced it.
+export type { Fidelity } from "./generated/ir/Fidelity";
+export type { FidelityNote } from "./generated/ir/FidelityNote";
+export type { ConversionReport } from "./generated/ir/ConversionReport";
 export type { FieldDevice } from "./generated/ir/FieldDevice";
 export type { IoDirection } from "./generated/ir/IoDirection";
 // `Tag` and `DataType` exist in both crates with different shapes; the IR ones
