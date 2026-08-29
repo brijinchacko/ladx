@@ -15,6 +15,7 @@ use ladx_ir::IrProject;
 use ladx_ir::fidelity::ConversionReport;
 use ladx_types::FeatureFlag;
 use serde::Serialize;
+use tauri_plugin_dialog::DialogExt;
 
 /// A project read out of a vendor file, and what the reading cost.
 #[derive(Serialize)]
@@ -63,6 +64,48 @@ pub fn l5x_import(
         project: import.project,
         report: import.report,
     })
+}
+
+/// Choose an L5X and read it, in one step.
+///
+/// A native dialog rather than a file input, and the reason is the file sizes
+/// involved. A browser picker hands the page a File with no path, so the bytes
+/// would have to cross the IPC boundary as an array to reach Rust, and an L5X
+/// is routinely tens of megabytes. The dialog gives a path, and the path is all
+/// that has to cross.
+///
+/// Returns None when the dialog is cancelled, which is not an error.
+#[tauri::command]
+pub async fn pick_and_import_l5x(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+) -> Result<Option<VendorImport>, String> {
+    require(&state, FeatureFlag::VendorRockwell)?;
+
+    let chosen: Option<std::path::PathBuf> = app
+        .dialog()
+        .file()
+        .add_filter("Studio 5000 export", &["L5X", "l5x"])
+        .blocking_pick_file()
+        .and_then(|p| p.into_path().ok());
+
+    let Some(path) = chosen else {
+        return Ok(None);
+    };
+
+    let bytes = std::fs::read(&path).map_err(|e| format!("could not read that file: {e}"))?;
+    let import = ladx_parsers::l5x_ir::parse_to_ir(&bytes).map_err(|e| e.to_string())?;
+
+    state
+        .audit
+        .log("user", "l5x_import", path.to_str())
+        .ok();
+
+    Ok(Some(VendorImport {
+        summary: import.report.summary(),
+        project: import.project,
+        report: import.report,
+    }))
 }
 
 /// Write an IR project back out as an L5X.

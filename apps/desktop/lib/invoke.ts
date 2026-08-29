@@ -1,7 +1,7 @@
 // Typed wrappers around Tauri commands. Frontend code calls these, // never `fetch()` to public domains (per ADR-005 / network policy).
 // Talking to Ollama on localhost is the Rust side's responsibility.
 
-import type { FeatureDescriptor, FeatureFlag } from "@ladx/types";
+import type { ConversionReport, FeatureDescriptor, FeatureFlag, IrProject } from "@ladx/types";
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 
 export const invoke = tauriInvoke;
@@ -352,4 +352,21 @@ export async function featureSet(
   enabled: boolean,
 ): Promise<FeatureDescriptor[]> {
   return tauriInvoke<FeatureDescriptor[]>("feature_set", { flag, enabled });
+}
+
+/**
+ * Choose an L5X and read it for its logic, in one step.
+ *
+ * Behind the vendor.rockwell capability; the command refuses when it is off.
+ * Resolves to null when the dialog is cancelled, which is not an error.
+ */
+export async function pickAndImportL5x(): Promise<VendorImport | null> {
+  return tauriInvoke<VendorImport | null>("pick_and_import_l5x");
+}
+
+export interface VendorImport {
+  project: IrProject;
+  report: ConversionReport;
+  /** One line, for showing without making somebody read the whole report. */
+  summary: string;
 }

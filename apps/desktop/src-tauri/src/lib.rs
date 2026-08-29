@@ -59,6 +59,7 @@ pub fn run() {
             // Behind vendor.rockwell. Reads the logic rather than the names,
             // and is not what the project picker uses.
             commands::vendor::l5x_import,
+            commands::vendor::pick_and_import_l5x,
             commands::vendor::l5x_export,
             commands::autofix::auto_fix_st,
             commands::ai::ai_complete,

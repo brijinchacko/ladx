@@ -7,8 +7,11 @@ import {
   type ConvertSource,
   ConvertWorkbench,
   type LadxProgram,
+  ladxProgramFromIr,
   partitionRunnableLike,
+  reportToNotes,
 } from "@/lib/designs";
+import { featuresList, pickAndImportL5x } from "@/lib/invoke";
 import { useProjectFolder } from "@/lib/project-folder";
 import { useEffect, useState } from "react";
 
@@ -24,6 +27,20 @@ export default function ConvertPage() {
   const [unreadable, setUnreadable] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { project, fileInto } = useProjectFolder();
+
+  /*
+   * Whether the Rockwell reader is switched on.
+   *
+   * Asked once when the page opens rather than assumed. Off is the normal
+   * answer and the button simply does not appear, which is better than a
+   * disabled control explaining a capability somebody has not asked for.
+   */
+  const [rockwell, setRockwell] = useState(false);
+  useEffect(() => {
+    featuresList()
+      .then((flags) => setRockwell(flags.some((f) => f.id === "vendor.rockwell" && f.enabled)))
+      .catch(() => setRockwell(false));
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -83,6 +100,29 @@ export default function ConvertPage() {
               label: "Save to project",
               save: async (text, filename) =>
                 (await fileInto(kindOf(filename), filename, text)) ?? filename,
+            }
+          : undefined
+      }
+      /*
+       * A native dialog rather than the browser's file input, because the
+       * reader is in Rust and an L5X is routinely tens of megabytes: the
+       * dialog hands over a path, and only the path crosses the boundary.
+       */
+      coreImport={
+        rockwell
+          ? {
+              label: "Open an L5X",
+              run: async () => {
+                const out = await pickAndImportL5x();
+                if (!out) return null;
+                const { program, dropped } = ladxProgramFromIr(out.project);
+                return {
+                  program,
+                  notes: reportToNotes(out.report, dropped),
+                  summary: out.summary,
+                  name: out.project.name,
+                };
+              },
             }
           : undefined
       }

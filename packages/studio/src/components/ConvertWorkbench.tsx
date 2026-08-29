@@ -88,6 +88,7 @@ export default function ConvertWorkbench({
   askModel,
   modelsUrl = "/api/models",
   assistantStore,
+  coreImport,
 }: {
   sources: ConvertSource[];
   companyName: string | null;
@@ -128,6 +129,30 @@ export default function ConvertWorkbench({
   askModel: AskModel;
   /** Where the model list comes from: a URL on the web, a function on desktop. */
   modelsUrl?: ModelsSource;
+  /**
+   * Opening a vendor file with the Rust reader, when the surface offers it.
+   *
+   * Injected rather than called directly, because the two surfaces open a file
+   * in genuinely different ways. The desktop uses a native dialog and passes a
+   * path, since an L5X is routinely tens of megabytes and a browser file input
+   * would put all of it through the IPC boundary to get it to Rust. The web has
+   * the bytes on the server already.
+   *
+   * Absent means this surface has no such reader, or the capability is switched
+   * off, and the file input beside it keeps working exactly as before. The
+   * label travels with the behaviour so the button can say what it will
+   * actually do.
+   */
+  coreImport?: {
+    label: string;
+    /** Returns null when the person cancels, which is not an error. */
+    run: () => Promise<{
+      program: LadxProgram;
+      notes: ImportNote[];
+      summary: string;
+      name: string;
+    } | null>;
+  };
   /**
    * Where the conversation is kept.
    *
@@ -281,6 +306,38 @@ export default function ConvertWorkbench({
       program: out.imported.program,
     });
   }, []);
+
+  /**
+   * The same thing through the Rust reader, when the surface offers one.
+   *
+   * Kept beside `takeFile` rather than replacing it. The file input still
+   * works, still reads the formats it always did, and this is a second way in
+   * for the one format the new reader currently handles.
+   */
+  const [coreBusy, setCoreBusy] = useState(false);
+  const openWithCore = useCallback(async () => {
+    if (!coreImport) return;
+    setCoreBusy(true);
+    setError(null);
+    setRemedy(null);
+    try {
+      const out = await coreImport.run();
+      // Null is a cancelled dialog, so nothing should change on screen.
+      if (!out) return;
+      setImportNotes(out.notes);
+      setImportFormat(out.summary);
+      setUploaded({
+        projectId: null,
+        projectName: null,
+        name: out.name,
+        program: out.program,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not read that file.");
+    } finally {
+      setCoreBusy(false);
+    }
+  }, [coreImport]);
 
   const [exported, setExported] = useState<string | null>(null);
 
@@ -470,6 +527,20 @@ export default function ConvertWorkbench({
             e.target.value = "";
           }}
         />
+        {/* Only when the surface has a reader and it is switched on. An
+            unfinished capability should not leave a button behind that
+            explains why it cannot do anything. */}
+        {coreImport && (
+          <button
+            type="button"
+            onClick={() => void openWithCore()}
+            disabled={coreBusy}
+            className="flex h-7 items-center gap-1.5 rounded-md border border-teal-300 bg-teal-50/60 px-2.5 text-[12px] text-teal-800 transition-colors hover:border-teal-500 disabled:opacity-50"
+          >
+            <PackageOpen className="h-3.5 w-3.5" />
+            {coreBusy ? "Reading…" : coreImport.label}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => {

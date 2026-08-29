@@ -128,3 +128,4 @@ export {
 
 export { ladxProgramFromIr } from "./lib/from-ir";
 export type { FromIrResult, DroppedInstruction } from "./lib/from-ir";
+export { reportToNotes } from "./lib/core-import";
