@@ -1,0 +1,34 @@
+# Line endings.
+#
+# Everything text is LF in the repository and LF on checkout, on every
+# platform. Without this, git on Windows helpfully rewrites LF to CRLF when it
+# checks out, and Biome, whose formatter is the one linter this repo has, sees
+# a file that disagrees with itself and fails the whole run. That is what was
+# failing CI on windows-latest on every push: not the code, the checkout.
+* text=auto eol=lf
+
+# Binaries, which must never be touched. Brand artwork, icon containers, the
+# fonts and anything shipped as a build artefact.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.dmg binary
+*.msi binary
+*.exe binary
+
+# Generated, and noisy in a review. Still committed, because the lockfile is
+# the build and the bindings are checked against the Rust types in CI.
+pnpm-lock.yaml linguist-generated=true -diff
+packages/types/src/generated/** linguist-generated=true

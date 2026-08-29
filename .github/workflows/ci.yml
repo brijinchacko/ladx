@@ -1,3 +1,16 @@
+# Every push and every pull request.
+#
+# Split by what each platform is actually for rather than running everything
+# twice. The web app is served from Linux, so that is where the JavaScript, the
+# types and the shared Rust crates are checked. The desktop app is built for
+# Windows and macOS, so that is where its own crate is compiled and tested.
+#
+# It is deliberately not a release build. `desktop-release.yml` produces
+# installers, signs the update packages and drafts a release; doing that on
+# every push would double the cost of the slowest job in the repository for no
+# extra signal, and it would sit a Tauri bundle behind every commit that nobody
+# downloads.
+
 name: CI
 
 on:
@@ -9,27 +22,20 @@ env:
   TURBO_TELEMETRY_DISABLED: 1
 
 jobs:
-  ci:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+  # Everything that is not the desktop binary.
+  checks:
+    name: Lint, types, tests, build
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - uses: pnpm/action-setup@v4
-
       - uses: dtolnay/rust-toolchain@stable
-
       - uses: Swatinem/rust-cache@v2
 
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
       - name: Lint
         run: pnpm lint
@@ -37,11 +43,15 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Cargo test (regenerates TS bindings)
-        run: pnpm test:rust
+      # The shared crates only. The desktop crate is Tauri, which needs GTK and
+      # WebKit development headers to build at all, and this repository does not
+      # ship a Linux desktop: installing them here would be a minute of apt on
+      # every run to compile something nobody downloads. It is tested on Windows
+      # below, where it is a platform we actually build for.
+      - name: Cargo test, shared crates (regenerates TS bindings)
+        run: pnpm test:rust:core
 
       - name: Verify TS bindings up to date
-        shell: bash
         run: |
           if ! git diff --exit-code packages/types/src/generated/; then
             echo "::error::Generated TS bindings are out of date. Run 'pnpm test:rust' and commit."
@@ -54,6 +64,30 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Tauri build (Windows only)
-        if: matrix.os == 'windows-latest'
-        run: pnpm tauri:build
+  # The desktop crate, on a platform it is built for.
+  desktop:
+    name: Desktop crate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./apps/desktop/src-tauri -> target"
+
+      - run: pnpm install --frozen-lockfile
+
+      # Its own tests: the workspace layout, the project folder, the local
+      # store and the base64 write path are all in here.
+      - name: Cargo test
+        run: cargo test -p ladx-studio
+
+      # Compiled but not bundled. This catches a desktop build that has stopped
+      # compiling, which is the thing worth knowing on a push, without spending
+      # the ten minutes an installer takes.
+      - name: Cargo check
+        run: cargo check -p ladx-studio

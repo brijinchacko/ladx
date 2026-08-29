@@ -14,6 +14,7 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "test:rust": "cargo test --workspace",
+    "test:rust:core": "cargo test --workspace --exclude ladx-studio",
     "test:e2e": "turbo test:e2e",
     "tauri:dev": "pnpm --filter=@ladx/desktop tauri dev",
     "tauri:build": "pnpm --filter=@ladx/desktop tauri build",
