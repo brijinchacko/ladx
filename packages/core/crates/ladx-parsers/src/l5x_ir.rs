@@ -244,6 +244,19 @@ pub fn parse_to_ir(bytes: &[u8]) -> Result<L5xImport> {
                     "Tag" => {
                         if let Some(n) = get(&attrs, "Name") {
                             ctx.tag_description = None;
+                            // A tag with no declared type is a guess, and the
+                            // guess is reported rather than made quietly. BOOL
+                            // is the safest default and is still wrong for
+                            // anything called Speed or Setpoint, so somebody
+                            // needs to be told which tags were assumed.
+                            if get(&attrs, "DataType").is_none() {
+                                report.add(
+                                    Fidelity::Approximate,
+                                    format!("Tag {n}"),
+                                    "The source declared no data type; read as BOOL. \
+                                     Check this before relying on it.",
+                                );
+                            }
                             ctx.open_tag = Some(Tag {
                                 name: n.to_string(),
                                 data_type: data_type_for(get(&attrs, "DataType").unwrap_or("BOOL")),
@@ -474,6 +487,16 @@ fn finish_routine(ctx: &mut Ctx, project: &mut IrProject, report: &mut Conversio
     ctx.st_lines.clear();
 }
 
+/// The sample L5X, shared with the exporter's round-trip tests.
+///
+/// Exposed rather than duplicated: two copies of a fixture drift, and the
+/// round trip is only meaningful if it runs over the same document the import
+/// tests assert against.
+#[cfg(test)]
+pub fn tests_sample() -> &'static str {
+    tests::SAMPLE
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -481,7 +504,7 @@ mod tests {
     /// A small but realistically shaped L5X: CDATA rung text, descriptions,
     /// controller and program scoped tags, a UDT with a hidden filler member,
     /// and two routine languages.
-    const SAMPLE: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+    pub(crate) const SAMPLE: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
 <RSLogix5000Content SchemaRevision="1.0" SoftwareRevision="32.00">
   <Controller Name="LineFour" ProcessorType="1756-L83E">
     <DataTypes>
@@ -711,6 +734,30 @@ mod tests {
         for aoi in &names.manifest.aois {
             assert!(ir.pous.iter().any(|p| &p.name == aoi), "AOI {aoi} missing from the IR");
         }
+    }
+
+    /// A guessed data type must be visible in the report, because a tag called
+    /// Speed read as BOOL is the kind of wrong that is only noticed later.
+    #[test]
+    fn a_tag_with_no_declared_type_is_reported_as_a_guess() {
+        let xml = r#"<?xml version="1.0"?>
+<RSLogix5000Content>
+  <Controller Name="C">
+    <Tags>
+      <Tag Name="Conveyor_Speed"/>
+      <Tag Name="Motor" DataType="BOOL"/>
+    </Tags>
+  </Controller>
+</RSLogix5000Content>"#;
+        let import = parse_to_ir(xml.as_bytes()).unwrap();
+        let guesses: Vec<&str> = import
+            .report
+            .notes
+            .iter()
+            .filter(|n| n.fidelity == Fidelity::Approximate)
+            .map(|n| n.subject.as_str())
+            .collect();
+        assert_eq!(guesses, vec!["Tag Conveyor_Speed"], "only the undeclared one is a guess");
     }
 
     #[test]

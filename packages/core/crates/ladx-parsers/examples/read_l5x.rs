@@ -41,6 +41,12 @@ fn main() {
                 };
                 println!("  {:<40} {detail}", pou.name);
             }
+            if std::env::args().any(|a| a == "--write") {
+                match ladx_parsers::l5x_write::write(&import.project) {
+                    Ok(out) => println!("\n--- written back ---\n{}", out.xml),
+                    Err(e) => eprintln!("could not write: {e}"),
+                }
+            }
             println!("\n{}", import.report.summary());
             for note in import.report.for_review() {
                 println!("  [{}] {}: {}", note.fidelity.label(), note.subject, note.detail);
