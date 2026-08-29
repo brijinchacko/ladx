@@ -8,6 +8,7 @@
 
 pub mod audit;
 pub mod document;
+pub mod features;
 pub mod hmi;
 pub mod manifest;
 pub mod memory;
@@ -18,6 +19,7 @@ pub mod validator;
 
 pub use audit::*;
 pub use document::*;
+pub use features::*;
 pub use hmi::*;
 pub use manifest::*;
 pub use memory::*;

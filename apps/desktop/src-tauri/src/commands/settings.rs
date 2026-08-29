@@ -43,6 +43,14 @@ pub struct StudioSettings {
     /// decided for them.
     #[serde(default)]
     pub check_for_updates: bool,
+    /// Capabilities switched on before they are finished.
+    ///
+    /// Empty by default, and empty means the app behaves exactly as it did
+    /// before any of them existed. Stored rather than derived so that turning
+    /// one on is a decision the person made and can see, not something a build
+    /// decided for them.
+    #[serde(default)]
+    pub features: ladx_types::FeatureSet,
 }
 
 #[tauri::command]
@@ -71,4 +79,41 @@ pub fn settings_save(
         .log("user", "settings_saved", settings.default_model.as_deref())
         .ok();
     Ok(())
+}
+
+#[cfg(test)]
+mod feature_tests {
+    use super::*;
+    use ladx_types::{FeatureFlag, FeatureSet};
+
+    /// A settings file written before flags existed still loads.
+    ///
+    /// This is the file every install already has on disk, so getting it wrong
+    /// would present as an app that has forgotten the workspace, the model and
+    /// the last project all at once.
+    #[test]
+    fn settings_written_before_flags_still_load() {
+        let old = r#"{
+            "defaultModel": "qwen2.5-coder:7b",
+            "workspaceDir": "/Users/someone/LADX",
+            "lastProject": "/Users/someone/LADX/Line 4",
+            "sidebarCollapsed": false,
+            "checkForUpdates": false
+        }"#;
+        let s: StudioSettings = serde_json::from_str(old).expect("existing settings must load");
+        assert_eq!(s.default_model.as_deref(), Some("qwen2.5-coder:7b"));
+        assert_eq!(s.features, FeatureSet::default());
+        assert!(s.features.enabled.is_empty(), "nothing switches itself on");
+    }
+
+    #[test]
+    fn flags_round_trip_through_the_settings_file() {
+        let mut s = StudioSettings::default();
+        s.features.enable(FeatureFlag::VendorSiemens);
+        let json = serde_json::to_string(&s).unwrap();
+        assert!(json.contains("vendor.siemens"), "stored under its documented name");
+        let back: StudioSettings = serde_json::from_str(&json).unwrap();
+        assert!(back.features.is_on(FeatureFlag::VendorSiemens));
+        assert!(!back.features.is_on(FeatureFlag::VendorRockwell));
+    }
 }

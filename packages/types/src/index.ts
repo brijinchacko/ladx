@@ -22,6 +22,13 @@ export type { ValidatorDiagnostic } from "./generated/ValidatorDiagnostic";
 export type { ValidatorReport } from "./generated/ValidatorReport";
 export type { VendorKind } from "./generated/VendorKind";
 
+// ── Feature flags ────────────────────────────────────────────────────────
+// The list is defined in `ladx-types` so the vendor bridges and the UI
+// cannot disagree about what exists or what it is called.
+export type { FeatureFlag } from "./generated/FeatureFlag";
+export type { FeatureSet } from "./generated/FeatureSet";
+export type { Maturity } from "./generated/Maturity";
+
 // ── LADX IR ──────────────────────────────────────────────────────────────
 // Generated from the `ladx-ir` crate into ./generated/ir/. Namespaced in its
 // own directory because ts-rs writes one flat file per type name, so two
