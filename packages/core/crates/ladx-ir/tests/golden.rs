@@ -20,7 +20,7 @@
 //! and read the diff before committing it. A golden diff in a commit that was
 //! not meant to change output is the entire point of the file.
 
-use ladx_ir::{IrProject, OpCode, Pou, PouBody, plcopen_graph, to_st};
+use ladx_ir::{IrProject, Logic, OpCode, Pou, PouBody, neutral_text, plcopen_graph, to_st};
 use std::path::PathBuf;
 
 fn repo_root() -> PathBuf {
@@ -191,4 +191,133 @@ fn the_entry_point_names_a_pou_that_exists() {
             "{slug} names entry point {entry:?}, which is not one of its POUs"
         );
     }
+}
+
+/// What a rung means, with the bookkeeping stripped off.
+///
+/// A round trip is not required to return byte-identical structs, and asserting
+/// that it does tests the wrong thing. Instruction ids are synthetic and get
+/// reassigned by whoever built the object last, and the reader records the
+/// original mnemonic in `vendor` even for instructions it understands perfectly
+/// well, which a hand-written fixture has no reason to carry.
+///
+/// What must survive is the meaning: the same instructions, with the same
+/// operands, in the same series and parallel arrangement. That is what this
+/// projects onto, so a failure here is a real change in the logic rather than a
+/// change in how it was labelled.
+fn meaning(logic: &Logic) -> String {
+    match logic {
+        Logic::Element { instruction } => instruction_meaning(instruction),
+        Logic::Series { children } => {
+            format!("series({})", children.iter().map(meaning).collect::<Vec<_>>().join(","))
+        }
+        Logic::Parallel { children } => {
+            format!("parallel({})", children.iter().map(meaning).collect::<Vec<_>>().join(","))
+        }
+    }
+}
+
+fn instruction_meaning(i: &ladx_ir::Instruction) -> String {
+    // For something LADX never understood, the original mnemonic *is* the
+    // meaning, so it is part of the comparison rather than stripped with the
+    // rest of the provenance.
+    let op = if i.op == OpCode::Unsupported {
+        i.vendor.as_ref().map(|v| v.original_mnemonic.clone()).unwrap_or_else(|| "?".into())
+    } else {
+        format!("{:?}", i.op)
+    };
+    let operands: Vec<String> = i
+        .operands
+        .iter()
+        .map(|o| match o {
+            ladx_ir::Operand::Tag { name } => name.clone(),
+            ladx_ir::Operand::Text { value } => value.clone(),
+            ladx_ir::Operand::Number { value } => format!("{value}"),
+        })
+        .collect();
+    format!("{op}({})", operands.join(","))
+}
+
+/// The guarantee that matters for an export: the text is stable.
+///
+/// Written, read back, written again, and the two strings must match. This is
+/// the property a customer's file depends on. If it holds, exporting a project
+/// LADX imported returns the same rungs it was given, whether or not LADX
+/// understood every instruction in them.
+#[test]
+fn writing_a_fixture_rung_is_stable() {
+    for (slug, project) in fixtures() {
+        for pou in &project.pous {
+            let PouBody::Ladder { rungs } = &pou.body else { continue };
+            for rung in rungs {
+                let once = neutral_text::rung_to_text(rung)
+                    .unwrap_or_else(|e| panic!("{slug}/{}/{} could not be written: {e}", pou.name, rung.id));
+                let reread = neutral_text::parse_rung(&once, rung.id.clone())
+                    .unwrap_or_else(|e| panic!("{slug}/{} wrote unreadable text {once:?}: {e}", rung.id));
+                let twice = neutral_text::rung_to_text(&reread)
+                    .unwrap_or_else(|e| panic!("{slug}/{} could not be rewritten: {e}", rung.id));
+
+                assert_eq!(twice, once, "{slug}/{}/{} is not stable", pou.name, rung.id);
+            }
+        }
+    }
+}
+
+/// And the structure survives, for every rung LADX fully understands.
+///
+/// The exception is deliberate and worth stating, because it is a real limit
+/// rather than a gap in the test. Rockwell neutral text does not say whether an
+/// instruction drives the rung or gates it; that is knowledge about the
+/// instruction, and for one LADX has never heard of it has none. So a rung
+/// holding an unknown mnemonic comes back with it on the condition side, even
+/// if whoever built the IR knew it was an output.
+///
+/// The text is unchanged either way, which is why the stability test above
+/// covers those rungs and this one does not. What LADX cannot currently do is
+/// remember its own classification of an instruction it does not understand
+/// across an export. Nothing is lost from the file; something is lost from the
+/// model.
+#[test]
+fn structure_survives_for_rungs_ladx_fully_understands() {
+    let mut checked = 0;
+    for (slug, project) in fixtures() {
+        for pou in &project.pous {
+            let PouBody::Ladder { rungs } = &pou.body else { continue };
+            for rung in rungs {
+                let has_unknown = rung
+                    .logic
+                    .instructions()
+                    .into_iter()
+                    .chain(rung.outputs.iter())
+                    .any(|i| i.op == OpCode::Unsupported);
+                if has_unknown {
+                    continue;
+                }
+
+                let text = neutral_text::rung_to_text(rung).unwrap();
+                let back = neutral_text::parse_rung(&text, rung.id.clone()).unwrap();
+
+                // Normalised first: a series wrapping a single element is the
+                // same circuit as that element alone, and which one you get
+                // depends on whether a human or the reader built the object.
+                assert_eq!(
+                    meaning(&plcopen_graph::normalise(back.logic.clone())),
+                    meaning(&plcopen_graph::normalise(rung.logic.clone())),
+                    "{slug}/{}/{} changed meaning: {text}",
+                    pou.name,
+                    rung.id
+                );
+
+                let before: Vec<String> = rung.outputs.iter().map(instruction_meaning).collect();
+                let after: Vec<String> = back.outputs.iter().map(instruction_meaning).collect();
+                assert_eq!(
+                    after, before,
+                    "{slug}/{}/{} lost or changed an output: {text}",
+                    pou.name, rung.id
+                );
+                checked += 1;
+            }
+        }
+    }
+    assert!(checked > 20, "only {checked} rungs were checked; the fixtures should give more");
 }

@@ -274,6 +274,100 @@ fn push_operand(out: &mut Vec<Operand>, raw: &str) {
     }
 }
 
+/// Why a rung could not be written back as Rockwell neutral text.
+#[derive(Debug, thiserror::Error, PartialEq)]
+pub enum WriteError {
+    #[error("{op:?} has no Rockwell equivalent and nothing was preserved to write instead")]
+    NoEquivalent { op: OpCode },
+    #[error("an unsupported instruction arrived with no record of what it originally was")]
+    LostOrigin,
+}
+
+/// A rung, written back out as Rockwell neutral text.
+///
+/// The inverse of [`parse_rung`], and it has to be exact rather than merely
+/// plausible: this is what an export writes into somebody's project file.
+///
+/// The interesting case is [`OpCode::Unsupported`]. LADX could not read the
+/// instruction on the way in, so it kept the mnemonic and operands verbatim,
+/// and writing it back means putting that original back exactly as it was
+/// found. That is the whole preservation contract, and it is the difference
+/// between a round trip that returns somebody's project and one that returns a
+/// project with the PID loop quietly missing.
+pub fn rung_to_text(rung: &Rung) -> Result<String, WriteError> {
+    let mut out = String::new();
+    write_logic(&rung.logic, &mut out)?;
+    for output in &rung.outputs {
+        write_instruction(output, &mut out)?;
+    }
+    out.push(';');
+    Ok(out)
+}
+
+fn write_logic(logic: &Logic, out: &mut String) -> Result<(), WriteError> {
+    match logic {
+        Logic::Element { instruction } => write_instruction(instruction, out),
+        Logic::Series { children } => {
+            for c in children {
+                write_logic(c, out)?;
+            }
+            Ok(())
+        }
+        Logic::Parallel { children } => {
+            out.push('[');
+            for (i, c) in children.iter().enumerate() {
+                if i > 0 {
+                    out.push(',');
+                }
+                write_logic(c, out)?;
+            }
+            out.push(']');
+            Ok(())
+        }
+    }
+}
+
+fn write_instruction(i: &Instruction, out: &mut String) -> Result<(), WriteError> {
+    let mnemonic = match i.op {
+        // Put back exactly what was found, which is the only honest thing to
+        // write for something LADX never understood.
+        OpCode::Unsupported => {
+            let v = i.vendor.as_ref().ok_or(WriteError::LostOrigin)?;
+            v.original_mnemonic.clone()
+        }
+        ref op => op
+            .clone()
+            .to_rockwell()
+            .ok_or_else(|| WriteError::NoEquivalent { op: op.clone() })?
+            .to_string(),
+    };
+
+    out.push_str(&mnemonic);
+    out.push('(');
+    for (n, operand) in i.operands.iter().enumerate() {
+        if n > 0 {
+            out.push(',');
+        }
+        match operand {
+            Operand::Tag { name } => out.push_str(name),
+            Operand::Text { value } => out.push_str(value),
+            Operand::Number { value } => {
+                // Written back in the shape it was read in. A preset that went
+                // in as 1000 must not come out as 1000.0: Studio 5000 accepts
+                // both, but a diff against the customer's original file would
+                // light up on every timer in the project.
+                if value.fract() == 0.0 && value.is_finite() {
+                    out.push_str(&format!("{}", *value as i64));
+                } else {
+                    out.push_str(&format!("{value}"));
+                }
+            }
+        }
+    }
+    out.push(')');
+    Ok(())
+}
+
 impl OpCode {
     /// Map a Rockwell mnemonic onto the neutral instruction set.
     ///
@@ -481,6 +575,131 @@ mod tests {
             let op = OpCode::from_rockwell(text);
             assert_ne!(op, OpCode::Unsupported, "{text} should map");
             assert_eq!(op.to_rockwell(), Some(text), "{text} should round trip");
+        }
+    }
+}
+
+#[cfg(test)]
+mod write_tests {
+    use super::*;
+
+    /// text -> IR -> text, byte for byte.
+    ///
+    /// The strongest statement available about an importer and an exporter that
+    /// have to agree, and the one that would catch a mapping that is wrong in
+    /// both directions in a way that cancels out on a single pass.
+    fn round_trip(text: &str) {
+        let rung = parse_rung(text, "r1").unwrap_or_else(|e| panic!("{text:?} did not parse: {e}"));
+        let back = rung_to_text(&rung).unwrap_or_else(|e| panic!("{text:?} did not write: {e}"));
+        assert_eq!(back, text, "round trip changed the rung");
+    }
+
+    #[test]
+    fn a_plain_series_survives() {
+        round_trip("XIC(Start)XIO(Stop)OTE(Motor);");
+    }
+
+    #[test]
+    fn a_seal_in_survives() {
+        round_trip("[XIC(Start_PB),XIC(Motor)]XIO(Stop_PB)OTE(Motor);");
+    }
+
+    #[test]
+    fn nested_branches_survive() {
+        round_trip("XIC(a)[XIC(b),[XIC(c),XIC(d)]XIC(e)]OTE(f);");
+    }
+
+    #[test]
+    fn timers_keep_their_preset_shape() {
+        // 1000, not 1000.0. A diff against the customer's own file would
+        // otherwise light up on every timer in the project.
+        round_trip("XIC(Run)TON(T1,1000,0);");
+    }
+
+    #[test]
+    fn several_outputs_survive() {
+        round_trip("XIC(Reset)OTU(A)OTU(B)OTU(C);");
+    }
+
+    #[test]
+    fn an_empty_rung_survives() {
+        round_trip("OTE(Always);");
+    }
+
+    /// The preservation contract, in the direction that matters.
+    ///
+    /// LADX could not read PID on the way in, so it kept the mnemonic and
+    /// operands. Writing it back must put the original back exactly. If this
+    /// fails, an export hands somebody their project with the loop missing.
+    #[test]
+    fn an_instruction_ladx_never_understood_comes_back_unchanged() {
+        round_trip("XIC(Enable)PID(Loop,PV,CV);");
+
+        let rung = parse_rung("XIC(Enable)PID(Loop,PV,CV);", "r1").unwrap();
+        let pid = rung
+            .logic
+            .instructions()
+            .into_iter()
+            .chain(rung.outputs.iter())
+            .find(|i| i.op == OpCode::Unsupported)
+            .expect("PID should be unsupported");
+        assert_eq!(pid.vendor.as_ref().unwrap().original_mnemonic, "PID");
+    }
+
+    /// An unsupported instruction that has lost its origin cannot be written,
+    /// and must say so rather than inventing a mnemonic.
+    #[test]
+    fn an_unsupported_instruction_with_no_origin_is_refused() {
+        let rung = Rung {
+            id: "r1".into(),
+            comment: None,
+            logic: Logic::empty(),
+            outputs: vec![Instruction {
+                id: "i1".into(),
+                op: OpCode::Unsupported,
+                operands: vec![Operand::Tag { name: "x".into() }],
+                vendor: None,
+            }],
+        };
+        assert_eq!(rung_to_text(&rung), Err(WriteError::LostOrigin));
+    }
+
+    /// A negated coil is drawn, not written, in Rockwell. Refused loudly
+    /// rather than silently turned into an OTE, which would invert the logic.
+    #[test]
+    fn a_negated_coil_is_refused_rather_than_mangled() {
+        let rung = Rung {
+            id: "r1".into(),
+            comment: None,
+            logic: Logic::empty(),
+            outputs: vec![Instruction {
+                id: "i1".into(),
+                op: OpCode::CoilNegated,
+                operands: vec![Operand::Tag { name: "Motor".into() }],
+                vendor: None,
+            }],
+        };
+        assert_eq!(
+            rung_to_text(&rung),
+            Err(WriteError::NoEquivalent { op: OpCode::CoilNegated })
+        );
+    }
+
+    /// And the other direction: IR -> text -> IR, over the shapes the fixtures
+    /// use. Catches a writer that produces something readable but different.
+    #[test]
+    fn the_ir_survives_a_trip_through_text() {
+        for text in [
+            "XIC(Start)XIO(Stop)OTE(Motor);",
+            "[XIC(A),XIC(B),XIC(C)]OTE(Any);",
+            "XIC(Run)TON(T1,5000,0);",
+            "EQU(Step,10)XIC(Done)MOV(20,Step);",
+            "XIC(Enable)PID(Loop,PV,CV);",
+        ] {
+            let first = parse_rung(text, "r1").unwrap();
+            let written = rung_to_text(&first).unwrap();
+            let second = parse_rung(&written, "r1").unwrap();
+            assert_eq!(second, first, "IR changed through text for {text:?}");
         }
     }
 }
