@@ -81,6 +81,15 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # The frontend first, because the crate does not compile without it.
+      # tauri::generate_context! reads the config at compile time and panics if
+      # frontendDist, ../out, is not on disk. Nothing below is a frontend test;
+      # they just cannot be built until that directory exists. This was the
+      # whole reason this job failed on every push: it passes locally only
+      # because a developer has already built the app at least once.
+      - name: Build the frontend the crate compiles against
+        run: pnpm --filter=@ladx/desktop build
+
       # Its own tests: the workspace layout, the project folder, the local
       # store and the base64 write path are all in here.
       - name: Cargo test
