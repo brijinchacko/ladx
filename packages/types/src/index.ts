@@ -60,6 +60,12 @@ export type { DataTypeDef } from "./generated/ir/DataTypeDef";
 export type { Fidelity } from "./generated/ir/Fidelity";
 export type { FidelityNote } from "./generated/ir/FidelityNote";
 export type { ConversionReport } from "./generated/ir/ConversionReport";
+// What refers to what. Computed from the program, not inferred, so a
+// question like "what drives this output" has an exact answer.
+export type { Access } from "./generated/ir/Access";
+export type { TagUse } from "./generated/ir/TagUse";
+export type { Call } from "./generated/ir/Call";
+export type { ProjectGraph } from "./generated/ir/ProjectGraph";
 export type { FieldDevice } from "./generated/ir/FieldDevice";
 export type { IoDirection } from "./generated/ir/IoDirection";
 // `Tag` and `DataType` exist in both crates with different shapes; the IR ones
