@@ -55,6 +55,33 @@ const result = await invoke("parse_project", { path: "/path/to/file" });
 - TwinCAT detection: check for `TwinCAT XAE Shell` registration.
 - A connector being unavailable is fine, disable the related UI rather than erroring.
 
+## The window turns off Tauri's own drag and drop
+
+`app.windows[0].dragDropEnabled` is `false` in `tauri.conf.json`, and it has to
+stay false. It defaults to true, and while it is true the webview hands every
+drag to the operating system's file-drop handler and the page never sees one.
+That is the right default for an app whose windows accept dropped files. This
+one does not; it drags instructions onto rungs, symbols onto drawings and
+objects onto panels, all with HTML5 drag events and `dataTransfer`. With the
+default left alone none of that works and nothing reports an error, because
+from the page's side the events simply never arrive.
+
+It is a JSON file and cannot carry a comment, which is why this is written
+here. If dropping real files into the app is ever wanted, it has to be built on
+Tauri's own drag-drop events rather than by turning this back on.
+
+## The layout sets the fonts, and that is not cosmetic
+
+`app/layout.tsx` loads Public Sans, Saira and JetBrains Mono through
+`next/font/google`, exactly as the web app does. next/font fetches them while
+building and emits them into the bundle, so the running app loads them from its
+own files and never asks the network.
+
+It is load-bearing. The ladder editor, the monitor and the tag tables lay out
+in columns against monospace advance widths. Without this the three font
+variables are undefined, neither face is on the machine, every column falls
+back to whatever the system offers, and the ladder drifts out of alignment.
+
 ## Things to never do
 - Don't cache PLC project parses to disk in cleartext. Encrypt with a per-install key.
 - Don't put the person's work in localStorage / sessionStorage / IndexedDB.

@@ -198,6 +198,22 @@ type Props = {
    * seconds ago, with nothing on screen to say why.
    */
   crossLinks?: { label: string; href: string; hint?: string }[];
+  /**
+   * How this host leaves for another tool.
+   *
+   * Injected, because the two surfaces navigate differently and only the host
+   * knows which it is. The default is a full page load, which is right on the
+   * web: the destination reads this program back from the server, so a fresh
+   * document is exactly what is wanted.
+   *
+   * It is wrong on a static export. There every route is a file, an
+   * extensionless path matches nothing, and a full load of "/hmi" lands on a
+   * 404 with no shell around it. The sidebar is the only navigation the
+   * desktop has, so that page is a dead end: the app looks like it has lost
+   * its furniture and there is no way back out. A host that routes client side
+   * passes its router here instead.
+   */
+  navigate?: (href: string) => void;
 };
 
 export default function LadxStudio({
@@ -207,6 +223,7 @@ export default function LadxStudio({
   onBack,
   bottomDock,
   crossLinks = [],
+  navigate,
 }: Props) {
   // Held in a ref, not recreated per render: the default builds a new object
   // each call, and a changing storage identity would re-trigger the load effect
@@ -2485,15 +2502,18 @@ export default function LadxStudio({
   /**
    * Leave for another tool, having saved first.
    *
-   * A full navigation rather than a router push: the destination reads this
-   * program from the server, so a fresh document is exactly what is wanted.
+   * How it leaves is the host's to decide, see `navigate`. Saving first is
+   * not: the destination binds to this program's tag table by name, and
+   * arriving before the debounce has fired shows a table missing the tag that
+   * was just added.
    */
   const followCrossLink = async (href: string) => {
     if (program) {
       await save();
       setDirty(false);
     }
-    window.location.assign(href);
+    if (navigate) navigate(href);
+    else window.location.assign(href);
   };
 
   const menus: Menu[] = program

@@ -6,7 +6,7 @@ import { desktopAssistantStore } from "@/lib/assistant-store";
 import { generateLadderLocally } from "@/lib/generate-ladder";
 import { tauriStorage } from "@/lib/ladder-storage";
 import { LadderAi, LadxStudio } from "@ladx/studio";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 /**
@@ -28,6 +28,7 @@ function Ladder() {
   // A project named in the URL, from "Open the ladder program" in the HMI
   // editor. Arriving with one skips the picker: the caller has already
   // answered the only question it asks.
+  const router = useRouter();
   const wanted = useSearchParams().get("project");
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [projectId, setProjectId] = useState<string>(wanted ?? "scratch");
@@ -96,6 +97,14 @@ function Ladder() {
          * resolve which application that is, so the /hmi page does it once the
          * local list is in. It saves before it navigates either way.
          */
+        /*
+         * Routed rather than loaded.
+         *
+         * This is a static export, so "/hmi" is a path with no file behind it
+         * and a full page load of it ends on the 404. The router knows the
+         * route and keeps the shell, which is the only way back to anything.
+         */
+        navigate={(href) => router.push(href)}
         crossLinks={[
           {
             label: "HMI",

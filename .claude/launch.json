@@ -12,6 +12,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter=@ladx/desktop", "dev:next"],
       "port": 1420
+    },
+    {
+      "name": "ladx-desktop-built",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "1421", "--directory", "apps/desktop/out"],
+      "port": 1421
     }
   ]
 }

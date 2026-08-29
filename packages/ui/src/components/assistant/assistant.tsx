@@ -33,6 +33,7 @@ import {
   loadFrame,
   publishDockInset,
   saveFrame,
+  viewportKnown,
 } from "../../lib/assistant-frame";
 import { ThinkingMark } from "../brand/thinking-mark";
 import { AiMark } from "./mark";
@@ -210,24 +211,61 @@ export default function Assistant({
    * initialiser is the same bug wearing a hat.
    */
   useEffect(() => {
-    const stored = loadFrame(toolId, window.innerWidth, window.innerHeight);
+    let done = false;
+    let raf = 0;
+
     /*
-     * An assistant that cannot run starts put away.
+     * Placed only once the window can say how big it is.
      *
-     * It is still there, still says why, and is one click from being read,
-     * which is the point: hiding it entirely on the surfaces with no model is
-     * how the same feature ends up looking like three different features. But
-     * a panel that cannot do anything should not be occupying the canvas of a
-     * tool somebody came to use, so it opens as a bar rather than a box.
+     * Waiting rather than guessing, because a guess made against a viewport of
+     * zero is unrecoverable: it puts the panel in the top left corner at its
+     * minimum size, on top of the sidebar, and nothing later moves it. See
+     * `viewportKnown`.
      *
-     * Only when nothing was stored. Somebody who opened it anyway gets it back
-     * the way they left it.
+     * The retry is a rAF loop, which browsers do not run while the document is
+     * hidden. That is the behaviour wanted here rather than a limitation: a
+     * background tab has no viewport to measure, and this picks the work back
+     * up on the frame it becomes visible.
      */
-    if (disabledReason && !hasStoredFrame(toolId)) {
-      setFrame({ ...stored, mode: "minimised" });
-      return;
-    }
-    setFrame(stored);
+    const place = (): boolean => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      if (!viewportKnown(vw, vh)) return false;
+
+      const stored = loadFrame(toolId, vw, vh);
+      /*
+       * An assistant that cannot run starts put away.
+       *
+       * It is still there, still says why, and is one click from being read,
+       * which is the point: hiding it entirely on the surfaces with no model is
+       * how the same feature ends up looking like three different features. But
+       * a panel that cannot do anything should not be occupying the canvas of a
+       * tool somebody came to use, so it opens as a bar rather than a box.
+       *
+       * Only when nothing was stored. Somebody who opened it anyway gets it back
+       * the way they left it.
+       */
+      if (disabledReason && !hasStoredFrame(toolId)) setFrame({ ...stored, mode: "minimised" });
+      else setFrame(stored);
+      return true;
+    };
+
+    const attempt = () => {
+      if (done) return;
+      if (place()) {
+        done = true;
+        return;
+      }
+      raf = requestAnimationFrame(attempt);
+    };
+
+    attempt();
+    window.addEventListener("resize", attempt);
+    return () => {
+      done = true;
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", attempt);
+    };
   }, [toolId, disabledReason]);
 
   // Re-clamped on resize, not only on restore. A window dragged to a smaller

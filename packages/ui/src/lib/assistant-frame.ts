@@ -58,6 +58,29 @@ export const MIN_H = 190;
 const KEEP_VISIBLE = 120;
 const HEADER = 34;
 
+/**
+ * Whether the window can be measured yet.
+ *
+ * A webview reports nothing for its own size for a moment while the window is
+ * being made, and a Tauri window is made after the page inside it has started.
+ * Placing the panel against that zero is not a near miss, it is the worst
+ * possible answer: every term in `defaultFrame` bottoms out, so the panel
+ * lands at the top left corner at its minimum size, which on the desktop is
+ * exactly where the sidebar is. It covers the brand, the project button and
+ * the first three rows of navigation.
+ *
+ * Nothing recovers from it afterwards, either. `clampFrame` only ever pulls a
+ * panel further inside the viewport, and a small panel in the top left corner
+ * is already legal at every size, so no resize, no reload and no later
+ * measurement moves it. The panel stays on top of the only way out of the
+ * tool, and the app reads as having lost its sidebar.
+ *
+ * So a zero is treated as "not known yet" rather than as a viewport.
+ */
+export function viewportKnown(vw: number, vh: number): boolean {
+  return vw > 0 && vh > 0;
+}
+
 export function defaultFrame(vw: number, vh: number): Frame {
   /*
    * Small, and floating.

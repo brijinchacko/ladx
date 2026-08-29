@@ -17,6 +17,7 @@ import {
   defaultFrame,
   loadFrame,
   saveFrame,
+  viewportKnown,
 } from "./assistant-frame";
 
 /*
@@ -170,5 +171,40 @@ describe("what comes back from storage", () => {
     const f = loadFrame("hmi", 1440, 900);
     expect(Number.isFinite(f.x)).toBe(true);
     expect(f.w).toBeGreaterThanOrEqual(MIN_W);
+  });
+});
+
+describe("a viewport that is not known yet", () => {
+  /*
+   * A webview reports no size for a moment while its window is being made.
+   * Every term in defaultFrame bottoms out against that zero, and the result
+   * is the panel sitting on the desktop sidebar with no way to shift it: the
+   * corner it lands in is legal at every later size, so clamping never moves
+   * it again. Placement has to wait instead of guessing.
+   */
+  it("says a zero sized window is not measurable", () => {
+    expect(viewportKnown(0, 0)).toBe(false);
+    expect(viewportKnown(1280, 0)).toBe(false);
+    expect(viewportKnown(0, 720)).toBe(false);
+  });
+
+  it("says a real window is", () => {
+    expect(viewportKnown(1280, 720)).toBe(true);
+  });
+
+  it("is the corner case worth waiting for: zero puts the panel on the sidebar", () => {
+    const f = defaultFrame(0, 0);
+    // The desktop sidebar is 256 wide and starts at the top left.
+    expect(f.x).toBeLessThan(256);
+    expect(f.y).toBeLessThan(64);
+  });
+
+  it("and clamping never rescues it, which is why it must not be placed there", () => {
+    const bad = defaultFrame(0, 0);
+    expect(clampFrame(bad, 1280, 720)).toEqual(bad);
+  });
+
+  it("places clear of the sidebar once the window can be measured", () => {
+    expect(defaultFrame(1280, 720).x).toBeGreaterThanOrEqual(256);
   });
 });
