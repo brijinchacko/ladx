@@ -82,6 +82,46 @@ in columns against monospace advance widths. Without this the three font
 variables are undefined, neither face is on the machine, every column falls
 back to whatever the system offers, and the ladder drifts out of alignment.
 
+## The DMG step fails locally and that is a Mac setting, not a bug
+
+`pnpm tauri:build` builds `LADX Studio.app` and then fails on the DMG with
+
+```
+failed to bundle project error running bundle_dmg.sh
+```
+
+Tauri swallows the script's own output, which is why this looks like a build
+problem. It is not. Running the bundler by hand shows the real error:
+
+```
+execution error: Not authorized to send Apple events to Finder. (-1743)
+```
+
+`bundle_dmg.sh` runs an AppleScript to lay the DMG window out, and macOS needs
+Automation permission for that. Grant it once, to whichever app runs the build,
+in System Settings, Privacy and Security, Automation, then Finder. It needs the
+person at the keyboard; it cannot be done from a script.
+
+Two things follow. The `.app` is built before this step, so a failed DMG still
+leaves a testable application in `target/release/bundle/macos/`. And CI is
+unaffected and always has been, which is why every release so far has produced
+a DMG while local builds do not: releases are cut by the workflow, not here.
+
+To produce one locally without granting the permission, run the bundler
+directly with `--skip-jenkins`, which is the flag that skips the AppleScript:
+
+```bash
+cd target/release/bundle/dmg
+cp -R "../macos/LADX Studio.app" .
+bash bundle_dmg.sh --volname "LADX Studio" --skip-jenkins \
+  --icon "LADX Studio.app" 180 170 --app-drop-link 480 170 \
+  --window-size 660 400 --hide-extension "LADX Studio.app" \
+  "LADX Studio.dmg" "LADX Studio.app"
+```
+
+The result has no custom window layout. That is cosmetic and it installs the
+same way.
+
 ## Things to never do
 - Don't cache PLC project parses to disk in cleartext. Encrypt with a per-install key.
 - Don't put the person's work in localStorage / sessionStorage / IndexedDB.
