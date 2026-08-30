@@ -140,3 +140,19 @@ mod tests {
         assert!(!f.is_on(FeatureFlag::VendorSiemens));
     }
 }
+
+/// What refers to what, for a project.
+///
+/// Takes the project rather than a path, because the thing somebody wants
+/// analysed is usually the program open in the editor rather than a file on
+/// disk. The frontend converts its own model to the IR and sends that.
+#[tauri::command]
+pub fn analyse_project(
+    state: tauri::State<'_, AppState>,
+    project: IrProject,
+) -> Result<ladx_ir::graph::ProjectGraph, String> {
+    require(&state, FeatureFlag::EngineeringAnalysis)?;
+    let graph = ladx_ir::graph::ProjectGraph::build(&project);
+    state.audit.log("user", "analyse_project", Some(&project.name)).ok();
+    Ok(graph)
+}

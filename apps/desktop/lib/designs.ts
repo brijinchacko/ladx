@@ -9,7 +9,13 @@
  * just as hard.
  */
 
-export { ConvertWorkbench, Monitor, ladxProgramFromIr, reportToNotes } from "@ladx/studio";
+export {
+  ConvertWorkbench,
+  Monitor,
+  ladxProgramFromIr,
+  ladxProgramToIr,
+  reportToNotes,
+} from "@ladx/studio";
 export type { ConvertSource, LadxProgram, ProgramSource, Tag } from "@ladx/studio";
 
 function isRunnableRung(rung: unknown): boolean {

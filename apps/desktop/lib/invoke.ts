@@ -1,7 +1,13 @@
 // Typed wrappers around Tauri commands. Frontend code calls these, // never `fetch()` to public domains (per ADR-005 / network policy).
 // Talking to Ollama on localhost is the Rust side's responsibility.
 
-import type { ConversionReport, FeatureDescriptor, FeatureFlag, IrProject } from "@ladx/types";
+import type {
+  ConversionReport,
+  FeatureDescriptor,
+  FeatureFlag,
+  IrProject,
+  ProjectGraph,
+} from "@ladx/types";
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 
 export const invoke = tauriInvoke;
@@ -369,4 +375,14 @@ export interface VendorImport {
   report: ConversionReport;
   /** One line, for showing without making somebody read the whole report. */
   summary: string;
+}
+
+/**
+ * What refers to what, for a program.
+ *
+ * Behind the engineering.analysis capability. The answers are computed from the
+ * program rather than inferred, so they are either right or a bug.
+ */
+export async function analyseProject(project: IrProject): Promise<ProjectGraph> {
+  return tauriInvoke<ProjectGraph>("analyse_project", { project });
 }
