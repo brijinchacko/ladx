@@ -1,0 +1,54 @@
+# The Rust binaries the web app shells out to.
+#
+# The web app is not self-contained: `/api/projects/:id/ir` and the validator
+# routes run the parser and validator as subprocesses, because a PLC project is
+# tens of megabytes and reading one in Node was ruled out early.
+#
+# That works locally, where `cargo build` has been run, and it does not work on
+# the server, which has no Rust toolchain and never has. A route that shells out
+# to a binary nobody deployed fails at the moment somebody signs in and uses it,
+# which is exactly late enough to be missed: the unauthenticated check returns
+# 401 before the binary is touched, so the route looks fine from outside.
+#
+# So the binaries are built here, on the platform the server runs, and attached
+# to the run. A deploy fetches them rather than assuming they are present.
+
+name: Server binaries
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/server-binaries.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Linux binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      # Only the binaries the web app actually runs. The desktop crate is not
+      # built here: it needs GTK and WebKit and is not served from Linux.
+      - name: Build
+        run: cargo build --release --bin ladx-parser --bin ladx-validate
+
+      - name: Check they run
+        run: |
+          ./target/release/ladx-parser 2>&1 | grep -q "usage" || {
+            echo "::error::ladx-parser did not start"; exit 1; }
+          echo "ladx-parser starts"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-binaries
+          path: |
+            target/release/ladx-parser
+            target/release/ladx-validate
+          retention-days: 30
