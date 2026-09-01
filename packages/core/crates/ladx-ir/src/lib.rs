@@ -38,14 +38,19 @@ pub mod alarms;
 pub mod context;
 pub mod diff;
 pub mod docs;
+pub mod drift;
 pub mod fidelity;
 pub mod graph;
+pub mod handover;
 pub mod health;
 pub mod io;
 pub mod neutral_text;
 pub mod plcopen_graph;
+pub mod sequence;
+pub mod tests_gen;
 pub mod to_st;
 pub mod trace;
+pub mod validation;
 
 /// Bumped whenever a stored document would no longer round-trip. See
 /// [`migrate`] for the upgrade path.

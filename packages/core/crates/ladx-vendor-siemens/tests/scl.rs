@@ -100,7 +100,11 @@ fn set_and_reset_become_if_blocks() {
 #[test]
 fn an_unrecognised_instruction_becomes_a_comment_and_a_finding() {
     let out = scl("06-pid-loop");
-    assert!(out.source.contains("// PID under:"), "got:\n{}", out.source);
+    assert!(out.source.contains("// PID("), "got:\n{}", out.source);
+    assert!(out.source.contains("under: \"Loop_Enable\""), "got:\n{}", out.source);
+    // With what it worked on, or the comment records only that something was
+    // here and not what it did.
+    assert!(out.source.contains("\"CV_Heater\""), "got:\n{}", out.source);
     assert!(
         out.report.notes.iter().any(|n| n.fidelity == Fidelity::Unsupported
             && n.detail.contains("nothing is invented"))

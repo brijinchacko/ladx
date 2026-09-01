@@ -214,15 +214,26 @@ pub fn pou_to_scl(pou: &Pou) -> Scl {
 
         // Edge instances are named after the tag so two one-shots on different
         // bits do not share storage, which would make each cancel the other.
+        //
+        // The call matters as much as the declaration. An R_TRIG instance that
+        // is declared and read but never called compiles cleanly and holds Q
+        // false for ever, so the one-shot silently never fires. That is the
+        // worst kind of conversion fault: the block builds, downloads, and runs
+        // the machine wrongly. So the call is written immediately above the
+        // statement that reads it, which is also the only place it is correct:
+        // an R_TRIG must be called once per scan, before its Q is used.
         for i in rung.logic.instructions() {
             if i.op == OpCode::RisingEdge {
-                let name = format!("R_TRIG_{}", ident(i.operands.first()));
-                instances.insert(name, "R_TRIG".into());
+                let tag = ident(i.operands.first());
+                let name = format!("R_TRIG_{tag}");
+                instances.insert(name.clone(), "R_TRIG".into());
+                source.push_str(&format!("\"{name}\"(CLK := \"{tag}\");\n"));
                 report.add(
                     Fidelity::Approximate,
                     where_.clone(),
                     "A one-shot has no SCL operator. It is an R_TRIG instance, declared with the \
-                     block, and it holds state between scans.",
+                     block and called once per scan before its Q is read, and it holds state \
+                     between scans.",
                 );
             }
         }
@@ -357,13 +368,19 @@ pub fn pou_to_scl(pou: &Pou) -> Scl {
                         .as_ref()
                         .map(|v| v.original_mnemonic.clone())
                         .unwrap_or_else(|| "an unrecognised instruction".into());
-                    source.push_str(&format!("// {name} under: {cond}\n"));
+                    // The operands go in the comment too. Without them the
+                    // comment says an unknown instruction was here and not
+                    // what it worked on, which is the part somebody rewriting
+                    // it by hand actually needs.
+                    let args: Vec<String> = output.operands.iter().map(operand).collect();
+                    source.push_str(&format!("// {name}({}) under: {cond}\n", args.join(", ")));
                     report.add(
                         Fidelity::Unsupported,
                         where_.clone(),
                         format!(
                             "{name} has no S7 equivalent LADX knows of. It is written as a \
-                             comment so nothing is lost and nothing is invented."
+                             comment, with its operands and its conditions, so nothing is lost \
+                             and nothing is invented. It does nothing until somebody writes it."
                         ),
                     );
                 }

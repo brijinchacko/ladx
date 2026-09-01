@@ -121,7 +121,15 @@ fn a_timer_crosses_properly() {
 fn a_pid_survives_the_whole_journey_as_a_finding() {
     let m = ir_to_siemens(&fixture("06-pid-loop"), ConversionReport::new());
 
-    assert!(m.to_source().contains("// PID under:"));
+    let source = m.to_source();
+    assert!(source.contains("// PID("), "named, and carried as a comment:\n{source}");
+    assert!(source.contains("under: \"Loop_Enable\""), "with the conditions it sat under");
+    // The operands as well. A comment saying an unknown instruction was here,
+    // without saying what it worked on, leaves the person rewriting it by hand
+    // to go back to the original file anyway.
+    for tag in ["PV_Temp", "SP_Temp", "CV_Heater"] {
+        assert!(source.contains(tag), "{tag} is missing from:\n{source}");
+    }
     assert!(m.needs_review(), "it must reach a person");
     assert!(
         m.report.for_review().iter().any(|n| n.detail.contains("nothing is invented")),

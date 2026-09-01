@@ -54,6 +54,9 @@ quick-xml = { version = "0.36", features = ["serialize"] }
 zip = "2.2"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.10", features = ["v4", "serde"] }
+# Checksums for handover packs. A checksum nobody else can reproduce is not a
+# checksum, so this is the standard implementation rather than a hand-rolled one.
+sha2 = "0.10"
 
 [profile.release]
 opt-level = 3

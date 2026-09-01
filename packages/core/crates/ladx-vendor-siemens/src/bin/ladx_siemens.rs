@@ -7,6 +7,7 @@
 //! Usage:
 //!     ladx-siemens --scl <project.ir.json>       IR to SCL
 //!     ladx-siemens --migrate <project.L5X>       L5X to SCL, one step
+//!     ladx-siemens --read <block.scl>            SCL to IR, the other way
 
 use anyhow::Context;
 use std::process::ExitCode;
@@ -15,8 +16,9 @@ fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
     let scl = args.iter().any(|a| a == "--scl");
     let migrate = args.iter().any(|a| a == "--migrate");
+    let read = args.iter().any(|a| a == "--read");
     let Some(path) = args.iter().skip(1).find(|a| !a.starts_with("--")) else {
-        eprintln!("usage: ladx-siemens [--scl | --migrate] <path>");
+        eprintln!("usage: ladx-siemens [--scl | --migrate | --read] <path>");
         return ExitCode::from(2);
     };
 
@@ -24,8 +26,10 @@ fn main() -> ExitCode {
         run_migrate(path)
     } else if scl {
         run_scl(path)
+    } else if read {
+        run_read(path)
     } else {
-        Err(anyhow::anyhow!("say what to do: --scl or --migrate"))
+        Err(anyhow::anyhow!("say what to do: --scl, --migrate or --read"))
     };
 
     match result {
@@ -64,6 +68,25 @@ fn run_scl(path: &str) -> anyhow::Result<String> {
         ladx_ir::fidelity::ConversionReport::new(),
     );
     reply(&m)
+}
+
+/// SCL to IR. The caller gets the project and, as importantly, whether the
+/// project is the whole program: an IR read from a file with unread statements
+/// is missing rungs, and anything that analyses it will be confidently wrong.
+fn run_read(path: &str) -> anyhow::Result<String> {
+    let src = std::fs::read_to_string(path).with_context(|| format!("reading {path}"))?;
+    let name = std::path::Path::new(path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("imported");
+    let result = ladx_vendor_siemens::read::read_scl(name, &src);
+    Ok(serde_json::to_string(&serde_json::json!({
+        "project": result.project,
+        "summary": result.summary(),
+        "complete": result.is_complete(),
+        "unread": result.unread(),
+        "notes": result.notes,
+    }))?)
 }
 
 fn run_migrate(path: &str) -> anyhow::Result<String> {

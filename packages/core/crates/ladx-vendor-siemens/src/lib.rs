@@ -10,6 +10,7 @@
 
 pub mod detect;
 pub mod migrate;
+pub mod read;
 pub mod scl;
 pub mod time;
 

@@ -64,6 +64,83 @@ pub fn from_operand_ms(value: f64) -> (i64, bool) {
     ((rounded as i64), (value - rounded).abs() > f64::EPSILON)
 }
 
+/// An S7 TIME literal back to milliseconds. The inverse of [`time_literal`],
+/// needed to read SCL rather than only write it.
+///
+/// Returns `None` rather than a guess: a preset read wrongly runs the machine
+/// on the wrong timing, and a timer that silently became 5ms instead of 5s is
+/// worse than one that failed to import.
+pub fn parse_iec_duration(text: &str) -> Option<i64> {
+    let t = text.trim();
+    let body = t
+        .strip_prefix("T#")
+        .or_else(|| t.strip_prefix("t#"))
+        .or_else(|| t.strip_prefix("TIME#"))
+        .or_else(|| t.strip_prefix("time#"))?;
+    let (body, sign) = match body.strip_prefix('-') {
+        Some(rest) => (rest, -1),
+        None => (body, 1),
+    };
+    if body.is_empty() {
+        return None;
+    }
+
+    let mut total: i64 = 0;
+    let mut digits = String::new();
+    let mut unit = String::new();
+    let mut saw_any = false;
+
+    // Units must appear largest first and each at most once, which is what
+    // makes T#1m30s unambiguous. Anything else is not a literal this reader
+    // will translate.
+    let order = ["d", "h", "m", "s", "ms"];
+    let mut last_rank: Option<usize> = None;
+
+    let flush = |digits: &mut String,
+                 unit: &mut String,
+                 total: &mut i64,
+                 last_rank: &mut Option<usize>|
+     -> Option<()> {
+        if digits.is_empty() || unit.is_empty() {
+            return None;
+        }
+        let rank = order.iter().position(|u| *u == unit.as_str())?;
+        if last_rank.is_some_and(|r| rank <= r) {
+            return None; // repeated or out of order
+        }
+        let n: i64 = digits.parse().ok()?;
+        let ms = match unit.as_str() {
+            "d" => n.checked_mul(86_400_000)?,
+            "h" => n.checked_mul(3_600_000)?,
+            "m" => n.checked_mul(60_000)?,
+            "s" => n.checked_mul(1_000)?,
+            "ms" => n,
+            _ => return None,
+        };
+        *total = total.checked_add(ms)?;
+        *last_rank = Some(rank);
+        digits.clear();
+        unit.clear();
+        Some(())
+    };
+
+    for c in body.chars() {
+        if c.is_ascii_digit() {
+            if !unit.is_empty() {
+                flush(&mut digits, &mut unit, &mut total, &mut last_rank)?;
+            }
+            digits.push(c);
+            saw_any = true;
+        } else if c.is_ascii_alphabetic() {
+            unit.push(c.to_ascii_lowercase());
+        } else {
+            return None;
+        }
+    }
+    flush(&mut digits, &mut unit, &mut total, &mut last_rank)?;
+    saw_any.then_some(total * sign)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -107,6 +184,37 @@ mod tests {
     #[test]
     fn a_negative_duration_stays_negative() {
         assert_eq!(time_literal(-5_000), "T#-5s");
+    }
+
+    /// The pair has to round-trip, or a program converted out and back is not
+    /// the program that went in.
+    #[test]
+    fn every_duration_survives_being_written_and_read_back() {
+        for ms in [0, 1, 500, 3_000, 5_000, 30_000, 90_000, 3_600_000, 3_661_500, 86_400_000] {
+            assert_eq!(parse_iec_duration(&time_literal(ms)), Some(ms), "{ms}");
+        }
+        assert_eq!(parse_iec_duration(&time_literal(-5_000)), Some(-5_000));
+    }
+
+    #[test]
+    fn the_forms_a_person_types_are_accepted() {
+        assert_eq!(parse_iec_duration("T#5S"), Some(5_000));
+        assert_eq!(parse_iec_duration("t#250ms"), Some(250));
+        assert_eq!(parse_iec_duration("TIME#1m"), Some(60_000));
+        assert_eq!(parse_iec_duration("  T#2s  "), Some(2_000));
+    }
+
+    /// A preset read wrongly runs the machine on the wrong timing, so anything
+    /// unclear is refused rather than guessed.
+    #[test]
+    fn anything_it_cannot_read_is_refused_rather_than_guessed() {
+        assert_eq!(parse_iec_duration("5000"), None, "a bare number has no unit");
+        assert_eq!(parse_iec_duration("T#"), None);
+        assert_eq!(parse_iec_duration("T#5x"), None, "unknown unit");
+        assert_eq!(parse_iec_duration("T#5s3s"), None, "a repeated unit is ambiguous");
+        assert_eq!(parse_iec_duration("T#5s1m"), None, "out of order is not a literal");
+        assert_eq!(parse_iec_duration("T#1.5s"), None, "TIME has no fractional part");
+        assert_eq!(parse_iec_duration(""), None);
     }
 
     #[test]
