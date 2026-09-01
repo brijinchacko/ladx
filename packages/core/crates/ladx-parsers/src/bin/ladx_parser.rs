@@ -30,6 +30,8 @@ enum Mode {
     Health,
     /// Working backwards from one tag.
     Why,
+    /// Which written standards apply to a request.
+    Standards,
 }
 
 fn main() -> ExitCode {
@@ -40,6 +42,8 @@ fn main() -> ExitCode {
         Mode::Health
     } else if args.iter().any(|a| a == "--why") {
         Mode::Why
+    } else if args.iter().any(|a| a == "--standards") {
+        Mode::Standards
     } else {
         Mode::Manifest
     };
@@ -58,6 +62,7 @@ fn main() -> ExitCode {
             Some(tag) => run_why(path, tag),
             None => Err(anyhow::anyhow!("--why needs a tag: ladx-parser --why <file> <tag>")),
         },
+        Mode::Standards => run_standards(path),
     };
 
     match result {
@@ -127,4 +132,34 @@ fn run_health(path: &str) -> anyhow::Result<String> {
 fn run_why(path: &str, tag: &str) -> anyhow::Result<String> {
     let project = read_ir(path)?;
     Ok(serde_json::to_string(&ladx_ir::trace::why(&project, tag))?)
+}
+
+/// Which of the written standards apply to a request.
+///
+/// Takes one file holding the standards, the request and the project, rather
+/// than reading a database: the caller already has them, and a binary that
+/// could reach the database would be a second place the schema has to be known.
+fn run_standards(path: &str) -> anyhow::Result<String> {
+    #[derive(serde::Deserialize)]
+    struct Input {
+        memories: Vec<ladx_types::Memory>,
+        request: String,
+        #[serde(default)]
+        project: Option<String>,
+    }
+
+    let raw = std::fs::read_to_string(path).with_context(|| format!("reading {path}"))?;
+    let input: Input =
+        serde_json::from_str(&raw).with_context(|| format!("{path} is not a standards request"))?;
+
+    let out = ladx_rag::applicable(&input.memories, &input.request, input.project.as_deref());
+
+    Ok(serde_json::to_string(&serde_json::json!({
+        // The text a prompt gets, with the vetoes first and labelled as such.
+        "prompt": out.to_prompt(),
+        // And the ids, so a caller can say which standards it used rather than
+        // leaving somebody to guess why the answer came out that way.
+        "forbidden": out.forbidden.iter().map(|m| &m.id).collect::<Vec<_>>(),
+        "guidance": out.guidance.iter().map(|m| &m.id).collect::<Vec<_>>(),
+    }))?)
 }

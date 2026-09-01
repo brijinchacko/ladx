@@ -10,6 +10,7 @@
 import { getApiUser } from "@/lib/auth/server";
 import { auditInBackground } from "@/lib/db/audit";
 import { complete, firstJsonObject } from "@/lib/inference/complete";
+import { standardsFor } from "@/lib/ladder/standards";
 import { ProviderError } from "@/lib/providers";
 import {
   LadderReplyError,
@@ -32,6 +33,13 @@ const request = z.object({
   current: z.unknown().optional(),
   /** Replace the program, or add rungs to it. */
   mode: z.enum(["replace", "extend"]).default("extend"),
+  /**
+   * Which project this is for, so a standard written for one site applies and
+   * one written for another does not. Absent means only the company-wide and
+   * personal standards are considered, which is the right answer for a program
+   * that is not attached to anything.
+   */
+  projectId: z.string().uuid().nullish(),
 });
 
 /**
@@ -55,6 +63,19 @@ export async function POST(req: Request) {
   // rather than the first sixty in the table.
   const context = ladderContext(existing, parsed.data.mode, parsed.data.prompt);
 
+  /*
+   * What this engineer has written down about how work is done here.
+   *
+   * Ahead of the request rather than after it, and vetoes ahead of guidance,
+   * because a model that reads "never use SET/RESET for a motor" after being
+   * asked for a motor has already decided how to write it.
+   */
+  const standards = await standardsFor(
+    auth.user.id,
+    parsed.data.prompt,
+    parsed.data.projectId ?? null,
+  );
+
   const system = ladderSystemPrompt();
 
   try {
@@ -70,7 +91,12 @@ export async function POST(req: Request) {
           model: parsed.data.model,
           messages: [
             { role: "system", content: system },
-            { role: "user", content: `${context}\n\n${parsed.data.prompt}` },
+            {
+              role: "user",
+              content: standards.prompt
+                ? `${standards.prompt}\n${context}\n\n${parsed.data.prompt}`
+                : `${context}\n\n${parsed.data.prompt}`,
+            },
             ...(attempt === 0
               ? []
               : [

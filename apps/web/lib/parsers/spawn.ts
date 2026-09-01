@@ -140,3 +140,37 @@ export async function whyNotIr(project: unknown, tag: string): Promise<Trace> {
     return JSON.parse(stdout) as Trace;
   });
 }
+
+/** Which written standards apply to a request, and the text a prompt gets. */
+export interface ApplicableStandards {
+  /** Vetoes first, labelled as such. Empty string when nothing applies. */
+  prompt: string;
+  /** Ids, so a caller can say which ones it used rather than leaving somebody
+   *  to guess why an answer came out the way it did. */
+  forbidden: string[];
+  guidance: string[];
+}
+
+export async function applicableStandards(
+  memories: unknown[],
+  request: string,
+  project: string | null,
+): Promise<ApplicableStandards> {
+  // Nothing written down is the common case and does not need a subprocess.
+  if (memories.length === 0) return { prompt: "", forbidden: [], guidance: [] };
+
+  const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+  const os = await import("node:os");
+  const dir = await mkdtemp(path.join(os.tmpdir(), "ladx-std-"));
+  const file = path.join(dir, "standards.json");
+  try {
+    await writeFile(file, JSON.stringify({ memories, request, project }));
+    const { stdout } = await exec(ladxParserBinary(), ["--standards", file], {
+      timeout: 15_000,
+      maxBuffer: 8 * 1024 * 1024,
+    });
+    return JSON.parse(stdout) as ApplicableStandards;
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
