@@ -14,6 +14,8 @@ import {
   deviationsFor,
   driftFor,
   handoverPackFor,
+  narrativeFor,
+  proposedScreensFor,
   sequencesFor,
   testPlanFor,
 } from "@/lib/parsers/spawn";
@@ -36,7 +38,7 @@ const request = z.object({
   // The IR is checked by Rust when it deserialises; a second definition here
   // would be a second thing to keep in step.
   project: z.unknown(),
-  what: z.enum(["sequence", "tests", "deviations", "drift", "handover"]),
+  what: z.enum(["narrative", "sequence", "tests", "deviations", "screens", "drift", "handover"]),
   /** The other lists that name the same tags: an HMI export, an I/O schedule. */
   sources: z.array(tagSource).max(20).optional(),
 });
@@ -66,8 +68,12 @@ export async function POST(req: Request) {
 
   try {
     switch (what) {
+      case "narrative":
+        return Response.json(await narrativeFor(project));
       case "sequence":
         return Response.json(await sequencesFor(project));
+      case "screens":
+        return Response.json(await proposedScreensFor(project));
       case "tests":
         return Response.json(await testPlanFor(project));
       case "deviations":

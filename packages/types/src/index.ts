@@ -154,3 +154,14 @@ export type { Workflow } from "./generated/agents/Workflow";
 export type { Outcome as WorkflowOutcome } from "./generated/agents/Outcome";
 export type { StepRecord as WorkflowStepRecord } from "./generated/agents/StepRecord";
 export type { Run as WorkflowRun } from "./generated/agents/Run";
+
+// The control narrative: what the program does, in sentences.
+export type { Sourced } from "./generated/ir/Sourced";
+export type { Section as NarrativeSection } from "./generated/ir/Section";
+export type { Document as NarrativeDocument } from "./generated/ir/Document";
+
+// Screens proposed from the program, without asking a model.
+export type { Control as ProposedControl } from "./generated/hmi/Control";
+export type { ProposedBinding } from "./generated/hmi/ProposedBinding";
+export type { ProposedScreen } from "./generated/hmi/ProposedScreen";
+export type { Proposal as ScreenProposal } from "./generated/hmi/Proposal";

@@ -349,7 +349,7 @@ export function renderDocument(input: {
     ? `<img class="logo" src="${esc(company.logo)}" alt="${esc(companyName)}" />`
     : `<div class="logo-fallback">${esc(companyName || "LADX")}</div>`;
 
-  const title = `${docTitle} (${docAbbr}) — ${project.name}`;
+  const title = `${docTitle} (${docAbbr}): ${project.name}`;
 
   return `<!doctype html>
 <html lang="en">

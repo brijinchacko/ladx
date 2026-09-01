@@ -11,7 +11,7 @@ fn main() {
         return;
     }
     for b in blocks() {
-        println!("{} — {}", b.name, b.about);
+        println!("{}: {}", b.name, b.about);
     }
     let params: BTreeMap<String, String> = [
         ("start", "P101_Start_PB"),

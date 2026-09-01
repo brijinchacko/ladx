@@ -172,7 +172,7 @@ export const DRAWING_TEMPLATES: DrawingTemplate[] = [
 
       const row = (label: string, value: string) => {
         out.push(T(TEXT, { x, y }, label, 3));
-        out.push(T(TEXT, { x: x + 45, y }, value || "—", 3.5));
+        out.push(T(TEXT, { x: x + 45, y }, value || "-", 3.5));
         y -= 8;
       };
       row("PROJECT", fields.projectName ?? "");

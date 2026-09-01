@@ -2,20 +2,49 @@
 
 import { parseTagList } from "@/lib/ladder/tag-list";
 import { ladxProgramToIr } from "@ladx/studio";
-import type { Block, Deviation, Drift, Pack, Sequence, TestGroup } from "@ladx/types";
+import type {
+  Block,
+  Deviation,
+  Drift,
+  HardwareFinding,
+  HardwareModule,
+  NarrativeSection,
+  Pack,
+  ProposedScreen,
+  Sequence,
+  TestGroup,
+} from "@ladx/types";
 import {
   AlertTriangle,
+  BookOpen,
   ClipboardCheck,
+  Cpu,
   Download,
   GitCompare,
   Layers,
+  MonitorCog,
   Package,
   Route,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-type What = "sequence" | "tests" | "deviations" | "drift" | "handover";
+type What =
+  | "narrative"
+  | "sequence"
+  | "tests"
+  | "deviations"
+  | "screens"
+  | "hardware"
+  | "drift"
+  | "handover";
 
+interface NarrativeOut {
+  title: string;
+  sections: NarrativeSection[];
+  /** Statements the program could not answer, counted. */
+  gaps: number;
+  markdown: string;
+}
 interface SequenceOut {
   sequences: Sequence[];
   notes: string[];
@@ -31,6 +60,17 @@ interface DeviationsOut {
   deviations: Deviation[];
   blocks: Block[];
 }
+interface ScreensOut {
+  screens: ProposedScreen[];
+  notes: string[];
+}
+interface HardwareOut {
+  modules: HardwareModule[];
+  notes: string[];
+  findings: HardwareFinding[];
+  breaking: number;
+  table: string;
+}
 interface DriftOut {
   drifts: Drift[];
   notes: string[];
@@ -39,6 +79,13 @@ interface DriftOut {
 }
 
 const TABS: { what: What; label: string; icon: React.ReactNode; blurb: string }[] = [
+  {
+    what: "narrative",
+    label: "Narrative",
+    icon: <BookOpen className="h-4 w-4" />,
+    blurb:
+      "What the program does, in sentences, for somebody who cannot read ladder. Written from the logic, so it cannot disagree with it.",
+  },
   {
     what: "sequence",
     label: "Sequence",
@@ -59,6 +106,20 @@ const TABS: { what: What; label: string; icon: React.ReactNode; blurb: string }[
     icon: <Layers className="h-4 w-4" />,
     blurb:
       "Where this program departs from the standard blocks. Roles are judged by tag name, which is all a PLC file carries, so each of these is a question rather than a fault.",
+  },
+  {
+    what: "screens",
+    label: "Screens",
+    icon: <MonitorCog className="h-4 w-4" />,
+    blurb:
+      "A first cut of the operator interface, read from the program rather than asked of a model. A safety tag comes back as an indicator and never as a button.",
+  },
+  {
+    what: "hardware",
+    label: "Hardware",
+    icon: <Cpu className="h-4 w-4" />,
+    blurb:
+      "The racks, from a full controller export, against what the program addresses. A card moved one slot leaves every address past it compiling and reading the wrong terminal.",
   },
   {
     what: "drift",
@@ -90,7 +151,7 @@ export function CommissionClient({
   openOn?: string | null;
 }) {
   const [chosen, setChosen] = useState<string>(openOn ?? programs[0]?.id ?? "");
-  const [what, setWhat] = useState<What>("sequence");
+  const [what, setWhat] = useState<What>("narrative");
   const [data, setData] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -137,15 +198,39 @@ export function CommissionClient({
   );
 
   useEffect(() => {
-    // Drift is the one thing that needs a list pasted first, so it does not
-    // run on its own and come back with an error the user did not ask for.
+    // Two tabs wait for something the user has to supply. Running them on
+    // arrival would answer a question nobody asked, with an error.
     if (what === "drift" && !pasted.trim()) {
       setData(null);
       setError(null);
       return;
     }
+    // Hardware reads an uploaded export, not the program on screen: the module
+    // list is not in a program.
+    if (what === "hardware") {
+      setError(null);
+      return;
+    }
     void load(chosen, what);
   }, [chosen, what, load, pasted]);
+
+  const uploadHardware = useCallback(async (file: File) => {
+    setBusy(true);
+    setError(null);
+    setData(null);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/ladder/hardware", { method: "POST", body });
+      const out = await res.json();
+      if (!res.ok) throw new Error(out.error ?? "That file could not be read.");
+      setData(out);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "That file could not be read.");
+    } finally {
+      setBusy(false);
+    }
+  }, []);
 
   const download = (text: string, name: string, type = "text/markdown") => {
     const blob = new Blob([text], { type: `${type};charset=utf-8` });
@@ -173,7 +258,9 @@ export function CommissionClient({
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-6">
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div
+        className={`mb-4 flex flex-wrap items-center gap-3 ${what === "hardware" ? "hidden" : ""}`}
+      >
         <select
           value={chosen}
           onChange={(e) => setChosen(e.target.value)}
@@ -208,6 +295,28 @@ export function CommissionClient({
 
       {tab && <p className="mb-4 text-[12.5px] leading-relaxed text-ink-500">{tab.blurb}</p>}
 
+      {what === "hardware" && (
+        <div className="mb-5 rounded-md border border-ink-200 bg-ink-50/40 p-3">
+          <label htmlFor="l5x" className="mb-1.5 block text-[12.5px] font-medium text-ink-700">
+            A full controller export
+          </label>
+          <p className="mb-2 text-[12px] leading-relaxed text-ink-500">
+            An L5X exported from the controller, not from a single routine. Only a controller export
+            carries the module list, and without it no address can be checked against a card.
+          </p>
+          <input
+            id="l5x"
+            type="file"
+            accept=".L5X,.l5x,.xml"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void uploadHardware(file);
+            }}
+            className="block w-full text-[12.5px] text-ink-700 file:mr-3 file:rounded-sm file:border file:border-ink-200 file:bg-white file:px-3 file:py-1.5 file:text-[12.5px] file:text-ink-700"
+          />
+        </div>
+      )}
+
       {(what === "drift" || what === "handover") && (
         <div className="mb-5 rounded-md border border-ink-200 bg-ink-50/40 p-3">
           <label htmlFor="taglist" className="mb-1.5 block text-[12.5px] font-medium text-ink-700">
@@ -236,11 +345,21 @@ export function CommissionClient({
         </p>
       )}
 
+      {what === "narrative" && data != null && (
+        <NarrativeView out={data as NarrativeOut} onDownload={download} />
+      )}
       {what === "sequence" && data != null && <SequenceView out={data as SequenceOut} />}
       {what === "tests" && data != null && (
         <TestsView out={data as TestsOut} onDownload={download} />
       )}
       {what === "deviations" && data != null && <DeviationsView out={data as DeviationsOut} />}
+      {what === "screens" && data != null && <ScreensView out={data as ScreensOut} />}
+      {what === "hardware" && data != null && <HardwareView out={data as HardwareOut} />}
+      {what === "hardware" && data == null && !busy && !error && (
+        <Empty>
+          Choose a controller export above and its racks are checked against the program in it.
+        </Empty>
+      )}
       {what === "drift" && data != null && <DriftView out={data as DriftOut} />}
       {what === "drift" && data == null && !busy && !error && (
         <Empty>Paste a tag list above and it is compared against the program.</Empty>
@@ -264,6 +383,65 @@ function Notes({ notes }: { notes: string[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function NarrativeView({
+  out,
+  onDownload,
+}: {
+  out: NarrativeOut;
+  onDownload: (t: string, n: string) => void;
+}) {
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-[12.5px] text-ink-500">
+          {out.sections.length} section{out.sections.length === 1 ? "" : "s"}
+          {out.gaps > 0 && `, ${out.gaps} needing an engineer`}
+        </p>
+        <button
+          type="button"
+          onClick={() => onDownload(out.markdown, "control-narrative.md")}
+          className="flex items-center gap-1.5 rounded-md border border-ink-200 px-2 py-1 text-[12px] text-ink-700 hover:border-ink-400"
+        >
+          <Download className="h-3.5 w-3.5" />
+          Download
+        </button>
+      </div>
+      {out.sections.map((s) => (
+        <div key={s.heading} className="mb-3 rounded-md border border-ink-200 bg-white p-4">
+          <h3 className="mb-1.5 text-[13.5px] font-medium text-ink-900">{s.heading}</h3>
+          {s.paragraphs.length === 0 && s.needs_engineer.length === 0 ? (
+            <p className="text-[12.5px] text-ink-500">Nothing in the program to write here.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {s.paragraphs.map((line) => (
+                <li key={line.text} className="text-[13px] leading-relaxed text-ink-700">
+                  {line.text}
+                  {line.from.length > 0 && (
+                    <span className="ml-2 font-mono text-[11.5px] text-ink-400">
+                      {line.from.join(", ")}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {/* Written into the document rather than left out, so a gap is
+              visible to whoever has to fill it. */}
+          {s.needs_engineer.length > 0 && (
+            <ul className="mt-2 space-y-1 border-t border-ink-100 pt-2">
+              {s.needs_engineer.map((q) => (
+                <li key={q} className="text-[12.5px] leading-relaxed text-amber-800">
+                  Needs an engineer: {q}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -397,6 +575,113 @@ function DeviationsView({ out }: { out: DeviationsOut }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function ScreensView({ out }: { out: ScreensOut }) {
+  if (out.screens.length === 0) {
+    return (
+      <div>
+        <Empty>
+          Nothing in this program is wired to the plant, so there is nothing to show an operator.
+        </Empty>
+        <Notes notes={out.notes} />
+      </div>
+    );
+  }
+  return (
+    <div>
+      {out.screens.map((screen) => (
+        <div key={screen.name} className="mb-4 rounded-md border border-ink-200 bg-white p-4">
+          <h3 className="text-[13.5px] font-medium text-ink-900">{screen.name}</h3>
+          <p className="mb-3 text-[12.5px] text-ink-500">{screen.purpose}</p>
+          <ul className="space-y-2">
+            {screen.bindings.map((b) => (
+              <li key={b.tag} className="text-[13px] text-ink-700">
+                <span className="font-mono text-[12px] text-ink-900">{b.tag}</span>
+                <span className="ml-2 rounded bg-ink-100 px-1.5 py-0.5 text-[11px] text-ink-700">
+                  {b.control}
+                </span>
+                {b.label && <span className="ml-2 text-ink-600">{b.label}</span>}
+                <p className="mt-0.5 text-[12px] leading-relaxed text-ink-500">{b.because}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+      <Notes notes={out.notes} />
+    </div>
+  );
+}
+
+function HardwareView({ out }: { out: HardwareOut }) {
+  if (out.modules.length === 0) {
+    return (
+      <div>
+        <Empty>No module list in that file.</Empty>
+        <Notes notes={out.notes} />
+      </div>
+    );
+  }
+  return (
+    <div>
+      <p className="mb-3 text-[12.5px] text-ink-500">
+        {out.modules.length} module{out.modules.length === 1 ? "" : "s"}
+        {out.breaking > 0
+          ? `, and ${out.breaking} address${out.breaking === 1 ? "" : "es"} that read the wrong terminal`
+          : ". Every address lands on a card that is in the racks."}
+      </p>
+
+      <div className="mb-4 overflow-x-auto rounded-md border border-ink-200 bg-white">
+        <table className="w-full text-[12.5px]">
+          <thead className="border-b border-ink-100 text-left text-ink-500">
+            <tr>
+              <th className="px-3 py-2 font-medium">Slot</th>
+              <th className="px-3 py-2 font-medium">Name</th>
+              <th className="px-3 py-2 font-medium">Catalogue</th>
+              <th className="px-3 py-2 font-medium">Type</th>
+              <th className="px-3 py-2 font-medium">Points</th>
+              <th className="px-3 py-2 font-medium">Revision</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...out.modules]
+              .sort((a, b) => (a.slot ?? 999) - (b.slot ?? 999))
+              .map((m) => (
+                <tr key={m.name} className="border-b border-ink-50 last:border-0">
+                  <td className="px-3 py-1.5 font-mono tabular-nums text-ink-900">
+                    {m.slot ?? "-"}
+                  </td>
+                  <td className="px-3 py-1.5 text-ink-900">
+                    {m.name}
+                    {m.inhibited && (
+                      <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-900">
+                        inhibited
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-1.5 font-mono text-ink-600">{m.catalog ?? "-"}</td>
+                  <td className="px-3 py-1.5 text-ink-600">{m.kind}</td>
+                  <td className="px-3 py-1.5 tabular-nums text-ink-600">{m.points ?? "-"}</td>
+                  <td className="px-3 py-1.5 tabular-nums text-ink-600">{m.revision ?? "-"}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+
+      {out.findings.map((f) => (
+        <div
+          key={f.detail}
+          className={`mb-2 rounded-md border px-3 py-2 ${
+            f.issue === "moduleUnused" ? "border-ink-200 bg-white" : "border-amber-200 bg-amber-50"
+          }`}
+        >
+          <p className="text-[13px] leading-relaxed text-ink-800">{f.detail}</p>
+        </div>
+      ))}
+      <Notes notes={out.notes} />
     </div>
   );
 }

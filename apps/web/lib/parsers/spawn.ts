@@ -18,7 +18,18 @@ import type {
   ParseResult,
   Trace,
 } from "@ladx/types";
-import type { Block, Deviation, Drift, Pack, Sequence, TestGroup } from "@ladx/types";
+import type {
+  Block,
+  Deviation,
+  Drift,
+  HardwareFinding,
+  HardwareModule,
+  NarrativeSection,
+  Pack,
+  ProposedScreen,
+  Sequence,
+  TestGroup,
+} from "@ladx/types";
 
 const exec = promisify(execFile);
 
@@ -334,5 +345,73 @@ export async function handoverPackFor(project: unknown, sources?: unknown): Prom
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+}
+
+/**
+ * The control narrative: what the program does, in sentences.
+ *
+ * The one document somebody who cannot read ladder can actually use, and the
+ * one that is normally written last, by hand, from a program the author has
+ * stopped thinking about.
+ */
+export async function narrativeFor(project: unknown): Promise<{
+  sections: NarrativeSection[];
+  gaps: number;
+  markdown: string;
+}> {
+  const bin = ladxParserBinary();
+  return withIrFile(project, async (file) => {
+    const { stdout } = await exec(bin, ["--narrative", file], {
+      timeout: 30_000,
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return JSON.parse(stdout);
+  });
+}
+
+/**
+ * The racks, and the addresses that do not match them.
+ *
+ * Takes an L5X rather than an IR project: the module list is hardware
+ * configuration and lives in the export, not in the program. A program-only
+ * export carries none, and the answer says so rather than showing an empty
+ * rack.
+ */
+export async function hardwareFor(localPath: string): Promise<{
+  modules: HardwareModule[];
+  notes: string[];
+  findings: HardwareFinding[];
+  breaking: number;
+  table: string;
+}> {
+  const bin = ladxParserBinary();
+  const { stdout } = await exec(bin, ["--hardware", localPath], {
+    timeout: 60_000,
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  return JSON.parse(stdout);
+}
+
+/**
+ * Screens proposed from the program, without asking a model.
+ *
+ * Different from /api/hmi/generate, which turns a description into objects on
+ * the glass. This reads the program: what is wired to the plant, which way each
+ * signal goes, and which tags are safety related. A safety device that can be
+ * operated from a screen is not a safety device, and that judgement is not one
+ * to leave to a model.
+ */
+export async function proposedScreensFor(project: unknown): Promise<{
+  screens: ProposedScreen[];
+  notes: string[];
+}> {
+  const bin = ladxParserBinary();
+  return withIrFile(project, async (file) => {
+    const { stdout } = await exec(bin, ["--screens", file], {
+      timeout: 30_000,
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return JSON.parse(stdout);
   });
 }

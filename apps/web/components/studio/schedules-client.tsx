@@ -234,7 +234,7 @@ function Table({ head, rows }: { head: string[]; rows: string[][] }) {
                 key={`${head[i]}-${cell}`}
                 className={`px-3 py-1.5 ${i === 0 ? "font-mono text-ink-900" : "text-ink-600"}`}
               >
-                {cell || <span className="text-ink-300">—</span>}
+                {cell || <span className="text-ink-300">-</span>}
               </td>
             ))}
           </tr>

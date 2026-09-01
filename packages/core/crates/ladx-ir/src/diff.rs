@@ -2,7 +2,7 @@
 //!
 //! A text diff of an L5X answers "line 485 changed", which is true and useless.
 //! The question being asked is "what is different about the machine", and the
-//! answer somebody needs is "Motor M102 lost its guard permissive" — a sentence
+//! answer somebody needs is "Motor M102 lost its guard permissive", a sentence
 //! about the plant rather than about the file.
 //!
 //! Risk is reported and never resolved. LADX can see that a permissive was

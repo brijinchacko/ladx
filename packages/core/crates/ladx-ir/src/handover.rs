@@ -242,7 +242,7 @@ fn manifest(
     s.push('\n');
 
     s.push_str("## How far this has been validated\n\n");
-    s.push_str(&format!("**{}** — {}\n\n", level.label(), level.caveat()));
+    s.push_str(&format!("**{}**. {}\n\n", level.label(), level.caveat()));
     if !level.is_production_ready() {
         s.push_str(
             "No level reachable by LADX means this program is ready to run a plant. Somebody \
