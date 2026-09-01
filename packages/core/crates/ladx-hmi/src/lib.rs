@@ -1,5 +1,11 @@
-//! ladx-hmi, skeleton crate. See MASTER_BUILD_SPEC.md for scope. Phase 0
-//! ships an empty crate so the workspace builds; later phases fill it in.
+//! The operator interface, proposed from the program.
+//!
+//! The rich HMI model lives in `packages/hmi` and is what the editor works on.
+//! This is the part that can be computed rather than drawn: which tags an
+//! operator needs to see, which they need to touch, and which are faults. The
+//! program already answers all three.
+
+pub mod propose;
 
 pub fn ladx_hmi_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
