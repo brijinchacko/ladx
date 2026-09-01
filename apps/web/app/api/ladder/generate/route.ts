@@ -152,14 +152,35 @@ export async function POST(req: Request) {
         rungs: program.rungs.length,
         tags: program.tags.length,
         problems: problems.length,
+        // Which standards applied, so an audit can reconstruct why a rung was
+        // written the way it was, not only that it was written.
+        standardsFollowed: standards.used.forbidden.length + standards.used.guidance.length,
       },
     });
+
+    /*
+     * Which standards shaped this, in the words they were written in.
+     *
+     * The Standards page says LADX shows you which ones it used, and that
+     * promise is what makes the feature trustworthy rather than mysterious: a
+     * suggestion somebody disagrees with can be traced to the rule that caused
+     * it, and the rule can be reworded.
+     */
+    const followed = [
+      ...standards.used.forbidden.map((c) => `never: ${c}`),
+      ...standards.used.guidance.map((c) => c),
+    ];
 
     return NextResponse.json({
       program,
       problems,
-      notes,
+      notes: followed.length
+        ? `${notes}${notes ? "\n\n" : ""}Followed your standards:\n${followed
+            .map((f) => `  · ${f}`)
+            .join("\n")}`
+        : notes,
       model,
+      standards: standards.used,
     });
   } catch (err) {
     const message =

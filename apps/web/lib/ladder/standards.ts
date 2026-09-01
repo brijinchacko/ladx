@@ -21,7 +21,15 @@ import { and, eq, isNull } from "drizzle-orm";
 export interface StandardsForPrompt {
   /** Prepended to the request. Empty when nothing applies. */
   prompt: string;
-  /** What was used, for telling somebody afterwards. */
+  /**
+   * What was used, in the words they were written in.
+   *
+   * The content rather than the ids, because this is shown to the person who
+   * wrote them. "LADX followed 2 standards" is not an answer; the two rules
+   * are. The Standards page promises this and it is the promise that makes
+   * the feature trustworthy: a suggestion somebody disagrees with can be
+   * traced to the rule that caused it and the rule can be changed.
+   */
   used: { forbidden: string[]; guidance: string[] };
 }
 
@@ -54,7 +62,15 @@ export async function standardsFor(
     }));
 
     const out = await applicableStandards(shaped, request, projectId);
-    return { prompt: out.prompt, used: { forbidden: out.forbidden, guidance: out.guidance } };
+    const contentOf = (ids: string[]) =>
+      ids
+        .map((id) => rows.find((r) => r.id === id)?.content)
+        .filter((c): c is string => Boolean(c));
+
+    return {
+      prompt: out.prompt,
+      used: { forbidden: contentOf(out.forbidden), guidance: contentOf(out.guidance) },
+    };
   } catch {
     // Deliberately swallowed. Somebody writing a rung should not be stopped
     // because the standards could not be read; they get what they had before

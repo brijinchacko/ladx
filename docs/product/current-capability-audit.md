@@ -125,3 +125,29 @@ pattern (`StudioStorage`, `CadStore`, `askModel`, `CadRoutes`, `AssistantStore`)
 is a good seam and is the right place to add vendor and engineering capability
 without forking web and desktop. The plan should build on these rather than
 around them.
+
+## Addendum, 2026-09-01: a second duplication, deliberately left standing
+
+There are now two SCL generators, and this is written down rather than fixed
+because fixing it now would be the wrong call.
+
+`packages/studio/src/lib/convert.ts` has produced Siemens SCL since before any
+of this work. It is shipped, it is in front of users, and checking it rather
+than assuming showed it is not naive: it writes real TIME literals and it emits
+declarations. `ladx-vendor-siemens::scl` is richer, mapping Rockwell timer
+members onto the S7 ones and naming edge instances after their tags, and it
+carries a conversion report.
+
+Neither has been imported by TIA Portal. Replacing a shipped generator with an
+unvalidated one is not an improvement, it is a change of which unknown you are
+running, so the Rust one stays behind `vendor.siemens` until a real project has
+been through it.
+
+The condition for consolidating is the same one set for the two L5X readers: a
+real file, through real vendor software. Until then, two implementations that
+each work is a better position than one that has never been checked.
+
+This is the second such pair, after the L5X readers. Two is a pattern rather
+than an accident: building the Rust path beside a working TypeScript one is
+how this codebase has been able to keep shipping, and every pair carries a
+stated condition for collapsing it. A third without one would be drift.
