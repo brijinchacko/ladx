@@ -83,6 +83,11 @@ export type { Trace } from "./generated/ir/Trace";
 // to a model; only the rungs that touch what was asked.
 export type { RungExcerpt } from "./generated/ir/RungExcerpt";
 export type { Context } from "./generated/ir/Context";
+// The I/O list, read out of the program rather than typed again.
+export type { SignalType } from "./generated/ir/SignalType";
+export type { IoPoint } from "./generated/ir/IoPoint";
+export type { IoIssue } from "./generated/ir/IoIssue";
+export type { IoList } from "./generated/ir/IoList";
 export type { FieldDevice } from "./generated/ir/FieldDevice";
 export type { IoDirection } from "./generated/ir/IoDirection";
 // `Tag` and `DataType` exist in both crates with different shapes; the IR ones

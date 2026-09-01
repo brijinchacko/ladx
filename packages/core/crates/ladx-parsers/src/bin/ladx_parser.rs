@@ -35,6 +35,8 @@ enum Mode {
     Why,
     /// Which written standards apply to a request.
     Standards,
+    /// The I/O list, read out of a project.
+    Io,
 }
 
 fn main() -> ExitCode {
@@ -47,6 +49,8 @@ fn main() -> ExitCode {
         Mode::Why
     } else if args.iter().any(|a| a == "--standards") {
         Mode::Standards
+    } else if args.iter().any(|a| a == "--io") {
+        Mode::Io
     } else {
         Mode::Manifest
     };
@@ -54,7 +58,7 @@ fn main() -> ExitCode {
     let positional: Vec<&String> = args.iter().skip(1).filter(|a| !a.starts_with("--")).collect();
     let Some(path) = positional.first() else {
         eprintln!(
-            "usage: ladx-parser [--ir | --health | --why <tag> | --standards] <path>"
+            "usage: ladx-parser [--ir | --health | --why <tag> | --standards | --io] <path>"
         );
         return ExitCode::from(2);
     };
@@ -68,6 +72,7 @@ fn main() -> ExitCode {
             None => Err(anyhow::anyhow!("--why needs a tag: ladx-parser --why <file> <tag>")),
         },
         Mode::Standards => run_standards(path),
+        Mode::Io => run_io(path),
     };
 
     match result {
@@ -166,5 +171,18 @@ fn run_standards(path: &str) -> anyhow::Result<String> {
         // leaving somebody to guess why the answer came out that way.
         "forbidden": out.forbidden.iter().map(|m| &m.id).collect::<Vec<_>>(),
         "guidance": out.guidance.iter().map(|m| &m.id).collect::<Vec<_>>(),
+    }))?)
+}
+
+/// The I/O list, with the CSV alongside so a caller does not build it again.
+fn run_io(path: &str) -> anyhow::Result<String> {
+    let project = read_ir(path)?;
+    let list = ladx_ir::io::io_list(&project);
+    Ok(serde_json::to_string(&serde_json::json!({
+        "points": list.points,
+        "issues": list.issues,
+        "inputs": list.inputs(),
+        "outputs": list.outputs(),
+        "csv": ladx_ir::io::to_csv(&list),
     }))?)
 }
