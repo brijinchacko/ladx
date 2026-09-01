@@ -26,6 +26,10 @@ use crate::{ParseError, Result};
 pub struct L5xImport {
     pub project: IrProject,
     pub report: ConversionReport,
+    /// The racks and the cards in them, where the export carries them. A
+    /// controller-only export does not, and an empty list there means "not in
+    /// this file", not "no hardware".
+    pub hardware: ladx_ir::hardware::Hardware,
 }
 
 /// Where the walker currently is.
@@ -40,6 +44,8 @@ struct Ctx {
     routine_kind: Option<String>,
     /// Set while inside `<DataType>`, so members land on the right UDT.
     data_type: Option<DataTypeDef>,
+    /// Module being assembled, and the port that gives away its slot.
+    module: Option<ladx_ir::hardware::Module>,
     /// Rung being assembled.
     rung_number: Option<String>,
     rung_comment: Option<String>,
@@ -110,6 +116,7 @@ pub fn parse_to_ir(bytes: &[u8]) -> Result<L5xImport> {
     project.source_vendor = Some(Vendor::Rockwell);
     let mut report = ConversionReport::new();
     let mut ctx = Ctx::default();
+    let mut hardware = ladx_ir::hardware::Hardware::default();
     let mut saw_root = false;
     let mut main_routine: Option<String> = None;
 
@@ -134,6 +141,56 @@ pub fn parse_to_ir(bytes: &[u8]) -> Result<L5xImport> {
 
                 match name.as_str() {
                     "RSLogix5000Content" => saw_root = true,
+
+                    // The hardware configuration. Present in a full controller
+                    // export, absent from a routine-only one, which is why the
+                    // absence is reported rather than left to look like an
+                    // empty rack.
+                    "Module" => {
+                        let Some(module_name) = get(&attrs, "Name") else { continue };
+                        let catalog = get(&attrs, "CatalogNumber").map(str::to_string);
+                        let revision = match (get(&attrs, "Major"), get(&attrs, "Minor")) {
+                            (Some(major), Some(minor)) => Some(format!("{major}.{minor}")),
+                            _ => None,
+                        };
+                        let module = ladx_ir::hardware::Module {
+                            name: module_name.to_string(),
+                            kind: catalog
+                                .as_deref()
+                                .map(ladx_ir::hardware::kind_for)
+                                .unwrap_or(ladx_ir::hardware::ModuleKind::Other),
+                            points: catalog.as_deref().and_then(ladx_ir::hardware::points_for),
+                            catalog,
+                            slot: None,
+                            parent: get(&attrs, "ParentModule").map(str::to_string),
+                            revision,
+                            inhibited: get(&attrs, "Inhibited") == Some("true"),
+                        };
+                        if closed_immediately {
+                            hardware.modules.push(module);
+                        } else {
+                            ctx.module = Some(module);
+                        }
+                    }
+
+                    // The slot is not on the module. It is the address of the
+                    // port that faces the chassis, and a module can have more
+                    // than one port, so the upstream one is the one that says
+                    // where the card physically sits.
+                    "Port" => {
+                        if let Some(m) = ctx.module.as_mut() {
+                            let upstream = get(&attrs, "Upstream") == Some("true");
+                            if upstream || m.slot.is_none() {
+                                if let Some(slot) =
+                                    get(&attrs, "Address").and_then(|a| a.parse().ok())
+                                {
+                                    if upstream || m.slot.is_none() {
+                                        m.slot = Some(slot);
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     "Controller" => {
                         if let Some(n) = get(&attrs, "Name") {
@@ -270,7 +327,7 @@ pub fn parse_to_ir(bytes: &[u8]) -> Result<L5xImport> {
                 }
 
                 if closed_immediately {
-                    close_element(&name, &mut ctx, &mut project, &mut report);
+                    close_element(&name, &mut ctx, &mut project, &mut report, &mut hardware);
                 }
             }
 
@@ -287,7 +344,7 @@ pub fn parse_to_ir(bytes: &[u8]) -> Result<L5xImport> {
 
             Ok(Event::End(e)) => {
                 let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
-                close_element(&name, &mut ctx, &mut project, &mut report);
+                close_element(&name, &mut ctx, &mut project, &mut report, &mut hardware);
             }
 
             _ => {}
@@ -302,7 +359,16 @@ pub fn parse_to_ir(bytes: &[u8]) -> Result<L5xImport> {
     }
 
     project.entry_point = main_routine;
-    Ok(L5xImport { project, report })
+    if hardware.modules.is_empty() {
+        hardware.notes.push(
+            "This export carries no module list. A routine or program export does not include \
+             the hardware configuration; only a full controller export does. No address in the \
+             program has been checked against a card."
+                .into(),
+        );
+    }
+
+    Ok(L5xImport { project, report, hardware })
 }
 
 /// Finish whatever element just ended.
@@ -316,8 +382,15 @@ fn close_element(
     ctx: &mut Ctx,
     project: &mut IrProject,
     report: &mut ConversionReport,
+    hardware: &mut ladx_ir::hardware::Hardware,
 ) {
     match name {
+        "Module" => {
+            if let Some(m) = ctx.module.take() {
+                hardware.modules.push(m);
+            }
+        }
+
         "Text" | "Comment" | "Line" | "Description" => ctx.expect = None,
 
         "Rung" => finish_rung(ctx, report),

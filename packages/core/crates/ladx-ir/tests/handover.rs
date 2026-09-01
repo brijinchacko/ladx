@@ -127,3 +127,12 @@ fn documents_with_nothing_to_say_are_left_out() {
     let p = pack(&fixture("08-multi-step-sequence"), &PackInputs::default());
     assert!(p.file("03-sequence-of-operation.md").is_some());
 }
+
+/// A pack with no rack list cannot be checked against the hardware, and that
+/// is a concern rather than a silence.
+#[test]
+fn a_pack_without_hardware_says_the_addresses_were_never_checked() {
+    let p = pack(&fixture("03-conveyor"), &PackInputs::default());
+    assert!(p.file("06-hardware.md").is_none());
+    assert!(p.concerns.iter().any(|c| c.contains("reading the wrong terminal")));
+}

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RSLogix5000Content SchemaRevision="1.0" SoftwareRevision="32.00" TargetName="DrillCell" TargetType="Controller">
+<Controller Use="Target" Name="DrillCell" ProcessorType="1756-L83E" MajorRev="32" MinorRev="11">
+<Modules>
+<Module Name="Local" CatalogNumber="1756-L83E" Vendor="1" ProductType="14" Major="32" Minor="11" ParentModule="Local" Inhibited="false">
+<Ports>
+<Port Id="1" Address="0" Type="ICP" Upstream="false"><Bus Size="10"/></Port>
+</Ports>
+</Module>
+<Module Name="DI_01" CatalogNumber="1756-IB16" Vendor="1" ProductType="7" Major="3" Minor="1" ParentModule="Local" Inhibited="false">
+<Ports>
+<Port Id="1" Address="1" Type="ICP" Upstream="true"/>
+</Ports>
+</Module>
+<Module Name="DO_01" CatalogNumber="1756-OB16E" Vendor="1" ProductType="7" Major="3" Minor="1" ParentModule="Local" Inhibited="false">
+<Ports>
+<Port Id="1" Address="2" Type="ICP" Upstream="true"/>
+</Ports>
+</Module>
+<Module Name="AI_01" CatalogNumber="1756-IF8" Vendor="1" ProductType="10" Major="3" Minor="1" ParentModule="Local" Inhibited="true">
+<Ports>
+<Port Id="1" Address="3" Type="ICP" Upstream="true"/>
+</Ports>
+</Module>
+<Module Name="Spare_DI" CatalogNumber="1756-IB32" Vendor="1" ProductType="7" Major="3" Minor="1" ParentModule="Local" Inhibited="false">
+<Ports>
+<Port Id="1" Address="6" Type="ICP" Upstream="true"/>
+</Ports>
+</Module>
+</Modules>
+<Tags>
+<Tag Name="Start_PB" TagType="Base" DataType="BOOL" ExternalAccess="Read/Write">
+<Description><![CDATA[Start button]]></Description>
+</Tag>
+<Tag Name="Motor_Run" TagType="Base" DataType="BOOL" ExternalAccess="Read/Write"/>
+<Tag Name="Level_PV" TagType="Base" DataType="REAL" ExternalAccess="Read/Write"/>
+<Tag Name="Spare_In" TagType="Base" DataType="BOOL" ExternalAccess="Read/Write"/>
+<Tag Name="Ghost_In" TagType="Base" DataType="BOOL" ExternalAccess="Read/Write"/>
+</Tags>
+<Programs>
+<Program Name="MainProgram" MainRoutineName="MainRoutine">
+<Routines>
+<Routine Name="MainRoutine" Type="RLL">
+<RLLContent>
+<Rung Number="0" Type="N">
+<Comment><![CDATA[Start the motor.]]></Comment>
+<Text><![CDATA[XIC(Local:1:I.Data.3)OTE(Local:2:O.Data.5);]]></Text>
+</Rung>
+<Rung Number="1" Type="N">
+<Comment><![CDATA[A point past the end of a 16-point card.]]></Comment>
+<Text><![CDATA[XIC(Local:1:I.Data.20)OTE(Motor_Run);]]></Text>
+</Rung>
+<Rung Number="2" Type="N">
+<Comment><![CDATA[Reads an inhibited analogue card.]]></Comment>
+<Text><![CDATA[XIC(Local:3:I.Ch0Data.0)OTE(Level_PV);]]></Text>
+</Rung>
+<Rung Number="3" Type="N">
+<Comment><![CDATA[Slot 7 has nothing in it.]]></Comment>
+<Text><![CDATA[XIC(Local:7:I.Data.0)OTE(Ghost_In);]]></Text>
+</Rung>
+<Rung Number="4" Type="N">
+<Comment><![CDATA[An output address on an input card.]]></Comment>
+<Text><![CDATA[XIC(Start_PB)OTE(Local:1:O.Data.0);]]></Text>
+</Rung>
+</RLLContent>
+</Routine>
+</Routines>
+</Program>
+</Programs>
+</Controller>
+</RSLogix5000Content>

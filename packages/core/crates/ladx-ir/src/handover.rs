@@ -61,6 +61,9 @@ fn hashed(path: &str, purpose: &str, content: String) -> PackFile {
 pub struct PackInputs<'a> {
     pub validation: Option<Validation>,
     pub other_tag_lists: &'a [Source],
+    /// The racks, where the export carried them. A pack without a rack list is
+    /// a pack nobody can order a spare from.
+    pub hardware: Option<crate::hardware::Hardware>,
     /// Stamped into the manifest. Passed in because the IR has no clock.
     pub dated: Option<String>,
     pub prepared_by: Option<String>,
@@ -131,6 +134,42 @@ pub fn pack(project: &IrProject, inputs: &PackInputs<'_>) -> Pack {
                 safety.join(", ")
             ));
         }
+    }
+
+    if let Some(hw) = &inputs.hardware {
+        if !hw.modules.is_empty() {
+            let mut doc = format!("# {} hardware\n\n", project.name);
+            doc.push_str(&hw.to_text());
+            let findings = hw.check(project);
+            if findings.is_empty() {
+                doc.push_str("\nEvery address in the program lands on a card that is in the racks.\n");
+            } else {
+                doc.push_str("\n## Addresses that do not match the racks\n\n");
+                for f in &findings {
+                    doc.push_str(&format!("- {}\n", f.detail));
+                }
+            }
+            files.push(hashed(
+                "06-hardware.md",
+                "The racks and the cards in them, with catalogue numbers and revisions.",
+                doc,
+            ));
+            let breaking = findings.iter().filter(|f| f.issue.is_wrong_at_runtime()).count();
+            if breaking > 0 {
+                concerns.push(format!(
+                    "{breaking} address{} in the program does not match the racks. Each one \
+                     compiles and reads the wrong terminal.",
+                    if breaking == 1 { "" } else { "es" }
+                ));
+            }
+        }
+    } else {
+        concerns.push(
+            "No hardware configuration was provided, so no address in the program has been \
+             checked against a card. A module moved one slot leaves every address past it \
+             compiling and reading the wrong terminal."
+                .into(),
+        );
     }
 
     let drift_report: DriftReport = drift(project, inputs.other_tag_lists);
