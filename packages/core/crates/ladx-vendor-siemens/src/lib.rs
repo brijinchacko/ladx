@@ -8,6 +8,7 @@
 //! The connector itself, detection, Openness, and a project on disk, comes
 //! next and cannot be verified from here.
 
+pub mod detect;
 pub mod scl;
 pub mod time;
 

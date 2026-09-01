@@ -2304,6 +2304,7 @@ version = "0.0.0"
 dependencies = [
  "ladx-ir",
  "ladx-types",
+ "ladx-vendor",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
