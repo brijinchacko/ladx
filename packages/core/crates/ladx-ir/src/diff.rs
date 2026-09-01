@@ -169,30 +169,68 @@ pub fn diff(before: &IrProject, after: &IrProject) -> Diff {
     let g_before = ProjectGraph::build(before);
     let g_after = ProjectGraph::build(after);
 
+    // A rung number is not an identity. An export pulled off a controller
+    // numbers its rungs from zero, so the same program read back from the
+    // machine arrives with every rung under a different key. Matching on the
+    // key alone reported an identical program as three removals and three
+    // additions, which is worst on the one comparison people actually want:
+    // this program against the one that is running.
+    //
+    // So the rungs that do not match by key are paired by their content within
+    // the same POU before anything is called added or removed.
+    let mut unmatched_after: Vec<&String> = Vec::new();
+
     for (where_, after_text) in &after_rungs {
         match before_rungs.get(where_) {
-            None => changes.push(Change {
-                risk: Risk::Medium,
-                summary: format!("A rung was added at {where_}."),
-                at: vec![where_.clone()],
-            }),
+            None => unmatched_after.push(where_),
             Some(before_text) if before_text != after_text => {
                 changes.extend(describe_rung_change(where_, &g_before, &g_after));
             }
             _ => {}
         }
     }
-    for where_ in before_rungs.keys() {
-        if !after_rungs.contains_key(where_) {
-            changes.push(Change {
-                risk: Risk::High,
-                summary: format!("A rung was removed at {where_}."),
-                at: vec![where_.clone()],
-            });
+
+    let mut unmatched_before: Vec<&String> =
+        before_rungs.keys().filter(|k| !after_rungs.contains_key(*k)).collect();
+
+    let pou_of = |key: &str| key.rsplit_once('/').map(|(p, _)| p.to_string()).unwrap_or_default();
+
+    let mut renumbered = 0usize;
+    let mut still_added: Vec<&String> = Vec::new();
+
+    for after_key in unmatched_after {
+        let text = &after_rungs[after_key];
+        let pou = pou_of(after_key);
+        // The same logic, in the same routine, under a different number.
+        let found = unmatched_before
+            .iter()
+            .position(|b| pou_of(b) == pou && &before_rungs[*b] == text);
+        match found {
+            Some(i) => {
+                unmatched_before.remove(i);
+                renumbered += 1;
+            }
+            None => still_added.push(after_key),
         }
     }
 
+    for where_ in still_added {
+        changes.push(Change {
+            risk: Risk::Medium,
+            summary: format!("A rung was added at {where_}."),
+            at: vec![where_.clone()],
+        });
+    }
+    for where_ in unmatched_before {
+        changes.push(Change {
+            risk: Risk::High,
+            summary: format!("A rung was removed at {where_}."),
+            at: vec![where_.clone()],
+        });
+    }
+
     changes.sort_by(|a, b| b.risk.cmp(&a.risk).then(a.summary.cmp(&b.summary)));
+
 
     let mut not_compared = Vec::new();
     let carried: Vec<&str> = after
@@ -206,6 +244,18 @@ pub fn diff(before: &IrProject, after: &IrProject) -> Diff {
             "{} is not ladder. LADX carries it as source and did not compare it, so a change \
              inside it is not in this list.",
             carried.join(", ")
+        ));
+    }
+
+    // Said once rather than as a change per rung: renumbering is not a change
+    // to the program, but it does mean the rung references in one version do
+    // not point at the same rungs in the other.
+    if renumbered > 0 {
+        not_compared.push(format!(
+            "{renumbered} rung{} matched by their contents rather than their numbers, so the two \
+             versions number their rungs differently. The logic is the same; a rung reference \
+             from one will not find the same rung in the other.",
+            if renumbered == 1 { "" } else { "s" }
         ));
     }
 

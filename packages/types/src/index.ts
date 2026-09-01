@@ -165,3 +165,8 @@ export type { Control as ProposedControl } from "./generated/hmi/Control";
 export type { ProposedBinding } from "./generated/hmi/ProposedBinding";
 export type { ProposedScreen } from "./generated/hmi/ProposedScreen";
 export type { Proposal as ScreenProposal } from "./generated/hmi/Proposal";
+
+// What changed between two versions of a program.
+export type { Risk as ChangeRisk } from "./generated/ir/Risk";
+export type { Change } from "./generated/ir/Change";
+export type { Diff } from "./generated/ir/Diff";

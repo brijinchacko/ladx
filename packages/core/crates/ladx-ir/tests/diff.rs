@@ -181,3 +181,75 @@ fn it_says_what_it_did_not_compare() {
     let d = diff(&before, &after);
     assert!(d.not_compared.iter().any(|n| n.contains("Calc") && n.contains("did not compare")));
 }
+
+/// The comparison people actually want is this program against the one running
+/// on the machine, and an export pulled off a controller numbers its rungs from
+/// zero. Matching on the number alone reported an identical program as three
+/// removals and three additions.
+#[test]
+fn a_renumbered_program_is_the_same_program() {
+    let before = fixture("03-conveyor");
+
+    // The same logic, with every rung under a different number, which is what
+    // comes back from the controller.
+    let mut after = before.clone();
+    for pou in &mut after.pous {
+        if let ladx_ir::PouBody::Ladder { rungs } = &mut pou.body {
+            for (n, rung) in rungs.iter_mut().enumerate() {
+                rung.id = format!("r{n}");
+            }
+        }
+    }
+
+    let d = diff(&before, &after);
+    assert!(d.changes.is_empty(), "got {:?}", d.changes);
+    assert!(
+        d.not_compared.iter().any(|n| n.contains("rather than their numbers")),
+        "and it has to say why the rung references will not line up"
+    );
+}
+
+/// Matching by content must not hide a real change. A rung that was genuinely
+/// removed has no counterpart to pair with.
+#[test]
+fn content_matching_does_not_hide_a_removed_rung() {
+    let before = fixture("03-conveyor");
+    let mut after = before.clone();
+    if let ladx_ir::PouBody::Ladder { rungs } = &mut after.pous[0].body {
+        rungs.remove(0);
+        // and renumber, so it cannot pass by luck of the ids lining up
+        for (n, rung) in rungs.iter_mut().enumerate() {
+            rung.id = format!("r{n}");
+        }
+    }
+    let d = diff(&before, &after);
+    assert!(
+        d.changes.iter().any(|c| c.summary.contains("removed")),
+        "a removed rung must still be reported, got {:?}",
+        d.changes
+    );
+}
+
+/// Two rungs are only the same rung if they are in the same routine. Identical
+/// logic in a different POU is a different rung.
+#[test]
+fn content_matching_does_not_cross_routines() {
+    let before = fixture("08-multi-step-sequence");
+    let mut after = before.clone();
+    // Move every rung out of the second POU into the first, renumbering.
+    let moved: Vec<_> = match &after.pous[1].body {
+        ladx_ir::PouBody::Ladder { rungs } => rungs.clone(),
+        _ => vec![],
+    };
+    if let ladx_ir::PouBody::Ladder { rungs } = &mut after.pous[1].body {
+        rungs.clear();
+    }
+    if let ladx_ir::PouBody::Ladder { rungs } = &mut after.pous[0].body {
+        rungs.extend(moved);
+    }
+    let d = diff(&before, &after);
+    assert!(
+        !d.changes.is_empty(),
+        "rungs that changed routine are a change, not a renumbering"
+    );
+}

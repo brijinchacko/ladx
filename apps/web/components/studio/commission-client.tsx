@@ -4,6 +4,7 @@ import { parseTagList } from "@/lib/ladder/tag-list";
 import { ladxProgramToIr } from "@ladx/studio";
 import type {
   Block,
+  Change,
   Deviation,
   Drift,
   HardwareFinding,
@@ -35,6 +36,7 @@ type What =
   | "deviations"
   | "screens"
   | "hardware"
+  | "compare"
   | "drift"
   | "handover";
 
@@ -70,6 +72,11 @@ interface HardwareOut {
   findings: HardwareFinding[];
   breaking: number;
   table: string;
+}
+interface CompareOut {
+  changes: Change[];
+  notCompared: string[];
+  worst: string | null;
 }
 interface DriftOut {
   drifts: Drift[];
@@ -120,6 +127,13 @@ const TABS: { what: What; label: string; icon: React.ReactNode; blurb: string }[
     icon: <Cpu className="h-4 w-4" />,
     blurb:
       "The racks, from a full controller export, against what the program addresses. A card moved one slot leaves every address past it compiling and reading the wrong terminal.",
+  },
+  {
+    what: "compare",
+    label: "Compare",
+    icon: <GitCompare className="h-4 w-4" />,
+    blurb:
+      "This program against an export pulled off the controller. What is on the machine that is not here, ranked by what it would do.",
   },
   {
     what: "drift",
@@ -207,12 +221,39 @@ export function CommissionClient({
     }
     // Hardware reads an uploaded export, not the program on screen: the module
     // list is not in a program.
-    if (what === "hardware") {
+    if (what === "hardware" || what === "compare") {
       setError(null);
       return;
     }
     void load(chosen, what);
   }, [chosen, what, load, pasted]);
+
+  const compareWith = useCallback(
+    async (file: File) => {
+      const found = programs.find((p) => p.id === chosen);
+      if (!found) return;
+      setBusy(true);
+      setError(null);
+      setData(null);
+      try {
+        const body = new FormData();
+        body.append("file", file);
+        body.append(
+          "project",
+          JSON.stringify(ladxProgramToIr(found.program as Parameters<typeof ladxProgramToIr>[0])),
+        );
+        const res = await fetch("/api/ladder/compare", { method: "POST", body });
+        const out = await res.json();
+        if (!res.ok) throw new Error(out.error ?? "That file could not be compared.");
+        setData(out);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "That file could not be compared.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [programs, chosen],
+  );
 
   const uploadHardware = useCallback(async (file: File) => {
     setBusy(true);
@@ -295,6 +336,28 @@ export function CommissionClient({
 
       {tab && <p className="mb-4 text-[12.5px] leading-relaxed text-ink-500">{tab.blurb}</p>}
 
+      {what === "compare" && (
+        <div className="mb-5 rounded-md border border-ink-200 bg-ink-50/40 p-3">
+          <label htmlFor="cmp" className="mb-1.5 block text-[12.5px] font-medium text-ink-700">
+            The export from the controller
+          </label>
+          <p className="mb-2 text-[12px] leading-relaxed text-ink-500">
+            An L5X pulled off the machine. It is compared against the program selected above, and
+            the wording reads as what the machine has that this does not.
+          </p>
+          <input
+            id="cmp"
+            type="file"
+            accept=".L5X,.l5x,.xml"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void compareWith(file);
+            }}
+            className="block w-full text-[12.5px] text-ink-700 file:mr-3 file:rounded-sm file:border file:border-ink-200 file:bg-white file:px-3 file:py-1.5 file:text-[12.5px] file:text-ink-700"
+          />
+        </div>
+      )}
+
       {what === "hardware" && (
         <div className="mb-5 rounded-md border border-ink-200 bg-ink-50/40 p-3">
           <label htmlFor="l5x" className="mb-1.5 block text-[12.5px] font-medium text-ink-700">
@@ -359,6 +422,10 @@ export function CommissionClient({
         <Empty>
           Choose a controller export above and its racks are checked against the program in it.
         </Empty>
+      )}
+      {what === "compare" && data != null && <CompareView out={data as CompareOut} />}
+      {what === "compare" && data == null && !busy && !error && (
+        <Empty>Choose an export from the controller and it is compared against this program.</Empty>
       )}
       {what === "drift" && data != null && <DriftView out={data as DriftOut} />}
       {what === "drift" && data == null && !busy && !error && (
@@ -682,6 +749,54 @@ function HardwareView({ out }: { out: HardwareOut }) {
         </div>
       ))}
       <Notes notes={out.notes} />
+    </div>
+  );
+}
+
+function CompareView({ out }: { out: CompareOut }) {
+  if (out.changes.length === 0) {
+    return (
+      <div>
+        <Empty>Nothing differs. The machine is running this program.</Empty>
+        <Notes notes={out.notCompared} />
+      </div>
+    );
+  }
+  // Safety first, then by how much it would do, because a list sorted by file
+  // order buries the one thing somebody needed to see.
+  const rank: Record<string, number> = { safety: 0, high: 1, medium: 2, low: 3 };
+  const sorted = [...out.changes].sort((a, b) => (rank[a.risk] ?? 9) - (rank[b.risk] ?? 9));
+  return (
+    <div>
+      <p className="mb-3 text-[12.5px] text-ink-500">
+        {out.changes.length} difference{out.changes.length === 1 ? "" : "s"}
+        {out.worst && `, the most serious ranked ${out.worst}`}.
+      </p>
+      {sorted.map((c) => (
+        <div
+          key={c.summary}
+          className={`mb-2 rounded-md border px-3 py-2 ${
+            c.risk === "safety"
+              ? "border-red-200 bg-red-50"
+              : c.risk === "high"
+                ? "border-amber-200 bg-amber-50"
+                : "border-ink-200 bg-white"
+          }`}
+        >
+          <span
+            className={`mr-2 rounded px-1.5 py-0.5 text-[11px] font-medium ${
+              c.risk === "safety" ? "bg-red-200 text-red-900" : "bg-ink-100 text-ink-700"
+            }`}
+          >
+            {c.risk}
+          </span>
+          <span className="text-[13px] leading-relaxed text-ink-800">{c.summary}</span>
+          {c.at.length > 0 && (
+            <span className="ml-2 font-mono text-[11.5px] text-ink-400">{c.at.join(", ")}</span>
+          )}
+        </div>
+      ))}
+      <Notes notes={out.notCompared} />
     </div>
   );
 }
