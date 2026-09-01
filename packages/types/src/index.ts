@@ -88,6 +88,11 @@ export type { SignalType } from "./generated/ir/SignalType";
 export type { IoPoint } from "./generated/ir/IoPoint";
 export type { IoIssue } from "./generated/ir/IoIssue";
 export type { IoList } from "./generated/ir/IoList";
+// The alarms a program already has, found rather than declared.
+export type { Confidence } from "./generated/ir/Confidence";
+export type { Alarm } from "./generated/ir/Alarm";
+export type { AlarmIssue } from "./generated/ir/AlarmIssue";
+export type { AlarmList } from "./generated/ir/AlarmList";
 export type { FieldDevice } from "./generated/ir/FieldDevice";
 export type { IoDirection } from "./generated/ir/IoDirection";
 // `Tag` and `DataType` exist in both crates with different shapes; the IR ones

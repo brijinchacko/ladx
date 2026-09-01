@@ -37,6 +37,8 @@ enum Mode {
     Standards,
     /// The I/O list, read out of a project.
     Io,
+    /// The alarms a program already has.
+    Alarms,
 }
 
 fn main() -> ExitCode {
@@ -51,6 +53,8 @@ fn main() -> ExitCode {
         Mode::Standards
     } else if args.iter().any(|a| a == "--io") {
         Mode::Io
+    } else if args.iter().any(|a| a == "--alarms") {
+        Mode::Alarms
     } else {
         Mode::Manifest
     };
@@ -58,7 +62,7 @@ fn main() -> ExitCode {
     let positional: Vec<&String> = args.iter().skip(1).filter(|a| !a.starts_with("--")).collect();
     let Some(path) = positional.first() else {
         eprintln!(
-            "usage: ladx-parser [--ir | --health | --why <tag> | --standards | --io] <path>"
+            "usage: ladx-parser [--ir | --health | --why <tag> | --standards | --io | --alarms] <path>"
         );
         return ExitCode::from(2);
     };
@@ -73,6 +77,7 @@ fn main() -> ExitCode {
         },
         Mode::Standards => run_standards(path),
         Mode::Io => run_io(path),
+        Mode::Alarms => run_alarms(path),
     };
 
     match result {
@@ -184,5 +189,15 @@ fn run_io(path: &str) -> anyhow::Result<String> {
         "inputs": list.inputs(),
         "outputs": list.outputs(),
         "csv": ladx_ir::io::to_csv(&list),
+    }))?)
+}
+
+fn run_alarms(path: &str) -> anyhow::Result<String> {
+    let project = read_ir(path)?;
+    let list = ladx_ir::alarms::alarm_list(&project);
+    Ok(serde_json::to_string(&serde_json::json!({
+        "alarms": list.alarms,
+        "issues": list.issues,
+        "csv": ladx_ir::alarms::to_csv(&list),
     }))?)
 }

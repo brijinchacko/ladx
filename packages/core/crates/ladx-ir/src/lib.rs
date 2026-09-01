@@ -34,6 +34,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+pub mod alarms;
 pub mod context;
 pub mod fidelity;
 pub mod graph;
