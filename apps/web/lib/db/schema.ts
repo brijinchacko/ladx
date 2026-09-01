@@ -27,6 +27,22 @@ import {
 
 // ----- enums -----
 
+export const memoryScopeEnum = pgEnum("memory_scope", ["user", "company", "project"]);
+
+/**
+ * Forbidden is a kind rather than a flag on approved.
+ *
+ * They are never weighed against each other: a forbidden rule is a veto, and a
+ * scheme where a sufficiently specific approval outranks a safety rule has no
+ * right answer.
+ */
+export const memoryKindEnum = pgEnum("memory_kind", [
+  "convention",
+  "approved",
+  "forbidden",
+  "note",
+]);
+
 export const vendorKindEnum = pgEnum("vendor_kind", [
   "siemens",
   "rockwell",
@@ -1065,3 +1081,43 @@ export const cadDrawings = pgTable(
 
 export type DocumentRow = typeof documents.$inferSelect;
 export type CadDrawing = typeof cadDrawings.$inferSelect;
+
+// ----- engineering memory -----
+// What LADX has been told about how work is done here: approved blocks,
+// forbidden patterns, naming conventions. Not the assistant's chat history,
+// which lives in `messages`.
+//
+// Nothing is ever updated in place. An edit inserts a new row and points the
+// old one at it, so a suggestion made last month can still be explained after
+// the rule behind it has been reworded. `supersededBy` being null is what makes
+// a row current.
+export const memories = pgTable(
+  "memories",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    scope: memoryScopeEnum("scope").notNull(),
+    kind: memoryKindEnum("kind").notNull(),
+    /** Set when the scope is project. Null otherwise. */
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    /** Why, when somebody said. A rule with a reason survives its author. */
+    reason: text("reason"),
+    /** Who wrote it, kept as text so it survives the account being deleted. */
+    author: text("author").notNull(),
+    supersedes: uuid("supersedes"),
+    supersededBy: uuid("superseded_by"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("memories_user_idx").on(t.userId),
+    projectIdx: index("memories_project_idx").on(t.projectId),
+    // Retrieval only ever wants current rows, and on a long-lived account the
+    // superseded ones will outnumber them.
+    currentIdx: index("memories_current_idx").on(t.userId, t.supersededBy),
+  }),
+);
+
+export type MemoryRow = typeof memories.$inferSelect;

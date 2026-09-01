@@ -1,4 +1,5 @@
 import { askModelViaApi } from "@/components/studio/ask-model";
+import { coreImportViaApi } from "@/components/studio/core-import";
 import { saveRecordViaApi } from "@/components/studio/save-record";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
@@ -46,7 +47,7 @@ export default async function StudioConvertPage({
     <>
       <WorkspaceHeader
         title="Convert"
-        subtitle="Ladder into Structured Text, SCL, neutral text or PLCopen XML. Runs in your browser; nothing is uploaded."
+        subtitle="Ladder into Structured Text, SCL, neutral text or PLCopen XML, in your browser. Opening an L5X sends it to the server to be read, because that reader is not something a browser can run."
       />
       <ConvertWorkbench
         ladderHref="/studio/ladder"
@@ -57,6 +58,7 @@ export default async function StudioConvertPage({
         sources={sources}
         companyName={company?.name ?? null}
         author={user.displayName ?? user.email.split("@")[0] ?? ""}
+        coreImport={coreImportViaApi}
       />
     </>
   );
