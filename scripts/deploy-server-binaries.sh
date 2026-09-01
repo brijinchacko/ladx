@@ -49,5 +49,20 @@ ssh -i "$KEY" "$HOST" "
     *'must not be broken'*) echo '  standards retrieval: working' ;;
     *) echo '  standards retrieval: FAILED'; echo \"  got: \$OUT\"; exit 1 ;;
   esac
+
+  # Every mode the web actually passes, asked for by name. A binary from
+  # before a mode existed answers 'unknown' and exits non-zero, which is the
+  # whole failure this script is here to catch; checking only the modes that
+  # already worked would be a check that cannot fail.
+  for MODE in --ir --health --why --standards --io --alarms --narrative --diff --screens \\
+              --sequence --tests --hardware --deviations --handover --drift; do
+    ./target/release/ladx-parser 2>&1 | grep -q -- \"\$MODE\" \\
+      || { echo \"  ladx-parser does not know \$MODE: the binary is older than the app\"; exit 1; }
+  done
+  echo '  ladx-parser knows every mode the app passes'
+
+  ./target/release/ladx-siemens 2>&1 | grep -q -- '--read' \\
+    || { echo '  ladx-siemens cannot read SCL: the binary predates Siemens import'; exit 1; }
+  echo '  ladx-siemens reads SCL as well as writing it'
 "
 echo "done"
