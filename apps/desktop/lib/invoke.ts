@@ -5,6 +5,7 @@ import type {
   ConversionReport,
   FeatureDescriptor,
   FeatureFlag,
+  HealthReport,
   IrProject,
   ProjectGraph,
 } from "@ladx/types";
@@ -385,4 +386,14 @@ export interface VendorImport {
  */
 export async function analyseProject(project: IrProject): Promise<ProjectGraph> {
   return tauriInvoke<ProjectGraph>("analyse_project", { project });
+}
+
+/**
+ * What is worth telling somebody about a project.
+ *
+ * Behind engineering.analysis. Every finding names the rung or tag it is about,
+ * so a report can be navigated rather than only read.
+ */
+export async function projectHealth(project: IrProject): Promise<HealthReport> {
+  return tauriInvoke<HealthReport>("project_health", { project });
 }

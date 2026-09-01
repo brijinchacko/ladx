@@ -156,3 +156,18 @@ pub fn analyse_project(
     state.audit.log("user", "analyse_project", Some(&project.name)).ok();
     Ok(graph)
 }
+
+/// Look a project over and report what is worth telling somebody.
+///
+/// Separate from `analyse_project`, which returns the raw relationships. This
+/// is the reading of them, and it is what a screen shows.
+#[tauri::command]
+pub fn project_health(
+    state: tauri::State<'_, AppState>,
+    project: IrProject,
+) -> Result<ladx_ir::health::HealthReport, String> {
+    require(&state, FeatureFlag::EngineeringAnalysis)?;
+    let report = ladx_ir::health::analyse(&project);
+    state.audit.log("user", "project_health", Some(&project.name)).ok();
+    Ok(report)
+}

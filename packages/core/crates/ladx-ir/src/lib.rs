@@ -36,6 +36,7 @@ use ts_rs::TS;
 
 pub mod fidelity;
 pub mod graph;
+pub mod health;
 pub mod neutral_text;
 pub mod plcopen_graph;
 pub mod to_st;
