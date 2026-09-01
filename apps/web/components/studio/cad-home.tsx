@@ -42,15 +42,18 @@ interface ProjectOption {
 export default function CadHome({
   drawings,
   projects,
+  openOn,
   company,
 }: {
   drawings: CadRow[];
   projects: ProjectOption[];
+  /** The project this was opened from, when it was opened from one. */
+  openOn?: string | null;
   company: { name?: string } | null;
 }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
+  const [projectId, setProjectId] = useState(openOn ?? projects[0]?.id ?? "");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 

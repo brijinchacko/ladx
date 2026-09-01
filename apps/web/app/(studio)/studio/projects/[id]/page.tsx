@@ -9,6 +9,7 @@ import ProjectChatDock from "@/components/studio/project-chat-dock";
 import ProjectDrawings from "@/components/studio/project-drawings";
 import ProjectPlanner, { type PlannerTask } from "@/components/studio/project-planner";
 import ProjectSummary from "@/components/studio/project-summary";
+import { ProjectTools } from "@/components/studio/project-tools";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { UploadButton } from "@/components/upload-button";
 import { requireUser } from "@/lib/auth/server";
@@ -440,6 +441,12 @@ export default async function ProjectWorkspace({
                   </div>
                 </div>
               </section>
+
+              {/* Every tool that works on this project, carrying the project
+                  with it. Without this the only way into most of them is the
+                  sidebar, where the program has to be picked again from a
+                  dropdown. */}
+              <ProjectTools projectId={project.id} hasProgram={programs.length > 0} />
 
               {/* the PLC file, if one was uploaded to this project */}
               <section className="rounded-sm border border-ink-100 p-5">

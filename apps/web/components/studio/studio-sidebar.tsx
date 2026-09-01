@@ -2,6 +2,7 @@
 
 import AccountMenu from "@/components/studio/account-menu";
 import ChatHistory, { type HistoryItem } from "@/components/studio/chat-history";
+import { GROUPS, TOOLS as SHARED_TOOLS } from "@/lib/studio/tools";
 import {
   Logo,
   SIDEBAR_ASIDE,
@@ -46,6 +47,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -58,18 +60,32 @@ export interface SidebarProject {
   phase: string;
 }
 
-const TOOLS = [
-  { href: "/studio/ladder", label: "Ladder", icon: Grid2x2Check },
-  { href: "/studio/monitor", label: "Monitor", icon: Activity },
-  { href: "/studio/cad", label: "CAD", icon: PencilRuler },
-  { href: "/studio/hmi", label: "HMI/SCADA", icon: MonitorCog },
-  { href: "/studio/convert", label: "Convert", icon: GitCompareArrows },
-  { href: "/studio/documents", label: "Documents", icon: Library },
-  { href: "/studio/knowledge", label: "Knowledge", icon: FileText },
-  { href: "/studio/schedules", label: "Schedules", icon: Cable },
-  { href: "/studio/commission", label: "Commissioning", icon: ClipboardCheck },
-  { href: "/studio/standards", label: "Standards", icon: Ruler },
-];
+/**
+ * Icons for the shared tool list.
+ *
+ * The list itself lives in lib/studio/tools, so the sidebar and the project
+ * page cannot drift apart. Only the icon mapping is here, because an icon is a
+ * component and the shared list has to stay importable by the server.
+ */
+const TOOL_ICONS: Record<string, LucideIcon> = {
+  Grid2x2Check,
+  GitCompareArrows,
+  MonitorCog,
+  PencilRuler,
+  Activity,
+  Cable,
+  ClipboardCheck,
+  Ruler,
+  Library,
+  FileText,
+};
+
+const TOOLS = SHARED_TOOLS.map((t) => ({
+  href: t.href,
+  label: t.label,
+  icon: TOOL_ICONS[t.icon] ?? FileText,
+  group: t.group,
+}));
 
 const COLLAPSE_KEY = "ladx.studio.sidebar";
 
@@ -258,14 +274,23 @@ export default function StudioSidebar({
           </Section>
         )}
 
-        {/* the tools, all of which open inside this shell */}
-        <Section label="Tools">
-          {TOOLS.map((t) => (
-            <Row key={t.href} href={t.href} active={isActive(t.href)} icon={t.icon}>
-              {t.label}
-            </Row>
-          ))}
-        </Section>
+        {/*
+          The tools, in groups.
+
+          Ten of them in one list is not a list, it is a pile: nothing in it
+          says which relate to each other or what to reach for first. The three
+          headings answer "what am I doing", which is the question somebody
+          actually has standing here.
+        */}
+        {GROUPS.map((g) => (
+          <Section key={g.id} label={g.label}>
+            {TOOLS.filter((t) => t.group === g.id).map((t) => (
+              <Row key={t.href} href={t.href} active={isActive(t.href)} icon={t.icon}>
+                {t.label}
+              </Row>
+            ))}
+          </Section>
+        ))}
 
         {/* Only shown to an administrator, and shown last: it is not a tool
             and does not belong among them. The link being hidden is a

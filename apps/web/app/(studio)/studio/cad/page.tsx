@@ -1,4 +1,5 @@
 import CadHome, { type CadRow } from "@/components/studio/cad-home";
+import { ProjectContext } from "@/components/studio/project-context";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
@@ -16,8 +17,11 @@ export const dynamic = "force-dynamic";
  * making people find it after opening a blank canvas would waste the one thing
  * this tool has over a generic drawing app.
  */
-export default async function CadIndexPage() {
+export default async function CadIndexPage({
+  searchParams,
+}: { searchParams: Promise<{ project?: string }> }) {
   const user = await requireUser();
+  const { project: wanted } = await searchParams;
 
   const [rows, userProjects, company] = await Promise.all([
     db()
@@ -44,14 +48,18 @@ export default async function CadIndexPage() {
     updatedAt: r.updatedAt.toISOString(),
   }));
 
+  const inProject = wanted ? (userProjects.find((p) => p.id === wanted) ?? null) : null;
+
   return (
     <>
       <WorkspaceHeader
         title="CAD"
         subtitle={`${drawings.length} drawing${drawings.length === 1 ? "" : "s"}. Panel layouts, schematics and general arrangements.`}
       />
+      <ProjectContext projectId={inProject?.id ?? null} projectName={inProject?.name ?? null} />
       <CadHome
         drawings={drawings}
+        openOn={inProject?.id ?? null}
         projects={userProjects.map((p) => ({ id: p.id, name: p.name }))}
         company={company ? { name: company.name ?? undefined } : null}
       />

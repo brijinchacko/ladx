@@ -1,3 +1,4 @@
+import { ProjectContext } from "@/components/studio/project-context";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
 import { listProjects } from "@/lib/platform/queries";
@@ -14,9 +15,13 @@ export const dynamic = "force-dynamic";
  * projects, so it leads with generating a filled document for one of them and
  * treats browsing as the secondary action.
  */
-export default async function StudioDocumentsPage() {
+export default async function StudioDocumentsPage({
+  searchParams,
+}: { searchParams: Promise<{ project?: string }> }) {
   const user = await requireUser();
+  const { project: wanted } = await searchParams;
   const projects = await listProjects(user.id);
+  const inProject = wanted ? (projects.find((p) => p.id === wanted) ?? null) : null;
 
   return (
     <>
@@ -24,6 +29,8 @@ export default async function StudioDocumentsPage() {
         title="Documents"
         subtitle={`${TEMPLATES.length} templates. Open one here, then attach it to a project or start a new one.`}
       />
+
+      <ProjectContext projectId={inProject?.id ?? null} projectName={inProject?.name ?? null} />
 
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
         <section className="mb-8 rounded-md border border-ink-200 bg-ink-50/50 p-5">

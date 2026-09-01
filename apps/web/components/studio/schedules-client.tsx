@@ -12,10 +12,18 @@ interface Schedules {
 
 export function SchedulesClient({
   programs,
+  openOn,
 }: {
   programs: { id: string; name: string; program: unknown }[];
+  /**
+   * The program to open on, when this was reached from a project.
+   *
+   * Null means it was reached from the sidebar, where there is no project and
+   * the most recently touched program is the reasonable default.
+   */
+  openOn?: string | null;
 }) {
-  const [chosen, setChosen] = useState<string>(programs[0]?.id ?? "");
+  const [chosen, setChosen] = useState<string>(openOn ?? programs[0]?.id ?? "");
   const [data, setData] = useState<Schedules | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

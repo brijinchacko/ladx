@@ -1,8 +1,10 @@
+import { ProjectContext } from "@/components/studio/project-context";
 import { SchedulesClient } from "@/components/studio/schedules-client";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
 import { listPrograms } from "@/lib/db/ladder";
 import { partitionRunnable } from "@/lib/ladder/runnable";
+import { listProjects } from "@/lib/platform/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +17,23 @@ export const dynamic = "force-dynamic";
  * version somebody is actually holding rather than the one they exported in
  * March.
  */
-export default async function SchedulesPage() {
+export default async function SchedulesPage({
+  searchParams,
+}: { searchParams: Promise<{ project?: string }> }) {
   const user = await requireUser();
-  const programs = await listPrograms(user.id);
+  const { project: wanted } = await searchParams;
+  const [programs, projects] = await Promise.all([listPrograms(user.id), listProjects(user.id)]);
   // A stored program can be any shape, and a schedule built from one that
   // cannot be read would be a schedule built from nothing.
   const { runnable } = partitionRunnable(programs);
+
+  // The project carried in from wherever this was opened, if it was opened
+  // from a project at all. A program is one per project, so the project picks
+  // the program; nothing here has to guess.
+  const inProject = wanted ? (projects.find((p) => p.id === wanted) ?? null) : null;
+  const openOn = inProject
+    ? (runnable.find((p) => p.projectId === inProject.id)?.id ?? null)
+    : null;
 
   return (
     <>
@@ -32,8 +45,10 @@ export default async function SchedulesPage() {
           The page already has them, and the route that serves one takes a
           project id rather than a program id, so re-fetching would have been
           both a round trip and the wrong key. */}
+      <ProjectContext projectId={inProject?.id ?? null} projectName={inProject?.name ?? null} />
       <SchedulesClient
         programs={runnable.map((p) => ({ id: p.id, name: p.name, program: p.program }))}
+        openOn={openOn}
       />
     </>
   );
