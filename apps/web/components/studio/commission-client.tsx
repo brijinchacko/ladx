@@ -322,10 +322,10 @@ export function CommissionClient({
             key={t.what}
             type="button"
             onClick={() => setWhat(t.what)}
-            className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[12.5px] ${
+            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12.5px] transition-colors ${
               what === t.what
-                ? "border-ink-900 bg-ink-900 text-white"
-                : "border-ink-200 bg-white text-ink-700 hover:border-ink-400"
+                ? "bg-ink-900 font-medium text-white"
+                : "text-ink-600 hover:bg-ink-100 hover:text-ink-900"
             }`}
           >
             {t.icon}

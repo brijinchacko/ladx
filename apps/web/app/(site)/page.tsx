@@ -308,7 +308,7 @@ export default function HomePage() {
           </p>
           <Link
             href="/ladder"
-            className="mt-7 inline-block rounded-sm bg-teal-400 px-6 py-3 text-[15px] font-semibold text-ink-900 transition-opacity hover:opacity-90"
+            className="mt-7 inline-block rounded-sm bg-teal-400 px-6 py-3 text-[15px] font-semibold text-on-accent transition-opacity hover:opacity-90"
           >
             Open Studio
           </Link>

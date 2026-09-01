@@ -2,27 +2,146 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LADX baseline, light theme is the default surface; dark is opt-in via .dark on root. */
+/*
+ * Colour, in two themes, defined once.
+ *
+ * The problem this solves: the app carries about three thousand fixed colour
+ * classes, `text-ink-900`, `border-ink-100`, `bg-white`. Retrofitting a dark
+ * theme by adding a `dark:` variant to each of them would be three thousand
+ * edits and three thousand chances to miss one, and a missed one is white text
+ * on a white background.
+ *
+ * So the scale itself is the variable. `text-ink-900` does not mean "this
+ * navy"; it means "the strongest text colour in the theme that is on". Every
+ * existing class flips with no edit at all.
+ *
+ * The ramp reverses in dark because the scale is already used semantically:
+ * low numbers are surfaces, high numbers are text and emphasis. A primary
+ * button is `bg-ink-900 text-white`, which is dark-on-light in the light theme
+ * and light-on-dark in the dark one. Both are correct, and neither needed a
+ * second class.
+ *
+ * Three states, not two. An explicit choice sets data-theme on the root; the
+ * default sets nothing and follows the operating system, which is what most
+ * people actually want and what the toggle calls System.
+ */
+
 @layer base {
   :root {
-    --ladx-ink: 15 26 36;
-    --ladx-teal: 53 182 186;
-    /* Hex form, for SVG fills that can't take an rgb() triplet. */
-    --ladx-teal-hex: #35b6ba;
-    --ladx-white: 255 255 255;
-    --background: var(--ladx-white);
-    --foreground: var(--ladx-ink);
+    /*
+     * Text on a teal fill, in both themes.
+     *
+     * This one deliberately does not flip. Teal is a mid tone in both themes,
+     * so the label on top has to stay dark either way: letting it follow the
+     * ink scale made the primary call to action light-on-teal in the dark
+     * theme, at 2.7 to 1, which is the worst contrast on the whole page and on
+     * the one element most people were going to press.
+     */
+    --on-accent: 15 26 36;
+    --ink-50: 244 246 248;
+    --ink-100: 228 232 236;
+    --ink-200: 197 205 212;
+    --ink-300: 154 166 176;
+    --ink-400: 94 109 122;
+    --ink-500: 71 88 102;
+    --ink-600: 51 66 78;
+    --ink-700: 34 46 55;
+    --ink-800: 21 33 43;
+    --ink-900: 15 26 36;
+    --teal-50: 234 248 247;
+    --teal-100: 205 239 236;
+    --teal-200: 156 223 217;
+    --teal-300: 107 207 198;
+    --teal-400: 63 191 181;
+    --teal-500: 46 163 154;
+    --teal-600: 35 133 126;
+    --teal-700: 27 104 98;
+    --teal-800: 17 74 70;
+    --teal-900: 10 48 45;
+    --raised: 255 255 255;
+    --page: 255 255 255;
+    /* Darkened to clear AA as text on a light panel; the old green was 3.3. */
+    --success: 31 128 56;
+    /*
+     * Darker than the amber it used to be.
+     *
+     * That amber was 2.2 to 1 on white, which is not a warning anybody can
+     * read. It works as a fill and had never been checked as text, which is
+     * how it survived: nothing looks wrong about it until you measure it.
+     */
+    --warning: 154 108 21;
+    /* A hair darker, to clear AA rather than sit just under it at 4.44. */
+    --danger: 203 66 66;
+    color-scheme: light;
   }
 
-  .dark {
-    --background: var(--ladx-ink);
-    --foreground: var(--ladx-white);
+  /* System dark, which is the default. Guarded so an explicit light choice
+     still wins over a dark operating system. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink-50: 19 27 34;
+      --ink-100: 27 36 44;
+      --ink-200: 42 54 64;
+      --ink-300: 61 76 87;
+      --ink-400: 134 148 160;
+      --ink-500: 150 163 173;
+      --ink-600: 178 189 197;
+      --ink-700: 203 212 218;
+      --ink-800: 225 231 235;
+      --ink-900: 237 241 244;
+      --teal-50: 10 48 45;
+      --teal-100: 17 74 70;
+      --teal-200: 27 104 98;
+      --teal-300: 35 133 126;
+      --teal-400: 46 163 154;
+      --teal-500: 63 191 181;
+      --teal-600: 107 207 198;
+      --teal-700: 156 223 217;
+      --teal-800: 205 239 236;
+      --teal-900: 234 248 247;
+      --raised: 15 23 30;
+      --page: 11 17 22;
+      --success: 74 201 106;
+      --warning: 240 190 100;
+      --danger: 235 116 116;
+      color-scheme: dark;
+    }
+  }
+
+  /* An explicit dark choice, which has to win over a light operating system. */
+  :root[data-theme="dark"] {
+    --ink-50: 19 27 34;
+    --ink-100: 27 36 44;
+    --ink-200: 42 54 64;
+    --ink-300: 61 76 87;
+    --ink-400: 134 148 160;
+    --ink-500: 150 163 173;
+    --ink-600: 178 189 197;
+    --ink-700: 203 212 218;
+    --ink-800: 225 231 235;
+    --ink-900: 237 241 244;
+    --teal-50: 10 48 45;
+    --teal-100: 17 74 70;
+    --teal-200: 27 104 98;
+    --teal-300: 35 133 126;
+    --teal-400: 46 163 154;
+    --teal-500: 63 191 181;
+    --teal-600: 107 207 198;
+    --teal-700: 156 223 217;
+    --teal-800: 205 239 236;
+    --teal-900: 234 248 247;
+    --raised: 15 23 30;
+    --page: 11 17 22;
+    --success: 74 201 106;
+    --warning: 240 190 100;
+    --danger: 235 116 116;
+    color-scheme: dark;
   }
 
   html,
   body {
-    background: rgb(var(--background));
-    color: rgb(var(--foreground));
+    background: rgb(var(--page));
+    color: rgb(var(--ink-900));
     font-family: var(--font-sans, "Public Sans"), system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -33,8 +152,33 @@
   *::after {
     box-sizing: border-box;
   }
-}
 
+  /*
+   * Borders carry the theme without being told.
+   *
+   * Tailwind's default border colour is a fixed grey, so any `border` with no
+   * colour class drew a light grey line on a dark surface. There were enough of
+   * those to matter.
+   */
+  *,
+  *::before,
+  *::after {
+    border-color: rgb(var(--ink-100));
+  }
+
+  /*
+   * Switching themes should not animate.
+   *
+   * Components carry `transition-colors` for their hover states, and without
+   * this every one of them would cross-fade at once when the theme changes,
+   * which reads as the page breaking rather than as a setting taking effect.
+   */
+  [data-theme-switching] *,
+  [data-theme-switching] *::before,
+  [data-theme-switching] *::after {
+    transition: none !important;
+  }
+}
 /*
  * The mark, turning, while LADX AI is working.
  *

@@ -24,7 +24,7 @@ interface RecentProject {
 export function StudioStart({ projects }: { projects: RecentProject[] }) {
   if (projects.length === 0) {
     return (
-      <div className="border-b border-ink-100 px-6 py-5">
+      <div className="px-6 py-5">
         <p className="text-[13.5px] text-ink-700">
           Start with a job. A project holds one program and everything read out of it: the I/O list,
           the acceptance tests, the drawings and the handover pack.
@@ -48,7 +48,7 @@ export function StudioStart({ projects }: { projects: RecentProject[] }) {
   }
 
   return (
-    <div className="border-b border-ink-100 px-6 py-4">
+    <div className="px-6 py-4">
       <div className="mb-2.5 flex items-baseline justify-between gap-3">
         <h2 className="text-[12.5px] font-medium text-ink-700">Pick up where you left off</h2>
         <Link
@@ -63,7 +63,7 @@ export function StudioStart({ projects }: { projects: RecentProject[] }) {
           <Link
             key={p.id}
             href={`/studio/projects/${p.id}`}
-            className="flex items-start gap-2.5 rounded-sm border border-ink-200 px-3 py-2.5 transition-colors hover:border-ink-400 hover:bg-ink-50/50"
+            className="flex items-start gap-2.5 rounded-md px-3 py-2.5 transition-colors hover:bg-ink-100/70"
           >
             <FolderKanban className="mt-0.5 h-4 w-4 shrink-0 text-ink-500" />
             <div className="min-w-0">
@@ -95,9 +95,7 @@ function Start({
     <Link
       href={href}
       className={`flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-[13px] transition-colors ${
-        primary
-          ? "bg-ink-900 text-white hover:opacity-90"
-          : "border border-ink-200 text-ink-700 hover:border-ink-400"
+        primary ? "bg-ink-900 text-white hover:opacity-90" : "text-ink-700 hover:bg-ink-100"
       }`}
     >
       <Icon className="h-3.5 w-3.5" />

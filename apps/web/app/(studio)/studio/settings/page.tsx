@@ -1,5 +1,6 @@
 import CompanyForm from "@/components/platform/company-form";
 import { ProvidersPanel } from "@/components/providers-panel";
+import { ThemeToggle } from "@/components/studio/theme-toggle";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
 import { getCompany } from "@/lib/platform/queries";
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 /**
  * Settings.
  *
- * Two things live here, in the order they matter on day one. The company
+ * Three things live here, in the order they matter on day one. The company
  * profile is first because it is what makes generated documents yours: enter it
  * once and it is on every FDS, FAT and handover pack. The providers panel is
  * second because until a key is connected, the AI half of the platform cannot
@@ -24,10 +25,21 @@ export default async function SettingsPage() {
     <>
       <WorkspaceHeader
         title="Settings"
-        subtitle="Your company, the AI providers you have connected, and your account."
+        subtitle="Your company, the AI providers you have connected, how it looks, and your account."
       />
       <div className="relative min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl space-y-12 p-6">
+          <section>
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-ink-900">Appearance</h2>
+              <p className="mt-1 max-w-2xl text-[14.5px] leading-relaxed text-ink-500">
+                System follows this computer, including when it changes at sunset. A choice is kept
+                in this browser, so it does not travel to another machine.
+              </p>
+            </div>
+            <ThemeToggle />
+          </section>
+
           <section>
             <div className="mb-5">
               <h2 className="text-lg font-semibold text-ink-900">Company profile</h2>

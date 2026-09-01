@@ -47,7 +47,7 @@ export function ProjectTools({
   const tools = scopedTools();
 
   return (
-    <section className="rounded-sm border border-ink-100 p-5">
+    <section>
       <h2 className="text-[15px] font-semibold text-ink-900">Tools</h2>
       <p className="mt-0.5 text-[13px] text-ink-500">
         {hasProgram
@@ -68,7 +68,7 @@ export function ProjectTools({
             return (
               <div
                 key={tool.href}
-                className="flex items-start gap-2.5 rounded-sm border border-ink-100 px-3 py-2.5 opacity-50"
+                className="flex items-start gap-2.5 rounded-md px-3 py-2.5 opacity-40"
               >
                 <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" />
                 <div className="min-w-0">
@@ -83,7 +83,7 @@ export function ProjectTools({
             <Link
               key={tool.href}
               href={toolHref(tool, projectId)}
-              className="flex items-start gap-2.5 rounded-sm border border-ink-200 px-3 py-2.5 transition-colors hover:border-ink-400 hover:bg-ink-50/50"
+              className="flex items-start gap-2.5 rounded-md px-3 py-2.5 transition-colors hover:bg-ink-100/70"
             >
               <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ink-500" />
               <div className="min-w-0">

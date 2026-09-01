@@ -3,6 +3,7 @@ import { JetBrains_Mono, Public_Sans, Saira } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
 import ConsentBanner from "@/components/consent/consent-banner";
+import { THEME_SCRIPT } from "@/lib/theme/theme";
 
 /**
  * Three faces, each doing one job.
@@ -88,7 +89,25 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${display.variable} ${mono.variable}`}>
+    <html
+      lang="en"
+      className={`${sans.variable} ${display.variable} ${mono.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/*
+          Runs before the first paint, so somebody who chose dark never sees a
+          white flash. It has to be inline and synchronous for that: waiting for
+          React means waiting for hydration, and the flash happens before then
+          on every single navigation.
+
+          suppressHydrationWarning above is required rather than tidy. This
+          script writes an attribute onto <html> that the server did not render,
+          which React would otherwise report as a mismatch on every page.
+        */}
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed string from our own module, with no interpolation and no user input, and there is no other way to run anything before the first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>
         {children}
         <ConsentBanner />
