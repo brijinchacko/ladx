@@ -212,9 +212,6 @@ pub fn pou_to_scl(pou: &Pou) -> Scl {
             source.push_str(&format!("// {c}\n"));
         }
 
-        let mut cond = String::new();
-        condition(&rung.logic, &mut cond, &mut report, &where_);
-
         // Edge instances are named after the tag so two one-shots on different
         // bits do not share storage, which would make each cancel the other.
         for i in rung.logic.instructions() {
@@ -229,6 +226,54 @@ pub fn pou_to_scl(pou: &Pou) -> Scl {
                 );
             }
         }
+
+        // A rung with nothing on its output side produces no SCL, and that is
+        // how a converted file ends up quietly shorter than the project it came
+        // from. It happens for real: an instruction LADX does not recognise
+        // cannot be classified as an output, so it stays on the condition side,
+        // and a rung whose only content is one of those has an empty output
+        // list. The report says so either way, but a file that looks complete
+        // and is not is the harder thing to catch.
+        if rung.outputs.is_empty() {
+            let carried: Vec<String> = rung
+                .logic
+                .instructions()
+                .into_iter()
+                .map(|i| {
+                    let name = if i.op == OpCode::Unsupported {
+                        i.vendor
+                            .as_ref()
+                            .map(|v| v.original_mnemonic.clone())
+                            .unwrap_or_else(|| "unknown".into())
+                    } else {
+                        format!("{:?}", i.op)
+                    };
+                    let args: Vec<String> = i.operands.iter().map(operand).collect();
+                    format!("{name}({})", args.join(", "))
+                })
+                .collect();
+
+            if !carried.is_empty() {
+                source.push_str(&format!("// not converted: {}\n", carried.join(" ")));
+                report.add(
+                    Fidelity::Unsupported,
+                    where_.clone(),
+                    format!(
+                        "This rung drives nothing LADX could write, so it is carried as a comment \
+                         rather than left out. What it contained: {}",
+                        carried.join(" ")
+                    ),
+                );
+            }
+            source.push('\n');
+            continue;
+        }
+
+        // Evaluated here rather than earlier, so a rung that is never written
+        // does not also report what its condition "was replaced with". Nothing
+        // is written for it, so nothing was replaced.
+        let mut cond = String::new();
+        condition(&rung.logic, &mut cond, &mut report, &where_);
 
         for output in &rung.outputs {
             let first = output.operands.first();

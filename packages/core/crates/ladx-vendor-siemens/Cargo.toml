@@ -9,6 +9,7 @@ authors.workspace = true
 ladx-types = { workspace = true }
 ladx-ir = { workspace = true }
 ladx-vendor = { workspace = true }
+ladx-parsers = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }

@@ -9,6 +9,7 @@
 //! next and cannot be verified from here.
 
 pub mod detect;
+pub mod migrate;
 pub mod scl;
 pub mod time;
 

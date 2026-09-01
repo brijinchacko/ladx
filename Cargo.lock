@@ -2304,6 +2304,7 @@ name = "ladx-vendor-siemens"
 version = "0.0.0"
 dependencies = [
  "ladx-ir",
+ "ladx-parsers",
  "ladx-types",
  "ladx-vendor",
  "serde",
