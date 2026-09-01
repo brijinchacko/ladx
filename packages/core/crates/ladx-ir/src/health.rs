@@ -89,6 +89,7 @@ pub fn analyse(project: &IrProject) -> HealthReport {
     unused_tags(&g, &mut findings);
     uncalled_routines(project, &g, &mut findings);
     latches_without_a_reset(&g, &mut findings);
+    unassigned_instructions(project, &mut findings);
 
     // Worst first: somebody reading three lines should read the three that
     // matter most.
@@ -121,10 +122,11 @@ fn undeclared_references(g: &ProjectGraph, out: &mut Vec<Finding>) {
             check: "undeclared-tag".into(),
             title: format!("{tag} is used but never declared"),
             detail: format!(
-                "{} place{} refer to {tag}, and no tag table declares it. Either the import \
-                 missed a scope or the program will not compile.",
+                "{} place{} {} {tag}, and no tag table declares it. Either the import missed a \
+                 scope or the program will not compile.",
                 uses.len(),
-                if uses.len() == 1 { "" } else { "s" }
+                if uses.len() == 1 { "" } else { "s" },
+                if uses.len() == 1 { "refers to" } else { "refer to" }
             ),
             locations: uses
                 .iter()
@@ -281,4 +283,37 @@ fn latches_without_a_reset(g: &ProjectGraph, out: &mut Vec<Finding>) {
                 .collect(),
         });
     }
+}
+
+/// Instructions placed but never given a tag.
+///
+/// Reported as one finding rather than one each: a rung being drawn often has
+/// several, and six identical lines is noise. It is a Warning rather than
+/// Critical because it is the ordinary state of something half finished, and
+/// the wording says so instead of implying somebody has broken the program.
+fn unassigned_instructions(project: &IrProject, out: &mut Vec<Finding>) {
+    let blank = crate::graph::unassigned(project);
+    if blank.is_empty() {
+        return;
+    }
+    out.push(Finding {
+        severity: Severity::Warning,
+        check: "unassigned-instruction".into(),
+        title: format!(
+            "{} instruction{} with no tag",
+            blank.len(),
+            if blank.len() == 1 { "" } else { "s" }
+        ),
+        detail: "Placed but not filled in. That is normal while a rung is being drawn, and the \
+                 rung will not do anything until each one names a tag."
+            .into(),
+        locations: blank
+            .iter()
+            .map(|u| Where {
+                pou: Some(u.pou.clone()),
+                rung: Some(u.rung.clone()),
+                tag: None,
+            })
+            .collect(),
+    });
 }

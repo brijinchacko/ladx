@@ -224,3 +224,96 @@ fn every_finding_names_something() {
         }
     }
 }
+
+/// Found on a real program, not a fixture.
+///
+/// A contact placed and not yet given a tag was being read as a reference to a
+/// tag named "", which produced a Critical finding reading "  is used but never
+/// declared" with a blank where the name should be. It is not a missing tag; it
+/// is an instruction somebody has not finished, which is the ordinary state of a
+/// rung halfway through being drawn.
+#[test]
+fn an_instruction_with_no_tag_is_not_a_missing_tag() {
+    let mut p = fixture("01-motor-starter");
+    let ladx_ir::PouBody::Ladder { rungs } = &mut p.pous[0].body else { panic!() };
+    rungs.push(ladx_ir::Rung {
+        id: "r_blank".into(),
+        comment: None,
+        logic: ladx_ir::Logic::Element {
+            instruction: ladx_ir::Instruction {
+                id: "i_blank".into(),
+                op: OpCode::Contact,
+                operands: vec![ladx_ir::Operand::Tag { name: String::new() }],
+                vendor: None,
+            },
+        },
+        outputs: vec![],
+    });
+
+    let r = analyse(&p);
+
+    assert!(
+        !r.findings.iter().any(|f| f.check == "undeclared-tag"),
+        "a blank tag is not an undeclared one"
+    );
+
+    let f = r
+        .findings
+        .iter()
+        .find(|f| f.check == "unassigned-instruction")
+        .expect("it should be reported, just as the right thing");
+    assert_eq!(f.severity, Severity::Warning);
+    assert!(f.title.contains("1 instruction"));
+    // Says it is normal, rather than implying somebody broke the program.
+    assert!(f.detail.contains("normal while a rung is being drawn"));
+    assert_eq!(f.locations[0].rung.as_deref(), Some("r_blank"));
+}
+
+/// Several blanks are one finding, because a rung being drawn often has a few
+/// and six identical lines is noise.
+#[test]
+fn several_unassigned_instructions_are_one_finding() {
+    let mut p = fixture("01-motor-starter");
+    let ladx_ir::PouBody::Ladder { rungs } = &mut p.pous[0].body else { panic!() };
+    for n in 0..3 {
+        rungs.push(ladx_ir::Rung {
+            id: format!("r_blank{n}"),
+            comment: None,
+            logic: ladx_ir::Logic::Element {
+                instruction: ladx_ir::Instruction {
+                    id: format!("i{n}"),
+                    op: OpCode::Contact,
+                    operands: vec![ladx_ir::Operand::Tag { name: "  ".into() }],
+                    vendor: None,
+                },
+            },
+            outputs: vec![],
+        });
+    }
+
+    let r = analyse(&p);
+    let blanks: Vec<_> = r.findings.iter().filter(|f| f.check == "unassigned-instruction").collect();
+    assert_eq!(blanks.len(), 1, "one finding");
+    assert!(blanks[0].title.contains("3 instructions"));
+    assert_eq!(blanks[0].locations.len(), 3, "but all three are navigable");
+}
+
+/// The grammar, because a report that says "1 place refer to" reads as
+/// unfinished software and undermines everything else on the screen.
+#[test]
+fn one_place_refers_and_two_places_refer() {
+    let mut p = fixture("01-motor-starter");
+    p.tags.retain(|t| t.name != "Overload_OK");
+    let one = analyse(&p);
+    let f = one.findings.iter().find(|f| f.check == "undeclared-tag").unwrap();
+    assert!(f.detail.contains("1 place refers to"), "got: {}", f.detail);
+
+    p.tags.retain(|t| t.name != "Stop_PB");
+    let two = analyse(&p);
+    let f = two
+        .findings
+        .iter()
+        .find(|f| f.check == "undeclared-tag" && f.title.contains("Stop_PB"))
+        .unwrap();
+    assert!(f.detail.contains("1 place refers to"), "Stop_PB is used once");
+}

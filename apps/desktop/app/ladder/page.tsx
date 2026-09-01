@@ -4,8 +4,9 @@ import { api } from "@/lib/api";
 import { localModels } from "@/lib/ask-model";
 import { desktopAssistantStore } from "@/lib/assistant-store";
 import { generateLadderLocally } from "@/lib/generate-ladder";
+import { featuresList, projectHealth } from "@/lib/invoke";
 import { tauriStorage } from "@/lib/ladder-storage";
-import { LadderAi, LadxStudio } from "@ladx/studio";
+import { LadderAi, LadxStudio, ladxProgramToIr } from "@ladx/studio";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
@@ -30,6 +31,21 @@ function Ladder() {
   // answered the only question it asks.
   const router = useRouter();
   const wanted = useSearchParams().get("project");
+
+  /*
+   * Whether looking a program over is switched on.
+   *
+   * Off is the normal answer, and then no menu item appears at all rather than
+   * one that has to explain itself.
+   */
+  const [canAnalyse, setCanAnalyse] = useState(false);
+  useEffect(() => {
+    featuresList()
+      .then((flags) =>
+        setCanAnalyse(flags.some((f) => f.id === "engineering.analysis" && f.enabled)),
+      )
+      .catch(() => setCanAnalyse(false));
+  }, []);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [projectId, setProjectId] = useState<string>(wanted ?? "scratch");
   const [ready, setReady] = useState(false);
@@ -105,6 +121,34 @@ function Ladder() {
          * route and keeps the shell, which is the only way back to anything.
          */
         navigate={(href) => router.push(href)}
+        /*
+         * The analysis runs in Rust over the IR, so the program goes across as
+         * an IR document. That conversion loses nothing: every instruction the
+         * editor can draw has a place in the IR.
+         */
+        analyse={
+          canAnalyse
+            ? {
+                label: "Look this program over",
+                run: async (program) => {
+                  const report = await projectHealth(ladxProgramToIr(program));
+                  return {
+                    findings: report.findings.map((f) => ({
+                      severity: f.severity,
+                      title: f.title,
+                      detail: f.detail,
+                      at: f.locations
+                        .map((l) =>
+                          l.rung && l.pou ? `${l.pou}/${l.rung}` : (l.pou ?? l.tag ?? ""),
+                        )
+                        .filter(Boolean),
+                    })),
+                    notChecked: report.not_checked,
+                  };
+                },
+              }
+            : undefined
+        }
         crossLinks={[
           {
             label: "HMI",

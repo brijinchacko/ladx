@@ -110,9 +110,49 @@ fn mnemonic(i: &Instruction) -> String {
 
 fn tag_of(o: &Operand) -> Option<&str> {
     match o {
-        Operand::Tag { name } => Some(name.as_str()),
+        // An empty name is not a reference to a tag called "". It is an
+        // instruction somebody has placed and not yet filled in, which is the
+        // normal state of a rung halfway through being drawn. Treating it as a
+        // reference produces a finding with a blank name in it, which is both
+        // wrong and unreadable.
+        Operand::Tag { name } if !name.trim().is_empty() => Some(name.as_str()),
         _ => None,
     }
+}
+
+/// An instruction that has been placed but not given a tag.
+///
+/// Worth knowing about separately: the rung will not run, but it is also the
+/// ordinary state of something being edited, so it is a different thing from a
+/// reference to a tag that does not exist.
+pub fn unassigned(project: &IrProject) -> Vec<TagUse> {
+    let mut out = Vec::new();
+    for pou in &project.pous {
+        let PouBody::Ladder { rungs } = &pou.body else { continue };
+        for rung in rungs {
+            let all = rung.logic.instructions().into_iter().chain(rung.outputs.iter());
+            for i in all {
+                // Only the first operand, which is the tag position for every
+                // instruction that names one. A missing preset is a different
+                // question and defaults sensibly.
+                let blank = match i.operands.first() {
+                    Some(Operand::Tag { name }) => name.trim().is_empty(),
+                    None => !matches!(i.op, OpCode::Return),
+                    _ => false,
+                };
+                if blank {
+                    out.push(TagUse {
+                        tag: String::new(),
+                        access: Access::Read,
+                        pou: pou.name.clone(),
+                        rung: rung.id.clone(),
+                        via: mnemonic(i),
+                    });
+                }
+            }
+        }
+    }
+    out
 }
 
 /// The bare tag a member reference belongs to.

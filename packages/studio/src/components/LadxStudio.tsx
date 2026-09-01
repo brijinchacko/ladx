@@ -214,7 +214,41 @@ type Props = {
    * passes its router here instead.
    */
   navigate?: (href: string) => void;
+  /**
+   * Looking the open program over, when the surface can.
+   *
+   * Injected, because the analysis runs in Rust and the two surfaces reach it
+   * differently. Absent means this surface cannot, or the capability is off,
+   * and no menu item appears rather than one that explains why it does nothing.
+   *
+   * Findings go to the output window rather than a panel of their own. That is
+   * where an engineer already looks when something is not behaving, and it
+   * keeps what LADX found beside what the compiler and the simulator said
+   * instead of in a third place.
+   */
+  analyse?: {
+    label: string;
+    run: (program: LadxProgram) => Promise<AnalysisOutcome>;
+  };
 };
+
+/**
+ * What an analysis found, in terms this component can show.
+ *
+ * Deliberately not the IR's own report type: this package should not have to
+ * know how the analysis is modelled, only how to say what it found.
+ */
+export interface AnalysisOutcome {
+  findings: {
+    severity: "critical" | "warning" | "suggestion" | "information";
+    title: string;
+    detail: string;
+    /** Rungs or tags, already written for a person: "Main/r14". */
+    at: string[];
+  }[];
+  /** Anything the analysis did not look at, so silence is not read as a pass. */
+  notChecked: string[];
+}
 
 export default function LadxStudio({
   projectId,
@@ -224,6 +258,7 @@ export default function LadxStudio({
   bottomDock,
   crossLinks = [],
   navigate,
+  analyse,
 }: Props) {
   // Held in a ref, not recreated per render: the default builds a new object
   // each call, and a changing storage identity would re-trigger the load effect
@@ -2516,6 +2551,53 @@ export default function LadxStudio({
     else window.location.assign(href);
   };
 
+  /**
+   * Look the open program over and say what came back.
+   *
+   * Everything goes to the output window, including the case where there is
+   * nothing to say. An analysis that reports nothing and shows nothing is
+   * indistinguishable from one that did not run, and the difference matters:
+   * "I checked and it is fine" is a result.
+   */
+  const [analysing, setAnalysing] = useState(false);
+  const runAnalysis = async () => {
+    if (!analyse || !program) return;
+    setAnalysing(true);
+    setPanelOpen("messages", true);
+    try {
+      const out = await analyse.run(program);
+
+      for (const f of out.findings) {
+        const level: MessageLevel =
+          f.severity === "critical" ? "error" : f.severity === "warning" ? "warning" : "info";
+        const at = f.at.length ? ` (${f.at.join(", ")})` : "";
+        say(level, "Analyse", `${f.title}${at}. ${f.detail}`);
+      }
+
+      // Said after the findings, so it is the line left at the bottom.
+      if (out.findings.length === 0) {
+        say("success", "Analyse", "Nothing to report.");
+      } else {
+        const critical = out.findings.filter((f) => f.severity === "critical").length;
+        const warnings = out.findings.filter((f) => f.severity === "warning").length;
+        say(
+          critical > 0 ? "error" : warnings > 0 ? "warning" : "info",
+          "Analyse",
+          `${out.findings.length} finding${out.findings.length === 1 ? "" : "s"}: ` +
+            `${critical} critical, ${warnings} to check.`,
+        );
+      }
+
+      for (const n of out.notChecked) {
+        say("info", "Analyse", `Not examined: ${n}`);
+      }
+    } catch (err) {
+      say("error", "Analyse", err instanceof Error ? err.message : "The analysis did not run.");
+    } finally {
+      setAnalysing(false);
+    }
+  };
+
   const menus: Menu[] = program
     ? [
         {
@@ -2638,14 +2720,29 @@ export default function LadxStudio({
             },
           ],
         },
-        ...(crossLinks.length
+        ...(crossLinks.length || analyse
           ? [
               {
                 label: "Tools",
-                items: crossLinks.map((l) => ({
-                  label: l.label,
-                  onSelect: () => void followCrossLink(l.href),
-                })),
+                items: [
+                  ...(analyse
+                    ? [
+                        {
+                          label: analysing ? "Looking…" : analyse.label,
+                          disabled: analysing,
+                          onSelect: () => void runAnalysis(),
+                        },
+                      ]
+                    : []),
+                  // The rule on a separator here is that it goes before the
+                  // item, so it belongs on the first cross link rather than on
+                  // Analyse, which would put a line above the top of the menu.
+                  ...crossLinks.map((l, i) => ({
+                    label: l.label,
+                    separator: i === 0 && Boolean(analyse),
+                    onSelect: () => void followCrossLink(l.href),
+                  })),
+                ],
               },
             ]
           : []),
