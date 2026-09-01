@@ -151,3 +151,34 @@ This is the second such pair, after the L5X readers. Two is a pattern rather
 than an accident: building the Rust path beside a working TypeScript one is
 how this codebase has been able to keep shipping, and every pair carries a
 stated condition for collapsing it. A third without one would be drift.
+
+## Addendum: why the web has no capability switches
+
+The desktop gates every unfinished capability behind a flag that is off until
+somebody turns it on. The web does not, and that is a decision rather than an
+omission.
+
+What reached the web divides cleanly, and the division is about what each thing
+claims rather than how finished it is:
+
+**Analysis, the trace and Standards make no claim about anybody else's
+software.** They read the engineer's own program and their own written rules,
+and they are either right about it or they are a bug. There is nothing for a
+switch to protect somebody from, and a toggle would only ask them to opt in to
+something that already works.
+
+**Reading an L5X does make a claim**, and an unvalidated one: it has never been
+run against a file exported by Studio 5000. So that one says so, in the notes
+panel, at the moment somebody uses it.
+
+A switch on a settings page would have been the wrong instrument for that. It
+does not make the claim any truer, it puts the caveat somewhere nobody reads,
+and it asks an engineer to opt in to a risk that has not been described to
+them. A line where the file is opened is smaller, harder to miss, and says the
+thing that is actually true.
+
+The desktop keeps its flags because they carry maturity per capability and
+because a desktop build cannot be rolled back the way a deploy can. When
+Siemens arrives on the web it will need the same treatment as the L5X reader,
+and if the web ever gains something genuinely destructive, it will need a real
+gate rather than a note.

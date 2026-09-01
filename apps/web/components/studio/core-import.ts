@@ -36,9 +36,30 @@ export const coreImportViaApi = {
     const report = body.report as ConversionReport;
     const { program, dropped } = ladxProgramFromIr(project);
 
+    /*
+     * Said where somebody is looking, not on a settings page they will never
+     * open.
+     *
+     * This reader has never been run against a project exported by Studio 5000.
+     * It is checked against LADX's own fixtures, which is a real check and a
+     * different claim, and the difference matters to an engineer deciding
+     * whether to trust what came back. Putting it first in the notes panel
+     * costs one line and is the only place it would actually be read.
+     */
+    const notes = [
+      {
+        severity: "info" as const,
+        where: "This reader",
+        message:
+          "Checked against LADX's own test projects, not against a file exported by Studio 5000. " +
+          "Read what came across before relying on it.",
+      },
+      ...reportToNotes(report, dropped),
+    ];
+
     return {
       program,
-      notes: reportToNotes(report, dropped),
+      notes,
       summary: body.summary as string,
       name: project.name,
     };
