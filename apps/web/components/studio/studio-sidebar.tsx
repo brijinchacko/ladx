@@ -26,6 +26,7 @@ import {
   CalendarRange,
   ChevronDown,
   ChevronsLeft,
+  ClipboardCheck,
   FileText,
   FolderKanban,
   GitCompareArrows,
@@ -66,6 +67,7 @@ const TOOLS = [
   { href: "/studio/documents", label: "Documents", icon: Library },
   { href: "/studio/knowledge", label: "Knowledge", icon: FileText },
   { href: "/studio/schedules", label: "Schedules", icon: Cable },
+  { href: "/studio/commission", label: "Commissioning", icon: ClipboardCheck },
   { href: "/studio/standards", label: "Standards", icon: Ruler },
 ];
 

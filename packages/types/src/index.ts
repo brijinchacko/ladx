@@ -103,3 +103,54 @@ export type { DataType as IrDataType } from "./generated/ir/DataType";
 // Same reason: @ladx/studio has a `DeviceKind` of its own spelled in
 // SCREAMING_CASE. Two enums, same name, different members.
 export type { DeviceKind as IrDeviceKind } from "./generated/ir/DeviceKind";
+
+// The steps a machine moves through, read out of its step register.
+export type { Transition } from "./generated/ir/Transition";
+export type { Sequence } from "./generated/ir/Sequence";
+export type { Sequences } from "./generated/ir/Sequences";
+
+// Acceptance tests written from the logic. Blank until somebody carries them
+// out; nothing here has been run.
+export type { Kind as TestKind } from "./generated/ir/Kind";
+export type { TestStep } from "./generated/ir/TestStep";
+export type { TestGroup } from "./generated/ir/TestGroup";
+export type { TestPlan } from "./generated/ir/TestPlan";
+
+// The program against the other lists that name the same tags.
+export type { Source as TagSource } from "./generated/ir/Source";
+export type { ExternalTag } from "./generated/ir/ExternalTag";
+export type { DriftKind } from "./generated/ir/DriftKind";
+export type { Drift } from "./generated/ir/Drift";
+export type { DriftReport } from "./generated/ir/DriftReport";
+
+// How far a program has actually been checked. LADX may award the first three
+// levels and no more.
+export type { Level as ValidationLevel } from "./generated/ir/Level";
+export type { Validation } from "./generated/ir/Validation";
+
+// The racks, and the addresses that do not match them.
+export type { ModuleKind } from "./generated/ir/ModuleKind";
+export type { Module as HardwareModule } from "./generated/ir/Module";
+export type { Hardware } from "./generated/ir/Hardware";
+export type { HardwareIssue } from "./generated/ir/HardwareIssue";
+export type { HardwareFinding } from "./generated/ir/HardwareFinding";
+
+// The blocks that get written again on every job.
+export type { Param as BlockParam } from "./generated/ir/Param";
+export type { Block } from "./generated/ir/Block";
+export type { Role as BlockRole } from "./generated/ir/Role";
+export type { Deviation } from "./generated/ir/Deviation";
+
+// The pack the customer gets.
+export type { PackFile } from "./generated/ir/PackFile";
+export type { Pack } from "./generated/ir/Pack";
+
+// Several specialists on one job, with the checks as the gates between them.
+export type { Role as AgentRole } from "./generated/agents/Role";
+export type { Check as WorkflowCheck } from "./generated/agents/Check";
+export type { StepKind as WorkflowStepKind } from "./generated/agents/StepKind";
+export type { Step as WorkflowStep } from "./generated/agents/Step";
+export type { Workflow } from "./generated/agents/Workflow";
+export type { Outcome as WorkflowOutcome } from "./generated/agents/Outcome";
+export type { StepRecord as WorkflowStepRecord } from "./generated/agents/StepRecord";
+export type { Run as WorkflowRun } from "./generated/agents/Run";

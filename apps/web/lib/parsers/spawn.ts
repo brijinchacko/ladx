@@ -18,6 +18,7 @@ import type {
   ParseResult,
   Trace,
 } from "@ladx/types";
+import type { Block, Deviation, Drift, Pack, Sequence, TestGroup } from "@ladx/types";
 
 const exec = promisify(execFile);
 
@@ -216,5 +217,122 @@ export async function alarmListFor(project: unknown): Promise<{
       maxBuffer: 64 * 1024 * 1024,
     });
     return JSON.parse(stdout);
+  });
+}
+
+/**
+ * The steps the machine moves through, read out of the step register.
+ *
+ * An empty list of sequences is not "this machine has no sequence": it is
+ * "nothing here was written in a shape this recognises", which is why the
+ * notes come back with it and the caller shows them.
+ */
+export async function sequencesFor(project: unknown): Promise<{
+  sequences: Sequence[];
+  notes: string[];
+  text: string;
+}> {
+  const bin = ladxParserBinary();
+  return withIrFile(project, async (file) => {
+    const { stdout } = await exec(bin, ["--sequence", file], {
+      timeout: 30_000,
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return JSON.parse(stdout);
+  });
+}
+
+/** Acceptance tests written from the logic. Not carried out by anything. */
+export async function testPlanFor(project: unknown): Promise<{
+  groups: TestGroup[];
+  notCovered: string[];
+  safetySteps: number;
+  markdown: string;
+}> {
+  const bin = ladxParserBinary();
+  return withIrFile(project, async (file) => {
+    const { stdout } = await exec(bin, ["--tests", file], {
+      timeout: 30_000,
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return JSON.parse(stdout);
+  });
+}
+
+/** Where the program departs from the standard blocks. */
+export async function deviationsFor(project: unknown): Promise<{
+  deviations: Deviation[];
+  blocks: Block[];
+}> {
+  const bin = ladxParserBinary();
+  return withIrFile(project, async (file) => {
+    const { stdout } = await exec(bin, ["--deviations", file], {
+      timeout: 30_000,
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return JSON.parse(stdout);
+  });
+}
+
+/** The program against another tag list: an HMI export, an I/O schedule. */
+export async function driftFor(
+  project: unknown,
+  sources: unknown,
+): Promise<{
+  drifts: Drift[];
+  notes: string[];
+  breaking: number;
+  text: string;
+}> {
+  const bin = ladxParserBinary();
+  return withIrFile(project, async (file) => {
+    const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+    const os = await import("node:os");
+    const dir = await mkdtemp(path.join(os.tmpdir(), "ladx-drift-"));
+    const lists = path.join(dir, "taglists.json");
+    try {
+      await writeFile(lists, JSON.stringify(sources), "utf8");
+      const { stdout } = await exec(bin, ["--drift", file, lists], {
+        timeout: 30_000,
+        maxBuffer: 64 * 1024 * 1024,
+      });
+      return JSON.parse(stdout);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+}
+
+/**
+ * The handover pack.
+ *
+ * The tag lists are optional and their absence is not silent: the pack says on
+ * its own manifest that nothing was compared, because a pack that looks
+ * complete is the harder thing to catch.
+ */
+export async function handoverPackFor(project: unknown, sources?: unknown): Promise<Pack> {
+  const bin = ladxParserBinary();
+  return withIrFile(project, async (file) => {
+    if (!sources) {
+      const { stdout } = await exec(bin, ["--handover", file], {
+        timeout: 60_000,
+        maxBuffer: 64 * 1024 * 1024,
+      });
+      return JSON.parse(stdout);
+    }
+    const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+    const os = await import("node:os");
+    const dir = await mkdtemp(path.join(os.tmpdir(), "ladx-pack-"));
+    const lists = path.join(dir, "taglists.json");
+    try {
+      await writeFile(lists, JSON.stringify(sources), "utf8");
+      const { stdout } = await exec(bin, ["--handover", file, lists], {
+        timeout: 60_000,
+        maxBuffer: 64 * 1024 * 1024,
+      });
+      return JSON.parse(stdout);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 }
