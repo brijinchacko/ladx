@@ -229,6 +229,15 @@ type Props = {
   analyse?: {
     label: string;
     run: (program: LadxProgram) => Promise<AnalysisOutcome>;
+    /**
+     * Working backwards from one tag to what would have to be true.
+     *
+     * Offered on the element the person right-clicked, because that is when
+     * they are asking: they are looking at a coil that is not coming on. A
+     * menu somewhere else would be the same answer to a question nobody is
+     * holding in their head at the time.
+     */
+    why?: (program: LadxProgram, tag: string) => Promise<TraceOutcome>;
   };
 };
 
@@ -238,6 +247,13 @@ type Props = {
  * Deliberately not the IR's own report type: this package should not have to
  * know how the analysis is modelled, only how to say what it found.
  */
+/** What a trace found, in terms this component can show. */
+export interface TraceOutcome {
+  /** Said instead of the steps when there is nothing to trace. */
+  note?: string | null;
+  lines: string[];
+}
+
 export interface AnalysisOutcome {
   findings: {
     severity: "critical" | "warning" | "suggestion" | "information";
@@ -1786,6 +1802,16 @@ export default function LadxStudio({
           });
         },
       },
+      ...(analyse?.why && el.tag.trim()
+        ? ([
+            {
+              kind: "item",
+              label: `Why won't ${el.tag} come on?`,
+              onClick: () => void runWhy(el.tag),
+            },
+            { kind: "separator" },
+          ] as MenuItem[])
+        : []),
       { kind: "item", label: "Copy", hint: "Ctrl+C", onClick: () => copyElement(rungId, el.id) },
       {
         kind: "item",
@@ -2595,6 +2621,28 @@ export default function LadxStudio({
       say("error", "Analyse", err instanceof Error ? err.message : "The analysis did not run.");
     } finally {
       setAnalysing(false);
+    }
+  };
+
+  const runWhy = async (tag: string) => {
+    if (!analyse?.why || !program || !tag.trim()) return;
+    setPanelOpen("messages", true);
+    say("info", "Analyse", `What has to be true for ${tag} to come on:`);
+    try {
+      const out = await analyse.why(program, tag);
+      if (out.note) {
+        say("info", "Analyse", out.note);
+        return;
+      }
+      if (out.lines.length === 0) {
+        say("info", "Analyse", `Nothing in this program drives ${tag}.`);
+        return;
+      }
+      for (const line of out.lines) {
+        say("info", "Analyse", line);
+      }
+    } catch (err) {
+      say("error", "Analyse", err instanceof Error ? err.message : "Could not trace that.");
     }
   };
 

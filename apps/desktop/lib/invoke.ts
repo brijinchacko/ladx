@@ -8,6 +8,7 @@ import type {
   HealthReport,
   IrProject,
   ProjectGraph,
+  Trace,
 } from "@ladx/types";
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 
@@ -396,4 +397,15 @@ export async function analyseProject(project: IrProject): Promise<ProjectGraph> 
  */
 export async function projectHealth(project: IrProject): Promise<HealthReport> {
   return tauriInvoke<HealthReport>("project_health", { project });
+}
+
+/**
+ * Work backwards from a tag to what would have to be true for it to come on.
+ *
+ * Answers from the program, not from live values. It says what to go and look
+ * at rather than what is wrong, which is the part that can be answered
+ * honestly.
+ */
+export async function whyNot(project: IrProject, tag: string): Promise<Trace> {
+  return tauriInvoke<Trace>("why_not", { project, tag });
 }

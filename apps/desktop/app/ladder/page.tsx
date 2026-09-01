@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 import { localModels } from "@/lib/ask-model";
 import { desktopAssistantStore } from "@/lib/assistant-store";
 import { generateLadderLocally } from "@/lib/generate-ladder";
-import { featuresList, projectHealth } from "@/lib/invoke";
+import { featuresList, projectHealth, whyNot } from "@/lib/invoke";
 import { tauriStorage } from "@/lib/ladder-storage";
 import { LadderAi, LadxStudio, ladxProgramToIr } from "@ladx/studio";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -144,6 +144,34 @@ function Ladder() {
                         .filter(Boolean),
                     })),
                     notChecked: report.not_checked,
+                  };
+                },
+                why: async (program, tag) => {
+                  const t = await whyNot(ladxProgramToIr(program), tag);
+                  if (t.note) return { note: t.note, lines: [] };
+                  return {
+                    lines: t.steps.map((s) => {
+                      const indent = "  ".repeat(s.depth);
+                      if (s.already_seen) {
+                        return `${indent}${s.tag} holds itself in, via ${s.via} on ${s.pou}/${s.rung}`;
+                      }
+                      const conds = s.conditions
+                        .map((c) => {
+                          const want =
+                            c.sense === "mustBeOn"
+                              ? "on"
+                              : c.sense === "mustBeOff"
+                                ? "off"
+                                : "compared";
+                          return c.one_of_several
+                            ? `${c.tag} ${want} (or another)`
+                            : `${c.tag} ${want}`;
+                        })
+                        .join(", ");
+                      return `${indent}${s.tag} is driven by ${s.via} on ${s.pou}/${s.rung}${
+                        conds ? ` when ${conds}` : ""
+                      }`;
+                    }),
                   };
                 },
               }
