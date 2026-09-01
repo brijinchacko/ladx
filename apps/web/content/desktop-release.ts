@@ -22,7 +22,7 @@
  * once at startup, so an installer copied in afterwards is on disk and still
  * 404s until the process comes back.
  */
-export const DESKTOP_VERSION = "0.3.3";
+export const DESKTOP_VERSION = "0.3.4";
 
 /** Where the installers are served from. */
 const BASE = "/downloads";
@@ -67,7 +67,7 @@ export const DESKTOP_BUILDS: DesktopBuild[] = [
     file: `LADX-Studio-${DESKTOP_VERSION}-universal.dmg`,
     href: `${BASE}/LADX-Studio-${DESKTOP_VERSION}-universal.dmg`,
     size: "11 MB",
-    sha256: "85499ca9ec13a550d3bb10a089a97050f6fbc3af7382b844f8af076b5994214b",
+    sha256: "3b33c9a049914d21bccfde8a0c08baee8ef0f140a5432dad3cdcce7b9e5bac25",
     requires: "macOS 11 or later. Apple Silicon and Intel in one download.",
     signed: false,
     pending: null,
@@ -77,8 +77,8 @@ export const DESKTOP_BUILDS: DesktopBuild[] = [
     platform: "Windows",
     file: `LADX-Studio-${DESKTOP_VERSION}-x64.msi`,
     href: `${BASE}/LADX-Studio-${DESKTOP_VERSION}-x64.msi`,
-    size: "5.9 MB",
-    sha256: "7fb4c37f1cd501c589608dd57bd0307307fc3248f85d7acb8e2e22e2e83aac75",
+    size: "6.0 MB",
+    sha256: "c92711879d3735286fc2a7630b7e9a9fdbb6d1d087d0e8b804fea39224a88d2f",
     requires: "Windows 10 or later, 64 bit.",
     signed: false,
     pending: null,
