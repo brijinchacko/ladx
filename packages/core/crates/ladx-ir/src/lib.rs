@@ -36,6 +36,8 @@ use ts_rs::TS;
 
 pub mod alarms;
 pub mod context;
+pub mod diff;
+pub mod docs;
 pub mod fidelity;
 pub mod graph;
 pub mod health;
