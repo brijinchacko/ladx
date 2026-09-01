@@ -7,6 +7,9 @@ authors.workspace = true
 
 [dependencies]
 ladx-types = { workspace = true }
+ladx-ir = { workspace = true }
+serde_json = { workspace = true }
+ts-rs = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }

@@ -98,7 +98,7 @@ impl HardwareIssue {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../../../types/src/generated/ir/")]
 #[serde(rename_all = "camelCase")]
-pub struct Finding {
+pub struct HardwareFinding {
     pub issue: HardwareIssue,
     /// The tag, where one address is at fault.
     pub tag: Option<String>,
@@ -184,7 +184,7 @@ impl Hardware {
     }
 
     /// Compare what the program addresses against what is in the racks.
-    pub fn check(&self, project: &IrProject) -> Vec<Finding> {
+    pub fn check(&self, project: &IrProject) -> Vec<HardwareFinding> {
         let mut out = Vec::new();
         if self.modules.is_empty() {
             return out;
@@ -237,7 +237,7 @@ impl Hardware {
             *used.entry(addr.slot).or_default() += 1;
 
             let Some(module) = self.in_slot(addr.slot) else {
-                out.push(Finding {
+                out.push(HardwareFinding {
                     issue: HardwareIssue::NoModuleInSlot,
                     tag: Some(point.tag.clone()),
                     detail: format!(
@@ -250,7 +250,7 @@ impl Hardware {
             };
 
             if module.inhibited {
-                out.push(Finding {
+                out.push(HardwareFinding {
                     issue: HardwareIssue::ModuleInhibited,
                     tag: Some(point.tag.clone()),
                     detail: format!(
@@ -263,7 +263,7 @@ impl Hardware {
 
             if let (Some(p), Some(capacity)) = (addr.point, module.points) {
                 if p >= capacity {
-                    out.push(Finding {
+                    out.push(HardwareFinding {
                         issue: HardwareIssue::PointBeyondCard,
                         tag: Some(point.tag.clone()),
                         detail: format!(
@@ -283,7 +283,7 @@ impl Hardware {
                 _ => false,
             };
             if wrong {
-                out.push(Finding {
+                out.push(HardwareFinding {
                     issue: HardwareIssue::WrongDirection,
                     tag: Some(point.tag.clone()),
                     detail: format!(
@@ -308,7 +308,7 @@ impl Hardware {
                 continue;
             }
             if !used.contains_key(&slot) {
-                out.push(Finding {
+                out.push(HardwareFinding {
                     issue: HardwareIssue::ModuleUnused,
                     tag: None,
                     detail: format!(

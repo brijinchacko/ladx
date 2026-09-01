@@ -33,6 +33,7 @@ step() {
 
 step "lint"          pnpm lint
 step "typecheck"     pnpm typecheck
+step "bindings"      python3 scripts/check-type-collisions.py
 step "rust"          pnpm test:rust:core
 step "javascript"    pnpm test
 step "build"         pnpm build

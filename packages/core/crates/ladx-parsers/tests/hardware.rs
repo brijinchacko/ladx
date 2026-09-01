@@ -3,7 +3,7 @@
 //! These live here rather than in ladx-ir because reading them needs the L5X
 //! parser, and the parser depends on the IR.
 
-use ladx_ir::hardware::{Finding, HardwareIssue};
+use ladx_ir::hardware::{HardwareFinding, HardwareIssue};
 
 fn cell() -> (ladx_ir::hardware::Hardware, ladx_ir::IrProject) {
     let bytes = std::fs::read(
@@ -70,7 +70,7 @@ fn addresses_written_straight_into_the_logic_are_checked_too() {
 #[test]
 fn only_the_genuinely_unused_card_is_called_unused() {
     let (hw, project) = cell();
-    let unused: Vec<Finding> = hw
+    let unused: Vec<HardwareFinding> = hw
         .check(&project)
         .into_iter()
         .filter(|f| f.issue == HardwareIssue::ModuleUnused)

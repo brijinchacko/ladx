@@ -45,6 +45,19 @@ enum Mode {
     Diff,
     /// Screens proposed from the program.
     Screens,
+    /// The steps the machine moves through.
+    Sequence,
+    /// Acceptance tests written from the logic.
+    Tests,
+    /// The racks, and the addresses that do not match them. Reads an L5X,
+    /// because the module list is not in an IR document.
+    Hardware,
+    /// Where the program departs from the standard blocks.
+    Deviations,
+    /// The whole handover pack.
+    Handover,
+    /// The program against another tag list.
+    Drift,
 }
 
 fn main() -> ExitCode {
@@ -65,6 +78,18 @@ fn main() -> ExitCode {
         Mode::Narrative
     } else if args.iter().any(|a| a == "--diff") {
         Mode::Diff
+    } else if args.iter().any(|a| a == "--sequence") {
+        Mode::Sequence
+    } else if args.iter().any(|a| a == "--tests") {
+        Mode::Tests
+    } else if args.iter().any(|a| a == "--hardware") {
+        Mode::Hardware
+    } else if args.iter().any(|a| a == "--deviations") {
+        Mode::Deviations
+    } else if args.iter().any(|a| a == "--handover") {
+        Mode::Handover
+    } else if args.iter().any(|a| a == "--drift") {
+        Mode::Drift
     } else if args.iter().any(|a| a == "--screens") {
         Mode::Screens
     } else {
@@ -74,7 +99,9 @@ fn main() -> ExitCode {
     let positional: Vec<&String> = args.iter().skip(1).filter(|a| !a.starts_with("--")).collect();
     let Some(path) = positional.first() else {
         eprintln!(
-            "usage: ladx-parser [--ir | --health | --why <tag> | --standards | --io | --alarms | --narrative | --diff <after>] <path>"
+            "usage: ladx-parser [--ir | --health | --why <tag> | --standards | --io | --alarms \
+             | --narrative | --diff <after> | --screens | --sequence | --tests | --deviations \
+             | --handover | --hardware <project.L5X> | --drift <taglists.json>] <path>"
         );
         return ExitCode::from(2);
     };
@@ -92,6 +119,18 @@ fn main() -> ExitCode {
         Mode::Alarms => run_alarms(path),
         Mode::Narrative => run_narrative(path),
         Mode::Screens => run_screens(path),
+        Mode::Sequence => run_sequence(path),
+        Mode::Tests => run_tests(path),
+        Mode::Hardware => run_hardware(path),
+        Mode::Deviations => run_deviations(path),
+        Mode::Handover => run_handover(path, positional.get(1).map(|s| s.as_str())),
+        Mode::Drift => match positional.get(1) {
+            Some(lists) => run_drift(path, lists),
+            None => Err(anyhow::anyhow!(
+                "--drift needs the other tag list: ladx-parser --drift <project.ir.json> \
+                 <taglists.json>"
+            )),
+        },
         Mode::Diff => match positional.get(1) {
             Some(after) => run_diff(path, after),
             None => Err(anyhow::anyhow!(
@@ -210,6 +249,87 @@ fn run_io(path: &str) -> anyhow::Result<String> {
         "outputs": list.outputs(),
         "csv": ladx_ir::io::to_csv(&list),
     }))?)
+}
+
+fn run_sequence(path: &str) -> anyhow::Result<String> {
+    let project = read_ir(path)?;
+    let s = ladx_ir::sequence::sequences(&project);
+    Ok(serde_json::to_string(&serde_json::json!({
+        "sequences": s.sequences,
+        "notes": s.notes,
+        "text": s.sequences.iter().map(|x| x.to_text()).collect::<Vec<_>>().join("\n"),
+    }))?)
+}
+
+fn run_tests(path: &str) -> anyhow::Result<String> {
+    let project = read_ir(path)?;
+    let plan = ladx_ir::tests_gen::test_plan(&project);
+    Ok(serde_json::to_string(&serde_json::json!({
+        "groups": plan.groups,
+        "notCovered": plan.not_covered,
+        "safetySteps": plan.safety_steps(),
+        "markdown": plan.to_markdown(&format!("{}: acceptance tests", project.name)),
+    }))?)
+}
+
+/// The racks. Reads an L5X rather than an IR document, because the module list
+/// is hardware configuration and the IR holds a program.
+fn run_hardware(path: &str) -> anyhow::Result<String> {
+    let bytes = std::fs::read(path).with_context(|| format!("reading {path}"))?;
+    let import = ladx_parsers::l5x_ir::parse_to_ir(&bytes)
+        .with_context(|| format!("reading the hardware configuration in {path}"))?;
+    let findings = import.hardware.check(&import.project);
+    Ok(serde_json::to_string(&serde_json::json!({
+        "modules": import.hardware.modules,
+        "notes": import.hardware.notes,
+        "findings": findings,
+        "breaking": findings.iter().filter(|f| f.issue.is_wrong_at_runtime()).count(),
+        "table": import.hardware.to_text(),
+    }))?)
+}
+
+fn run_deviations(path: &str) -> anyhow::Result<String> {
+    let project = read_ir(path)?;
+    Ok(serde_json::to_string(&serde_json::json!({
+        "deviations": ladx_ir::library::deviations(&project),
+        "blocks": ladx_ir::library::blocks(),
+    }))?)
+}
+
+/// The program against another tag list: an HMI export, an I/O schedule.
+fn run_drift(path: &str, lists: &str) -> anyhow::Result<String> {
+    let project = read_ir(path)?;
+    let raw = std::fs::read_to_string(lists).with_context(|| format!("reading {lists}"))?;
+    let sources: Vec<ladx_ir::drift::Source> = serde_json::from_str(&raw)
+        .with_context(|| format!("{lists} is not a list of tag sources"))?;
+    let report = ladx_ir::drift::drift(&project, &sources);
+    Ok(serde_json::to_string(&serde_json::json!({
+        "drifts": report.drifts,
+        "notes": report.notes,
+        "breaking": report.breaking().len(),
+        "text": report.to_text(),
+    }))?)
+}
+
+/// The pack. Takes the tag lists as a second file where there are any, because
+/// a pack assembled without them says so on its own manifest.
+fn run_handover(path: &str, lists: Option<&str>) -> anyhow::Result<String> {
+    let project = read_ir(path)?;
+    let sources: Vec<ladx_ir::drift::Source> = match lists {
+        Some(p) => serde_json::from_str(
+            &std::fs::read_to_string(p).with_context(|| format!("reading {p}"))?,
+        )
+        .with_context(|| format!("{p} is not a list of tag sources"))?,
+        None => Vec::new(),
+    };
+    let pack = ladx_ir::handover::pack(
+        &project,
+        &ladx_ir::handover::PackInputs {
+            other_tag_lists: &sources,
+            ..Default::default()
+        },
+    );
+    Ok(serde_json::to_string(&pack)?)
 }
 
 fn run_alarms(path: &str) -> anyhow::Result<String> {

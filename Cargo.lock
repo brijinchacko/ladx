@@ -2109,10 +2109,13 @@ dependencies = [
 name = "ladx-agents"
 version = "0.0.0"
 dependencies = [
+ "ladx-ir",
  "ladx-types",
  "serde",
+ "serde_json",
  "thiserror 1.0.69",
  "tracing",
+ "ts-rs",
 ]
 
 [[package]]
