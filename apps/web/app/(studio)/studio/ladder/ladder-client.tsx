@@ -81,7 +81,7 @@ export default function LadderClient({
         focus ? "fixed inset-0 z-50 flex flex-col bg-white" : "flex min-h-0 flex-1 flex-col"
       }
     >
-      <div className="flex shrink-0 items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-1.5">
+      <div className="flex shrink-0 items-center gap-2 border-b border-ink-100 bg-ink-50 px-3 py-1.5">
         <button
           type="button"
           onClick={() => setOpen(null)}

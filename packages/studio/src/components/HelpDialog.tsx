@@ -208,7 +208,7 @@ function Block({ b }: { b: HelpBlock }) {
     return (
       <p
         className="text-[12px] leading-relaxed text-ink-800 rounded px-3 py-2"
-        style={{ background: "#EFF6FF", borderLeft: "3px solid #2891FF" }}
+        style={{ background: "rgb(var(--ink-50))", borderLeft: "3px solid #2891FF" }}
       >
         {b.text}
       </p>
@@ -221,7 +221,7 @@ function Block({ b }: { b: HelpBlock }) {
           <li key={i} className="flex gap-2.5 text-[12.5px] leading-relaxed text-ink-700">
             <span
               className="shrink-0 grid place-items-center rounded-full text-[10px] font-bold text-white mt-0.5"
-              style={{ width: 17, height: 17, background: "#2891FF" }}
+              style={{ width: 17, height: 17, background: "rgb(var(--action))" }}
             >
               {i + 1}
             </span>

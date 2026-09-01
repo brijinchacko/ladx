@@ -2132,7 +2132,7 @@ export default function CadEditor({
       />
 
       {/* The name, the project it belongs to, and what leaves the machine. */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/40 px-3 py-1.5">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50 px-3 py-1.5">
         <input
           value={name}
           onChange={(e) => {
@@ -2279,7 +2279,7 @@ export default function CadEditor({
           />
 
           {/* status strip */}
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-center gap-4 border-t border-ink-100 bg-white/90 px-3 py-1 font-mono text-[10.5px] text-ink-400">
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-center gap-4 border-t border-ink-100 bg-white px-3 py-1 font-mono text-[10.5px] text-ink-400">
             <span>
               {cursor ? `X ${cursor.x.toFixed(1)}  Y ${cursor.y.toFixed(1)}` : "move the pointer"}
             </span>

@@ -176,7 +176,7 @@ export interface AssistantProps {
 
 /** A header control: white on the solid header, lit when it is the current one. */
 const ctl =
-  "flex h-5 w-5 items-center justify-center rounded text-white transition-colors hover:bg-white/20 hover:text-white";
+  "flex h-5 w-5 items-center justify-center rounded text-white transition-colors hover:bg-teal-800";
 
 export default function Assistant({
   toolId,
@@ -488,7 +488,7 @@ export default function Assistant({
               type="button"
               onClick={() => setModelsOpen((v) => !v)}
               title={`${models.source}. Click to change the model.`}
-              className="flex max-w-[150px] items-center gap-1 rounded-sm bg-white/15 px-1.5 py-0.5 text-white transition-colors hover:bg-white/25 hover:text-white"
+              className="flex max-w-[150px] items-center gap-1 rounded-sm bg-teal-800 px-1.5 py-0.5 text-white transition-colors hover:bg-teal-900"
             >
               <Cpu className="h-2.5 w-2.5 shrink-0" />
               <span className="truncate font-mono text-[10px]">
@@ -580,7 +580,7 @@ export default function Assistant({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => setMode("floating")}
             title="Float it, and drag it anywhere."
-            className={`${ctl} ${floating ? "bg-white/25" : ""}`}
+            className={`${ctl} ${floating ? "bg-teal-800" : ""}`}
           >
             <Square className="h-3 w-3" />
           </button>
@@ -664,7 +664,7 @@ export default function Assistant({
         )}
 
         {question && (
-          <div className="rounded-md border border-teal-600/40 bg-teal-50/50 p-2.5">
+          <div className="rounded-md border border-teal-600 bg-teal-50 p-2.5">
             <p className="text-[12.5px] text-ink-800 leading-relaxed">{question.text}</p>
             {question.options && question.options.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -673,7 +673,7 @@ export default function Assistant({
                     key={o}
                     type="button"
                     onClick={() => onAnswer?.(o)}
-                    className="rounded-full border border-teal-600/50 bg-white px-2.5 py-1 text-[11.5px] text-teal-800 transition-colors hover:border-teal-700 hover:bg-teal-50"
+                    className="rounded-full border border-teal-600 bg-white px-2.5 py-1 text-[11.5px] text-teal-800 transition-colors hover:border-teal-700 hover:bg-teal-50"
                   >
                     {o}
                   </button>

@@ -146,7 +146,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
                     </span>
                     {file.note && <span className="text-[13px] text-ink-500">{file.note}</span>}
                   </figcaption>
-                  <div className="max-h-[420px] overflow-auto border border-ink-200 bg-ink-50/40">
+                  <div className="max-h-[420px] overflow-auto border border-ink-200 bg-ink-50">
                     <pre className="p-4 font-mono text-[11.5px] leading-relaxed text-ink-700">
                       {file.body}
                     </pre>

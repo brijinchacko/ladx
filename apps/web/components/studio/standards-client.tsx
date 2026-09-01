@@ -267,7 +267,7 @@ function Editor({
   const noProjects = scope === "project" && projects.length === 0;
 
   return (
-    <div className="mb-5 rounded-lg border border-ink-200 bg-ink-50/40 p-4">
+    <div className="mb-5 rounded-lg border border-ink-200 bg-ink-50 p-4">
       <div className="mb-3 flex flex-wrap gap-1.5">
         {KINDS.map((k) => (
           <button

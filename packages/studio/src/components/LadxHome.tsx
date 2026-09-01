@@ -7,7 +7,7 @@ import LadxStudio from "./LadxStudio";
 
 /** Project list and worked examples, the way into the studio. */
 
-const LIVE = "#35B6BB";
+const LIVE = "rgb(var(--teal-500))";
 /** How many recent programs the home screen shows before "All". */
 const RECENT = 6;
 
@@ -203,15 +203,15 @@ export default function LadxHome() {
                       </div>
                       <span className="shrink-0">
                         {e.passed ? (
-                          <span className="text-[11.5px] font-bold px-2.5 py-1 rounded-full bg-success/12 text-success">
+                          <span className="text-[11.5px] font-bold px-2.5 py-1 rounded-full bg-success text-success">
                             Passed {e.marksAwarded}/{e.marks}
                           </span>
                         ) : e.awaitingMarking ? (
-                          <span className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-warning/15 text-warning">
+                          <span className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-warning text-warning">
                             Being marked
                           </span>
                         ) : e.marksAwarded != null ? (
-                          <span className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-danger/12 text-danger">
+                          <span className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-danger text-danger">
                             {e.marksAwarded}/{e.marks}, try again
                           </span>
                         ) : (
@@ -271,7 +271,7 @@ export default function LadxHome() {
                 {(showAll ? projects : projects.slice(0, RECENT)).map((p) => (
                   <div
                     key={p.id}
-                    className="group relative rounded-lg border border-ink-100 bg-white hover:border-teal-500/50 transition-colors"
+                    className="group relative rounded-lg border border-ink-100 bg-white hover:border-teal-500 transition-colors"
                   >
                     <button
                       type="button"
@@ -334,7 +334,7 @@ export default function LadxHome() {
                   key={s.key}
                   onClick={() => create(s.key)}
                   disabled={busy !== null}
-                  className="text-left rounded-xl border border-ink-100 bg-white p-3.5 hover:border-teal-500/40 transition-colors disabled:opacity-50"
+                  className="text-left rounded-xl border border-ink-100 bg-white p-3.5 hover:border-teal-500 transition-colors disabled:opacity-50"
                 >
                   <span className="flex items-center gap-1.5">
                     {busy === s.key && <Loader2 size={11} className="animate-spin" />}
@@ -367,7 +367,7 @@ export default function LadxHome() {
                 type="button"
                 onClick={() => reallyRemove(pendingDelete)}
                 className="px-3 h-9 rounded-lg text-[12.5px] font-bold text-white"
-                style={{ background: "#B3382C" }}
+                style={{ background: "rgb(var(--danger))" }}
               >
                 Delete
               </button>

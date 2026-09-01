@@ -91,7 +91,7 @@ export default function HmiShell() {
         </p>
       )}
       {!program && (
-        <p className="mb-2 rounded-sm border border-ink-200 bg-ink-50/60 px-4 py-2.5 text-[12.5px] leading-relaxed text-ink-600">
+        <p className="mb-2 rounded-sm border border-ink-200 bg-ink-50 px-4 py-2.5 text-[12.5px] leading-relaxed text-ink-600">
           No ladder program yet, so there are no PLC tags to bind to and nothing to run against.
           Draw a rung in the{" "}
           <a href="/ladder" className="font-medium text-teal-700 underline">

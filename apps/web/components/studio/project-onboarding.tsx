@@ -85,9 +85,9 @@ export default function ProjectOnboarding({
   const total = BRIEF_GROUPS.length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900/40 p-4 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900 p-4 sm:items-center">
       <div className="w-full max-w-2xl rounded-lg border border-ink-200 bg-white shadow-2xl">
-        <header className="flex items-start gap-4 border-b border-ink-100 bg-ink-50/60 px-5 py-3.5">
+        <header className="flex items-start gap-4 border-b border-ink-100 bg-ink-50 px-5 py-3.5">
           <div className="min-w-0 flex-1">
             <h2 className="font-display text-[15px] font-bold text-ink-900">
               Set up {projectName}
@@ -284,7 +284,7 @@ function ImportStep({
           className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors ${
             busy
               ? "border-ink-200 opacity-60"
-              : "border-ink-200 hover:border-teal-500 hover:bg-teal-50/30"
+              : "border-ink-200 hover:border-teal-500 hover:bg-teal-50"
           }`}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
@@ -404,7 +404,7 @@ function Field({
     "w-full rounded-md border px-2.5 py-2 text-[13.5px] leading-relaxed outline-none placeholder:text-ink-400 focus:border-ink-500";
   // A field that came from a document is marked, so it is obvious which values
   // were read rather than typed and therefore which ones want a second look.
-  const border = source ? "border-teal-400 bg-teal-50/40" : "border-ink-200";
+  const border = source ? "border-teal-400 bg-teal-50" : "border-ink-200";
 
   return (
     <div>

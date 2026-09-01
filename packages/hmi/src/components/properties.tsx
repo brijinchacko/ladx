@@ -187,13 +187,13 @@ export default function Properties({
         <div className="grid grid-cols-2 gap-2">
           <ColourField
             label="Fill"
-            value={w.fill ?? "#D8DCDF"}
+            value={w.fill ?? "rgb(var(--ink-200))"}
             onChange={(c) => onChange({ fill: c })}
             allowNone
           />
           <ColourField
             label="Line"
-            value={w.stroke ?? "#3A4550"}
+            value={w.stroke ?? "rgb(var(--ink-700))"}
             onChange={(c) => onChange({ stroke: c })}
           />
         </div>
@@ -633,7 +633,7 @@ export default function Properties({
                         {
                           id: "a1",
                           when: { kind: "expr", source: e.target.value },
-                          fill: w.animations?.[0]?.fill ?? "#B4531A",
+                          fill: w.animations?.[0]?.fill ?? "rgb(var(--danger))",
                         },
                       ]
                     : [],
@@ -647,7 +647,7 @@ export default function Properties({
             <div className="mt-1.5">
               <ColourField
                 label="Use this colour"
-                value={w.animations[0].fill ?? "#B4531A"}
+                value={w.animations[0].fill ?? "rgb(var(--danger))"}
                 onChange={(c) => {
                   const first = w.animations?.[0];
                   if (!first) return;

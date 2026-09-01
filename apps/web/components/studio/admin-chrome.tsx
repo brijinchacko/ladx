@@ -160,7 +160,7 @@ export function Table({ head, children }: { head: string[]; children: ReactNode 
     <div className="overflow-x-auto rounded-md border border-ink-200 bg-white">
       <table className="w-full min-w-[640px] border-collapse text-[12.5px]">
         <thead>
-          <tr className="border-b border-ink-100 bg-ink-50/60 text-left">
+          <tr className="border-b border-ink-100 bg-ink-50 text-left">
             {head.map((h) => (
               <th
                 key={h}

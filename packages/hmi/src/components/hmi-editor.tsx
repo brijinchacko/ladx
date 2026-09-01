@@ -433,8 +433,8 @@ export default function HmiEditor({
           kind,
           symbol,
           rect: { x: 40, y: 40, w: size.w, h: size.h },
-          fill: "#D8DCDF",
-          stroke: "#3A4550",
+          fill: "rgb(var(--ink-200))",
+          stroke: "rgb(var(--ink-700))",
           strokeWidth: 1.5,
           fontSize: 14,
           text: kind === "button" ? "Button" : kind === "text" ? "Text" : undefined,
@@ -542,7 +542,7 @@ export default function HmiEditor({
         name: `Screen ${n}`,
         slug: `screen-${n}`,
         size: d.defaultSize,
-        background: "#E8EAEC",
+        background: "rgb(var(--ink-100))",
         widgets: [],
       });
       return d;
@@ -577,8 +577,8 @@ export default function HmiEditor({
           kind: "symbol",
           name: file.name.replace(/\.svg$/i, ""),
           rect: { x: 40, y: 40, w: 96, h: 96 },
-          fill: "#D8DCDF",
-          stroke: "#3A4550",
+          fill: "rgb(var(--ink-200))",
+          stroke: "rgb(var(--ink-700))",
           strokeWidth: 1.5,
           // Carried on the widget rather than in a global library, so an
           // application takes its own artwork with it between installs.
@@ -1142,7 +1142,7 @@ export default function HmiEditor({
       <MenuBar menus={menus} />
 
       {/* toolbar */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50 px-3 py-2">
         <input
           value={name}
           onChange={(e) => {
@@ -1287,7 +1287,7 @@ export default function HmiEditor({
               e.preventDefault();
               nudgeZoom(e.deltaY < 0 ? 1 : -1);
             }}
-            className="min-h-0 flex-1 overflow-auto bg-ink-100/50 p-6"
+            className="min-h-0 flex-1 overflow-auto bg-ink-100 p-6"
           >
             <div
               style={{
@@ -1530,7 +1530,7 @@ export default function HmiEditor({
       />
 
       {importNote && (
-        <p className="flex shrink-0 items-center gap-3 border-t border-ink-100 bg-ink-50/60 px-3 py-1 text-[12px] text-ink-600">
+        <p className="flex shrink-0 items-center gap-3 border-t border-ink-100 bg-ink-50 px-3 py-1 text-[12px] text-ink-600">
           {importNote}
           <button
             type="button"
@@ -1640,7 +1640,7 @@ function GridOverlay({ w, h }: { w: number; h: number }) {
           <path
             d={`M ${GRID * 4} 0 L 0 0 0 ${GRID * 4}`}
             fill="none"
-            stroke="#9AA7B2"
+            stroke="rgb(var(--ink-400))"
             strokeWidth="0.5"
           />
         </pattern>
@@ -1770,7 +1770,7 @@ function Tools({
                 <li
                   key={r.def.id}
                   className={`truncate rounded-sm px-1 py-0.5 text-[11px] ${
-                    needsAck(r.runtime.state) ? "bg-danger/12 text-ink-900" : "text-ink-500"
+                    needsAck(r.runtime.state) ? "bg-danger text-ink-900" : "text-ink-500"
                   }`}
                 >
                   {r.def.message}
@@ -1932,7 +1932,7 @@ function ScreenList({
               name: `Screen ${n}`,
               slug: `screen-${n}`,
               size: d.defaultSize,
-              background: "#E8EAEC",
+              background: "rgb(var(--ink-100))",
               widgets: [],
             });
             return d;
@@ -2047,7 +2047,7 @@ function AlarmList({
               key={r.def.id}
               className={`rounded-sm border px-1.5 py-1 text-[11.5px] ${
                 needsAck(r.runtime.state)
-                  ? "border-danger bg-danger/10 text-ink-900"
+                  ? "border-danger bg-danger text-ink-900"
                   : "border-ink-200 text-ink-600"
               }`}
             >

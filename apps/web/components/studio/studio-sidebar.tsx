@@ -368,7 +368,7 @@ function NewButton({ onProjects }: { onProjects: boolean }) {
           onClick={() => setOpen((o) => !o)}
           aria-label="Other things to create"
           aria-expanded={open}
-          className="flex w-7 items-center justify-center border-l border-white/15 text-white transition-opacity hover:opacity-90"
+          className="flex w-7 items-center justify-center border-l border-white text-white transition-opacity hover:opacity-90"
         >
           <ChevronDown className="h-3.5 w-3.5" />
         </button>
@@ -503,7 +503,7 @@ function ProjectRow({
         className={`flex items-center rounded-md py-1.5 pl-8 pr-7 text-[13px] transition-colors ${
           active
             ? "bg-white font-medium text-ink-900 shadow-[0_1px_2px_rgb(var(--ink-900)/0.06)]"
-            : "text-ink-600 hover:bg-ink-100/70 hover:text-ink-900"
+            : "text-ink-600 hover:bg-ink-100 hover:text-ink-900"
         } ${busy ? "opacity-50" : ""}`}
       >
         <span className="min-w-0 flex-1 truncate">{project.name}</span>

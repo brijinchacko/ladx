@@ -102,7 +102,7 @@ function Banner({
   return (
     <section
       aria-label="Cookie choices"
-      className="fixed inset-x-0 bottom-0 z-[60] border-t border-ink-200 bg-white/97 backdrop-blur-sm"
+      className="fixed inset-x-0 bottom-0 z-[60] border-t border-ink-200 bg-white"
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:gap-8">
         <div className="flex-1">
@@ -186,7 +186,7 @@ function PreferencesDialog({
     });
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-ink-900/40 p-0 sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-ink-900 p-0 sm:items-center sm:p-6">
       <div
         ref={panelRef}
         // biome-ignore lint/a11y/useSemanticElements: <dialog> manages its own
@@ -277,7 +277,7 @@ function PreferencesDialog({
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 border-t border-ink-100 bg-ink-50/60 px-6 py-4">
+        <div className="flex flex-wrap items-center gap-3 border-t border-ink-100 bg-ink-50 px-6 py-4">
           <button
             type="button"
             onClick={save}

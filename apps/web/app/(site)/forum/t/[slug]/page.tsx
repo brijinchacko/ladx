@@ -138,7 +138,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
 
         {/* The answer, surfaced. Only when there is one and it is not the OP. */}
         {answer && (
-          <section className="mb-8 border-l-2 border-teal-600 bg-teal-50/40 py-4 pl-5 pr-4">
+          <section className="mb-8 border-l-2 border-teal-600 bg-teal-50 py-4 pl-5 pr-4">
             <h2 className="mb-2 flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.12em] text-teal-700">
               <Sq size={6} /> Accepted answer, by {answer.authorName}
             </h2>
@@ -147,7 +147,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
         )}
 
         <article className="mb-10 border border-ink-200 bg-white">
-          <div className="border-b border-ink-100 bg-ink-50/60 px-4 py-2.5">
+          <div className="border-b border-ink-100 bg-ink-50 px-4 py-2.5">
             <p className="font-mono text-[11.5px] text-ink-500">
               <span className="font-semibold text-ink-800">{thread.authorName}</span> asked ·{" "}
               {thread.createdAt.toLocaleDateString("en-GB", {
@@ -185,7 +185,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
                     post.isAnswer ? "border-teal-600" : "border-ink-200"
                   }`}
                 >
-                  <div className="flex flex-wrap items-center gap-3 border-b border-ink-100 bg-ink-50/60 px-4 py-2.5">
+                  <div className="flex flex-wrap items-center gap-3 border-b border-ink-100 bg-ink-50 px-4 py-2.5">
                     <p className="font-mono text-[11.5px] text-ink-500">
                       {post.deleted ? (
                         <span className="italic text-ink-400">reply removed</span>

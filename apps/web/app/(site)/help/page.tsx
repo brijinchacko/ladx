@@ -100,7 +100,7 @@ export default function HelpPage() {
             ))}
           </dl>
 
-          <div className="mt-8 rounded-sm border border-ink-200 bg-ink-50/70 p-5">
+          <div className="mt-8 rounded-sm border border-ink-200 bg-ink-50 p-5">
             <h3 className="mb-1.5 text-[14.5px] font-semibold text-ink-900">
               Question that others would benefit from?
             </h3>

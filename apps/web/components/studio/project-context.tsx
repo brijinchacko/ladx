@@ -23,7 +23,7 @@ export function ProjectContext({
   if (!projectId || !projectName) return null;
 
   return (
-    <div className="flex items-center gap-2 border-b border-ink-100 bg-ink-50/40 px-6 py-1.5">
+    <div className="flex items-center gap-2 border-b border-ink-100 bg-ink-50 px-6 py-1.5">
       <Link
         href={`/studio/projects/${projectId}`}
         className="flex items-center gap-1.5 text-[12.5px] text-ink-600 transition-colors hover:text-ink-900"

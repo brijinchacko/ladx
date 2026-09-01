@@ -85,7 +85,7 @@ export default function ProductsPage() {
               <li key={p.slug}>
                 <Link
                   href={`/products/${p.slug}`}
-                  className="group grid gap-5 border-b border-ink-100 py-7 transition-colors hover:bg-ink-50/60 sm:grid-cols-[1fr_auto] sm:gap-8 sm:px-4"
+                  className="group grid gap-5 border-b border-ink-100 py-7 transition-colors hover:bg-ink-50 sm:grid-cols-[1fr_auto] sm:gap-8 sm:px-4"
                 >
                   <div className="max-w-2xl">
                     <div className="mb-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">

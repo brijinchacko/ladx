@@ -152,7 +152,7 @@ function ChatPageInner() {
       </header>
 
       {error && (
-        <div className="mx-6 mt-4 rounded-md border border-warning/30 bg-warning/5 px-4 py-3 flex items-start gap-3">
+        <div className="mx-6 mt-4 rounded-md border border-warning bg-warning px-4 py-3 flex items-start gap-3">
           <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
           <div className="text-sm text-ink-900">{error}</div>
         </div>

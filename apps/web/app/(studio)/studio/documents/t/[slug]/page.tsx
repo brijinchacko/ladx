@@ -129,7 +129,7 @@ export default async function StudioTemplatePage({
                     </span>
                     {file.note && <span className="text-[12.5px] text-ink-500">{file.note}</span>}
                   </figcaption>
-                  <div className="max-h-[380px] overflow-auto rounded-md border border-ink-200 bg-ink-50/40">
+                  <div className="max-h-[380px] overflow-auto rounded-md border border-ink-200 bg-ink-50">
                     <pre className="p-3.5 font-mono text-[11px] leading-relaxed text-ink-700">
                       {file.body}
                     </pre>

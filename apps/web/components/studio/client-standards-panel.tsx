@@ -26,7 +26,7 @@ export default function ClientStandardsPanel({
 }) {
   if (!hasStandards(standards) || !standards) {
     return (
-      <section className="rounded-md border border-ink-100 bg-ink-50/40 p-4">
+      <section className="rounded-md border border-ink-100 bg-ink-50 p-4">
         <h2 className="font-display font-bold text-[14px] text-ink-900">
           {clientName} has no standards recorded
         </h2>
@@ -57,8 +57,8 @@ export default function ClientStandardsPanel({
   ];
 
   return (
-    <section className="rounded-md border border-teal-500/40">
-      <header className="flex flex-wrap items-baseline gap-x-3 border-teal-500/25 border-b bg-teal-50/60 px-4 py-2.5">
+    <section className="rounded-md border border-teal-500">
+      <header className="flex flex-wrap items-baseline gap-x-3 border-teal-500 border-b bg-teal-50 px-4 py-2.5">
         <h2 className="font-display font-bold text-[14px] text-ink-900">
           How {clientName} wants it done
         </h2>

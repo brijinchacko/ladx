@@ -128,7 +128,7 @@ export function Composer({
             : undefined
         }
         className={`rounded-2xl border bg-white shadow-sm transition-colors ${
-          dragging ? "border-teal-500 bg-teal-50/40" : "border-ink-200 focus-within:border-ink-400"
+          dragging ? "border-teal-500 bg-teal-50" : "border-ink-200 focus-within:border-ink-400"
         }`}
       >
         {attachments.length > 0 && (

@@ -33,7 +33,7 @@ export default async function StudioDocumentsPage({
       <ProjectContext projectId={inProject?.id ?? null} projectName={inProject?.name ?? null} />
 
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
-        <section className="mb-8 rounded-md border border-ink-200 bg-ink-50/50 p-5">
+        <section className="mb-8 rounded-md border border-ink-200 bg-ink-50 p-5">
           <h2 className="font-display text-[14px] font-bold text-ink-900">
             Generate from a project
           </h2>

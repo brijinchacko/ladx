@@ -532,7 +532,7 @@ export default function Monitor({
         </p>
       )}
       {/* controls */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50 px-3 py-2">
         <select
           value={sourceKey}
           onChange={(e) => setSourceKey(e.target.value)}
@@ -664,7 +664,7 @@ export default function Monitor({
 
       <div className="flex min-h-0 flex-1">
         {/* the logic */}
-        <div className="min-h-0 flex-1 overflow-y-auto bg-ink-50/30">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-ink-50">
           {routine && (
             <MonitorRungs
               routine={routine}
@@ -857,7 +857,14 @@ function Empty({ children }: { children: React.ReactNode }) {
   return <p className="text-[11.5px] leading-snug text-ink-400">{children}</p>;
 }
 
-const TREND_COLORS = ["#2C9A9E", "#B4531A", "#4A5A68", "#7A8894", "#0F1A24", "#35B6BB"];
+const TREND_COLORS = [
+  "rgb(var(--teal-600))",
+  "rgb(var(--danger))",
+  "rgb(var(--ink-600))",
+  "rgb(var(--ink-400))",
+  "rgb(var(--ink-900))",
+  "rgb(var(--teal-500))",
+];
 
 /**
  * A trend of the watched tags.
@@ -910,7 +917,7 @@ function Trend({ samples, names }: { samples: Sample[]; names: string[] }) {
               x2={w}
               y1={top + rowH - 3}
               y2={top + rowH - 3}
-              stroke="#E4EAEF"
+              stroke="rgb(var(--ink-100))"
               strokeWidth={1}
             />
             <path
@@ -923,7 +930,7 @@ function Trend({ samples, names }: { samples: Sample[]; names: string[] }) {
               x={2}
               y={top + 8}
               fontSize={8}
-              fill="#7A8894"
+              fill="rgb(var(--ink-400))"
               fontFamily="ui-monospace, monospace"
             >
               {name}

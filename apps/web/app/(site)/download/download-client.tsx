@@ -177,13 +177,13 @@ function BuildCard({
   return (
     <div
       className={`rounded-xl border p-5 ${
-        suggested ? "border-teal-500/40 bg-teal-500/[0.03]" : "border-ink-100"
+        suggested ? "border-teal-500 bg-teal-500/[0.03]" : "border-ink-100"
       }`}
     >
       <div className="mb-1 flex items-center gap-2">
         <h2 className="font-semibold text-ink-900">{build.platform}</h2>
         {suggested && (
-          <span className="rounded-full bg-teal-500/10 px-2 py-0.5 text-[11px] font-medium text-teal-600">
+          <span className="rounded-full bg-teal-500 px-2 py-0.5 text-[11px] font-medium text-teal-600">
             Your computer
           </span>
         )}
@@ -224,7 +224,7 @@ function BuildCard({
              * the app cannot be checked, and a person who was not warned
              * reasonably concludes the download is malicious and stops.
              */
-            <p className="mt-3 flex gap-2 rounded-md bg-warning/5 px-2.5 py-2 text-[11.5px] leading-relaxed text-ink-600">
+            <p className="mt-3 flex gap-2 rounded-md bg-warning px-2.5 py-2 text-[11.5px] leading-relaxed text-ink-600">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
               <span>
                 Not code signed yet, so {build.platform} will warn you the first time.{" "}
@@ -291,7 +291,7 @@ function WebAppNotice({ onClose }: { onClose: () => void }) {
       onClose={onClose}
       onCancel={onClose}
       aria-labelledby="webapp-notice-title"
-      className="w-full max-w-lg rounded-xl border border-ink-100 bg-white p-6 text-ink-900 shadow-xl backdrop:bg-ink-900/30"
+      className="w-full max-w-lg rounded-xl border border-ink-100 bg-white p-6 text-ink-900 shadow-xl backdrop:bg-ink-900"
     >
       <button
         type="button"
@@ -302,7 +302,7 @@ function WebAppNotice({ onClose }: { onClose: () => void }) {
         <X className="h-4 w-4" />
       </button>
 
-      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-md bg-teal-500/10 text-teal-600">
+      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-md bg-teal-500 text-teal-600">
         <Cloud className="h-4 w-4" />
       </div>
       <h2 id="webapp-notice-title" className="mb-2 text-xl font-semibold tracking-tight">
@@ -314,7 +314,7 @@ function WebAppNotice({ onClose }: { onClose: () => void }) {
         update.
       </p>
 
-      <div className="mb-5 rounded-lg bg-ink-50/60 p-4 text-[13px] leading-relaxed text-ink-600">
+      <div className="mb-5 rounded-lg bg-ink-50 p-4 text-[13px] leading-relaxed text-ink-600">
         <p className="flex gap-2">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-400" />
           <span>

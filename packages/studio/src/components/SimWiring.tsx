@@ -30,14 +30,14 @@ import { DEVICE_LABEL, type DeviceKind, type Tag, defaultDevice } from "../lib/t
  * shows the loop complete from L+ through the contact into the terminal.
  */
 
-const LIVE = "#16a34a";
-const DEAD = "#94a3b8";
-const RAIL_POS = "#dc2626";
-const RAIL_NEG = "#1e293b";
-const CASE = "#2b3440";
-const CASE_EDGE = "#55606c";
-const SCREW = "#c7ccd1";
-const LABEL = "#475569";
+const LIVE = "rgb(var(--success))";
+const DEAD = "rgb(var(--ink-400))";
+const RAIL_POS = "rgb(var(--danger))";
+const RAIL_NEG = "rgb(var(--ink-800))";
+const CASE = "rgb(var(--ink-200))";
+const CASE_EDGE = "rgb(var(--ink-600))";
+const SCREW = "rgb(var(--ink-200))";
+const LABEL = "rgb(var(--ink-600))";
 
 const on = (t: Tag) => (t.type === "INT" ? (t.value ?? 0) !== 0 : (t.value ?? 0) === 1);
 const deviceOf = (t: Tag): DeviceKind => t.device ?? defaultDevice(t);
@@ -240,7 +240,7 @@ function Terminal({
         stroke={CASE_EDGE}
         strokeWidth={1}
       />
-      <line x1={x - 3} y1={y} x2={x + 3} y2={y} stroke="#7b8794" strokeWidth={1.2} />
+      <line x1={x - 3} y1={y} x2={x + 3} y2={y} stroke="rgb(var(--ink-400))" strokeWidth={1.2} />
       {live && <circle cx={x} cy={y - 9} r={2.2} fill={LIVE} />}
       <text
         x={side === "left" ? x + 9 : x - 9}
@@ -249,7 +249,7 @@ function Terminal({
         fontSize={8}
         fontWeight={700}
         fontFamily="ui-monospace, monospace"
-        fill="#cbd5e1"
+        fill="rgb(var(--ink-200))"
       >
         {label}
       </text>
@@ -373,7 +373,7 @@ export default function SimWiring({
           textAnchor="middle"
           fontSize={8.5}
           fontWeight={900}
-          fill="#e2e8f0"
+          fill="rgb(var(--ink-100))"
           letterSpacing={1}
         >
           WARTENS
@@ -384,7 +384,7 @@ export default function SimWiring({
           textAnchor="middle"
           fontSize={7}
           fontWeight={700}
-          fill="#93c5fd"
+          fill="rgb(var(--action))"
         >
           {CPU.model}
         </text>
@@ -393,7 +393,7 @@ export default function SimWiring({
           y1={railTop + PLATE - 2}
           x2={CPU_R - 6}
           y2={railTop + PLATE - 2}
-          stroke="#475569"
+          stroke="rgb(var(--ink-600))"
           strokeWidth={0.8}
         />
 
@@ -428,7 +428,7 @@ export default function SimWiring({
                 y={y + 3}
                 textAnchor="middle"
                 fontSize={6.5}
-                fill="#94a3b8"
+                fill="rgb(var(--ink-400))"
               >
                 supply
               </text>
@@ -471,7 +471,7 @@ export default function SimWiring({
                 textAnchor="middle"
                 fontSize={8.5}
                 fontWeight={600}
-                fill="#0f172a"
+                fill="rgb(var(--ink-900))"
               >
                 {t.name}
               </text>
@@ -510,7 +510,7 @@ export default function SimWiring({
                 textAnchor="middle"
                 fontSize={8.5}
                 fontWeight={600}
-                fill="#0f172a"
+                fill="rgb(var(--ink-900))"
               >
                 {t.name}
               </text>
@@ -536,13 +536,13 @@ export default function SimWiring({
 
       <p className="mt-1.5 text-[10px] leading-relaxed" style={{ color: LABEL }}>
         Every circuit runs from <b style={{ color: RAIL_POS }}>L+</b> on the left to{" "}
-        <b style={{ color: "#0f172a" }}>M</b> on the right, which is exactly the shape of a rung. An
-        input completes its circuit through the field device into the terminal; an output is
-        completed by the controller closing its own contact.
+        <b style={{ color: "rgb(var(--ink-900))" }}>M</b> on the right, which is exactly the shape
+        of a rung. An input completes its circuit through the field device into the terminal; an
+        output is completed by the controller closing its own contact.
       </p>
 
       {unwired.length > 0 && (
-        <p className="mt-1.5 text-[9.5px] leading-relaxed" style={{ color: "#B45309" }}>
+        <p className="mt-1.5 text-[9.5px] leading-relaxed" style={{ color: "rgb(var(--warning))" }}>
           Not shown: {unwired.map((t) => t.name).join(", ")},{" "}
           {unwired.length === 1 ? "it has" : "they have"} no terminal address, so{" "}
           {unwired.length === 1 ? "it lives" : "they live"} in memory rather than on a screw.

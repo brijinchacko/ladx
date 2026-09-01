@@ -103,7 +103,7 @@ export default function CadCommandLine({
   };
 
   return (
-    <div className="flex h-full flex-col bg-ink-50/60">
+    <div className="flex h-full flex-col bg-ink-50">
       {showHelp && <HelpTable onClose={() => setShowHelp(false)} />}
 
       {(suggestions.length > 0 || error) && (

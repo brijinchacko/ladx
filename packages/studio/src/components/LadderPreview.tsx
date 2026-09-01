@@ -11,7 +11,7 @@ import type { Element, LadxProgram } from "../lib/types";
  * in a diagram and invisible in a list.
  */
 
-const LIVE = "#35B6BB";
+const LIVE = "rgb(var(--teal-500))";
 
 function glyph(el: Element): string {
   switch (el.type) {
@@ -43,7 +43,7 @@ function Box({ el }: { el: Element }) {
         className={`flex flex-col items-center justify-center rounded border-2 ${
           wide ? "px-2 h-8 min-w-[4rem]" : "w-12 h-8"
         }`}
-        style={{ borderColor: "#38423c", color: "#c9d2cb" }}
+        style={{ borderColor: "rgb(var(--ink-700))", color: "#c9d2cb" }}
       >
         <span className="font-mono text-[13px] leading-none">{glyph(el)}</span>
         {el.preset !== undefined && (
@@ -64,7 +64,7 @@ function Box({ el }: { el: Element }) {
 const Wire = ({ grow = false }: { grow?: boolean }) => (
   <span
     className={grow ? "flex-1 min-w-[1rem]" : "w-4"}
-    style={{ height: 2, background: "#38423c", marginTop: 18 }}
+    style={{ height: 2, background: "rgb(var(--ink-700))", marginTop: 18 }}
   />
 );
 

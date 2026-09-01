@@ -90,7 +90,7 @@ export default function ResourcesPage() {
       */}
       <nav
         aria-label="Topics"
-        className="-mx-5 sticky top-16 z-20 mb-10 flex gap-2 overflow-x-auto border-ink-100 border-y bg-white/95 px-5 py-3 backdrop-blur-sm sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:py-4"
+        className="-mx-5 sticky top-16 z-20 mb-10 flex gap-2 overflow-x-auto border-ink-100 border-y bg-white px-5 py-3 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:py-4"
       >
         {topics.map((topic) => {
           const count = POSTS.filter((p) => p.topic === topic).length;
@@ -110,7 +110,7 @@ export default function ResourcesPage() {
       {lead && (
         <Link
           href={`/resources/${lead.slug}`}
-          className="group mb-16 block border-y border-ink-100 py-10 transition-colors hover:bg-ink-50/50"
+          className="group mb-16 block border-y border-ink-100 py-10 transition-colors hover:bg-ink-50"
         >
           <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center">
             <div>

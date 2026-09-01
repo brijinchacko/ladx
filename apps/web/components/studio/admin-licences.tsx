@@ -91,7 +91,7 @@ export default function AdminLicences({ rows, open }: { rows: LicenceRow[]; open
       )}
 
       {fresh && (
-        <div className="mb-4 rounded-md border-2 border-teal-500 bg-teal-50/60 p-4">
+        <div className="mb-4 rounded-md border-2 border-teal-500 bg-teal-50 p-4">
           <p className="text-[13px] font-medium text-ink-900">
             Key for {fresh.issuedTo}. This is the only time it is shown.
           </p>
@@ -155,7 +155,7 @@ export default function AdminLicences({ rows, open }: { rows: LicenceRow[]; open
       <div className="overflow-x-auto rounded-md border border-ink-200 bg-white">
         <table className="w-full min-w-[860px] border-collapse text-[12.5px]">
           <thead>
-            <tr className="border-b border-ink-100 bg-ink-50/60 text-left">
+            <tr className="border-b border-ink-100 bg-ink-50 text-left">
               {["Key", "Issued to", "State", "Machine", "Last seen", "Expires", ""].map((h) => (
                 <th
                   key={h}

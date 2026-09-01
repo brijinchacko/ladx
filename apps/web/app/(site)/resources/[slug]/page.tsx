@@ -93,7 +93,7 @@ function Body({ lines }: { lines: string[] }) {
       blocks.push(
         <blockquote
           key={key}
-          className="my-7 border-l-2 border-teal-500 bg-teal-50/40 py-4 pl-5 pr-4 text-[16px] leading-relaxed text-ink-800"
+          className="my-7 border-l-2 border-teal-500 bg-teal-50 py-4 pl-5 pr-4 text-[16px] leading-relaxed text-ink-800"
         >
           <Inline text={line.slice(2)} />
         </blockquote>,
@@ -214,7 +214,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
         {/* The direct answer, first and self-contained. Retrieval selects
             passages rather than pages, and this is the passage. */}
-        <div className="mt-8 border-l-2 border-teal-500 bg-teal-50/40 py-4 pl-5 pr-4">
+        <div className="mt-8 border-l-2 border-teal-500 bg-teal-50 py-4 pl-5 pr-4">
           <p className="mb-1.5 font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-teal-700">
             Short answer
           </p>
@@ -256,7 +256,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           a hundred articles linked to one page and told a search engine
           nothing about which of them were about what.
         */}
-        <aside className="mt-14 rounded-sm border border-ink-200 bg-ink-50/60 p-6">
+        <aside className="mt-14 rounded-sm border border-ink-200 bg-ink-50 p-6">
           <h2 className="mb-2 font-display text-[1.1rem] font-bold text-ink-900">{cta.heading}</h2>
           <p className="mb-4 text-[15px] leading-relaxed text-ink-600">{cta.body}</p>
           <Link

@@ -22,7 +22,7 @@ import LadderPreview from "./LadderPreview";
  * the same script would land in different places.
  */
 
-const LIVE = "#35B6BB";
+const LIVE = "rgb(var(--teal-500))";
 
 type QueueRow = {
   id: string;
@@ -228,7 +228,7 @@ export default function LadxMarking() {
                 max={answer.exercise.marks}
                 value={marks}
                 onChange={(e) => setMarks(e.target.value)}
-                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white/10 text-[13px] text-text-primary"
+                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white text-[13px] text-text-primary"
               />
             </label>
             {pct != null && (
@@ -251,7 +251,7 @@ export default function LadxMarking() {
               onChange={(e) => setFeedback(e.target.value)}
               rows={3}
               placeholder="What was right, what was missing, and what to try next."
-              className="w-full px-3 py-2 rounded-lg bg-dark-primary border border-white/10 text-[13px] text-text-primary placeholder:text-text-muted resize-none"
+              className="w-full px-3 py-2 rounded-lg bg-dark-primary border border-white text-[13px] text-text-primary placeholder:text-text-muted resize-none"
             />
           </label>
 
@@ -292,7 +292,7 @@ export default function LadxMarking() {
           <div
             key={r.id}
             className={`rounded-xl border bg-surface p-4 ${
-              r.waitingDays >= 3 ? "border-warning/30" : "border-white/[0.08]"
+              r.waitingDays >= 3 ? "border-warning" : "border-white/[0.08]"
             }`}
           >
             <div className="flex items-start gap-3 flex-wrap">
@@ -308,7 +308,7 @@ export default function LadxMarking() {
                     </span>
                   )}
                   {r.unclaimed && (
-                    <span className="ml-2 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-warning/15 text-warning">
+                    <span className="ml-2 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-warning text-warning">
                       Unclaimed
                     </span>
                   )}

@@ -23,10 +23,10 @@
  */
 
 /** The pane itself, expanded. */
-export const SIDEBAR_ASIDE = "flex w-64 shrink-0 flex-col bg-ink-50/60";
+export const SIDEBAR_ASIDE = "flex w-64 shrink-0 flex-col bg-ink-50";
 
 /** The pane collapsed to icons. */
-export const SIDEBAR_ASIDE_COLLAPSED = "flex w-14 shrink-0 flex-col items-center bg-ink-50/60 py-3";
+export const SIDEBAR_ASIDE_COLLAPSED = "flex w-14 shrink-0 flex-col items-center bg-ink-50 py-3";
 
 /** Brand block at the top, and the control that collapses the pane. */
 export const SIDEBAR_BRAND = "flex items-center justify-between px-4 py-3.5";
@@ -71,7 +71,7 @@ export function sidebarRowClass(opts: { active: boolean; indent?: boolean }): st
   } ${
     opts.active
       ? "bg-white font-medium text-ink-900 shadow-[0_1px_2px_rgb(var(--ink-900)/0.06)]"
-      : "text-ink-600 hover:bg-ink-100/70 hover:text-ink-900"
+      : "text-ink-600 hover:bg-ink-100 hover:text-ink-900"
   }`;
 }
 

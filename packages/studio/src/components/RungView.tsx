@@ -47,9 +47,9 @@ export const ROW_H = ROW_BANDS.reduce((a, b) => a + b, 0);
 export const CENTRE = ROW_BANDS[0] + ROW_BANDS[1] / 2; // middle of the symbol band
 const ROWS = ROW_BANDS.map((n) => `${n}px`).join(" ");
 const CELL_W = 74;
-const INK = "#334155";
-const LIVE = "#22c55e";
-const SELECT = "#2891FF";
+const INK = "rgb(var(--ink-700))";
+const LIVE = "rgb(var(--success))";
+const SELECT = "rgb(var(--action))";
 
 export function nodeHeight(n: LadderNode): number {
   if (n.kind === "el") return ROW_H;
@@ -386,14 +386,14 @@ function ElementCell({
     >
       <span
         className="text-[10px] leading-[13px] text-center truncate px-0.5"
-        style={{ color: tag ? "#0f172a" : "#B3382C", width: CELL_W }}
+        style={{ color: tag ? "rgb(var(--ink-900))" : "rgb(var(--danger))", width: CELL_W }}
       >
         {tag || "no tag"}
       </span>
       <Glyph type={type} live={live} />
       <span
         className="text-[8.5px] leading-[11px] text-center truncate px-0.5"
-        style={{ color: "#64748b", width: CELL_W }}
+        style={{ color: "rgb(var(--ink-500))", width: CELL_W }}
       >
         {detail}
       </span>
@@ -402,7 +402,7 @@ function ElementCell({
           one without and nothing shifts when a tag is given a terminal. */}
       <span
         className="text-[8px] leading-[10px] text-center truncate px-0.5 font-mono"
-        style={{ color: address ? "#1B7F84" : "transparent", width: CELL_W }}
+        style={{ color: address ? "rgb(var(--teal-700))" : "transparent", width: CELL_W }}
       >
         {address || "\u00a0"}
       </span>
@@ -1161,7 +1161,7 @@ export default function RungView({
           <span
             className="text-[9.5px] font-bold px-1.5 rounded shrink-0"
             style={{
-              color: live ? "#15803d" : "#94a3b8",
+              color: live ? "rgb(var(--success))" : "rgb(var(--ink-400))",
               background: live ? "rgba(34,197,94,0.12)" : "transparent",
             }}
           >

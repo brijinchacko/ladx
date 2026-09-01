@@ -63,7 +63,7 @@ export function StudioStart({ projects }: { projects: RecentProject[] }) {
           <Link
             key={p.id}
             href={`/studio/projects/${p.id}`}
-            className="flex items-start gap-2.5 rounded-md px-3 py-2.5 transition-colors hover:bg-ink-100/70"
+            className="flex items-start gap-2.5 rounded-md px-3 py-2.5 transition-colors hover:bg-ink-100"
           >
             <FolderKanban className="mt-0.5 h-4 w-4 shrink-0 text-ink-500" />
             <div className="min-w-0">

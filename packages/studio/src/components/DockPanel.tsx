@@ -107,7 +107,7 @@ export function DockPanel<Id extends string>({
       }`}
       style={isSide ? { width: state.size } : { height: state.size }}
     >
-      <header className="flex shrink-0 items-center gap-1.5 border-ink-100 border-b bg-ink-50/60 px-2 py-1">
+      <header className="flex shrink-0 items-center gap-1.5 border-ink-100 border-b bg-ink-50 px-2 py-1">
         <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-500">
           {def.title}
         </span>
@@ -148,7 +148,7 @@ export function DockPanel<Id extends string>({
             : side === "right"
               ? "top-0 left-0 h-full w-[5px] cursor-col-resize"
               : "top-0 left-0 h-[5px] w-full cursor-row-resize"
-        } hover:bg-teal-500/40`}
+        } hover:bg-teal-500`}
       />
     </div>
   );
@@ -176,7 +176,7 @@ export function DockStrip<Id extends string>({
 }) {
   const closed = dock.panels.filter((p) => !layout[p.id]?.open);
   return (
-    <div className="flex shrink-0 items-center gap-2 border-ink-100 border-t bg-ink-50/60 px-2 py-1">
+    <div className="flex shrink-0 items-center gap-2 border-ink-100 border-t bg-ink-50 px-2 py-1">
       <LayoutGrid className="h-3 w-3 shrink-0 text-ink-400" />
       {closed.length === 0 ? (
         <span className="text-[11px] text-ink-400">

@@ -135,7 +135,7 @@ export default function ProjectBriefPanel({
 
   return (
     <section className="rounded-md border border-ink-200 bg-white">
-      <header className="flex flex-wrap items-center gap-4 border-b border-ink-100 bg-ink-50/60 px-5 py-3.5">
+      <header className="flex flex-wrap items-center gap-4 border-b border-ink-100 bg-ink-50 px-5 py-3.5">
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-[15px] font-bold text-ink-900">Design basis</h2>
           <p className="mt-0.5 text-[12.5px] leading-snug text-ink-500">
@@ -320,9 +320,9 @@ export function BriefPrompt({
   const [draft, setDraft] = useState<ProjectBrief>({});
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900/40 p-4 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900 p-4 sm:items-center">
       <div className="w-full max-w-lg rounded-md border border-ink-200 bg-white">
-        <header className="border-b border-ink-100 bg-ink-50/60 px-5 py-3.5">
+        <header className="border-b border-ink-100 bg-ink-50 px-5 py-3.5">
           <h2 className="font-display text-[15px] font-bold text-ink-900">
             Before we write the {documentTitle}
           </h2>

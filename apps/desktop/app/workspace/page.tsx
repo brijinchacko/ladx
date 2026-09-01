@@ -114,7 +114,7 @@ export default function WorkspacePage() {
         </header>
 
         {error && (
-          <p className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+          <p className="rounded-md border border-danger bg-danger px-4 py-3 text-sm text-danger">
             {error}
           </p>
         )}
@@ -218,14 +218,14 @@ function ProjectRow({
   return (
     <li
       className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
-        active ? "border-teal-500/50 bg-teal-500/5" : "border-ink-100"
+        active ? "border-teal-500 bg-teal-500" : "border-ink-100"
       }`}
     >
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-2 font-medium text-ink-900">
           {project.name}
           {active && (
-            <span className="flex items-center gap-1 rounded-full bg-teal-500/10 px-2 py-0.5 text-[11px] font-medium text-teal-600">
+            <span className="flex items-center gap-1 rounded-full bg-teal-500 px-2 py-0.5 text-[11px] font-medium text-teal-600">
               <Check className="h-3 w-3" />
               Open
             </span>
@@ -296,7 +296,7 @@ function NewProject({
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4 rounded-lg border border-ink-200 bg-ink-50/40 p-5">
+    <form onSubmit={submit} className="space-y-4 rounded-lg border border-ink-200 bg-ink-50 p-5">
       <p className="font-medium text-ink-900">New project</p>
       <div className="grid grid-cols-3 gap-3">
         <Field id="np-name" label="Name" value={name} onChange={setName} autoFocus />

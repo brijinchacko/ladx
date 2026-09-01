@@ -124,19 +124,24 @@ export default function ContextMenu({
         visibility: pos ? "visible" : "hidden",
         zIndex: 10000,
         minWidth: 216,
-        background: "#FFFFFF",
+        background: "rgb(var(--raised))",
         border: "1px solid #C9D2DC",
         borderRadius: 4,
         boxShadow: "0 8px 24px rgba(15,32,48,0.18)",
         padding: "4px 0",
         fontSize: 12,
-        color: "#0F2030",
+        color: "rgb(var(--ink-900))",
         userSelect: "none",
       }}
     >
       {menu.items.map((item, i) => {
         if (item.kind === "separator") {
-          return <div key={i} style={{ height: 1, background: "#E4E9EE", margin: "4px 0" }} />;
+          return (
+            <div
+              key={i}
+              style={{ height: 1, background: "rgb(var(--ink-100))", margin: "4px 0" }}
+            />
+          );
         }
         if (item.kind === "heading") {
           return (
@@ -149,7 +154,7 @@ export default function ContextMenu({
                   style={{
                     marginTop: 1,
                     fontSize: 11,
-                    color: "#5A6B7B",
+                    color: "rgb(var(--ink-500))",
                     fontFamily: "ui-monospace, Menlo, monospace",
                   }}
                 >
@@ -181,12 +186,18 @@ export default function ContextMenu({
               border: 0,
               textAlign: "left",
               cursor: item.disabled ? "default" : "pointer",
-              color: item.disabled ? "#9AA7B4" : item.danger ? "#B3382C" : "#0F2030",
+              color: item.disabled
+                ? "rgb(var(--ink-400))"
+                : item.danger
+                  ? "rgb(var(--danger))"
+                  : "rgb(var(--ink-900))",
               font: "inherit",
             }}
             onMouseEnter={(e) => {
               if (!item.disabled)
-                e.currentTarget.style.background = item.danger ? "#FBEAE8" : "#EAF3FC";
+                e.currentTarget.style.background = item.danger
+                  ? "rgb(var(--danger-bg))"
+                  : "rgb(var(--ink-50))";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";
@@ -197,7 +208,7 @@ export default function ContextMenu({
               <span
                 style={{
                   fontSize: 10.5,
-                  color: "#8998A6",
+                  color: "rgb(var(--ink-400))",
                   fontFamily: "ui-monospace, Menlo, monospace",
                 }}
               >

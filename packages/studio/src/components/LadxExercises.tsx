@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from "react";
  * which is what stops two trainers grading the same work differently.
  */
 
-const LIVE = "#35B6BB";
+const LIVE = "rgb(var(--teal-500))";
 
 type Row = {
   id: string;
@@ -178,7 +178,7 @@ export default function LadxExercises({
   }
 
   const field =
-    "w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white/10 text-[13px] text-text-primary placeholder:text-text-muted";
+    "w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white text-[13px] text-text-primary placeholder:text-text-muted";
 
   return (
     <div className="space-y-4">
@@ -245,9 +245,7 @@ export default function LadxExercises({
 
               <span
                 className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 ${
-                  r.isPublished
-                    ? "bg-neon-green/12 text-neon-green"
-                    : "bg-white/[0.06] text-text-muted"
+                  r.isPublished ? "bg-success-bg text-success" : "bg-white/[0.06] text-text-muted"
                 }`}
               >
                 {r.isPublished ? "Live" : "Draft"}
@@ -277,7 +275,7 @@ export default function LadxExercises({
       )}
 
       {draft && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-2xl max-h-[88vh] overflow-y-auto rounded-2xl border border-white/[0.12] bg-dark-secondary p-5">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-[14px] font-bold text-text-primary">
@@ -359,7 +357,7 @@ export default function LadxExercises({
                   onChange={(e) => setDraft({ ...draft, brief: e.target.value })}
                   rows={4}
                   placeholder="Build a motor start/stop circuit. Start_PB is momentary. Stop_PB and EStop_OK are wired normally closed. The motor must stay running when Start is released."
-                  className="w-full px-3 py-2 rounded-lg bg-dark-primary border border-white/10 text-[13px] text-text-primary placeholder:text-text-muted resize-y"
+                  className="w-full px-3 py-2 rounded-lg bg-dark-primary border border-white text-[13px] text-text-primary placeholder:text-text-muted resize-y"
                 />
               </label>
 
@@ -372,7 +370,7 @@ export default function LadxExercises({
                   onChange={(e) => setDraft({ ...draft, guidance: e.target.value })}
                   rows={4}
                   placeholder="Expect one rung: Start OR Motor (the seal-in branch), then Stop AND EStop in series, driving an OTE on Motor. Full marks need the seal-in as a parallel branch, not a second rung. Half marks if the stops are examined with XIO, that would mean the motor runs when the wire breaks."
-                  className="w-full px-3 py-2 rounded-lg bg-dark-primary border border-white/10 text-[13px] text-text-primary placeholder:text-text-muted resize-y"
+                  className="w-full px-3 py-2 rounded-lg bg-dark-primary border border-white text-[13px] text-text-primary placeholder:text-text-muted resize-y"
                 />
                 <span className="block text-[10.5px] text-text-muted mt-1">
                   Only the marker sees this, never the student.

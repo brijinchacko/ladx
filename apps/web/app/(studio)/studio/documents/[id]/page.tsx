@@ -53,7 +53,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
             </a>
           }
         />
-        <div className="min-h-0 flex-1 bg-ink-50/40 p-4">
+        <div className="min-h-0 flex-1 bg-ink-50 p-4">
           {isPdf || isImage ? (
             // An embedded preview, so a datasheet does not need a round trip
             // through the downloads folder to be read.

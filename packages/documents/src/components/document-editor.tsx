@@ -139,7 +139,7 @@ export default function DocumentEditor({
     <div className="flex min-h-0 flex-1 flex-col">
       {exported && (
         <p
-          className="shrink-0 truncate border-ink-100 border-b bg-ink-50/60 px-4 py-1.5 text-[11.5px] text-ink-600"
+          className="shrink-0 truncate border-ink-100 border-b bg-ink-50 px-4 py-1.5 text-[11.5px] text-ink-600"
           title={exported}
         >
           {exported}
@@ -147,7 +147,7 @@ export default function DocumentEditor({
       )}
 
       {/* bar */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-4 py-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50 px-4 py-2">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -257,7 +257,7 @@ export default function DocumentEditor({
 
         {mode !== "edit" && (
           <div
-            className={`min-h-0 overflow-y-auto bg-ink-50/30 ${mode === "split" ? "w-1/2" : "w-full"}`}
+            className={`min-h-0 overflow-y-auto bg-ink-50 ${mode === "split" ? "w-1/2" : "w-full"}`}
           >
             <div className="mx-auto max-w-3xl bg-white p-8 shadow-sm">
               {content.trim() ? (

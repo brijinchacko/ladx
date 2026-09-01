@@ -287,13 +287,13 @@ function DiagnosticsList({
 }) {
   if (state.kind === "error") {
     return (
-      <div className="px-3 py-2 text-xs bg-warning/10 text-warning border-t border-ink-100">
+      <div className="px-3 py-2 text-xs bg-warning text-warning border-t border-ink-100">
         {state.message}
       </div>
     );
   }
   return (
-    <ul className="text-xs bg-danger/5 border-t border-danger/20 divide-y divide-danger/10">
+    <ul className="text-xs bg-danger border-t border-danger divide-y divide-danger">
       {state.report.diagnostics.map((d, i) => (
         <DiagItem key={`${d.source}-${d.line}-${d.column}-${i}`} d={d} />
       ))}

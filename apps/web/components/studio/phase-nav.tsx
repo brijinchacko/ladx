@@ -57,7 +57,7 @@ export default function PhaseNav({
   }
 
   return (
-    <div className="sticky top-0 z-20 -mx-8 border-b border-ink-100 bg-white/95 px-8 backdrop-blur">
+    <div className="sticky top-0 z-20 -mx-8 border-b border-ink-100 bg-white px-8">
       <nav className="flex items-stretch gap-0.5 overflow-x-auto">
         {phases.map((p) => {
           const isViewing = p.id === viewing;

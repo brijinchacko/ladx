@@ -85,7 +85,7 @@ export default function CadList({
 
   return (
     <div>
-      <section className="mb-6 rounded-md border border-ink-200 bg-ink-50/50 p-4">
+      <section className="mb-6 rounded-md border border-ink-200 bg-ink-50 p-4">
         <h2 className="font-display text-[14px] font-bold text-ink-900">New drawing</h2>
         <p className="mt-1 text-[12.5px] leading-relaxed text-ink-500">
           2D drafting for panel layouts, wiring schematics and general arrangements. DXF is the

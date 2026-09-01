@@ -1339,7 +1339,7 @@ export function HmiLayoutFigure({ className }: { className?: string }) {
       />
 
       {/* the alarm banner, always at the top and never covered */}
-      <rect x="28" y="28" width="504" height="20" rx="2" fill="#B4531A" opacity="0.85" />
+      <rect x="28" y="28" width="504" height="20" rx="2" fill="rgb(var(--danger))" opacity="0.85" />
       <text x="36" y="42" fontSize="10" fill="#fff" fontFamily="ui-monospace, monospace">
         HI HI TANK 2 LEVEL 92% UNACKNOWLEDGED
       </text>
@@ -1377,16 +1377,16 @@ export function HmiLayoutFigure({ className }: { className?: string }) {
         rx="3"
         fill="currentColor"
         opacity="0.14"
-        stroke="#B4531A"
+        stroke="rgb(var(--danger))"
         strokeWidth="1.6"
       />
-      <rect x="180" y="76" width="70" height="70" rx="3" fill="#B4531A" opacity="0.5" />
+      <rect x="180" y="76" width="70" height="70" rx="3" fill="rgb(var(--danger))" opacity="0.5" />
       <text
         x="215"
         y="160"
         fontSize="9"
         textAnchor="middle"
-        fill="#B4531A"
+        fill="rgb(var(--danger))"
         fontFamily="ui-monospace, monospace"
       >
         TANK 2

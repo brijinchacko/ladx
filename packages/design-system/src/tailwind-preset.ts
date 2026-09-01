@@ -5,8 +5,8 @@ import { fonts, radii } from "./tokens";
  * Every colour resolves through a CSS variable, so the theme can change under
  * the markup without the markup knowing.
  *
- * `<alpha-value>` is Tailwind's placeholder: it keeps `bg-ink-900/40` and
- * `border-ink-100/60` working, which matters because the app uses fractional
+ * `<alpha-value>` is Tailwind's placeholder: it keeps `bg-ink-900` and
+ * `border-ink-100` working, which matters because the app uses fractional
  * opacities in a few hundred places and losing them would flatten every hover
  * state.
  */

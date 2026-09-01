@@ -16,8 +16,8 @@ import { rungLogic } from "../index";
  * produced the result you just recorded.
  */
 
-const LIVE = "#2C9A9E";
-const DEAD = "#C3CCD4";
+const LIVE = "rgb(var(--teal-600))";
+const DEAD = "rgb(var(--ink-200))";
 
 function glyph(type: string): string {
   switch (type) {
@@ -85,7 +85,7 @@ function El({
         }`}
         style={{
           borderColor: on ? LIVE : DEAD,
-          color: on ? LIVE : "#5A6773",
+          color: on ? LIVE : "rgb(var(--ink-500))",
           background: on ? "rgba(44,154,158,0.08)" : "transparent",
         }}
       >
@@ -175,7 +175,7 @@ export default function MonitorRungs({
           <div
             key={rung.id}
             className="rounded-md border bg-white p-2"
-            style={{ borderColor: live ? "rgba(44,154,158,0.45)" : "#E4EAEF" }}
+            style={{ borderColor: live ? "rgba(44,154,158,0.45)" : "rgb(var(--ink-100))" }}
           >
             <div className="mb-1 flex items-center gap-2">
               <span className="rounded bg-ink-100 px-1.5 py-0.5 font-mono text-[9.5px] font-bold text-ink-500">
@@ -215,7 +215,7 @@ export default function MonitorRungs({
               {/* right rail */}
               <span
                 className="ml-1 h-8 w-[3px] shrink-0 rounded-sm"
-                style={{ background: "#C3CCD4" }}
+                style={{ background: "rgb(var(--ink-200))" }}
                 aria-hidden="true"
               />
             </div>

@@ -133,7 +133,7 @@ export default function GoOnlineOverlay({
         style={{
           width: 400,
           maxWidth: "92vw",
-          background: "#FFFFFF",
+          background: "rgb(var(--raised))",
           border: "1px solid #C9D2DC",
           borderRadius: 8,
           boxShadow: "0 24px 60px rgba(15,32,48,0.35)",
@@ -148,21 +148,21 @@ export default function GoOnlineOverlay({
               width: 34,
               height: 34,
               borderRadius: 7,
-              background: finished ? "#DCFCE7" : "#EAF3FC",
-              color: finished ? "#15803D" : "#2891FF",
+              background: finished ? "rgb(var(--success-bg))" : "rgb(var(--ink-50))",
+              color: finished ? "rgb(var(--success))" : "rgb(var(--action))",
             }}
           >
             {finished ? <Zap size={17} /> : <Play size={16} />}
           </span>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0F2030" }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "rgb(var(--ink-900))" }}>
               {finished ? "Controller running" : "Going online"}
             </p>
             <p
               style={{
                 margin: "2px 0 0",
                 fontSize: 11.5,
-                color: "#5A6B7B",
+                color: "rgb(var(--ink-500))",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -171,13 +171,13 @@ export default function GoOnlineOverlay({
               {projectName || "Untitled"} · one scan every {scanMs} ms
             </p>
           </div>
-          {finished && <CheckCircle2 size={20} style={{ color: "#15803D" }} />}
+          {finished && <CheckCircle2 size={20} style={{ color: "rgb(var(--success))" }} />}
         </div>
 
         <div
           style={{
             height: 3,
-            background: "#EEF2F6",
+            background: "rgb(var(--ink-100))",
             borderRadius: 999,
             overflow: "hidden",
             marginBottom: 12,
@@ -187,7 +187,7 @@ export default function GoOnlineOverlay({
             style={{
               height: "100%",
               width: `${Math.round((step / STEPS.length) * 100)}%`,
-              background: finished ? "#16A34A" : "#2891FF",
+              background: finished ? "rgb(var(--success))" : "rgb(var(--action))",
               borderRadius: 999,
               transition: "width 240ms cubic-bezier(0.2,0,0,1)",
             }}
@@ -215,7 +215,11 @@ export default function GoOnlineOverlay({
                     height: 6,
                     borderRadius: 999,
                     flexShrink: 0,
-                    background: done ? "#16A34A" : now ? "#2891FF" : "#C9D2DC",
+                    background: done
+                      ? "rgb(var(--success))"
+                      : now
+                        ? "rgb(var(--action))"
+                        : "rgb(var(--ink-200))",
                   }}
                 />
                 <span style={{ minWidth: 0 }}>
@@ -223,13 +227,13 @@ export default function GoOnlineOverlay({
                     style={{
                       display: "block",
                       fontSize: 11.5,
-                      color: done ? "#334155" : "#0F2030",
+                      color: done ? "rgb(var(--ink-700))" : "rgb(var(--ink-900))",
                       fontWeight: now ? 700 : 500,
                     }}
                   >
                     {s.text}
                   </span>
-                  <span style={{ display: "block", fontSize: 9.5, color: "#94A3B8" }}>
+                  <span style={{ display: "block", fontSize: 9.5, color: "rgb(var(--ink-400))" }}>
                     {s.detail}
                   </span>
                 </span>
@@ -238,7 +242,7 @@ export default function GoOnlineOverlay({
           })}
         </ul>
 
-        <p style={{ margin: "12px 0 0", fontSize: 10, color: "#94A3B8" }}>
+        <p style={{ margin: "12px 0 0", fontSize: 10, color: "rgb(var(--ink-400))" }}>
           {finished
             ? "Every line above is in Messages. Press Escape or Stop to go offline."
             : "Escape to cancel."}

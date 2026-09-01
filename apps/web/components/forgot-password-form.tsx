@@ -38,7 +38,7 @@ export function ForgotPasswordForm() {
         </p>
 
         {submitted ? (
-          <div className="rounded-md border border-teal/30 bg-teal-50 px-4 py-3 text-sm text-ink-700">
+          <div className="rounded-md border border-teal bg-teal-50 px-4 py-3 text-sm text-ink-700">
             If an account exists for that email, we've sent a reset link.
           </div>
         ) : (

@@ -294,7 +294,7 @@ export default async function ProjectWorkspace({
             <div className="mt-6">
               {/* current phase */}
               <section className="mb-10 rounded-sm border border-ink-200 bg-white">
-                <div className="border-b border-ink-100 bg-ink-50/60 px-5 py-3">
+                <div className="border-b border-ink-100 bg-ink-50 px-5 py-3">
                   <div className="flex items-baseline gap-3">
                     <h2 className="font-display text-[1.05rem] font-bold text-ink-900">
                       {currentPhase.step ? `${currentPhase.step}. ` : ""}

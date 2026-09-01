@@ -15,8 +15,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "Draw ladder logic and watch it run, generate validated PLC code, and convert between platforms.",
     start_url: "/",
     display: "standalone",
-    background_color: "#FFFFFF",
-    theme_color: "#0F1A24",
+    background_color: "rgb(var(--raised))",
+    theme_color: "rgb(var(--ink-900))",
     icons: [
       { src: "/brand/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/brand/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },

@@ -192,7 +192,7 @@ export function MegaColumn({
 /** The strip along the bottom of a panel. */
 export function MegaFooter({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-ink-100 border-t bg-ink-50/60 px-6 py-3">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-ink-100 border-t bg-ink-50 px-6 py-3">
       {children}
     </div>
   );

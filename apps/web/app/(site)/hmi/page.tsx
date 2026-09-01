@@ -203,7 +203,7 @@ export default function HmiPage() {
           ))}
         </dl>
 
-        <div className="mt-12 rounded-sm border border-ink-200 bg-ink-50/60 p-6">
+        <div className="mt-12 rounded-sm border border-ink-200 bg-ink-50 p-6">
           <h2 className="font-display text-[1.1rem] font-bold text-ink-900">
             Start with the logic
           </h2>

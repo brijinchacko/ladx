@@ -1,6 +1,8 @@
 "use client";
 
+import { FolderConnect } from "@/components/studio/folder-connect";
 import ScopePicker from "@/components/studio/scope-picker";
+import { type ConnectedFolder, prepareFolder, rememberFolder } from "@/lib/fs/project-folder";
 import { SCOPE_PRESETS } from "@/lib/platform/scope";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -34,6 +36,8 @@ export function NewProjectForm({
     SCOPE_PRESETS.find((p) => p.id === "full")?.slugs ?? [],
   );
   const [description, setDescription] = useState("");
+  /** A folder on this computer, if one was chosen. Optional throughout. */
+  const [folder, setFolder] = useState<ConnectedFolder | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,6 +89,21 @@ export function NewProjectForm({
         return;
       }
       const { id } = (await res.json()) as { id: string };
+
+      // The project exists either way. A folder that cannot be written to is
+      // worth saying out loud, but it must not read as the project having
+      // failed, because it has not.
+      if (folder) {
+        try {
+          await rememberFolder(id, folder);
+          await prepareFolder(folder, name.trim(), new Date().toISOString().slice(0, 10));
+        } catch {
+          setError(
+            `The project was created. The folder "${folder.name}" could not be written to, so files will download instead.`,
+          );
+        }
+      }
+
       router.push(`/studio/projects/${id}`);
       router.refresh();
     } finally {
@@ -121,7 +140,7 @@ export function NewProjectForm({
       chrome hidden, which is not the space actually available, and the footer
       ends up under the toolbar.
     */
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900/40 p-4 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900 p-4 sm:items-center">
       <form
         onSubmit={create}
         className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col rounded-sm border border-ink-200 bg-white"
@@ -218,6 +237,16 @@ export function NewProjectForm({
               project.
             </p>
             <ScopePicker value={deliverables} onChange={setDeliverables} />
+          </div>
+
+          {/* Last, because it is the only optional field that touches the
+              user's own machine, and because it is the one decision that is
+              easier to make once the job has a name. */}
+          <div>
+            <span className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-400">
+              Folder on this computer
+            </span>
+            <FolderConnect folder={folder} onChange={setFolder} />
           </div>
 
           {clients.length === 0 && (

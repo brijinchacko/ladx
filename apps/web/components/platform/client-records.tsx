@@ -100,7 +100,7 @@ export function Contacts({
 
   return (
     <section className="rounded-md border border-ink-100">
-      <header className="flex items-center gap-2 border-ink-100 border-b bg-ink-50/60 px-4 py-2.5">
+      <header className="flex items-center gap-2 border-ink-100 border-b bg-ink-50 px-4 py-2.5">
         <UserRound className="h-3.5 w-3.5 text-ink-400" />
         <h2 className="font-display font-bold text-[14px] text-ink-900">Contacts</h2>
         <span className="font-mono text-[11px] text-ink-400">{contacts.length}</span>
@@ -118,7 +118,7 @@ export function Contacts({
       {adding && (
         <form
           action={add}
-          className="grid gap-2 border-ink-100 border-b bg-ink-50/30 p-4 sm:grid-cols-2"
+          className="grid gap-2 border-ink-100 border-b bg-ink-50 p-4 sm:grid-cols-2"
         >
           <label>
             <span className={label}>Name</span>
@@ -282,7 +282,7 @@ export function Sites({ clientId, sites }: { clientId: string; sites: ClientSite
 
   return (
     <section className="rounded-md border border-ink-100">
-      <header className="flex items-center gap-2 border-ink-100 border-b bg-ink-50/60 px-4 py-2.5">
+      <header className="flex items-center gap-2 border-ink-100 border-b bg-ink-50 px-4 py-2.5">
         <MapPin className="h-3.5 w-3.5 text-ink-400" />
         <h2 className="font-display font-bold text-[14px] text-ink-900">Sites</h2>
         <span className="font-mono text-[11px] text-ink-400">{sites.length}</span>
@@ -300,7 +300,7 @@ export function Sites({ clientId, sites }: { clientId: string; sites: ClientSite
       {adding && (
         <form
           action={add}
-          className="grid gap-2 border-ink-100 border-b bg-ink-50/30 p-4 sm:grid-cols-2"
+          className="grid gap-2 border-ink-100 border-b bg-ink-50 p-4 sm:grid-cols-2"
         >
           <label>
             <span className={label}>Site name</span>
@@ -478,8 +478,8 @@ export function Standards({
   }
 
   return (
-    <section className="rounded-md border border-teal-500/40">
-      <header className="flex items-center gap-2 border-teal-500/25 border-b bg-teal-50/60 px-4 py-2.5">
+    <section className="rounded-md border border-teal-500">
+      <header className="flex items-center gap-2 border-teal-500 border-b bg-teal-50 px-4 py-2.5">
         <h2 className="font-display font-bold text-[14px] text-ink-900">
           How this client wants it done
         </h2>

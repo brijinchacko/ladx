@@ -103,7 +103,7 @@ function Band({
           y1={height * f}
           x2={width}
           y2={height * f}
-          stroke="#0F1A24"
+          stroke="rgb(var(--ink-900))"
           strokeWidth="0.5"
           opacity="0.12"
         />
@@ -232,7 +232,7 @@ export default function HistoryPanel({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-ink-900/30"
+      className="fixed inset-0 z-50 flex justify-end bg-ink-900"
       onClick={onClose}
       onKeyDown={undefined}
     >
@@ -311,7 +311,7 @@ export default function HistoryPanel({
                 </div>
               </dl>
 
-              <div className="mb-4 rounded-sm border border-ink-100 bg-ink-50/40 p-2">
+              <div className="mb-4 rounded-sm border border-ink-100 bg-ink-50 p-2">
                 <Band historian={historian} pens={trend.pens} width={520} height={160} />
               </div>
               <p className="-mt-3 mb-4 text-[11.5px] text-ink-500">

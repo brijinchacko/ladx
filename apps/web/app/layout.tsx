@@ -82,8 +82,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   // Matches the icon's ground, so mobile browser chrome doesn't clash with it.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
-    { media: "(prefers-color-scheme: dark)", color: "#0F1A24" },
+    { media: "(prefers-color-scheme: light)", color: "rgb(var(--raised))" },
+    { media: "(prefers-color-scheme: dark)", color: "rgb(var(--ink-900))" },
   ],
 };
 

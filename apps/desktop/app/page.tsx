@@ -59,7 +59,7 @@ export default function HomePage() {
         </header>
 
         {probe.error && (
-          <div className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+          <div className="rounded-md border border-danger bg-danger px-4 py-3 text-sm text-danger">
             {probe.error}
           </div>
         )}
@@ -148,8 +148,8 @@ function StatusCard({
           loading
             ? "bg-ink-100 text-ink-500"
             : ok
-              ? "bg-success/10 text-success"
-              : "bg-warning/10 text-warning"
+              ? "bg-success text-success"
+              : "bg-warning text-warning"
         }`}
       >
         {loading ? (

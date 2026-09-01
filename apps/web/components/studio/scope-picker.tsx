@@ -50,9 +50,7 @@ export default function ScopePicker({
               type="button"
               onClick={() => onChange(p.slugs)}
               className={`rounded-md border p-2.5 text-left transition-colors ${
-                on
-                  ? "border-teal-500 bg-teal-50/50"
-                  : "border-ink-200 bg-white hover:border-ink-400"
+                on ? "border-teal-500 bg-teal-50" : "border-ink-200 bg-white hover:border-ink-400"
               }`}
             >
               <span className="flex items-baseline gap-1.5">

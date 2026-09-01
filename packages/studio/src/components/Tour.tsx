@@ -227,7 +227,12 @@ export default function Tour({
                 style={{
                   width: n === i ? 14 : 5,
                   height: 5,
-                  background: n === i ? "#2891FF" : n < i ? "#94A3B8" : "#C9D2DC",
+                  background:
+                    n === i
+                      ? "rgb(var(--action))"
+                      : n < i
+                        ? "rgb(var(--ink-400))"
+                        : "rgb(var(--ink-200))",
                 }}
               />
             ))}
@@ -253,7 +258,7 @@ export default function Tour({
             type="button"
             onClick={next}
             className="flex items-center gap-1 px-2.5 h-6 rounded text-[11px] font-semibold text-white"
-            style={{ background: "#2891FF" }}
+            style={{ background: "rgb(var(--action))" }}
           >
             {i >= TOUR.length - 1 ? (
               "Done"

@@ -29,7 +29,7 @@ export default function ReplyBox({
 
   if (locked) {
     return (
-      <div className="border border-ink-200 bg-ink-50/60 px-5 py-4 text-[14px] text-ink-500">
+      <div className="border border-ink-200 bg-ink-50 px-5 py-4 text-[14px] text-ink-500">
         This thread is locked. It stays readable, but no new replies can be added.
       </div>
     );
@@ -71,7 +71,7 @@ export default function ReplyBox({
 
   return (
     <form onSubmit={submit} className="border border-ink-200 bg-white">
-      <div className="border-b border-ink-100 bg-ink-50/60 px-4 py-2.5">
+      <div className="border-b border-ink-100 bg-ink-50 px-4 py-2.5">
         <h2 className="font-display text-[14px] font-bold text-ink-900">Reply</h2>
       </div>
       <div className="p-4">

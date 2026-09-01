@@ -162,7 +162,7 @@ export default function CadPage() {
           ))}
         </dl>
 
-        <div className="mt-12 rounded-sm border border-ink-200 bg-ink-50/60 p-6">
+        <div className="mt-12 rounded-sm border border-ink-200 bg-ink-50 p-6">
           <h2 className="font-display text-[1.1rem] font-bold text-ink-900">The rest of it</h2>
           <p className="mt-2 text-[15px] leading-relaxed text-ink-600">
             The drawings are one part of a control package. The same project holds the ladder

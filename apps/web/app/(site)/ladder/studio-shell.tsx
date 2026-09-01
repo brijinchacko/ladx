@@ -173,7 +173,7 @@ function StudioBar({
     mode === "docked" ? "Focus mode" : mode === "focus" ? "Fullscreen" : "Exit fullscreen";
 
   return (
-    <div className="flex h-9 shrink-0 items-center gap-3 border-b border-ink-200 bg-ink-50/70 px-3">
+    <div className="flex h-9 shrink-0 items-center gap-3 border-b border-ink-200 bg-ink-50 px-3">
       <span
         aria-hidden="true"
         className="h-[7px] w-[7px] shrink-0 bg-teal-600"

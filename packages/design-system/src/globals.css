@@ -193,6 +193,48 @@
   }
 
   /*
+   * Form controls take their colours from the theme, not from the browser.
+   *
+   * `color-scheme: dark` tells the browser to render its own widgets darkly,
+   * which is right for scrollbars and date pickers. For a text input it means
+   * the user agent paints a neutral grey field, and an input styled with only a
+   * border and a text colour, which is most of them, came out grey on navy: a
+   * different colour from every panel around it.
+   *
+   * Set on the element rather than on each input, so nothing has to remember.
+   * This is in the base layer, so any explicit background class still wins.
+   */
+  input,
+  textarea,
+  select {
+    background-color: rgb(var(--raised));
+    color: rgb(var(--ink-900));
+  }
+
+  /* The placeholder is not body text and should not read as filled-in. */
+  input::placeholder,
+  textarea::placeholder {
+    color: rgb(var(--ink-400));
+    opacity: 1;
+  }
+
+  /*
+   * Chrome paints its own background over an autofilled field and ignores
+   * background-color to do it. An inset shadow the size of the field is the
+   * only thing it honours, so the field keeps the theme instead of turning
+   * pale yellow on a dark page.
+   */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px rgb(var(--raised)) inset;
+    -webkit-text-fill-color: rgb(var(--ink-900));
+    caret-color: rgb(var(--ink-900));
+  }
+
+  /*
    * Borders carry the theme without being told.
    *
    * Tailwind's default border colour is a fixed grey, so any `border` with no

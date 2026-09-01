@@ -80,7 +80,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         </p>
 
         {magicSent ? (
-          <div className="rounded-md border border-teal/30 bg-teal-50 px-4 py-3 text-sm text-ink-700">
+          <div className="rounded-md border border-teal bg-teal-50 px-4 py-3 text-sm text-ink-700">
             Check your email, we've sent a sign-in link valid for 15 minutes.
           </div>
         ) : (
@@ -147,7 +147,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               )}
 
               {error && (
-                <div className="rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">
+                <div className="rounded-md border border-danger bg-danger px-3 py-2 text-sm text-danger">
                   {error}
                 </div>
               )}

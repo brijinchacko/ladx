@@ -337,7 +337,7 @@ export function CommissionClient({
       {tab && <p className="mb-4 text-[12.5px] leading-relaxed text-ink-500">{tab.blurb}</p>}
 
       {what === "compare" && (
-        <div className="mb-5 rounded-md border border-ink-200 bg-ink-50/40 p-3">
+        <div className="mb-5 rounded-md border border-ink-200 bg-ink-50 p-3">
           <label htmlFor="cmp" className="mb-1.5 block text-[12.5px] font-medium text-ink-700">
             The export from the controller
           </label>
@@ -359,7 +359,7 @@ export function CommissionClient({
       )}
 
       {what === "hardware" && (
-        <div className="mb-5 rounded-md border border-ink-200 bg-ink-50/40 p-3">
+        <div className="mb-5 rounded-md border border-ink-200 bg-ink-50 p-3">
           <label htmlFor="l5x" className="mb-1.5 block text-[12.5px] font-medium text-ink-700">
             A full controller export
           </label>
@@ -381,7 +381,7 @@ export function CommissionClient({
       )}
 
       {(what === "drift" || what === "handover") && (
-        <div className="mb-5 rounded-md border border-ink-200 bg-ink-50/40 p-3">
+        <div className="mb-5 rounded-md border border-ink-200 bg-ink-50 p-3">
           <label htmlFor="taglist" className="mb-1.5 block text-[12.5px] font-medium text-ink-700">
             The other tag list
           </label>

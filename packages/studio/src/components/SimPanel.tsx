@@ -28,9 +28,9 @@ import css from "./ladx.module.css";
  * Outputs are lamps: read-only, lit when the coil is energised.
  */
 
-const ON = "#22c55e";
-const OFF = "#94a3b8";
-const NC_REST = "#0ea5e9";
+const ON = "rgb(var(--success))";
+const OFF = "rgb(var(--ink-400))";
+const NC_REST = "rgb(var(--action))";
 
 export type PlcState = {
   /** Powered on, the simulator window is open and the rack is live. */
@@ -75,13 +75,13 @@ function Led({ on, label, colour }: { on: boolean; label: string; colour: string
         style={{
           width: 9,
           height: 9,
-          background: on ? colour : "#334155",
+          background: on ? colour : "rgb(var(--ink-700))",
           boxShadow: on ? `0 0 7px ${colour}` : "none",
         }}
       />
       <span
         className="text-[7.5px] font-bold tracking-wide"
-        style={{ color: on ? colour : "#64748b" }}
+        style={{ color: on ? colour : "rgb(var(--ink-500))" }}
       >
         {label}
       </span>
@@ -122,7 +122,7 @@ function Screw({ label, on, colour }: { label: string; on: boolean; colour: stri
           width: 5,
           height: 5,
           marginBottom: 1,
-          background: on ? colour : "#7b8794",
+          background: on ? colour : "rgb(var(--ink-400))",
           boxShadow: on ? `0 0 5px ${colour}` : "none",
         }}
       />
@@ -147,14 +147,14 @@ function StatusLamp({ on, label, colour }: { on: boolean; label: string; colour:
         style={{
           width: 7,
           height: 7,
-          background: on ? colour : "#1b2027",
+          background: on ? colour : "rgb(var(--ink-100))",
           boxShadow: on ? `0 0 6px ${colour}` : "inset 0 0 0 1px #55606c",
         }}
       />
       <span
         style={{
           fontSize: 6.5,
-          color: on ? colour : "#8a949f",
+          color: on ? colour : "rgb(var(--ink-400))",
           fontWeight: 700,
           letterSpacing: 0.3,
         }}
@@ -180,8 +180,8 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
         className="rounded-sm flex items-end gap-0.5 px-1 pt-1 pb-0.5 overflow-x-auto"
         style={{ background: STRIP }}
       >
-        <Screw label="L+" on={plc.powered} colour="#ef4444" />
-        <Screw label="M" on={plc.powered} colour="#64748b" />
+        <Screw label="L+" on={plc.powered} colour="rgb(var(--danger))" />
+        <Screw label="M" on={plc.powered} colour="rgb(var(--ink-500))" />
         <span style={{ width: 4 }} />
         {Array.from({ length: 8 }).map((_, i) => {
           const t = digitalIn[i];
@@ -190,7 +190,7 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
               key={`i${i}`}
               label={`I0.${i}`}
               on={!!t && plc.powered && t.value !== 0}
-              colour="#22c55e"
+              colour="rgb(var(--success))"
             />
           );
         })}
@@ -200,9 +200,9 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
       <div className="flex gap-2 px-1.5 py-1.5">
         {/* Status lamps, behind the door on real hardware */}
         <div className="flex flex-col gap-1 shrink-0 pt-0.5">
-          <StatusLamp on={plc.running} label="RUN" colour="#22c55e" />
-          <StatusLamp on={plc.powered && !plc.running} label="STOP" colour="#f59e0b" />
-          <StatusLamp on={plc.faulted} label="ERROR" colour="#ef4444" />
+          <StatusLamp on={plc.running} label="RUN" colour="rgb(var(--success))" />
+          <StatusLamp on={plc.powered && !plc.running} label="STOP" colour="rgb(var(--warning))" />
+          <StatusLamp on={plc.faulted} label="ERROR" colour="rgb(var(--danger))" />
           <StatusLamp on={plc.powered && !plc.downloaded} label="MAINT" colour="#eab308" />
         </div>
 
@@ -212,17 +212,24 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
             style={{
               fontSize: 9,
               fontWeight: 900,
-              color: "#e2e8f0",
+              color: "rgb(var(--ink-100))",
               letterSpacing: 1.4,
               lineHeight: 1.1,
             }}
           >
             WARTENS
           </p>
-          <p style={{ fontSize: 7.5, fontWeight: 700, color: "#93c5fd", letterSpacing: 0.4 }}>
+          <p
+            style={{
+              fontSize: 7.5,
+              fontWeight: 700,
+              color: "rgb(var(--action))",
+              letterSpacing: 0.4,
+            }}
+          >
             VCX CPU 1212C
           </p>
-          <p style={{ fontSize: 6, color: "#94a3b8", lineHeight: 1.5 }}>
+          <p style={{ fontSize: 6, color: "rgb(var(--ink-400))", lineHeight: 1.5 }}>
             DC/DC/DC · 24 V DC
             <br />
             Order WVX-212-1AE40-0XB0
@@ -235,7 +242,7 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
 
         {/* Mode switch */}
         <div className="shrink-0 flex flex-col items-center justify-center gap-0.5">
-          <span style={{ fontSize: 5.5, color: "#8a949f", fontWeight: 700 }}>MODE</span>
+          <span style={{ fontSize: 5.5, color: "rgb(var(--ink-400))", fontWeight: 700 }}>MODE</span>
           <span
             className="rounded-sm flex flex-col items-stretch overflow-hidden"
             style={{ width: 26, border: "1px solid #55606c" }}
@@ -250,8 +257,12 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
                     fontSize: 5.5,
                     fontWeight: 800,
                     padding: "1.5px 0",
-                    background: active ? (m === "RUN" ? "#22c55e" : "#f59e0b") : "transparent",
-                    color: active ? "#0f172a" : "#8a949f",
+                    background: active
+                      ? m === "RUN"
+                        ? "rgb(var(--success))"
+                        : "rgb(var(--warning))"
+                      : "transparent",
+                    color: active ? "rgb(var(--ink-900))" : "rgb(var(--ink-400))",
                   }}
                 >
                   {m}
@@ -268,7 +279,12 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
         <span className="flex items-center gap-1 shrink-0">
           <span
             className="relative rounded-sm"
-            style={{ width: 20, height: 15, background: "#1b2027", border: "1px solid #55606c" }}
+            style={{
+              width: 20,
+              height: 15,
+              background: "rgb(var(--ink-100))",
+              border: "1px solid #55606c",
+            }}
           >
             <span
               className="absolute"
@@ -277,7 +293,7 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
                 bottom: -1,
                 width: 7,
                 height: 4,
-                background: "#1b2027",
+                background: "rgb(var(--ink-100))",
                 border: "1px solid #55606c",
                 borderTop: "none",
               }}
@@ -289,7 +305,7 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
                 top: 2,
                 width: 4,
                 height: 4,
-                background: plc.powered ? "#22c55e" : "#39414b",
+                background: plc.powered ? "rgb(var(--success))" : "rgb(var(--ink-700))",
                 boxShadow: plc.powered ? "0 0 4px #22c55e" : "none",
               }}
             />
@@ -300,12 +316,12 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
                 top: 2,
                 width: 4,
                 height: 4,
-                background: plc.running ? "#f59e0b" : "#39414b",
+                background: plc.running ? "rgb(var(--warning))" : "rgb(var(--ink-700))",
                 boxShadow: plc.running ? "0 0 4px #f59e0b" : "none",
               }}
             />
           </span>
-          <span style={{ fontSize: 5.5, color: "#8a949f", lineHeight: 1.3 }}>
+          <span style={{ fontSize: 5.5, color: "rgb(var(--ink-400))", lineHeight: 1.3 }}>
             X1 PROFINET
             <br />
             LINK · RX/TX
@@ -314,7 +330,7 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
 
         <span
           className="ml-auto text-right"
-          style={{ fontSize: 5.5, color: "#8a949f", lineHeight: 1.3 }}
+          style={{ fontSize: 5.5, color: "rgb(var(--ink-400))", lineHeight: 1.3 }}
         >
           IP 192.168.0.1 / 24
           <br />
@@ -334,7 +350,7 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
               key={`q${i}`}
               label={`Q0.${i}`}
               on={!!t && plc.powered && t.value !== 0}
-              colour="#f59e0b"
+              colour="rgb(var(--warning))"
             />
           );
         })}
@@ -361,7 +377,7 @@ function Rack({ plc, inputs, outputs }: { plc: PlcState; inputs: Tag[]; outputs:
  * a student will be handed on site.
  */
 function LampSymbol({ on }: { on: boolean }) {
-  const c = on ? ON : "#cbd5e1";
+  const c = on ? ON : "rgb(var(--ink-200))";
   return (
     <span className="relative block shrink-0" style={{ width: 22, height: 22 }}>
       <span
@@ -391,7 +407,7 @@ function LampSymbol({ on }: { on: boolean }) {
 }
 
 function MotorSymbol({ on }: { on: boolean }) {
-  const c = on ? ON : "#cbd5e1";
+  const c = on ? ON : "rgb(var(--ink-200))";
   return (
     <span
       className="grid place-items-center rounded-full shrink-0 text-[11px] font-bold"
@@ -420,12 +436,18 @@ function OutputRow({ tag, on }: { tag: Tag; on: boolean }) {
       <div className="py-1.5">
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-[12.5px] font-medium text-ink-900 truncate">{tag.name}</span>
-          <span className="text-[13px] font-mono font-bold" style={{ color: "#15803d" }}>
+          <span
+            className="text-[13px] font-mono font-bold"
+            style={{ color: "rgb(var(--success))" }}
+          >
             {tag.value}
           </span>
         </div>
         <div className="h-1.5 rounded bg-ink-100 overflow-hidden mt-1">
-          <div className="h-full rounded" style={{ width: `${pct}%`, background: "#2891FF" }} />
+          <div
+            className="h-full rounded"
+            style={{ width: `${pct}%`, background: "rgb(var(--action))" }}
+          />
         </div>
         <span className="text-[10px] text-ink-500">{sub} · read-only</span>
       </div>
@@ -441,7 +463,7 @@ function OutputRow({ tag, on }: { tag: Tag; on: boolean }) {
       </span>
       <span
         className="ml-auto text-[11px] font-mono font-bold"
-        style={{ color: on ? "#15803d" : OFF }}
+        style={{ color: on ? "rgb(var(--success))" : OFF }}
       >
         {on ? "1" : "0"}
       </span>
@@ -516,7 +538,7 @@ function InputControl({ tag, on, h }: { tag: Tag; on: boolean; h: SimHandlers })
           style={{
             width: 26,
             height: 26,
-            border: `2px solid ${pressed ? ON : nc ? NC_REST : "#94a3b8"}`,
+            border: `2px solid ${pressed ? ON : nc ? NC_REST : "rgb(var(--ink-400))"}`,
             background: pressed ? ON : "#fff",
             boxShadow: pressed ? `0 0 8px ${ON}` : "inset 0 1px 2px rgba(0,0,0,0.12)",
           }}
@@ -530,7 +552,7 @@ function InputControl({ tag, on, h }: { tag: Tag; on: boolean; h: SimHandlers })
           style={{
             width: 34,
             height: 20,
-            background: on ? ON : "#cbd5e1",
+            background: on ? ON : "rgb(var(--ink-200))",
             position: "relative",
             transition: "background 120ms",
           }}
@@ -552,7 +574,7 @@ function InputControl({ tag, on, h }: { tag: Tag; on: boolean; h: SimHandlers })
 
       <span
         className="ml-auto text-[11px] font-mono font-bold"
-        style={{ color: on ? "#15803d" : OFF }}
+        style={{ color: on ? "rgb(var(--success))" : OFF }}
       >
         {on ? "1" : "0"}
       </span>
@@ -636,8 +658,8 @@ export default function SimPanel({
             title={help}
             className="px-2.5 h-6 rounded text-[11px] font-bold transition-colors"
             style={{
-              background: view === key ? "#2891FF" : "transparent",
-              color: view === key ? "#fff" : "#475569",
+              background: view === key ? "rgb(var(--action))" : "transparent",
+              color: view === key ? "#fff" : "rgb(var(--ink-600))",
             }}
           >
             {label}
@@ -660,7 +682,10 @@ export default function SimPanel({
             title="Back to 100%"
             aria-label="Reset zoom"
             className="px-1 text-[9.5px] font-semibold tabular-nums"
-            style={{ color: zoom === 1 ? "#94a3b8" : "#1B7F84", minWidth: 30 }}
+            style={{
+              color: zoom === 1 ? "rgb(var(--ink-400))" : "rgb(var(--teal-700))",
+              minWidth: 30,
+            }}
           >
             {Math.round(zoom * 100)}%
           </button>
@@ -707,8 +732,8 @@ export default function SimPanel({
         <span
           className="inline-flex items-center gap-1.5 px-2 h-6 rounded text-[11px] font-bold"
           style={{
-            background: running ? "rgba(34,197,94,0.12)" : "#f1f5f9",
-            color: running ? "#15803d" : "#64748b",
+            background: running ? "rgba(34,197,94,0.12)" : "rgb(var(--ink-50))",
+            color: running ? "rgb(var(--success))" : "rgb(var(--ink-500))",
           }}
         >
           <Zap size={11} /> {running ? "RUN" : "STOP"}
@@ -733,7 +758,7 @@ export default function SimPanel({
                 plc.downloaded ? "Solve logic" : "Download the program to the controller first"
               }
               className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-[11.5px] font-bold text-white disabled:opacity-40"
-              style={{ background: "#16a34a" }}
+              style={{ background: "rgb(var(--success))" }}
             >
               <Play size={11} /> Run
             </button>
@@ -836,7 +861,10 @@ export default function SimPanel({
                         <div className="h-1.5 rounded bg-ink-100 overflow-hidden mt-1">
                           <div
                             className="h-full rounded"
-                            style={{ width: `${pct}%`, background: t.dn ? ON : "#2891FF" }}
+                            style={{
+                              width: `${pct}%`,
+                              background: t.dn ? ON : "rgb(var(--action))",
+                            }}
                           />
                         </div>
                         <div className="flex gap-2 mt-0.5">
@@ -846,8 +874,8 @@ export default function SimPanel({
                               className="text-[9.5px] font-bold"
                               style={{
                                 color: t[b.toLowerCase() as "en" | "tt" | "dn"]
-                                  ? "#15803d"
-                                  : "#cbd5e1",
+                                  ? "rgb(var(--success))"
+                                  : "rgb(var(--ink-200))",
                               }}
                             >
                               {b}

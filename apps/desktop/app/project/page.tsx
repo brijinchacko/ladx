@@ -44,7 +44,7 @@ function ProjectDetail() {
   if (error) {
     return (
       <div className="mx-auto max-w-3xl p-8">
-        <div className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+        <div className="rounded-md border border-danger bg-danger px-4 py-3 text-sm text-danger">
           {error}
         </div>
       </div>

@@ -82,7 +82,7 @@ export default async function AdminUsersPage({
             </tr>
           ) : (
             rows.map((u) => (
-              <tr key={u.id} className="border-b border-ink-50 last:border-0 hover:bg-ink-50/50">
+              <tr key={u.id} className="border-b border-ink-50 last:border-0 hover:bg-ink-50">
                 <td className="px-3 py-2">
                   <Link
                     href={`/studio/admin/users/${u.id}`}

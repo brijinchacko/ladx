@@ -118,7 +118,7 @@ import css from "./ladx.module.css";
  * through React state at 10 Hz would re-render the whole ladder continuously.
  */
 
-const LIVE = "#35B6BB";
+const LIVE = "rgb(var(--teal-500))";
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 /**
@@ -3394,10 +3394,18 @@ export default function LadxStudio({
           className="flex items-center gap-1.5 rounded border px-2.5 py-1.5 text-[11.5px]"
           style={
             flash.tone === "ok"
-              ? { borderColor: "#16A34A55", background: "#F0FDF4", color: "#15803D" }
+              ? {
+                  borderColor: "#16A34A55",
+                  background: "rgb(var(--success-bg))",
+                  color: "rgb(var(--success))",
+                }
               : flash.tone === "warn"
-                ? { borderColor: "#F59E0B66", background: "#FFFBEB", color: "#B45309" }
-                : { borderColor: "#2891FF55", background: "#2891FF10", color: "#1d4ed8" }
+                ? {
+                    borderColor: "#F59E0B66",
+                    background: "rgb(var(--warning-bg))",
+                    color: "rgb(var(--warning))",
+                  }
+                : { borderColor: "#2891FF55", background: "#2891FF10", color: "rgb(var(--action))" }
           }
         >
           {flash.tone === "ok" ? <CheckCircle2 size={12} /> : <AlertTriangle size={12} />}
@@ -3745,7 +3753,10 @@ export default function LadxStudio({
                                     </span>
                                   )}
                                 </span>
-                                <span className="font-mono font-bold" style={{ color: "#16A34A" }}>
+                                <span
+                                  className="font-mono font-bold"
+                                  style={{ color: "rgb(var(--success))" }}
+                                >
                                   {t.value}
                                 </span>
                               </span>
@@ -3764,7 +3775,11 @@ export default function LadxStudio({
                               key={t.name}
                               onClick={() => toggleInput(t.name)}
                               className="w-full flex items-center gap-2 px-2 h-9 rounded border bg-white hover:bg-ink-50 transition-colors"
-                              style={{ borderColor: t.value ? "#16A34A" : "#C9D2DC" }}
+                              style={{
+                                borderColor: t.value
+                                  ? "rgb(var(--success))"
+                                  : "rgb(var(--ink-200))",
+                              }}
                               title={`${t.name}, click to toggle`}
                             >
                               {/* A switch that looks like a switch: track and knob. */}
@@ -3773,7 +3788,9 @@ export default function LadxStudio({
                                 style={{
                                   width: 30,
                                   height: 16,
-                                  background: t.value ? "#16A34A" : "#94A3B8",
+                                  background: t.value
+                                    ? "rgb(var(--success))"
+                                    : "rgb(var(--ink-400))",
                                 }}
                               >
                                 <span
@@ -3798,7 +3815,9 @@ export default function LadxStudio({
                               </span>
                               <span
                                 className="text-[9.5px] font-mono font-bold shrink-0"
-                                style={{ color: t.value ? "#16A34A" : "#94A3B8" }}
+                                style={{
+                                  color: t.value ? "rgb(var(--success))" : "rgb(var(--ink-400))",
+                                }}
                               >
                                 {t.value ? "1" : "0"}
                               </span>
@@ -3823,13 +3842,17 @@ export default function LadxStudio({
                           <div
                             key={t.name}
                             className="flex items-center gap-2 px-2 h-9 rounded border bg-white"
-                            style={{ borderColor: t.value ? "#16A34A" : "#E2E8F0" }}
+                            style={{
+                              borderColor: t.value ? "rgb(var(--success))" : "rgb(var(--ink-100))",
+                            }}
                           >
                             <span
                               className="w-4 h-4 rounded-full shrink-0 border-2 transition-all"
                               style={{
-                                background: t.value ? "#22C55E" : "#E2E8F0",
-                                borderColor: t.value ? "#15803D" : "#C9D2DC",
+                                background: t.value ? "rgb(var(--success))" : "rgb(var(--ink-100))",
+                                borderColor: t.value
+                                  ? "rgb(var(--success))"
+                                  : "rgb(var(--ink-200))",
                                 boxShadow: t.value ? "0 0 9px rgba(34,197,94,0.75)" : "none",
                               }}
                             />
@@ -3848,7 +3871,9 @@ export default function LadxStudio({
                             </span>
                             <span
                               className="text-[9.5px] font-mono font-bold"
-                              style={{ color: t.value ? "#16A34A" : "#94A3B8" }}
+                              style={{
+                                color: t.value ? "rgb(var(--success))" : "rgb(var(--ink-400))",
+                              }}
                             >
                               {t.value ? "1" : "0"}
                             </span>
@@ -4074,7 +4099,7 @@ export default function LadxStudio({
       {branchHint && (
         <p
           className="flex items-start gap-1.5 rounded border px-2.5 py-1.5 text-[11.5px]"
-          style={{ borderColor: "#2891FF55", background: "#2891FF10", color: "#1d4ed8" }}
+          style={{ borderColor: "#2891FF55", background: "#2891FF10", color: "rgb(var(--action))" }}
         >
           <GitBranch size={12} className="mt-0.5 shrink-0" />
           <span className="flex-1">{branchHint}</span>
@@ -4183,7 +4208,7 @@ export default function LadxStudio({
                   setAsk(null);
                 }
               }}
-              className="w-full h-9 px-2.5 mb-3 rounded-lg bg-dark-primary border border-white/10 text-[13px] text-text-primary"
+              className="w-full h-9 px-2.5 mb-3 rounded-lg bg-dark-primary border border-white text-[13px] text-text-primary"
             />
           )}
           <div className="flex justify-end gap-2">
@@ -4207,8 +4232,8 @@ export default function LadxStudio({
               className="px-3 h-9 rounded-lg text-[12.5px] font-bold"
               style={
                 ask.danger
-                  ? { background: "#B3382C", color: "#fff" }
-                  : { background: LIVE, color: "#08201f" }
+                  ? { background: "rgb(var(--danger))", color: "#fff" }
+                  : { background: LIVE, color: "rgb(var(--on-accent))" }
               }
             >
               {ask.confirmLabel}
@@ -4268,8 +4293,8 @@ export default function LadxStudio({
             maxWidth: 460,
             padding: "9px 14px",
             borderRadius: 6,
-            background: "#0F2030",
-            color: "#F1F5F9",
+            background: "rgb(var(--ink-900))",
+            color: "rgb(var(--ink-50))",
             fontSize: 12.5,
             boxShadow: "0 8px 24px rgba(15,32,48,0.3)",
           }}
@@ -4307,7 +4332,7 @@ export default function LadxStudio({
                         else insertInstruction(picker.rungId, [], 999, i.type);
                         setPicker(null);
                       }}
-                      className="text-left px-2.5 py-1.5 rounded-lg border border-white/[0.1] hover:border-teal-500/50 hover:bg-teal-500/[0.06]"
+                      className="text-left px-2.5 py-1.5 rounded-lg border border-white/[0.1] hover:border-teal-500 hover:bg-teal-500/[0.06]"
                     >
                       <span className="block text-[12px] font-bold text-text-primary">
                         {i.type}
@@ -4345,7 +4370,7 @@ export default function LadxStudio({
                   setEditing(next);
                   updateElement(next);
                 }}
-                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white/10 text-[13px] text-text-primary"
+                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white text-[13px] text-text-primary"
               >
                 <option value="">Choose a routine…</option>
                 {routines
@@ -4376,7 +4401,7 @@ export default function LadxStudio({
                   updateElement(next);
                 }}
                 placeholder="Start_PB, or T1.DN"
-                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white/10 text-[13px] font-mono text-text-primary"
+                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white text-[13px] font-mono text-text-primary"
               />
             </label>
           )}
@@ -4395,7 +4420,7 @@ export default function LadxStudio({
                 // before the tree is rewritten underneath it.
                 setTimeout(() => branchAroundSelection(), 0);
               }}
-              className="w-full mb-3 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-teal-500/40 bg-teal-500/[0.08] text-[12.5px] font-bold text-teal-500"
+              className="w-full mb-3 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-teal-500 bg-teal-500/[0.08] text-[12.5px] font-bold text-teal-500"
             >
               <GitBranch size={13} /> Branch around this contact
             </button>
@@ -4419,7 +4444,7 @@ export default function LadxStudio({
               const devices = isOutputSide ? OUTPUT_DEVICES : INPUT_DEVICES;
 
               return (
-                <div className="rounded-lg border border-teal-500/40 bg-teal-500/[0.06] p-3 mb-3">
+                <div className="rounded-lg border border-teal-500 bg-teal-500/[0.06] p-3 mb-3">
                   <p className="text-[12px] font-bold text-text-primary">
                     &ldquo;{editing.tag.includes(".") ? editing.tag.split(".")[0] : editing.tag}
                     &rdquo; is not declared yet.
@@ -4482,7 +4507,7 @@ export default function LadxStudio({
                   setEditing(next);
                   updateElement(next);
                 }}
-                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white/10 text-[13px] text-text-primary"
+                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white text-[13px] text-text-primary"
               />
             </label>
           )}
@@ -4530,7 +4555,7 @@ export default function LadxStudio({
                   setEditing(next);
                   updateElement(next);
                 }}
-                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white/10 text-[13px] font-mono text-text-primary"
+                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white text-[13px] font-mono text-text-primary"
               />
             </label>
           )}
@@ -4549,7 +4574,7 @@ export default function LadxStudio({
                   setEditing(next);
                   updateElement(next);
                 }}
-                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white/10 text-[13px] font-mono text-text-primary"
+                className="w-full h-9 px-2.5 rounded-lg bg-dark-primary border border-white text-[13px] font-mono text-text-primary"
               />
               <span className="mt-1 block text-[10px] leading-relaxed text-text-muted">
                 A timer or counter needs the part you mean: <code>.PRE</code> for the preset,{" "}
@@ -4621,7 +4646,7 @@ function Modal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-sm max-h-[80vh] overflow-y-auto rounded-2xl border border-white/[0.12] bg-dark-secondary p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-[13.5px] font-bold text-text-primary">{title}</h2>
@@ -4697,7 +4722,7 @@ function RungDropStrip({
         height: over ? 26 : 14,
         margin: "2px 0",
         borderRadius: 4,
-        border: `2px dashed ${over ? "#35B6BB" : "#C9D2DC"}`,
+        border: `2px dashed ${over ? "rgb(var(--teal-500))" : "rgb(var(--ink-200))"}`,
         background: over ? "rgba(53,182,187,0.12)" : "transparent",
         transition: "height 90ms ease",
       }}

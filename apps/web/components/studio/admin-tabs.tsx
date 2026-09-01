@@ -27,7 +27,7 @@ const TABS = [
 export function AdminTabs() {
   const pathname = usePathname();
   return (
-    <nav className="flex shrink-0 items-center gap-1 border-b border-ink-100 bg-ink-50/60 px-5">
+    <nav className="flex shrink-0 items-center gap-1 border-b border-ink-100 bg-ink-50 px-5">
       {TABS.map((t) => {
         const active =
           t.href === "/studio/admin" ? pathname === t.href : pathname.startsWith(t.href);

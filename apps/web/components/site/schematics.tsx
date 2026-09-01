@@ -1114,7 +1114,7 @@ export function GanttFigure({ className }: { className?: string }) {
               width={b.w}
               height="14"
               rx="2"
-              fill={b.late ? "#B4531A" : b.done ? INK : TEAL}
+              fill={b.late ? "rgb(var(--danger))" : b.done ? INK : TEAL}
               opacity={b.done ? 0.28 : b.late ? 0.8 : 0.8}
             />
             {/* Finish to start, drawn because the chart enforces it rather

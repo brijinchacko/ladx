@@ -93,7 +93,7 @@ function Leaf({
   return (
     <div
       className={`group flex items-center gap-1 px-1.5 h-6 rounded cursor-pointer ${
-        active ? "bg-action/12" : "hover:bg-ink-100"
+        active ? "bg-action" : "hover:bg-ink-100"
       }`}
       onClick={onClick}
       onContextMenu={onContextMenu}

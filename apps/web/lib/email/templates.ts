@@ -2,8 +2,8 @@
 // later if/when we want richer composition. Brand tokens (ink, teal)
 // are inlined here because most clients ignore <style>.
 
-const INK = "#0F1A24";
-const TEAL = "#3FBFB5";
+const INK = "rgb(var(--ink-900))";
+const TEAL = "rgb(var(--teal-400))";
 const INK_50 = "#F4F6F8";
 const INK_500 = "#475866";
 

@@ -44,7 +44,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
 
       <Section title="Role" blurb="An administrator can see this area and everybody in it.">
         {user.id === me.id ? (
-          <p className="rounded-md border border-ink-200 bg-ink-50/60 p-3 text-[12.5px] text-ink-600">
+          <p className="rounded-md border border-ink-200 bg-ink-50 p-3 text-[12.5px] text-ink-600">
             This is your own account. Change your own role from another administrator's account, or
             with the grant script, so the last administrator cannot lock everybody out by accident.
           </p>

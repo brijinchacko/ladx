@@ -223,7 +223,7 @@ export default function GanttChart({
   return (
     <div className="flex min-h-0 flex-col">
       {onSchedule && all.length > dated && (
-        <p className="flex flex-wrap items-center gap-3 border-b border-ink-100 bg-ink-50/60 px-3 py-1.5 text-[12px] text-ink-600">
+        <p className="flex flex-wrap items-center gap-3 border-b border-ink-100 bg-ink-50 px-3 py-1.5 text-[12px] text-ink-600">
           <span>
             {all.length - dated} of {all.length} tasks have no dates, so they are not drawn.
           </span>
@@ -265,12 +265,12 @@ export default function GanttChart({
       <div className="flex min-h-0 flex-1">
         {/* names, fixed while the timeline scrolls under the pointer */}
         <div className="shrink-0 border-r border-ink-200" style={{ width: NAME_W }}>
-          <div className="h-[38px] border-b border-ink-200 bg-ink-50/60" />
+          <div className="h-[38px] border-b border-ink-200 bg-ink-50" />
           {rows.map((r, i) =>
             r.kind === "group" ? (
               <div
                 key={`g-${r.key}`}
-                className="flex items-center bg-ink-50/60 px-3 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-500"
+                className="flex items-center bg-ink-50 px-3 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-500"
                 style={{ height: ROW_H }}
               >
                 {r.label}
@@ -334,7 +334,7 @@ export default function GanttChart({
         <div ref={scrollRef} className="min-w-0 flex-1 overflow-x-auto">
           <div style={{ width }} className="relative">
             {/* header: months over days */}
-            <div className="sticky top-0 z-10 h-[38px] border-b border-ink-200 bg-ink-50/60">
+            <div className="sticky top-0 z-10 h-[38px] border-b border-ink-200 bg-ink-50">
               <div className="relative h-[19px]">
                 {bands.map((b) => (
                   <span
@@ -366,7 +366,7 @@ export default function GanttChart({
                 isWeekend(addDays(from, i)) ? (
                   <div
                     key={addDays(from, i).toISOString()}
-                    className="absolute inset-y-0 bg-ink-50/70"
+                    className="absolute inset-y-0 bg-ink-50"
                     style={{ left: i * dayPx, width: dayPx }}
                   />
                 ) : null,
@@ -413,11 +413,14 @@ export default function GanttChart({
                     <path
                       d={`M ${x1} ${y1} H ${mid} V ${y2} H ${x2}`}
                       fill="none"
-                      stroke={bad ? "#B4531A" : "#9AA7B2"}
+                      stroke={bad ? "rgb(var(--danger))" : "rgb(var(--ink-400))"}
                       strokeWidth={bad ? 1.6 : 1.1}
                       strokeDasharray={bad ? "3 2" : undefined}
                     />
-                    <path d={`M ${x2} ${y2} l -4 -3 v 6 z`} fill={bad ? "#B4531A" : "#9AA7B2"} />
+                    <path
+                      d={`M ${x2} ${y2} l -4 -3 v 6 z`}
+                      fill={bad ? "rgb(var(--danger))" : "rgb(var(--ink-400))"}
+                    />
                   </g>
                 );
               })}
@@ -427,9 +430,7 @@ export default function GanttChart({
             <div className="relative z-10">
               {rows.map((r) => {
                 if (r.kind === "group") {
-                  return (
-                    <div key={`g-${r.key}`} className="bg-ink-50/40" style={{ height: ROW_H }} />
-                  );
+                  return <div key={`g-${r.key}`} className="bg-ink-50" style={{ height: ROW_H }} />;
                 }
                 const t = r.task;
                 const bar = dragged(t);

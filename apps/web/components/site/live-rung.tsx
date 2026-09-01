@@ -337,7 +337,7 @@ export function LiveRung() {
                   <div
                     key={out.tag}
                     className={`grid grid-cols-[auto_1fr_auto] items-center gap-2.5 border px-2.5 py-2 ${
-                      on ? "border-teal-500 bg-teal-50" : "border-ink-100 bg-ink-50/50"
+                      on ? "border-teal-500 bg-teal-50" : "border-ink-100 bg-ink-50"
                     }`}
                   >
                     <span
@@ -356,7 +356,7 @@ export function LiveRung() {
 
               {/* Rung state. Three rows against three inputs, and it shows the
                   condition side resolving rather than only its result. */}
-              <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2.5 border border-ink-100 bg-ink-50/50 px-2.5 py-2">
+              <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2.5 border border-ink-100 bg-ink-50 px-2.5 py-2">
                 <span
                   aria-hidden="true"
                   className={`h-3 w-3 border ${rungPower.rung1 ? "border-teal-600 bg-teal-500" : "border-ink-200 bg-white"}`}

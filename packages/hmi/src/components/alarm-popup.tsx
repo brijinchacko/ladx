@@ -94,9 +94,18 @@ export default function AlarmPopup({
       </div>
 
       <div style={{ padding: "10px 12px" }}>
-        <p style={{ margin: 0, fontSize: 14, color: "#0F1A24", fontWeight: 500 }}>{a.message}</p>
+        <p style={{ margin: 0, fontSize: 14, color: "rgb(var(--ink-900))", fontWeight: 500 }}>
+          {a.message}
+        </p>
         {a.response && (
-          <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "#4A5A68", lineHeight: 1.45 }}>
+          <p
+            style={{
+              margin: "6px 0 0",
+              fontSize: 12.5,
+              color: "rgb(var(--ink-600))",
+              lineHeight: 1.45,
+            }}
+          >
             {a.response}
           </p>
         )}
@@ -118,7 +127,7 @@ export default function AlarmPopup({
             fontSize: 12.5,
             border: "1px solid #D5DCE2",
             background: "#fff",
-            color: "#4A5A68",
+            color: "rgb(var(--ink-600))",
             borderRadius: 3,
             cursor: "pointer",
           }}
@@ -132,7 +141,7 @@ export default function AlarmPopup({
             padding: "5px 14px",
             fontSize: 12.5,
             border: "none",
-            background: "#0F1A24",
+            background: "rgb(var(--ink-900))",
             color: "#fff",
             borderRadius: 3,
             cursor: "pointer",

@@ -45,7 +45,7 @@ export default function CadRail({
   const [tab, setTab] = useState<Tab>("sheets");
 
   return (
-    <div className="flex h-full flex-col bg-ink-50/40">
+    <div className="flex h-full flex-col bg-ink-50">
       <div className="flex shrink-0 items-center gap-0.5 border-b border-ink-100 p-1.5">
         {(
           [
@@ -119,7 +119,7 @@ export default function CadRail({
               <li
                 key={l.name}
                 className={`flex items-center gap-1 rounded px-1.5 py-1 ${
-                  activeLayer === l.name ? "bg-ink-900/5" : ""
+                  activeLayer === l.name ? "bg-ink-900" : ""
                 }`}
               >
                 <span

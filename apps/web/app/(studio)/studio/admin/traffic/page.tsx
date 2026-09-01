@@ -141,7 +141,7 @@ export default async function AdminTrafficPage({
         </Table>
       </Section>
 
-      <p className="mt-6 rounded-md border border-ink-200 bg-ink-50/60 p-3 text-[12px] leading-relaxed text-ink-600">
+      <p className="mt-6 rounded-md border border-ink-200 bg-ink-50 p-3 text-[12px] leading-relaxed text-ink-600">
         <strong className="font-semibold text-ink-800">What is stored.</strong> One row per day,
         page and signed-in flag, holding a number. No cookie is set, no address is kept, no session
         is written down, and there is no column in the table where one could go. That is why these

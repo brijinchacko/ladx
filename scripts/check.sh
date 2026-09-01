@@ -35,6 +35,7 @@ step "lint"          pnpm lint
 step "typecheck"     pnpm typecheck
 step "bindings"      python3 scripts/check-type-collisions.py
 step "house style"   python3 scripts/check-long-hyphens.py
+step "no glass"      python3 scripts/check-no-glass.py
 step "rust"          pnpm test:rust:core
 step "javascript"    pnpm test
 step "build"         pnpm build

@@ -51,7 +51,7 @@ export function ResetPasswordForm() {
         <p className="text-sm text-ink-500 text-center mb-8">Min 8 characters.</p>
 
         {!linkValid ? (
-          <div className="rounded-md border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+          <div className="rounded-md border border-danger bg-danger px-4 py-3 text-sm text-danger">
             This reset link is malformed. Request a new one.
           </div>
         ) : (
@@ -71,7 +71,7 @@ export function ResetPasswordForm() {
               />
             </div>
             {error && (
-              <div className="rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">
+              <div className="rounded-md border border-danger bg-danger px-3 py-2 text-sm text-danger">
                 {error}
               </div>
             )}

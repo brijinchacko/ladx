@@ -16,7 +16,7 @@ export default function LadxWindow({ onClose }: { onClose: () => void }) {
     <FloatingWindow
       storageKey="ladx"
       title="LADX Mini"
-      icon={<Cpu size={13} style={{ color: "#35B6BB" }} className="shrink-0" />}
+      icon={<Cpu size={13} style={{ color: "rgb(var(--teal-500))" }} className="shrink-0" />}
       onClose={onClose}
       defaultWidth={900}
       defaultHeight={620}

@@ -66,7 +66,7 @@ export default function LadderHome({
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-white">
       <div className="mx-auto max-w-4xl px-6 py-6">
-        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md border border-ink-200 bg-ink-50/50 px-4 py-3">
+        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md border border-ink-200 bg-ink-50 px-4 py-3">
           <Grid2x2Check className="h-4 w-4 shrink-0 text-teal-600" />
           <span className="text-[13.5px] text-ink-700">Work on the program for</span>
           <select
@@ -149,7 +149,7 @@ export default function LadderHome({
                   type="button"
                   onClick={() => start(s.key, s.name)}
                   disabled={Boolean(busy)}
-                  className="flex h-full w-full flex-col rounded-md border border-ink-200 bg-white p-3.5 text-left transition-colors hover:border-teal-500 hover:bg-teal-50/30 disabled:opacity-50"
+                  className="flex h-full w-full flex-col rounded-md border border-ink-200 bg-white p-3.5 text-left transition-colors hover:border-teal-500 hover:bg-teal-50 disabled:opacity-50"
                 >
                   <span className="flex items-baseline gap-2">
                     <span className="min-w-0 flex-1 font-display text-[13.5px] font-bold text-ink-900">

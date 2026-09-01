@@ -73,14 +73,14 @@ export default function MessageLog({
           label="Errors"
           n={counts.error}
           active={filter === "error"}
-          tone="#B3382C"
+          tone="rgb(var(--danger))"
           onClick={() => setFilter("error")}
         />
         <Chip
           label="Warnings"
           n={counts.warning}
           active={filter === "warning"}
-          tone="#B45309"
+          tone="rgb(var(--warning))"
           onClick={() => setFilter("warning")}
         />
         <Chip

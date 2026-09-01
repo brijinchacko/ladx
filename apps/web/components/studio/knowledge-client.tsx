@@ -174,7 +174,7 @@ export default function KnowledgeClient() {
       {/* ── library ── */}
       <div className="space-y-6">
         <section className="border border-ink-200 bg-white">
-          <div className="border-b border-ink-100 bg-ink-50/60 px-4 py-2.5">
+          <div className="border-b border-ink-100 bg-ink-50 px-4 py-2.5">
             <h2 className="font-display text-[14px] font-bold text-ink-900">Add a document</h2>
           </div>
           <form onSubmit={index} className="space-y-3 p-4">
@@ -264,7 +264,7 @@ export default function KnowledgeClient() {
       {/* ── ask ── */}
       <div className="min-w-0">
         <form onSubmit={ask} className="mb-6 border border-ink-200 bg-white">
-          <div className="border-b border-ink-100 bg-ink-50/60 px-4 py-2.5">
+          <div className="border-b border-ink-100 bg-ink-50 px-4 py-2.5">
             <h2 className="font-display text-[14px] font-bold text-ink-900">Ask your documents</h2>
           </div>
           <div className="space-y-3 p-4">
@@ -308,7 +308,7 @@ export default function KnowledgeClient() {
             className={`mb-6 border-l-2 py-2 pl-3 text-[13.5px] ${
               notice.kind === "error"
                 ? "border-danger bg-danger-bg text-danger"
-                : "border-teal-600 bg-teal-50/50 text-teal-900"
+                : "border-teal-600 bg-teal-50 text-teal-900"
             }`}
           >
             {notice.text}{" "}
@@ -340,7 +340,7 @@ export default function KnowledgeClient() {
 
         {answer && (
           <section className="border border-ink-200 bg-white">
-            <div className="border-b border-ink-100 bg-ink-50/60 px-4 py-2.5">
+            <div className="border-b border-ink-100 bg-ink-50 px-4 py-2.5">
               <h3 className="font-display text-[14px] font-bold text-ink-900">Answer</h3>
             </div>
             <div className="whitespace-pre-wrap px-4 py-4 text-[14.5px] leading-relaxed text-ink-800">

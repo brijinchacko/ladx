@@ -192,7 +192,7 @@ export default function CadToolbar({
   onZoom: (dir: "in" | "out") => void;
 }) {
   return (
-    <div className="flex shrink-0 items-stretch gap-3 overflow-x-auto border-b border-ink-100 bg-ink-50/60 px-3 py-1.5">
+    <div className="flex shrink-0 items-stretch gap-3 overflow-x-auto border-b border-ink-100 bg-ink-50 px-3 py-1.5">
       <Panel name="Select">
         <ToolButton
           spec={ALL_TOOLS[0] as ToolSpec}

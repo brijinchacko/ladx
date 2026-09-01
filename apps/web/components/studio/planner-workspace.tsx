@@ -558,7 +558,7 @@ export default function PlannerWorkspace({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="relative flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-2">
+      <div className="relative flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50 px-3 py-2">
         <CalendarRange className="h-3.5 w-3.5 shrink-0 text-teal-600" />
 
         <select
@@ -639,7 +639,7 @@ export default function PlannerWorkspace({
             type="button"
             onClick={() => void undoLast()}
             title="Put the last change back"
-            className="flex items-center gap-1 rounded-md border border-teal-500/50 bg-teal-50 px-2 py-1 text-[12px] text-teal-800 transition-colors hover:border-teal-600"
+            className="flex items-center gap-1 rounded-md border border-teal-500 bg-teal-50 px-2 py-1 text-[12px] text-teal-800 transition-colors hover:border-teal-600"
           >
             <RotateCcw className="h-3 w-3" />
             Undo {undoStack.length} change{undoStack.length === 1 ? "" : "s"}
@@ -797,7 +797,7 @@ export default function PlannerWorkspace({
       )}
 
       {selectedIds.length > 0 && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-ink-100 border-b bg-teal-50/50 px-3 py-1.5">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-ink-100 border-b bg-teal-50 px-3 py-1.5">
           <span className="font-medium text-[12.5px] text-ink-900">
             {selectedIds.length} selected
           </span>
@@ -856,7 +856,7 @@ export default function PlannerWorkspace({
       )}
 
       {importNote && (
-        <p className="flex items-center gap-3 border-b border-ink-100 bg-ink-50/60 px-3 py-1.5 text-[12px] text-ink-600">
+        <p className="flex items-center gap-3 border-b border-ink-100 bg-ink-50 px-3 py-1.5 text-[12px] text-ink-600">
           {importNote}
           <button
             type="button"

@@ -114,7 +114,7 @@ export default function HmiSetup({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-ink-900/30"
+      className="fixed inset-0 z-50 flex justify-end bg-ink-900"
       onClick={onClose}
       onKeyDown={undefined}
     >
@@ -256,7 +256,7 @@ function ScreenTab({
             onChange={(e) => patch({ background: e.target.value })}
             className="h-7 w-12"
           />
-          {["#E8EAEC", "#DDE1E4", "#F2F4F5", "#2B3138"].map((c) => (
+          {["rgb(var(--ink-100))", "#DDE1E4", "#F2F4F5", "#2B3138"].map((c) => (
             <button
               key={c}
               type="button"
@@ -753,9 +753,12 @@ function TrendsTab({
                       t.pens.push({
                         id: `p${Math.random().toString(36).slice(2, 7)}`,
                         target: { source: "plc", tag: plcTags[0]?.name ?? "" },
-                        colour: ["#3FBFB5", "#B4531A", "#3A4550", "#7A8894"][
-                          t.pens.length % 4
-                        ] as string,
+                        colour: [
+                          "rgb(var(--teal-400))",
+                          "rgb(var(--danger))",
+                          "rgb(var(--ink-700))",
+                          "rgb(var(--ink-400))",
+                        ][t.pens.length % 4] as string,
                       });
                     return d;
                   })
@@ -1005,7 +1008,7 @@ function BulkAlarms({
   }
 
   return (
-    <div className="mb-3 rounded-md border border-teal-300 bg-teal-50/30 p-3">
+    <div className="mb-3 rounded-md border border-teal-300 bg-teal-50 p-3">
       <div className="mb-2 flex items-center gap-2">
         <h4 className="font-display text-[13px] font-bold text-ink-900">Bulk alarms</h4>
         <button

@@ -227,7 +227,7 @@ function Row({
         className={`flex items-center gap-2 rounded-md py-1.5 pl-2 pr-7 text-[13px] transition-colors ${
           active
             ? "bg-white font-medium text-ink-900 shadow-[0_1px_2px_rgb(var(--ink-900)/0.06)]"
-            : "text-ink-600 hover:bg-ink-100/70 hover:text-ink-900"
+            : "text-ink-600 hover:bg-ink-100 hover:text-ink-900"
         }`}
       >
         {item.pinned ? (

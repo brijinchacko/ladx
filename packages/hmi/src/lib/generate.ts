@@ -1019,8 +1019,8 @@ export function defaultSize(kind: WidgetKind): { w: number; h: number } {
 /** ISA-101: the ground is quiet, and these are the only colours used. */
 const INK = "#3A464F";
 const LABEL = "#5A6670";
-const PLATE = "#D8DCDF";
-const LIVE = "#3FBFB5";
+const PLATE = "rgb(var(--ink-200))";
+const LIVE = "rgb(var(--teal-400))";
 
 /**
  * A screen laid out straight from the tag table, with no model involved.
@@ -1180,7 +1180,7 @@ export function draftScreen(ctx: GenContext): GeneratedScreen {
       kind: "numeric",
       rect: { x: at.x + Math.floor(colW * 0.5), y: at.y, w: colW - Math.floor(colW * 0.5), h: 28 },
       value: { kind: "plc", tag: t.type === "COUNTER" ? `${t.name}.ACC` : t.name },
-      fill: "#FFFFFF",
+      fill: "rgb(var(--raised))",
       stroke: INK,
       decimals: 0,
     });
@@ -1226,7 +1226,7 @@ export function draftScreen(ctx: GenContext): GeneratedScreen {
     widgets: drawn,
     hmiTags: [],
     alarms: [],
-    background: "#E8EAEC",
+    background: "rgb(var(--ink-100))",
     notes: `Laid out from the tag table: ${inputs.length} controls, ${outputs.length + bools.length} indicators, ${ints.length + counters.length} values, ${timers.length} timers.`,
     problems,
   };

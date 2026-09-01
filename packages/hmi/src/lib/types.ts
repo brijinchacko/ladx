@@ -580,7 +580,7 @@ export function emptyDoc(
         name: "Overview",
         slug: "overview",
         size: size,
-        background: "#E8EAEC",
+        background: "rgb(var(--ink-100))",
         widgets: [],
       },
     ],
@@ -631,7 +631,7 @@ export function readDoc(parsed: unknown, fallbackName = "Untitled HMI"): HmiDoc 
       name: s.name || `Screen ${i + 1}`,
       slug: s.slug || slugify(s.name || `screen-${i + 1}`),
       size: isSize(s.size) ? s.size : defaultSize,
-      background: s.background || "#E8EAEC",
+      background: s.background || "rgb(var(--ink-100))",
       widgets: Array.isArray(s.widgets) ? s.widgets : [],
     }));
 

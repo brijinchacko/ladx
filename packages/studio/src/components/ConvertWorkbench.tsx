@@ -480,7 +480,7 @@ export default function ConvertWorkbench({
         </p>
       )}
       {/* source bar */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-3 py-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50 px-3 py-2">
         <FolderKanban className="h-3.5 w-3.5 shrink-0 text-ink-400" />
         {uploaded ? (
           <span className="flex items-center gap-2 rounded-md border border-ink-200 bg-white px-2 py-1 text-[12.5px] text-ink-700">
@@ -535,7 +535,7 @@ export default function ConvertWorkbench({
             type="button"
             onClick={() => void openWithCore()}
             disabled={coreBusy}
-            className="flex h-7 items-center gap-1.5 rounded-md border border-teal-300 bg-teal-50/60 px-2.5 text-[12px] text-teal-800 transition-colors hover:border-teal-500 disabled:opacity-50"
+            className="flex h-7 items-center gap-1.5 rounded-md border border-teal-300 bg-teal-50 px-2.5 text-[12px] text-teal-800 transition-colors hover:border-teal-500 disabled:opacity-50"
           >
             <PackageOpen className="h-3.5 w-3.5" />
             {coreBusy ? "Reading…" : coreImport.label}
@@ -591,7 +591,7 @@ export default function ConvertWorkbench({
 
       {exported && (
         <p
-          className="shrink-0 truncate border-ink-100 border-b bg-ink-50/60 px-3 py-1.5 text-[11.5px] text-ink-600"
+          className="shrink-0 truncate border-ink-100 border-b bg-ink-50 px-3 py-1.5 text-[11.5px] text-ink-600"
           title={exported}
         >
           Saved {exported}
@@ -611,7 +611,7 @@ export default function ConvertWorkbench({
       {importNotes.length > 0 && (
         <details
           open={importNotes.some((n) => n.severity === "manual")}
-          className="shrink-0 border-ink-100 border-b bg-ink-50/40 px-3 py-2"
+          className="shrink-0 border-ink-100 border-b bg-ink-50 px-3 py-2"
         >
           <summary className="cursor-pointer text-[12.5px] text-ink-700">
             {importFormat ? `Read from ${importFormat}` : "Read"}
@@ -646,7 +646,7 @@ export default function ConvertWorkbench({
       ) : (
         <>
           {/* target tabs, each carrying what it will cost you */}
-          <div className="flex shrink-0 items-stretch gap-px overflow-x-auto border-b border-ink-100 bg-ink-50/30 px-3">
+          <div className="flex shrink-0 items-stretch gap-px overflow-x-auto border-b border-ink-100 bg-ink-50 px-3">
             {all.map(({ target: t, counts }) => {
               const active = t.id === target;
               const manual = counts.manual ?? 0;
@@ -708,7 +708,7 @@ export default function ConvertWorkbench({
                   </button>
                 </div>
               </div>
-              <pre className="min-h-0 flex-1 overflow-auto bg-ink-50/30 p-3 font-mono text-[11.5px] leading-relaxed text-ink-800">
+              <pre className="min-h-0 flex-1 overflow-auto bg-ink-50 p-3 font-mono text-[11.5px] leading-relaxed text-ink-800">
                 {current.result.text}
               </pre>
             </div>

@@ -71,7 +71,7 @@ export default function HmiHome({
   return (
     <div className="relative min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto max-w-5xl px-6 py-6">
-        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md border border-ink-200 bg-ink-50/50 px-4 py-3">
+        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md border border-ink-200 bg-ink-50 px-4 py-3">
           <MonitorCog className="h-4 w-4 shrink-0 text-teal-600" />
           <span className="text-[13.5px] text-ink-700">New application for</span>
           <select
@@ -146,7 +146,7 @@ export default function HmiHome({
                       type="button"
                       onClick={() => create(p)}
                       disabled={Boolean(busy)}
-                      className="flex h-full w-full flex-col rounded-md border border-ink-200 bg-white p-3 text-left transition-colors hover:border-teal-500 hover:bg-teal-50/30 disabled:opacity-50"
+                      className="flex h-full w-full flex-col rounded-md border border-ink-200 bg-white p-3 text-left transition-colors hover:border-teal-500 hover:bg-teal-50 disabled:opacity-50"
                     >
                       <span className="flex items-baseline gap-2">
                         <span className="font-display text-[13.5px] font-bold text-ink-900">

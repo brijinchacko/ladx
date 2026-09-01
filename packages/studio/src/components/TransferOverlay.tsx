@@ -51,7 +51,7 @@ function TransferScene({
   const CABLE_FROM = PC_X + 104;
   const CABLE_TO = PLC_X - 6;
   const live = !finished;
-  const wire = finished ? "#15803D" : "#2891FF";
+  const wire = finished ? "rgb(var(--success))" : "rgb(var(--action))";
 
   return (
     <svg
@@ -73,13 +73,13 @@ function TransferScene({
           width={84}
           height={54}
           rx={4}
-          fill="#1E293B"
-          stroke="#334155"
+          fill="rgb(var(--ink-800))"
+          stroke="rgb(var(--ink-700))"
           strokeWidth={1.4}
         />
-        <rect x={PC_X + 15} y={21} width={74} height={44} rx={2} fill="#0F172A" />
+        <rect x={PC_X + 15} y={21} width={74} height={44} rx={2} fill="rgb(var(--ink-900))" />
         {/* A rung on the screen, so it is plainly the editor. */}
-        <g stroke="#35B6BB" strokeWidth={1.4} fill="none" opacity={0.95}>
+        <g stroke="rgb(var(--teal-500))" strokeWidth={1.4} fill="none" opacity={0.95}>
           <line x1={PC_X + 21} y1={30} x2={PC_X + 21} y2={56} />
           <line x1={PC_X + 83} y1={30} x2={PC_X + 83} y2={56} />
           <line x1={PC_X + 21} y1={37} x2={PC_X + 40} y2={37} />
@@ -93,9 +93,16 @@ function TransferScene({
         {/* Base */}
         <path
           d={`M ${PC_X + 2} 76 L ${PC_X + 102} 76 L ${PC_X + 96} 70 L ${PC_X + 8} 70 Z`}
-          fill="#334155"
+          fill="rgb(var(--ink-700))"
         />
-        <text x={PC_X + 52} y={90} textAnchor="middle" fontSize={8} fontWeight={700} fill="#5A6B7B">
+        <text
+          x={PC_X + 52}
+          y={90}
+          textAnchor="middle"
+          fontSize={8}
+          fontWeight={700}
+          fill="rgb(var(--ink-500))"
+        >
           THIS COMPUTER
         </text>
       </g>
@@ -106,7 +113,7 @@ function TransferScene({
         y1={CABLE_Y}
         x2={CABLE_TO}
         y2={CABLE_Y}
-        stroke="#C9D2DC"
+        stroke="rgb(var(--ink-200))"
         strokeWidth={3}
         strokeLinecap="round"
       />
@@ -169,8 +176,8 @@ function TransferScene({
           width={118}
           height={58}
           rx={4}
-          fill="#2b3440"
-          stroke="#55606c"
+          fill="rgb(var(--ink-200))"
+          stroke="rgb(var(--ink-600))"
           strokeWidth={1.4}
         />
         {/* Terminal strips */}
@@ -182,7 +189,7 @@ function TransferScene({
             width={9}
             height={7}
             rx={1}
-            fill="#c7ccd1"
+            fill="rgb(var(--ink-200))"
           />
         ))}
         {Array.from({ length: 7 }).map((_, i) => (
@@ -193,7 +200,7 @@ function TransferScene({
             width={9}
             height={7}
             rx={1}
-            fill="#c7ccd1"
+            fill="rgb(var(--ink-200))"
           />
         ))}
         {/* Nameplate */}
@@ -203,7 +210,7 @@ function TransferScene({
           textAnchor="middle"
           fontSize={8.5}
           fontWeight={900}
-          fill="#e2e8f0"
+          fill="rgb(var(--ink-100))"
           letterSpacing={1}
         >
           WARTENS
@@ -214,13 +221,18 @@ function TransferScene({
           textAnchor="middle"
           fontSize={6.5}
           fontWeight={700}
-          fill="#93c5fd"
+          fill="rgb(var(--action))"
         >
           VCX CPU 1212C
         </text>
         {/* The mode lamps, which is what a download actually changes. */}
-        <circle cx={PLC_X + 10} cy={40} r={2.6} fill={finished ? "#22c55e" : "#f59e0b"} />
-        <text x={PLC_X + 15} y={42.5} fontSize={5.5} fontWeight={700} fill="#94a3b8">
+        <circle
+          cx={PLC_X + 10}
+          cy={40}
+          r={2.6}
+          fill={finished ? "rgb(var(--success))" : "rgb(var(--warning))"}
+        />
+        <text x={PLC_X + 15} y={42.5} fontSize={5.5} fontWeight={700} fill="rgb(var(--ink-400))">
           {finished ? "RUN" : "PROG"}
         </text>
         <text
@@ -229,7 +241,7 @@ function TransferScene({
           textAnchor="middle"
           fontSize={8}
           fontWeight={700}
-          fill="#5A6B7B"
+          fill="rgb(var(--ink-500))"
         >
           CONTROLLER
         </text>
@@ -333,7 +345,7 @@ export default function TransferOverlay({
         style={{
           width: 420,
           maxWidth: "92vw",
-          background: "#FFFFFF",
+          background: "rgb(var(--raised))",
           border: "1px solid #C9D2DC",
           borderRadius: 8,
           boxShadow: "0 24px 60px rgba(15,32,48,0.35)",
@@ -353,14 +365,14 @@ export default function TransferOverlay({
               width: 32,
               height: 32,
               borderRadius: 6,
-              background: finished ? "#DCFCE7" : "#EAF3FC",
-              color: finished ? "#15803D" : "#2891FF",
+              background: finished ? "rgb(var(--success-bg))" : "rgb(var(--ink-50))",
+              color: finished ? "rgb(var(--success))" : "rgb(var(--action))",
             }}
           >
             <Icon size={16} />
           </span>
           <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0F2030" }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "rgb(var(--ink-900))" }}>
               {finished
                 ? kind === "upload"
                   ? "Uploaded from the controller"
@@ -373,7 +385,7 @@ export default function TransferOverlay({
               style={{
                 margin: "2px 0 0",
                 fontSize: 11.5,
-                color: "#5A6B7B",
+                color: "rgb(var(--ink-500))",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -382,14 +394,16 @@ export default function TransferOverlay({
               {projectName || "Untitled"}
             </p>
           </div>
-          {finished && <CheckCircle2 size={20} style={{ marginLeft: "auto", color: "#15803D" }} />}
+          {finished && (
+            <CheckCircle2 size={20} style={{ marginLeft: "auto", color: "rgb(var(--success))" }} />
+          )}
         </div>
 
         <div
           style={{
             height: 4,
             borderRadius: 2,
-            background: "#E4E9EE",
+            background: "rgb(var(--ink-100))",
             overflow: "hidden",
             margin: "14px 0 12px",
           }}
@@ -398,7 +412,7 @@ export default function TransferOverlay({
             style={{
               height: "100%",
               width: `${finished ? 100 : pct}%`,
-              background: finished ? "#15803D" : "#2891FF",
+              background: finished ? "rgb(var(--success))" : "rgb(var(--action))",
               transition: "width 320ms ease",
             }}
           />
@@ -416,7 +430,11 @@ export default function TransferOverlay({
                   alignItems: "center",
                   gap: 8,
                   fontSize: 12,
-                  color: done ? "#0F2030" : active ? "#2891FF" : "#9AA7B4",
+                  color: done
+                    ? "rgb(var(--ink-900))"
+                    : active
+                      ? "rgb(var(--action))"
+                      : "rgb(var(--ink-400))",
                   fontWeight: active ? 600 : 400,
                 }}
               >
@@ -426,7 +444,11 @@ export default function TransferOverlay({
                     height: 6,
                     borderRadius: "50%",
                     flexShrink: 0,
-                    background: done ? "#15803D" : active ? "#2891FF" : "#C9D2DC",
+                    background: done
+                      ? "rgb(var(--success))"
+                      : active
+                        ? "rgb(var(--action))"
+                        : "rgb(var(--ink-200))",
                   }}
                 />
                 {label}

@@ -6,7 +6,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://ladx.ai";
 
 export function SiteHeader() {
   return (
-    <header className="border-b border-ink-100 bg-white/80 backdrop-blur sticky top-0 z-40">
+    <header className="border-b border-ink-100 bg-white sticky top-0 z-40">
       <div className="container mx-auto flex items-center justify-between p-6">
         <Link href="/">
           <Logo />

@@ -82,7 +82,7 @@ export default function HomePage() {
       </section>
 
       {/* ── The problem ───────────────────────────────────────────────── */}
-      <section className="border-b border-ink-100 bg-ink-50/50">
+      <section className="border-b border-ink-100 bg-ink-50">
         <div className="mx-auto max-w-6xl px-5 py-16">
           <div className="grid gap-10 lg:grid-cols-[1fr_1.25fr] lg:gap-16">
             <div>
@@ -184,7 +184,7 @@ export default function HomePage() {
                   <li key={p.slug}>
                     <Link
                       href={`/products/${p.slug}`}
-                      className="group grid gap-4 py-6 transition-colors hover:bg-ink-50/60 sm:grid-cols-[1fr_auto] sm:items-baseline sm:gap-8 sm:px-4"
+                      className="group grid gap-4 py-6 transition-colors hover:bg-ink-50 sm:grid-cols-[1fr_auto] sm:items-baseline sm:gap-8 sm:px-4"
                     >
                       <div className="max-w-2xl">
                         <div className="mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -222,7 +222,7 @@ export default function HomePage() {
       </section>
 
       {/* ── The IR ────────────────────────────────────────────────────── */}
-      <section className="border-y border-ink-100 bg-ink-50/50">
+      <section className="border-y border-ink-100 bg-ink-50">
         <div className="mx-auto max-w-6xl px-5 py-20">
           <div className="grid gap-12 lg:grid-cols-[1fr_1.3fr] lg:items-center">
             <div>

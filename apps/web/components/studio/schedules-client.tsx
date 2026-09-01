@@ -218,7 +218,7 @@ function Table({ head, rows }: { head: string[]; rows: string[][] }) {
   return (
     <table className="w-full border-collapse text-[12.5px]">
       <thead>
-        <tr className="border-b border-ink-100 bg-ink-50/60 text-left">
+        <tr className="border-b border-ink-100 bg-ink-50 text-left">
           {head.map((h) => (
             <th key={h} className="px-3 py-2 font-medium text-ink-600">
               {h}

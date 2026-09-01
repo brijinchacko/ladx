@@ -133,7 +133,7 @@ export function ContactForm() {
   // static, without it this one form would opt the whole route into dynamic
   // rendering.
   return (
-    <Suspense fallback={<div className="h-96 rounded-sm border border-ink-100 bg-ink-50/40" />}>
+    <Suspense fallback={<div className="h-96 rounded-sm border border-ink-100 bg-ink-50" />}>
       <Form />
     </Suspense>
   );

@@ -63,13 +63,10 @@ export function SiteHeader() {
   }, []);
 
   return (
-    <header
-      data-site-chrome
-      className="sticky top-0 z-40 border-b border-ink-100 bg-white/90 backdrop-blur-sm"
-    >
+    <header data-site-chrome className="sticky top-0 z-40 border-b border-ink-100 bg-white">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-5">
         <Link href="/" className="shrink-0" aria-label="LADX home">
-          <Logo size={22} tone="light" />
+          <Logo size={22} />
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">
@@ -193,11 +190,11 @@ export function SiteFooter() {
   ];
 
   return (
-    <footer data-site-chrome className="mt-24 border-t border-ink-100 bg-ink-50/60">
+    <footer data-site-chrome className="mt-24 border-t border-ink-100 bg-ink-50">
       <div className="mx-auto max-w-6xl px-5 py-14">
         <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1.5fr_repeat(5,1fr)]">
           <div className="sm:col-span-2 md:col-span-3 lg:col-span-1">
-            <Logo size={20} tone="light" />
+            <Logo size={20} />
             <p className="mt-3 max-w-xs text-[13.5px] leading-relaxed text-ink-500">
               The AI workbench for automation engineers. Vendor-neutral, validated before you see
               it, and able to run where the cloud isn't allowed.

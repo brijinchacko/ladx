@@ -77,8 +77,8 @@ export function stamp(at: number): string {
 }
 
 export const LEVEL_STYLE: Record<MessageLevel, { colour: string; bg: string; label: string }> = {
-  error: { colour: "#B3382C", bg: "#FBEAE8", label: "Error" },
+  error: { colour: "rgb(var(--danger))", bg: "rgb(var(--danger-bg))", label: "Error" },
   warning: { colour: "#96690A", bg: "#FBF1DF", label: "Warning" },
-  info: { colour: "#3C4A57", bg: "#EEF2F6", label: "Info" },
-  success: { colour: "#15803D", bg: "#E7F5EC", label: "OK" },
+  info: { colour: "#3C4A57", bg: "rgb(var(--ink-100))", label: "Info" },
+  success: { colour: "rgb(var(--success))", bg: "#E7F5EC", label: "OK" },
 };

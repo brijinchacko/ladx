@@ -100,7 +100,7 @@ export default function DocumentsPage() {
 
       <div className="mx-auto max-w-6xl px-5 py-14">
         {/* Which ones do I actually need. The question everybody has first. */}
-        <section className="mb-16 border border-ink-200 bg-ink-50/50 p-6 sm:p-8">
+        <section className="mb-16 border border-ink-200 bg-ink-50 p-6 sm:p-8">
           <h2 className="font-display text-[1.25rem] font-bold tracking-[-0.012em] text-ink-900">
             Which of these do I actually need?
           </h2>

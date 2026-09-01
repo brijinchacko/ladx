@@ -114,7 +114,7 @@ export default function ConvertClient() {
       {/* ── source and target ── */}
       <div className="space-y-6">
         <section className="border border-ink-200 bg-white">
-          <div className="border-b border-ink-100 bg-ink-50/60 px-4 py-2.5">
+          <div className="border-b border-ink-100 bg-ink-50 px-4 py-2.5">
             <h2 className="font-display text-[14px] font-bold text-ink-900">1. The program</h2>
           </div>
           <div className="space-y-3 p-4">
@@ -205,7 +205,7 @@ export default function ConvertClient() {
         </section>
 
         <section className="border border-ink-200 bg-white">
-          <div className="border-b border-ink-100 bg-ink-50/60 px-4 py-2.5">
+          <div className="border-b border-ink-100 bg-ink-50 px-4 py-2.5">
             <h2 className="font-display text-[14px] font-bold text-ink-900">2. The target</h2>
           </div>
           <div className="p-2">
@@ -214,7 +214,7 @@ export default function ConvertClient() {
                 key={t.id}
                 className={`block cursor-pointer border-l-2 px-3 py-2.5 transition-colors ${
                   target === t.id
-                    ? "border-teal-600 bg-teal-50/40"
+                    ? "border-teal-600 bg-teal-50"
                     : "border-transparent hover:bg-ink-50"
                 }`}
               >
@@ -237,7 +237,7 @@ export default function ConvertClient() {
           </div>
         </section>
 
-        <p className="border border-ink-200 bg-ink-50/50 px-4 py-3 text-[12.5px] leading-relaxed text-ink-500">
+        <p className="border border-ink-200 bg-ink-50 px-4 py-3 text-[12.5px] leading-relaxed text-ink-500">
           This runs entirely in your browser. Your program is not uploaded, and there is no server
           that could keep a copy of it.
         </p>
@@ -285,7 +285,7 @@ export default function ConvertClient() {
             )}
 
             <section className="border border-ink-200 bg-white">
-              <div className="flex flex-wrap items-center gap-3 border-b border-ink-100 bg-ink-50/60 px-4 py-2.5">
+              <div className="flex flex-wrap items-center gap-3 border-b border-ink-100 bg-ink-50 px-4 py-2.5">
                 <h2 className="font-mono text-[12px] font-semibold text-ink-800">
                   {result.filename}
                 </h2>

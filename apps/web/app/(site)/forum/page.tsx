@@ -80,7 +80,7 @@ export default async function ForumPage() {
                 <li key={c.slug}>
                   <Link
                     href={`/forum/c/${c.slug}`}
-                    className="group block border border-transparent px-3 py-2.5 transition-colors hover:border-ink-200 hover:bg-ink-50/60"
+                    className="group block border border-transparent px-3 py-2.5 transition-colors hover:border-ink-200 hover:bg-ink-50"
                   >
                     <span className="flex items-baseline justify-between gap-3">
                       <span className="font-display text-[14px] font-bold text-ink-900 group-hover:text-teal-700">

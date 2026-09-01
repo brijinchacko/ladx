@@ -235,7 +235,7 @@ export function LadxFrame({
               full ? "Leave fullscreen  ·  Esc" : "Fullscreen, the ladder gets the whole window"
             }
             aria-label={full ? "Leave fullscreen" : "Fullscreen"}
-            className="grid place-items-center w-6 h-6 rounded hover:bg-white/10"
+            className="grid place-items-center w-6 h-6 rounded hover:bg-white"
             style={{ color: "#94A3B8" }}
           >
             {full ? <Minimize2 size={13} /> : <Maximize2 size={13} />}

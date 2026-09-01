@@ -178,7 +178,7 @@ export function ChatWindow({
             />
           ))}
           {error && (
-            <div className="mx-4 my-2 rounded-md border border-danger/20 bg-danger/5 px-3 py-2 text-sm text-danger">
+            <div className="mx-4 my-2 rounded-md border border-danger bg-danger px-3 py-2 text-sm text-danger">
               {error}
             </div>
           )}

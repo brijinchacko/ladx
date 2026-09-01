@@ -247,7 +247,7 @@ export default function InstructionBar({
                 {key && (
                   <span
                     className="absolute font-bold leading-none"
-                    style={{ right: 2, bottom: 1, fontSize: 6.5, color: "#B6BFC9" }}
+                    style={{ right: 2, bottom: 1, fontSize: 6.5, color: "rgb(var(--ink-300))" }}
                   >
                     {key}
                   </span>

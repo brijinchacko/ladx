@@ -113,7 +113,7 @@ export default function SettingsPage() {
                 />
               </div>
               {activationError && (
-                <div className="rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">
+                <div className="rounded-md border border-danger bg-danger px-3 py-2 text-sm text-danger">
                   {activationError}
                 </div>
               )}
@@ -133,7 +133,7 @@ export default function SettingsPage() {
             </p>
           </div>
           {modelsError ? (
-            <div className="rounded-md border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-warning">
+            <div className="rounded-md border border-warning bg-warning px-4 py-3 text-sm text-warning">
               {modelsError}. Install Ollama from{" "}
               <a
                 href="https://ollama.com/download"
@@ -272,7 +272,7 @@ function UpdatesSection() {
       </div>
 
       {found && (
-        <div className="rounded-md border border-teal-500/40 bg-teal-500/5 p-4">
+        <div className="rounded-md border border-teal-500 bg-teal-500 p-4">
           <p className="text-sm font-medium text-ink-900">
             Version {found.version} is available
             {found.date ? ` · ${found.date.slice(0, 10)}` : ""}
@@ -423,7 +423,7 @@ function MaturityTag({ maturity }: { maturity: Maturity }) {
     planned: "border-ink-200 bg-ink-50 text-ink-500",
     experimental: "border-amber-300 bg-amber-50 text-amber-800",
     available: "border-teal-300 bg-teal-50 text-teal-700",
-    validated: "border-teal-500 bg-teal-500/10 text-teal-800",
+    validated: "border-teal-500 bg-teal-500 text-teal-800",
   };
   const label: Record<Maturity, string> = {
     planned: "Not built yet",

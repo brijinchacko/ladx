@@ -227,7 +227,7 @@ export default function FreePage() {
         </dl>
       </section>
 
-      <div className="rounded-sm border border-ink-200 bg-ink-50/60 p-6">
+      <div className="rounded-sm border border-ink-200 bg-ink-50 p-6">
         <h2 className="font-display font-bold text-[1.1rem] text-ink-900">
           And what an account is for
         </h2>

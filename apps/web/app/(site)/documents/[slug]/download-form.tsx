@@ -47,7 +47,7 @@ export default function DownloadForm({ slug, files }: { slug: string; files: Tem
 
   return (
     <div className="border border-ink-200 bg-white">
-      <div className="border-b border-ink-100 bg-ink-50/60 px-5 py-3">
+      <div className="border-b border-ink-100 bg-ink-50 px-5 py-3">
         <h2 className="font-display text-[15px] font-bold tracking-[-0.01em] text-ink-900">
           Fill in and download
         </h2>

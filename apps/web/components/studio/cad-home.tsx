@@ -127,7 +127,7 @@ export default function CadHome({
     <div className="relative min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto max-w-5xl px-6 py-6">
         {/* where it goes, decided once, before anything is created */}
-        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md border border-ink-200 bg-ink-50/50 px-4 py-3">
+        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md border border-ink-200 bg-ink-50 px-4 py-3">
           <PencilRuler className="h-4 w-4 shrink-0 text-teal-600" />
           <span className="text-[13.5px] text-ink-700">New drawings go to</span>
           <select
@@ -244,7 +244,7 @@ export default function CadHome({
                         type="button"
                         onClick={() => startTemplate(t)}
                         disabled={Boolean(busy)}
-                        className="flex h-full w-full flex-col rounded-md border border-ink-200 bg-white p-3 text-left transition-colors hover:border-teal-500 hover:bg-teal-50/30 disabled:opacity-50"
+                        className="flex h-full w-full flex-col rounded-md border border-ink-200 bg-white p-3 text-left transition-colors hover:border-teal-500 hover:bg-teal-50 disabled:opacity-50"
                       >
                         <span className="flex items-baseline gap-2">
                           <span className="shrink-0 rounded bg-ink-900 px-1.5 py-0.5 font-mono text-[9.5px] font-semibold text-white">

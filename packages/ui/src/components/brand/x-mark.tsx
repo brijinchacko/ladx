@@ -86,7 +86,7 @@ export interface AppIconProps {
 }
 
 /** Ink, from the design tokens. Duplicated as a literal because this renders into a file. */
-export const ICON_GROUND = "#0F1A24";
+export const ICON_GROUND = "rgb(var(--ink-900))";
 export const ICON_MARK = "#35B6BA";
 
 export function AppIcon({ size = 64, className, title }: AppIconProps) {

@@ -299,7 +299,7 @@ export default function ProjectChatDock({
       <div
         onPointerDown={startMove}
         style={{ touchAction: "none", cursor: dragging ? "grabbing" : "grab" }}
-        className="flex shrink-0 items-center gap-2 border-b border-ink-100 bg-ink-50/70 px-2.5 py-2"
+        className="flex shrink-0 items-center gap-2 border-b border-ink-100 bg-ink-50 px-2.5 py-2"
       >
         <GripVertical className="h-3.5 w-3.5 shrink-0 text-ink-400" />
         <div className="min-w-0 flex-1">
