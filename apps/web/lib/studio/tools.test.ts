@@ -32,22 +32,29 @@ describe("the tool list", () => {
 });
 
 describe("toolHref", () => {
-  const ladder = TOOLS.find((t) => t.href === "/studio/ladder");
-  const standards = TOOLS.find((t) => t.href === "/studio/standards");
+  /** A tool by route, failing loudly if the list no longer has it. */
+  function tool(href: string) {
+    const found = TOOLS.find((t) => t.href === href);
+    if (!found) throw new Error(`no tool at ${href}`);
+    return found;
+  }
+
+  const ladder = tool("/studio/ladder");
+  const standards = tool("/studio/standards");
 
   it("carries the project into a tool that works on one program", () => {
-    expect(toolHref(ladder!, "abc")).toBe("/studio/ladder?project=abc");
+    expect(toolHref(ladder, "abc")).toBe("/studio/ladder?project=abc");
   });
 
   // A URL that promises a context the page ignores is worse than no context:
   // the user lands on a different program from the one they clicked from.
   it("does not promise a context an unscoped tool would ignore", () => {
-    expect(toolHref(standards!, "abc")).toBe("/studio/standards");
+    expect(toolHref(standards, "abc")).toBe("/studio/standards");
   });
 
   it("is the plain route when there is no project", () => {
-    expect(toolHref(ladder!, null)).toBe("/studio/ladder");
-    expect(toolHref(ladder!, undefined)).toBe("/studio/ladder");
+    expect(toolHref(ladder, null)).toBe("/studio/ladder");
+    expect(toolHref(ladder, undefined)).toBe("/studio/ladder");
   });
 });
 
