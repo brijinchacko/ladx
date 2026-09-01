@@ -66,6 +66,18 @@ pub struct ProjectGraph {
     /// Tags the project declares. Kept so a reference to something undeclared
     /// can be spotted, which is one of the checks a health report wants.
     pub declared: Vec<String>,
+    /// Where each tag's uses are, so looking one up is not a walk of all of
+    /// them.
+    ///
+    /// Without this, every query is linear and every caller that asks about
+    /// each tag in turn is quadratic. On a fifty thousand tag project the I/O
+    /// list took nearly four seconds, almost all of it re-walking the same
+    /// list; the graph itself built in a fraction of that. Skipped in
+    /// serialisation because it is derived: a graph read back from JSON
+    /// rebuilds it rather than trusting it.
+    #[serde(skip)]
+    #[ts(skip)]
+    index: BTreeMap<String, Vec<usize>>,
 }
 
 /// Which operand positions a write lands on.
@@ -195,7 +207,27 @@ impl ProjectGraph {
         g.uses.dedup();
         g.calls.sort();
         g.calls.dedup();
+        g.reindex();
         g
+    }
+
+    /// Rebuild the lookup. Called after the uses settle, and by anything that
+    /// deserialises a graph rather than building one.
+    pub fn reindex(&mut self) {
+        self.index.clear();
+        for (n, u) in self.uses.iter().enumerate() {
+            self.index.entry(u.tag.clone()).or_default().push(n);
+        }
+    }
+
+    /// The uses of one tag, without walking the rest.
+    fn indexed(&self, tag: &str) -> impl Iterator<Item = &TagUse> {
+        self.index
+            .get(tag)
+            .map(|v| v.as_slice())
+            .unwrap_or(&[])
+            .iter()
+            .map(move |n| &self.uses[*n])
     }
 
     fn record(&mut self, pou: &crate::Pou, rung: &crate::Rung, i: &Instruction, condition: bool) {
@@ -228,17 +260,17 @@ impl ProjectGraph {
 
     /// Everywhere this tag is driven. "Which blocks write this output?"
     pub fn writers_of(&self, tag: &str) -> Vec<&TagUse> {
-        self.uses.iter().filter(|u| u.tag == tag && u.access == Access::Write).collect()
+        self.indexed(tag).filter(|u| u.access == Access::Write).collect()
     }
 
     /// Everywhere this tag is examined. "Where is EStop_OK used?"
     pub fn readers_of(&self, tag: &str) -> Vec<&TagUse> {
-        self.uses.iter().filter(|u| u.tag == tag && u.access == Access::Read).collect()
+        self.indexed(tag).filter(|u| u.access == Access::Read).collect()
     }
 
     /// Everywhere it appears at all.
     pub fn uses_of(&self, tag: &str) -> Vec<&TagUse> {
-        self.uses.iter().filter(|u| u.tag == tag).collect()
+        self.indexed(tag).collect()
     }
 
     pub fn calls_from(&self, pou: &str) -> Vec<&Call> {
