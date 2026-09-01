@@ -7,7 +7,17 @@ import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { ConversionReport, HealthReport, IrProject, ParseResult, Trace } from "@ladx/types";
+import type {
+  Alarm,
+  AlarmIssue,
+  ConversionReport,
+  HealthReport,
+  IoIssue,
+  IoPoint,
+  IrProject,
+  ParseResult,
+  Trace,
+} from "@ladx/types";
 
 const exec = promisify(execFile);
 
@@ -173,4 +183,38 @@ export async function applicableStandards(
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+}
+
+/** The I/O list, read out of a project. */
+export async function ioListFor(project: unknown): Promise<{
+  points: IoPoint[];
+  issues: IoIssue[];
+  inputs: number;
+  outputs: number;
+  csv: string;
+}> {
+  const bin = ladxParserBinary();
+  return withIrFile(project, async (file) => {
+    const { stdout } = await exec(bin, ["--io", file], {
+      timeout: 30_000,
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return JSON.parse(stdout);
+  });
+}
+
+/** The alarms a program already has. */
+export async function alarmListFor(project: unknown): Promise<{
+  alarms: Alarm[];
+  issues: AlarmIssue[];
+  csv: string;
+}> {
+  const bin = ladxParserBinary();
+  return withIrFile(project, async (file) => {
+    const { stdout } = await exec(bin, ["--alarms", file], {
+      timeout: 30_000,
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return JSON.parse(stdout);
+  });
 }

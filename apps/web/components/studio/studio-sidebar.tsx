@@ -22,6 +22,7 @@ import {
 } from "@ladx/ui";
 import {
   Activity,
+  Cable,
   CalendarRange,
   ChevronDown,
   ChevronsLeft,
@@ -64,6 +65,7 @@ const TOOLS = [
   { href: "/studio/convert", label: "Convert", icon: GitCompareArrows },
   { href: "/studio/documents", label: "Documents", icon: Library },
   { href: "/studio/knowledge", label: "Knowledge", icon: FileText },
+  { href: "/studio/schedules", label: "Schedules", icon: Cable },
   { href: "/studio/standards", label: "Standards", icon: Ruler },
 ];
 
