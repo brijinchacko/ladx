@@ -63,6 +63,7 @@ pub fn run() {
             commands::vendor::l5x_export,
             commands::vendor::analyse_project,
             commands::vendor::project_health,
+            commands::vendor::why_not,
             commands::autofix::auto_fix_st,
             commands::ai::ai_complete,
             commands::conversations::ensure_conversation,

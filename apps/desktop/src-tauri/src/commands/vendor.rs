@@ -171,3 +171,17 @@ pub fn project_health(
     state.audit.log("user", "project_health", Some(&project.name)).ok();
     Ok(report)
 }
+
+/// Work backwards from a tag to what would have to be true for it to come on.
+///
+/// Answers from the program, not from live values: LADX has none. It says what
+/// to go and look at, which is the part that can be answered honestly.
+#[tauri::command]
+pub fn why_not(
+    state: tauri::State<'_, AppState>,
+    project: IrProject,
+    tag: String,
+) -> Result<ladx_ir::trace::Trace, String> {
+    require(&state, FeatureFlag::EngineeringAnalysis)?;
+    Ok(ladx_ir::trace::why(&project, &tag))
+}

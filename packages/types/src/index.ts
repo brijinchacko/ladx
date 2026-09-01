@@ -70,6 +70,11 @@ export type { ProjectGraph } from "./generated/ir/ProjectGraph";
 export type { Severity as HealthSeverity } from "./generated/ir/Severity";
 export type { Finding } from "./generated/ir/Finding";
 export type { HealthReport } from "./generated/ir/HealthReport";
+// Working backwards from an output to what would have to be true.
+export type { Sense } from "./generated/ir/Sense";
+export type { Condition } from "./generated/ir/Condition";
+export type { Step as TraceStep } from "./generated/ir/Step";
+export type { Trace } from "./generated/ir/Trace";
 export type { FieldDevice } from "./generated/ir/FieldDevice";
 export type { IoDirection } from "./generated/ir/IoDirection";
 // `Tag` and `DataType` exist in both crates with different shapes; the IR ones
