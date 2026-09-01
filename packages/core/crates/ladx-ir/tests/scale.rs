@@ -86,11 +86,28 @@ fn synthetic(tags: usize, rungs: usize) -> IrProject {
     p
 }
 
+/// The bounds, scaled for how the code was compiled.
+///
+/// An unoptimised build is ten to fifty times slower on this kind of work, and
+/// the workspace test run is unoptimised. Writing one number meant a guard that
+/// passed under `--release`, which is how I checked it, and failed in the suite,
+/// which is how it actually runs. The multiplier is generous because the point
+/// is never the clock: quadratic blows through any of these by orders of
+/// magnitude, and a slow morning does not.
+fn budget(seconds: f64) -> f64 {
+    if cfg!(debug_assertions) {
+        seconds * 20.0
+    } else {
+        seconds
+    }
+}
+
 fn under(seconds: f64, label: &str, f: impl FnOnce()) {
+    let limit = budget(seconds);
     let started = Instant::now();
     f();
     let took = started.elapsed().as_secs_f64();
-    assert!(took < seconds, "{label} took {took:.2}s, which is over the {seconds}s guard");
+    assert!(took < limit, "{label} took {took:.2}s, which is over the {limit:.1}s guard");
 }
 
 #[test]
