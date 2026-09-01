@@ -171,7 +171,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
                           {r.abbr}
                         </span>
                         <span>
-                          <span className="block font-display text-[14px] font-bold text-ink-900 group-hover:text-teal-700">
+                          <span className="block font-display text-[14px] font-bold text-ink-900 group-hover:text-teal-800">
                             {r.title}
                           </span>
                           <span className="mt-0.5 block text-[13px] leading-relaxed text-ink-500">

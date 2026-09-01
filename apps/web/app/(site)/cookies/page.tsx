@@ -48,7 +48,7 @@ export default function CookiesPage() {
               key={line}
               className="flex items-start gap-2.5 text-[14.5px] leading-relaxed text-ink-700"
             >
-              <Sq size={5} className="mt-[8px] shrink-0 text-teal-600" />
+              <Sq size={5} className="mt-[8px] shrink-0 text-teal-700" />
               {line}
             </li>
           ))}

@@ -128,7 +128,7 @@ export default function DocumentList({
               {d.kind === "uploaded" ? (
                 <Paperclip className="h-3.5 w-3.5 shrink-0 text-ink-400" />
               ) : (
-                <FileText className="h-3.5 w-3.5 shrink-0 text-teal-600" />
+                <FileText className="h-3.5 w-3.5 shrink-0 text-teal-700" />
               )}
               <Link href={`/studio/documents/${d.id}`} className="min-w-0 flex-1">
                 <span className="block truncate text-[13.5px] font-medium text-ink-900">

@@ -119,7 +119,7 @@ export default function ResourcesPage() {
                 <span className="text-ink-400">/</span>
                 <span className="text-ink-400">{lead.minutes} min</span>
               </div>
-              <h2 className="font-display text-[1.8rem] font-bold leading-[1.15] tracking-[-0.015em] text-ink-900 group-hover:text-teal-700">
+              <h2 className="font-display text-[1.8rem] font-bold leading-[1.15] tracking-[-0.015em] text-ink-900 group-hover:text-teal-800">
                 {lead.title}
               </h2>
               <p className="mt-3 max-w-xl text-[15.5px] leading-relaxed text-ink-600">
@@ -163,7 +163,7 @@ export default function ResourcesPage() {
                     href={`/resources/${post.slug}`}
                     className="group block border-l-2 border-ink-100 pl-4 transition-colors hover:border-teal-500"
                   >
-                    <h3 className="font-display text-[1.05rem] font-bold leading-snug tracking-[-0.01em] text-ink-900 group-hover:text-teal-700">
+                    <h3 className="font-display text-[1.05rem] font-bold leading-snug tracking-[-0.01em] text-ink-900 group-hover:text-teal-800">
                       {post.title}
                     </h3>
                     {/*

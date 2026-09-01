@@ -787,7 +787,7 @@ function CompareView({ out }: { out: CompareOut }) {
         >
           <span
             className={`mr-2 rounded px-1.5 py-0.5 text-[11px] font-medium ${
-              c.risk === "safety" ? "bg-danger text-danger" : "bg-ink-100 text-ink-700"
+              c.risk === "safety" ? "bg-danger-bg text-danger" : "bg-ink-100 text-ink-700"
             }`}
           >
             {c.risk}

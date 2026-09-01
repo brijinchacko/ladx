@@ -128,7 +128,7 @@ export default function CadHome({
       <div className="mx-auto max-w-5xl px-6 py-6">
         {/* where it goes, decided once, before anything is created */}
         <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md border border-ink-200 bg-ink-50 px-4 py-3">
-          <PencilRuler className="h-4 w-4 shrink-0 text-teal-600" />
+          <PencilRuler className="h-4 w-4 shrink-0 text-teal-700" />
           <span className="text-[13.5px] text-ink-700">New drawings go to</span>
           <select
             value={projectId}
@@ -207,7 +207,7 @@ export default function CadHome({
                     href={`/studio/cad/${d.id}`}
                     className="group flex h-full flex-col rounded-md border border-ink-200 bg-white p-3 transition-colors hover:border-ink-400"
                   >
-                    <span className="truncate text-[13.5px] font-medium text-ink-900 group-hover:text-teal-700">
+                    <span className="truncate text-[13.5px] font-medium text-ink-900 group-hover:text-teal-800">
                       {d.name}
                     </span>
                     <span className="mt-0.5 truncate font-mono text-[10.5px] text-ink-400">
@@ -257,7 +257,7 @@ export default function CadHome({
                             {t.sheetSize}
                           </span>
                           {busy === t.id && (
-                            <Loader2 className="h-3 w-3 shrink-0 animate-spin text-teal-600" />
+                            <Loader2 className="h-3 w-3 shrink-0 animate-spin text-teal-700" />
                           )}
                         </span>
                         <span className="mt-1 text-[11.5px] leading-relaxed text-ink-500">
@@ -280,7 +280,7 @@ export default function CadHome({
             <ul className="divide-y divide-ink-100 overflow-hidden rounded-md border border-ink-100">
               {drawings.slice(recent.length).map((d) => (
                 <li key={d.id} className="flex items-center gap-3 px-4 py-2 hover:bg-ink-50">
-                  <PencilRuler className="h-3.5 w-3.5 shrink-0 text-teal-600" />
+                  <PencilRuler className="h-3.5 w-3.5 shrink-0 text-teal-700" />
                   <Link href={`/studio/cad/${d.id}`} className="min-w-0 flex-1">
                     <span className="block truncate text-[13px] text-ink-900">{d.name}</span>
                     <span className="block truncate font-mono text-[10.5px] text-ink-400">

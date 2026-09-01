@@ -82,7 +82,7 @@ export default async function StudioDocumentsPage({
                       <span className="mb-1.5 inline-block w-fit bg-ink-900 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-white">
                         {t.abbr}
                       </span>
-                      <span className="font-display text-[13.5px] font-bold leading-snug text-ink-900 group-hover:text-teal-700">
+                      <span className="font-display text-[13.5px] font-bold leading-snug text-ink-900 group-hover:text-teal-800">
                         {t.title}
                       </span>
                       <span className="mt-1 text-[12px] leading-relaxed text-ink-500">

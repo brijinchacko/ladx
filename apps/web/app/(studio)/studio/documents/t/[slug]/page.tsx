@@ -154,7 +154,7 @@ export default async function StudioTemplatePage({
                           {r.abbr}
                         </span>
                         <span className="min-w-0">
-                          <span className="block font-display text-[13.5px] font-bold text-ink-900 group-hover:text-teal-700">
+                          <span className="block font-display text-[13.5px] font-bold text-ink-900 group-hover:text-teal-800">
                             {r.title}
                           </span>
                           <span className="mt-0.5 block text-[12.5px] leading-relaxed text-ink-500">

@@ -170,7 +170,7 @@ export default function SettingsPage() {
                   Suggested default: <code>{modelsResp.suggested}</code>
                 </p>
               )}
-              {savedNote && <p className="text-xs text-teal-500">{savedNote}</p>}
+              {savedNote && <p className="text-xs text-teal-700">{savedNote}</p>}
             </div>
           ) : (
             <p className="text-sm text-ink-500">Checking…</p>
@@ -296,7 +296,7 @@ function UpdatesSection() {
                 )
                 .finally(() => setInstalling(false));
             }}
-            className="mt-3 rounded-md bg-teal-500 px-3 py-2 text-sm font-medium text-white hover:bg-teal-600 disabled:opacity-50"
+            className="mt-3 rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-50"
           >
             {installing ? "Installing…" : "Download and install"}
           </button>

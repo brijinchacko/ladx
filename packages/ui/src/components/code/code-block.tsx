@@ -215,7 +215,7 @@ export function CodeBlock({
             <button
               type="button"
               onClick={() => onAccept(source, reportFor())}
-              className="text-teal-600 hover:text-teal-700 px-2 py-1 rounded hover:bg-teal-50 inline-flex items-center gap-1 font-medium"
+              className="text-teal-700 hover:text-teal-800 px-2 py-1 rounded hover:bg-teal-50 inline-flex items-center gap-1 font-medium"
             >
               <Check className="h-3.5 w-3.5" />
               Accept

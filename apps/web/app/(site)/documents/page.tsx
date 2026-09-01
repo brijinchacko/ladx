@@ -189,7 +189,7 @@ export default function DocumentsPage() {
                           {t.files.length === 1 ? "1 file" : `${t.files.length} files`}
                         </span>
                       </div>
-                      <h3 className="font-display text-[15.5px] font-bold leading-snug tracking-[-0.01em] text-ink-900 group-hover:text-teal-700">
+                      <h3 className="font-display text-[15.5px] font-bold leading-snug tracking-[-0.01em] text-ink-900 group-hover:text-teal-800">
                         {t.title}
                       </h3>
                       <p className="mt-2 flex-1 text-[13.5px] leading-relaxed text-ink-600">

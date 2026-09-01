@@ -3029,7 +3029,7 @@ export default function LadxStudio({
           <button
             type="button"
             onClick={() => addRung(routineId)}
-            className="w-full h-9 rounded border border-dashed border-ink-400 bg-white text-[12.5px] font-semibold text-ink-700 hover:border-teal-500 hover:text-teal-500"
+            className="w-full h-9 rounded border border-dashed border-ink-400 bg-white text-[12.5px] font-semibold text-ink-700 hover:border-teal-500 hover:text-teal-800"
           >
             + Add network
           </button>
@@ -4420,7 +4420,7 @@ export default function LadxStudio({
                 // before the tree is rewritten underneath it.
                 setTimeout(() => branchAroundSelection(), 0);
               }}
-              className="w-full mb-3 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-teal-500 bg-teal-500/[0.08] text-[12.5px] font-bold text-teal-500"
+              className="w-full mb-3 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-teal-500 bg-teal-500/[0.08] text-[12.5px] font-bold text-teal-700"
             >
               <GitBranch size={13} /> Branch around this contact
             </button>

@@ -245,7 +245,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {others.map((p) => (
             <li key={p.slug}>
               <Link href={`/products/${p.slug}`} className="group block">
-                <h3 className="font-display text-[1.05rem] font-bold text-ink-900 group-hover:text-teal-700">
+                <h3 className="font-display text-[1.05rem] font-bold text-ink-900 group-hover:text-teal-800">
                   {p.name}
                 </h3>
                 <p className="mt-1 text-[13.5px] leading-relaxed text-ink-500">{p.tagline}</p>

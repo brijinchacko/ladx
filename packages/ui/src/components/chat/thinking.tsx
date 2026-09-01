@@ -39,7 +39,7 @@ export function Thinking({ label }: { label?: string }) {
 
   return (
     <div className="flex items-center gap-2.5" aria-live="polite" aria-busy="true">
-      <ThinkingMark size={15} className="text-teal-600" />
+      <ThinkingMark size={15} className="text-teal-700" />
       <span className="text-[13px] text-ink-400">{stage}</span>
       <span className="sr-only">LADX is generating a reply.</span>
     </div>

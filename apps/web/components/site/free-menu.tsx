@@ -38,7 +38,7 @@ export default function FreeMenu({ active }: { active: boolean }) {
                       onClick={close}
                       className="group -mx-2 block rounded-sm px-2 py-1.5 transition-colors hover:bg-ink-50"
                     >
-                      <span className="font-display font-bold text-[14.5px] text-ink-900 group-hover:text-teal-700">
+                      <span className="font-display font-bold text-[14.5px] text-ink-900 group-hover:text-teal-800">
                         {t.name}
                       </span>
                       <span className="mt-0.5 block text-[12.5px] text-ink-500 leading-snug">
@@ -55,7 +55,7 @@ export default function FreeMenu({ active }: { active: boolean }) {
             <Link
               href="/free"
               onClick={close}
-              className="font-medium text-[13px] text-ink-800 hover:text-teal-700"
+              className="font-medium text-[13px] text-ink-800 hover:text-teal-800"
             >
               All {FREE_SOFTWARE.length} free tools, and what an account adds →
             </Link>
@@ -90,7 +90,7 @@ export function FreeMenuMobile({ onNavigate }: { onNavigate: () => void }) {
         <Link
           href="/free"
           onClick={onNavigate}
-          className="text-[12px] text-ink-400 hover:text-teal-700"
+          className="text-[12px] text-ink-400 hover:text-teal-800"
         >
           All {FREE_SOFTWARE.length}
         </Link>

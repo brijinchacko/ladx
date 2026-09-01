@@ -105,7 +105,7 @@ export default function WorkspacePage() {
               onClick={() => setCreating(true)}
               disabled={!workspace}
               title={workspace ? undefined : "Choose where projects live first"}
-              className="flex items-center gap-2 rounded-md bg-teal-500 px-3 py-2 text-sm font-medium text-white hover:bg-teal-600 disabled:opacity-40"
+              className="flex items-center gap-2 rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-40"
             >
               <FolderPlus className="h-4 w-4" />
               New project
@@ -114,7 +114,7 @@ export default function WorkspacePage() {
         </header>
 
         {error && (
-          <p className="rounded-md border border-danger bg-danger px-4 py-3 text-sm text-danger">
+          <p className="rounded-md border border-danger bg-danger-bg px-4 py-3 text-sm text-danger">
             {error}
           </p>
         )}
@@ -129,7 +129,7 @@ export default function WorkspacePage() {
               <button
                 type="button"
                 onClick={choose}
-                className="shrink-0 text-xs text-teal-500 hover:text-teal-600"
+                className="shrink-0 text-xs text-teal-700 hover:text-teal-800"
               >
                 Change
               </button>
@@ -225,7 +225,7 @@ function ProjectRow({
         <p className="flex items-center gap-2 font-medium text-ink-900">
           {project.name}
           {active && (
-            <span className="flex items-center gap-1 rounded-full bg-teal-500 px-2 py-0.5 text-[11px] font-medium text-teal-600">
+            <span className="flex items-center gap-1 rounded-full bg-teal-500 px-2 py-0.5 text-[11px] font-medium text-teal-700">
               <Check className="h-3 w-3" />
               Open
             </span>
@@ -313,7 +313,7 @@ function NewProject({
               const picked = await pickWorkspace().catch(() => null);
               if (picked) setWhere(picked);
             }}
-            className="text-teal-500 hover:text-teal-600"
+            className="text-teal-700 hover:text-teal-800"
           >
             Somewhere else
           </button>
@@ -344,7 +344,7 @@ function NewProject({
         <button
           type="submit"
           disabled={!name.trim() || saving}
-          className="flex items-center gap-2 rounded-md bg-teal-500 px-3 py-2 text-sm font-medium text-white hover:bg-teal-600 disabled:opacity-40"
+          className="flex items-center gap-2 rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-40"
         >
           {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           Create
@@ -419,7 +419,7 @@ function Contents({ project }: { project: ProjectFolder }) {
         <button
           type="button"
           onClick={() => void revealProject(project.path)}
-          className="flex shrink-0 items-center gap-1 text-xs text-teal-500 hover:text-teal-600"
+          className="flex shrink-0 items-center gap-1 text-xs text-teal-700 hover:text-teal-800"
         >
           Open the folder
           <ArrowUpRight className="h-3 w-3" />

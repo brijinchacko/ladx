@@ -67,7 +67,7 @@ export default function LadderHome({
     <div className="min-h-0 flex-1 overflow-y-auto bg-white">
       <div className="mx-auto max-w-4xl px-6 py-6">
         <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md border border-ink-200 bg-ink-50 px-4 py-3">
-          <Grid2x2Check className="h-4 w-4 shrink-0 text-teal-600" />
+          <Grid2x2Check className="h-4 w-4 shrink-0 text-teal-700" />
           <span className="text-[13.5px] text-ink-700">Work on the program for</span>
           <select
             value={target}
@@ -109,8 +109,8 @@ export default function LadderHome({
                     className="group flex w-full flex-col rounded-md border border-ink-200 bg-white p-3 text-left transition-colors hover:border-ink-400"
                   >
                     <span className="flex items-baseline gap-2">
-                      <FileCode2 className="h-3.5 w-3.5 shrink-0 text-teal-600" />
-                      <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium text-ink-900 group-hover:text-teal-700">
+                      <FileCode2 className="h-3.5 w-3.5 shrink-0 text-teal-700" />
+                      <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium text-ink-900 group-hover:text-teal-800">
                         {p.name}
                       </span>
                       <span className="shrink-0 font-mono text-[10px] tabular-nums text-ink-400">
@@ -159,7 +159,7 @@ export default function LadderHome({
                       {s.program.rungs.length} rung{s.program.rungs.length === 1 ? "" : "s"}
                     </span>
                     {busy === s.key && (
-                      <Loader2 className="h-3 w-3 shrink-0 animate-spin text-teal-600" />
+                      <Loader2 className="h-3 w-3 shrink-0 animate-spin text-teal-700" />
                     )}
                   </span>
                   <span className="mt-1 text-[12px] leading-relaxed text-ink-500">

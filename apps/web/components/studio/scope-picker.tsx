@@ -54,7 +54,7 @@ export default function ScopePicker({
               }`}
             >
               <span className="flex items-baseline gap-1.5">
-                {on && <Check className="h-3 w-3 shrink-0 self-center text-teal-600" />}
+                {on && <Check className="h-3 w-3 shrink-0 self-center text-teal-700" />}
                 <span className="text-[13px] font-medium text-ink-900">{p.name}</span>
                 <span className="ml-auto shrink-0 font-mono text-[10px] tabular-nums text-ink-400">
                   {p.slugs.length}

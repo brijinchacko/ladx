@@ -29,6 +29,15 @@ const PAIRS: { fg: string; bg: string; what: string; large?: boolean }[] = [
   { fg: "on-accent", bg: "teal-400", what: "the label on a teal button" },
   { fg: "on-accent", bg: "teal-500", what: "the label on a teal button" },
   { fg: "teal-700", bg: "raised", what: "a teal link on a panel" },
+  { fg: "teal-700", bg: "page", what: "a teal link on the page" },
+  // The pairs the pre-deploy sweep caught. teal-500 is a fill, not a ground for
+  // text, and teal-600 as text measured 4.44 on white: under, by a hair.
+  { fg: "raised", bg: "teal-700", what: "white on the primary button" },
+  { fg: "on-accent", bg: "teal-500", what: "the label on a teal fill" },
+  { fg: "teal-800", bg: "teal-50", what: "a teal chip" },
+  { fg: "ink-600", bg: "warning-bg", what: "muted text in a warning box" },
+  { fg: "ink-600", bg: "danger-bg", what: "muted text in an error box" },
+  { fg: "ink-600", bg: "success-bg", what: "muted text in a success box" },
   { fg: "teal-800", bg: "teal-50", what: "teal text on a teal chip" },
   { fg: "danger", bg: "raised", what: "an error message" },
   // On its own tint, which is where these actually appear. Checking only

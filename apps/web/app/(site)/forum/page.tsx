@@ -83,7 +83,7 @@ export default async function ForumPage() {
                     className="group block border border-transparent px-3 py-2.5 transition-colors hover:border-ink-200 hover:bg-ink-50"
                   >
                     <span className="flex items-baseline justify-between gap-3">
-                      <span className="font-display text-[14px] font-bold text-ink-900 group-hover:text-teal-700">
+                      <span className="font-display text-[14px] font-bold text-ink-900 group-hover:text-teal-800">
                         {c.name}
                       </span>
                       <span className="font-mono text-[11px] tabular-nums text-ink-400">
@@ -146,7 +146,7 @@ function EmptyState() {
                 <li key={p}>
                   <Link
                     href={`/forum/new?category=${c.slug}`}
-                    className="flex items-start gap-2 text-[13.5px] leading-relaxed text-ink-600 transition-colors hover:text-teal-700"
+                    className="flex items-start gap-2 text-[13.5px] leading-relaxed text-ink-600 transition-colors hover:text-teal-800"
                   >
                     <Sq size={5} className="mt-[7px] shrink-0 text-ink-400" />
                     {p}

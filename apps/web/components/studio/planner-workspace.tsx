@@ -559,7 +559,7 @@ export default function PlannerWorkspace({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="relative flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50 px-3 py-2">
-        <CalendarRange className="h-3.5 w-3.5 shrink-0 text-teal-600" />
+        <CalendarRange className="h-3.5 w-3.5 shrink-0 text-teal-700" />
 
         <select
           value={clientId}
@@ -694,7 +694,7 @@ export default function PlannerWorkspace({
         {projectId && (
           <Link
             href={`/studio/projects/${projectId}?phase=summary`}
-            className="ml-auto text-[12.5px] text-ink-600 hover:text-teal-700"
+            className="ml-auto text-[12.5px] text-ink-600 hover:text-teal-800"
           >
             Open the project →
           </Link>

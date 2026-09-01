@@ -63,7 +63,7 @@ export function ThreadRow({
           <h3 className="font-display text-[16px] font-bold leading-snug tracking-[-0.01em] text-ink-900">
             <Link
               href={`/forum/t/${thread.slug}`}
-              className="transition-colors hover:text-teal-700"
+              className="transition-colors hover:text-teal-800"
             >
               {thread.title}
             </Link>

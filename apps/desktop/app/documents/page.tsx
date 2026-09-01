@@ -208,7 +208,7 @@ export default function DocumentsPage() {
         </header>
 
         {error && (
-          <p className="rounded-md border border-danger bg-danger px-4 py-3 text-sm text-danger">
+          <p className="rounded-md border border-danger bg-danger-bg px-4 py-3 text-sm text-danger">
             {error}
           </p>
         )}
@@ -263,7 +263,7 @@ export default function DocumentsPage() {
                 {busy ? (
                   <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-ink-400" />
                 ) : (
-                  <Plus className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" />
+                  <Plus className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" />
                 )}
                 <span className="min-w-0">
                   <span className="block text-[13px] font-medium text-ink-900">

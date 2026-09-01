@@ -316,7 +316,7 @@ export default function GanttChart({
                       if (r.task.dependsOn) onLink(r.task.id, null);
                       else setLinking(r.task.id);
                     }}
-                    className="shrink-0 text-ink-400 transition-colors hover:text-teal-700"
+                    className="shrink-0 text-ink-400 transition-colors hover:text-teal-800"
                   >
                     {r.task.dependsOn ? (
                       <Link2Off className="h-3 w-3" />

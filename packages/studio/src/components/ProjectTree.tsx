@@ -93,7 +93,7 @@ function Leaf({
   return (
     <div
       className={`group flex items-center gap-1 px-1.5 h-6 rounded cursor-pointer ${
-        active ? "bg-action" : "hover:bg-ink-100"
+        active ? "bg-white shadow-[0_1px_2px_rgb(var(--ink-900)/0.06)]" : "hover:bg-ink-100"
       }`}
       onClick={onClick}
       onContextMenu={onContextMenu}
@@ -101,7 +101,7 @@ function Leaf({
       {icon && <span className="text-ink-500 shrink-0">{icon}</span>}
       <span
         className={`text-[11.5px] truncate flex-1 min-w-0 ${
-          active ? "text-action font-semibold" : "text-ink-700"
+          active ? "text-ink-900 font-semibold" : "text-ink-700"
         }`}
       >
         {label}

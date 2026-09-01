@@ -72,7 +72,7 @@ export default function HmiHome({
     <div className="relative min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto max-w-5xl px-6 py-6">
         <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md border border-ink-200 bg-ink-50 px-4 py-3">
-          <MonitorCog className="h-4 w-4 shrink-0 text-teal-600" />
+          <MonitorCog className="h-4 w-4 shrink-0 text-teal-700" />
           <span className="text-[13.5px] text-ink-700">New application for</span>
           <select
             value={projectId}
@@ -112,7 +112,7 @@ export default function HmiHome({
                     href={hrefFor(a.id)}
                     className="group flex h-full flex-col rounded-md border border-ink-200 bg-white p-3 transition-colors hover:border-ink-400"
                   >
-                    <span className="truncate text-[13.5px] font-medium text-ink-900 group-hover:text-teal-700">
+                    <span className="truncate text-[13.5px] font-medium text-ink-900 group-hover:text-teal-800">
                       {a.name}
                     </span>
                     <span className="mt-0.5 truncate font-mono text-[10.5px] text-ink-400">
@@ -156,7 +156,7 @@ export default function HmiHome({
                           {p.size.width}×{p.size.height}
                         </span>
                         {busy === p.id && (
-                          <Loader2 className="h-3 w-3 animate-spin text-teal-600" />
+                          <Loader2 className="h-3 w-3 animate-spin text-teal-700" />
                         )}
                       </span>
                       <span className="mt-1 text-[11.5px] leading-relaxed text-ink-500">

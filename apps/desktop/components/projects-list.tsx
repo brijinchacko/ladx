@@ -17,7 +17,7 @@ export function ProjectsList() {
 
   if (error) {
     return (
-      <div className="rounded-md border border-danger bg-danger px-4 py-3 text-sm text-danger">
+      <div className="rounded-md border border-danger bg-danger-bg px-4 py-3 text-sm text-danger">
         {error}
       </div>
     );

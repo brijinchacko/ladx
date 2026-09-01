@@ -174,7 +174,7 @@ export default function ConvertClient() {
                           n.severity === "manual"
                             ? "bg-danger"
                             : n.severity === "warning"
-                              ? "bg-warning"
+                              ? "bg-warning-bg"
                               : "bg-ink-300"
                         }`}
                         aria-hidden="true"

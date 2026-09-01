@@ -81,7 +81,7 @@ export function MenuBar({ menus }: { menus: Menu[] }) {
                     }}
                     className="flex w-full items-center gap-3 px-3 py-1 text-left text-[12.5px] text-ink-700 transition-colors hover:bg-ink-50 disabled:opacity-35 disabled:hover:bg-transparent"
                   >
-                    <span className="w-3 shrink-0 text-teal-600">{it.checked ? "✓" : ""}</span>
+                    <span className="w-3 shrink-0 text-teal-700">{it.checked ? "✓" : ""}</span>
                     <span className="flex-1">{it.label}</span>
                     {it.shortcut && (
                       <span className="font-mono text-[10.5px] text-ink-400">{it.shortcut}</span>
@@ -168,7 +168,7 @@ export function ProjectTree({
             type="button"
             onClick={onAdd}
             title={`Edit ${label.toLowerCase()}`}
-            className="shrink-0 text-ink-400 hover:text-teal-700"
+            className="shrink-0 text-ink-400 hover:text-teal-800"
           >
             +
           </button>
@@ -181,7 +181,7 @@ export function ProjectTree({
   return (
     <div className="py-1">
       <div className="flex items-center gap-1.5 px-2 py-1">
-        <Monitor className="h-3 w-3 shrink-0 text-teal-600" />
+        <Monitor className="h-3 w-3 shrink-0 text-teal-700" />
         <span className="truncate font-mono text-[11px] uppercase tracking-[0.1em] text-ink-600">
           {appName}
         </span>

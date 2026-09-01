@@ -123,7 +123,7 @@ export default function FreePage() {
                 <li key={t.name}>
                   <a
                     href={`#${slug(t.name)}`}
-                    className="font-display font-bold text-[14.5px] text-ink-900 hover:text-teal-700"
+                    className="font-display font-bold text-[14.5px] text-ink-900 hover:text-teal-800"
                   >
                     {t.name}
                   </a>
@@ -169,7 +169,7 @@ export default function FreePage() {
               >
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                   <h3 className="font-display font-bold text-[1.3rem] text-ink-900 tracking-[-0.012em]">
-                    <Link href={t.href} className="hover:text-teal-700">
+                    <Link href={t.href} className="hover:text-teal-800">
                       {t.title}
                     </Link>
                   </h3>

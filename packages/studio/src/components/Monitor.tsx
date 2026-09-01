@@ -609,7 +609,7 @@ export default function Monitor({
 
         <span className="flex items-center gap-1.5 font-mono text-[11.5px] text-ink-500">
           <CircleDot
-            className={`h-3 w-3 ${running ? "animate-pulse text-teal-600" : "text-ink-400"}`}
+            className={`h-3 w-3 ${running ? "animate-pulse text-teal-700" : "text-ink-400"}`}
           />
           {scans} scans
           {observedScanMs !== null && observedScanMs > rate * 1.5 && (

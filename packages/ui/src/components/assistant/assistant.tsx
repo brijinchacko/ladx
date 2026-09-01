@@ -658,7 +658,7 @@ export default function Assistant({
         )}
         {busy && steps.length === 0 && (
           <p className="flex items-center gap-2 text-[12px] text-ink-500">
-            <ThinkingMark size={14} className="text-teal-600" />
+            <ThinkingMark size={14} className="text-teal-700" />
             Working. On the free tier this takes a moment.
           </p>
         )}

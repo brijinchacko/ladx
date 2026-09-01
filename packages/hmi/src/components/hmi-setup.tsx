@@ -763,7 +763,7 @@ function TrendsTab({
                     return d;
                   })
                 }
-                className="text-[12px] text-ink-600 hover:text-teal-700"
+                className="text-[12px] text-ink-600 hover:text-teal-800"
               >
                 + pen
               </button>
@@ -1029,7 +1029,7 @@ function BulkAlarms({
             <button
               type="button"
               onClick={() => setPicked(new Set(tags.map((t) => t.name)))}
-              className="text-[11px] text-ink-600 hover:text-teal-700"
+              className="text-[11px] text-ink-600 hover:text-teal-800"
             >
               All
             </button>
@@ -1038,7 +1038,7 @@ function BulkAlarms({
               onClick={() =>
                 setPicked(new Set(tags.filter((t) => t.type === "INT").map((t) => t.name)))
               }
-              className="text-[11px] text-ink-600 hover:text-teal-700"
+              className="text-[11px] text-ink-600 hover:text-teal-800"
             >
               Analogue
             </button>
@@ -1047,14 +1047,14 @@ function BulkAlarms({
               onClick={() =>
                 setPicked(new Set(tags.filter((t) => t.type === "BOOL").map((t) => t.name)))
               }
-              className="text-[11px] text-ink-600 hover:text-teal-700"
+              className="text-[11px] text-ink-600 hover:text-teal-800"
             >
               Digital
             </button>
             <button
               type="button"
               onClick={() => setPicked(new Set())}
-              className="text-[11px] text-ink-600 hover:text-teal-700"
+              className="text-[11px] text-ink-600 hover:text-teal-800"
             >
               None
             </button>

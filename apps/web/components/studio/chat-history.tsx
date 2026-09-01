@@ -232,7 +232,7 @@ function Row({
       >
         {item.pinned ? (
           <Pin
-            className={`h-3 w-3 shrink-0 ${active ? "text-teal-700" : "text-teal-600"}`}
+            className={`h-3 w-3 shrink-0 ${active ? "text-teal-700" : "text-teal-700"}`}
             fill="currentColor"
           />
         ) : (

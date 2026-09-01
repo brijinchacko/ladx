@@ -32,7 +32,7 @@ export default function ProductsMenu({ active }: { active: boolean }) {
                       className="group -mx-2 block rounded-sm px-2 py-1.5 transition-colors hover:bg-ink-50"
                     >
                       <span className="flex items-baseline gap-2">
-                        <span className="font-display font-bold text-[14.5px] text-ink-900 group-hover:text-teal-700">
+                        <span className="font-display font-bold text-[14.5px] text-ink-900 group-hover:text-teal-800">
                           {p.name}
                         </span>
                         {p.state !== "live" && (
@@ -55,7 +55,7 @@ export default function ProductsMenu({ active }: { active: boolean }) {
             <Link
               href="/products"
               onClick={close}
-              className="font-medium text-[13px] text-ink-800 hover:text-teal-700"
+              className="font-medium text-[13px] text-ink-800 hover:text-teal-800"
             >
               All {PRODUCTS.length} tools →
             </Link>
@@ -107,7 +107,7 @@ export function ProductsMenuMobile({ onNavigate }: { onNavigate: () => void }) {
         <Link
           href="/products"
           onClick={onNavigate}
-          className="text-[12px] text-ink-400 hover:text-teal-700"
+          className="text-[12px] text-ink-400 hover:text-teal-800"
         >
           All {PRODUCTS.length}
         </Link>

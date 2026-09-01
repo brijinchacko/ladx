@@ -1757,7 +1757,7 @@ function Tools({
             <button
               type="button"
               onClick={onAck}
-              className="ml-auto text-[11px] text-ink-600 hover:text-teal-700"
+              className="ml-auto text-[11px] text-ink-600 hover:text-teal-800"
             >
               Ack all
             </button>
@@ -1770,7 +1770,7 @@ function Tools({
                 <li
                   key={r.def.id}
                   className={`truncate rounded-sm px-1 py-0.5 text-[11px] ${
-                    needsAck(r.runtime.state) ? "bg-danger text-ink-900" : "text-ink-500"
+                    needsAck(r.runtime.state) ? "bg-danger-bg text-ink-900" : "text-ink-500"
                   }`}
                 >
                   {r.def.message}
@@ -1794,14 +1794,14 @@ function Tools({
           onClick={() =>
             setOpenCats(Object.fromEntries(["Objects", ...SYMBOL_CATEGORIES].map((c) => [c, true])))
           }
-          className="text-ink-500 hover:text-teal-700"
+          className="text-ink-500 hover:text-teal-800"
         >
           Expand all
         </button>
         <button
           type="button"
           onClick={() => setOpenCats({})}
-          className="text-ink-500 hover:text-teal-700"
+          className="text-ink-500 hover:text-teal-800"
         >
           Collapse all
         </button>
@@ -2047,7 +2047,7 @@ function AlarmList({
               key={r.def.id}
               className={`rounded-sm border px-1.5 py-1 text-[11.5px] ${
                 needsAck(r.runtime.state)
-                  ? "border-danger bg-danger text-ink-900"
+                  ? "border-danger bg-danger-bg text-ink-900"
                   : "border-ink-200 text-ink-600"
               }`}
             >

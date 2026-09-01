@@ -59,7 +59,7 @@ export default function HomePage() {
         </header>
 
         {probe.error && (
-          <div className="rounded-md border border-danger bg-danger px-4 py-3 text-sm text-danger">
+          <div className="rounded-md border border-danger bg-danger-bg px-4 py-3 text-sm text-danger">
             {probe.error}
           </div>
         )}
@@ -82,7 +82,7 @@ export default function HomePage() {
               href="https://ollama.com/download"
               target="_blank"
               rel="noreferrer"
-              className="text-xs text-teal-500 hover:text-teal-600"
+              className="text-xs text-teal-700 hover:text-teal-800"
             >
               Get Ollama →
             </a>
@@ -100,7 +100,7 @@ export default function HomePage() {
           }
           failMessage="Not activated. Enter your licence key in Settings."
           action={
-            <Link href="/settings" className="text-xs text-teal-500 hover:text-teal-600">
+            <Link href="/settings" className="text-xs text-teal-700 hover:text-teal-800">
               Open settings →
             </Link>
           }
@@ -148,8 +148,8 @@ function StatusCard({
           loading
             ? "bg-ink-100 text-ink-500"
             : ok
-              ? "bg-success text-success"
-              : "bg-warning text-warning"
+              ? "bg-success-bg text-success"
+              : "bg-warning-bg text-warning"
         }`}
       >
         {loading ? (

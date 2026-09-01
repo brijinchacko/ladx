@@ -127,7 +127,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     {!isSignUp && (
                       <Link
                         href="/forgot-password"
-                        className="text-xs text-teal-500 hover:text-teal-600"
+                        className="text-xs text-teal-700 hover:text-teal-800"
                       >
                         Forgot?
                       </Link>
@@ -184,14 +184,14 @@ export function AuthForm({ mode }: AuthFormProps) {
           {isSignUp ? (
             <>
               Already have an account?{" "}
-              <Link href="/sign-in" className="text-teal-500 hover:text-teal-600">
+              <Link href="/sign-in" className="text-teal-700 hover:text-teal-800">
                 Sign in
               </Link>
             </>
           ) : (
             <>
               No account?{" "}
-              <Link href="/sign-up" className="text-teal-500 hover:text-teal-600">
+              <Link href="/sign-up" className="text-teal-700 hover:text-teal-800">
                 Create one
               </Link>
             </>

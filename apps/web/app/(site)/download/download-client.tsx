@@ -104,13 +104,13 @@ export default function DownloadClient() {
           <h2 className="mb-2 font-semibold text-ink-900">Before you install</h2>
           <ul className="space-y-2 text-[13.5px] leading-relaxed text-ink-600">
             <li className="flex gap-2">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" />
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" />
               <span>
                 <a
                   href="https://ollama.com/download"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-teal-600 underline underline-offset-2"
+                  className="text-teal-700 underline underline-offset-2"
                 >
                   Ollama
                 </a>{" "}
@@ -119,14 +119,14 @@ export default function DownloadClient() {
               </span>
             </li>
             <li className="flex gap-2">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" />
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" />
               <span>
                 A licence key, entered once. That and the update check, which is off unless you
                 switch it on, are the only times it uses the network.
               </span>
             </li>
             <li className="flex gap-2">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" />
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" />
               <span>
                 A folder for your projects. Each one becomes a real directory you can back up, put
                 on a stick and hand over.
@@ -143,7 +143,7 @@ export default function DownloadClient() {
           </p>
           <Link
             href="/products"
-            className="mt-3 inline-flex items-center gap-1 text-[13px] text-teal-600 hover:text-teal-700"
+            className="mt-3 inline-flex items-center gap-1 text-[13px] text-teal-700 hover:text-teal-800"
           >
             Everything LADX does
             <ArrowRight className="h-3.5 w-3.5" />
@@ -183,7 +183,7 @@ function BuildCard({
       <div className="mb-1 flex items-center gap-2">
         <h2 className="font-semibold text-ink-900">{build.platform}</h2>
         {suggested && (
-          <span className="rounded-full bg-teal-500 px-2 py-0.5 text-[11px] font-medium text-teal-600">
+          <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-medium text-teal-800">
             Your computer
           </span>
         )}
@@ -224,7 +224,7 @@ function BuildCard({
              * the app cannot be checked, and a person who was not warned
              * reasonably concludes the download is malicious and stops.
              */
-            <p className="mt-3 flex gap-2 rounded-md bg-warning px-2.5 py-2 text-[11.5px] leading-relaxed text-ink-600">
+            <p className="mt-3 flex gap-2 rounded-md bg-warning-bg px-2.5 py-2 text-[11.5px] leading-relaxed text-ink-600">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
               <span>
                 Not code signed yet, so {build.platform} will warn you the first time.{" "}
@@ -249,7 +249,7 @@ function BuildCard({
           <button
             type="button"
             onClick={onWeb}
-            className="mt-3 inline-flex items-center gap-1 text-[12.5px] text-teal-600 hover:text-teal-700"
+            className="mt-3 inline-flex items-center gap-1 text-[12.5px] text-teal-700 hover:text-teal-800"
           >
             Use it in the browser meanwhile
             <ArrowRight className="h-3.5 w-3.5" />
@@ -302,7 +302,7 @@ function WebAppNotice({ onClose }: { onClose: () => void }) {
         <X className="h-4 w-4" />
       </button>
 
-      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-md bg-teal-500 text-teal-600">
+      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-md bg-teal-500 text-teal-700">
         <Cloud className="h-4 w-4" />
       </div>
       <h2 id="webapp-notice-title" className="mb-2 text-xl font-semibold tracking-tight">
@@ -328,7 +328,7 @@ function WebAppNotice({ onClose }: { onClose: () => void }) {
       <div className="flex flex-wrap gap-2">
         <Link
           href="/studio"
-          className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-teal-500 px-4 text-sm font-medium text-white transition-opacity hover:opacity-90"
+          className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-teal-700 px-4 text-sm font-medium text-white transition-opacity hover:opacity-90"
         >
           Open LADX in the browser
           <ArrowRight className="h-4 w-4" />

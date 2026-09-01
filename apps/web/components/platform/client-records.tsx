@@ -108,7 +108,7 @@ export function Contacts({
         <button
           type="button"
           onClick={() => setAdding((v) => !v)}
-          className="ml-auto flex items-center gap-1 text-[12.5px] text-ink-600 hover:text-teal-700"
+          className="ml-auto flex items-center gap-1 text-[12.5px] text-ink-600 hover:text-teal-800"
         >
           <Plus className="h-3 w-3" />
           Add
@@ -198,7 +198,7 @@ export function Contacts({
               {c.email && (
                 <a
                   href={`mailto:${c.email}`}
-                  className="font-mono text-[11.5px] text-ink-500 hover:text-teal-700"
+                  className="font-mono text-[11.5px] text-ink-500 hover:text-teal-800"
                 >
                   {c.email}
                 </a>
@@ -215,7 +215,7 @@ export function Contacts({
                     type="button"
                     onClick={() => void change(c.id, { isPrimary: true })}
                     title="Put this one on documents"
-                    className="text-[12px] text-ink-400 hover:text-teal-700"
+                    className="text-[12px] text-ink-400 hover:text-teal-800"
                   >
                     Use on documents
                   </button>
@@ -290,7 +290,7 @@ export function Sites({ clientId, sites }: { clientId: string; sites: ClientSite
         <button
           type="button"
           onClick={() => setAdding((v) => !v)}
-          className="ml-auto flex items-center gap-1 text-[12.5px] text-ink-600 hover:text-teal-700"
+          className="ml-auto flex items-center gap-1 text-[12.5px] text-ink-600 hover:text-teal-800"
         >
           <Plus className="h-3 w-3" />
           Add

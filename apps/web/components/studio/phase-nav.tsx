@@ -80,12 +80,12 @@ export default function PhaseNav({
             >
               {isCurrent ? (
                 <Circle
-                  className="h-2 w-2 shrink-0 text-teal-600"
+                  className="h-2 w-2 shrink-0 text-teal-700"
                   fill="currentColor"
                   aria-label="the project is here"
                 />
               ) : complete ? (
-                <Check className="h-2.5 w-2.5 shrink-0 text-teal-600" />
+                <Check className="h-2.5 w-2.5 shrink-0 text-teal-700" />
               ) : (
                 <span
                   className={`font-mono text-[9.5px] tabular-nums ${

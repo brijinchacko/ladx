@@ -211,7 +211,7 @@ export default function LadxHome() {
                             Being marked
                           </span>
                         ) : e.marksAwarded != null ? (
-                          <span className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-danger text-danger">
+                          <span className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-danger-bg text-danger">
                             {e.marksAwarded}/{e.marks}, try again
                           </span>
                         ) : (

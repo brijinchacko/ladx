@@ -62,7 +62,7 @@ function Body({ lines }: { lines: string[] }) {
         {list.map((item) => (
           <li
             key={item}
-            className="list-disc text-[16.5px] leading-[1.7] text-ink-700 marker:text-teal-600"
+            className="list-disc text-[16.5px] leading-[1.7] text-ink-700 marker:text-teal-700"
           >
             <Inline text={item} />
           </li>
@@ -279,7 +279,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                 <span className="mb-2 block font-mono text-[10.5px] uppercase tracking-[0.12em] text-teal-700">
                   {p.topic}
                 </span>
-                <h3 className="font-display text-[1.05rem] font-bold leading-snug text-ink-900 group-hover:text-teal-700">
+                <h3 className="font-display text-[1.05rem] font-bold leading-snug text-ink-900 group-hover:text-teal-800">
                   {p.title}
                 </h3>
                 <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-500">{p.summary}</p>

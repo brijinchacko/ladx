@@ -64,7 +64,7 @@ export default function ClientStandardsPanel({
         </h2>
         <Link
           href={`/studio/clients/${clientId}`}
-          className="ml-auto text-[12.5px] text-ink-500 hover:text-teal-700"
+          className="ml-auto text-[12.5px] text-ink-500 hover:text-teal-800"
         >
           Change on the client
         </Link>

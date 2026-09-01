@@ -86,7 +86,7 @@ export default async function AdminUsersPage({
                 <td className="px-3 py-2">
                   <Link
                     href={`/studio/admin/users/${u.id}`}
-                    className="font-medium text-ink-900 hover:text-teal-700"
+                    className="font-medium text-ink-900 hover:text-teal-800"
                   >
                     {u.displayName || u.email}
                   </Link>
@@ -116,7 +116,7 @@ export default async function AdminUsersPage({
                         ? "A provider key is on file. It is encrypted and this page cannot read it."
                         : "No provider connected, so nothing AI works for this account."
                     }
-                    className={u.hasProvider ? "text-teal-600" : "text-ink-400"}
+                    className={u.hasProvider ? "text-teal-700" : "text-ink-400"}
                   >
                     {u.hasProvider ? "yes" : "no"}
                   </span>

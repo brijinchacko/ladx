@@ -9,10 +9,14 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-ink-900 text-white hover:bg-ink-800",
-        primary: "bg-teal text-white hover:bg-teal-500",
+        // teal-700, not the brand fill teal: white on teal-500 measures 3.08
+        // to 1, and this is the button on the sign-in form.
+        primary: "bg-teal-700 text-white hover:bg-teal-800",
         secondary: "bg-ink-100 text-ink-900 hover:bg-ink-200",
         ghost: "hover:bg-ink-100 text-ink-900",
-        outline: "border border-ink-200 bg-transparent text-ink-900 hover:bg-ink-50",
+        // The panel colour rather than transparent, so the button keeps its own
+        // ground when it sits over something tinted.
+        outline: "border border-ink-200 bg-white text-ink-900 hover:bg-ink-50",
       },
       size: {
         sm: "h-8 px-3",

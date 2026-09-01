@@ -35,7 +35,7 @@ export interface PlannerTask {
 
 const STATUS: Record<TaskStatus, { label: string; icon: typeof Check; className: string }> = {
   todo: { label: "To do", icon: CircleDashed, className: "text-ink-400" },
-  doing: { label: "Doing", icon: CirclePlay, className: "text-teal-600" },
+  doing: { label: "Doing", icon: CirclePlay, className: "text-teal-700" },
   blocked: { label: "Blocked", icon: OctagonAlert, className: "text-danger" },
   done: { label: "Done", icon: Check, className: "text-teal-700" },
 };

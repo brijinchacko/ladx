@@ -89,7 +89,7 @@ export default function ProductsPage() {
                 >
                   <div className="max-w-2xl">
                     <div className="mb-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                      <h3 className="font-display text-[1.3rem] font-bold tracking-[-0.012em] text-ink-900 group-hover:text-teal-700">
+                      <h3 className="font-display text-[1.3rem] font-bold tracking-[-0.012em] text-ink-900 group-hover:text-teal-800">
                         {p.name}
                       </h3>
                       <span

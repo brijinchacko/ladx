@@ -44,7 +44,7 @@ export default function HomePage() {
             <h1 className="font-display text-[2.6rem] font-extrabold leading-[1.03] tracking-[-0.025em] text-ink-900 sm:text-[3.4rem]">
               Ladder logic you can
               <br />
-              actually <span className="text-teal-600">run</span>.
+              actually <span className="text-teal-700">run</span>.
             </h1>
             <p className="mt-6 max-w-lg text-[16.5px] leading-relaxed text-ink-600">
               An AI workbench for the people who program machines. Draw a rung and watch it conduct.
@@ -188,7 +188,7 @@ export default function HomePage() {
                     >
                       <div className="max-w-2xl">
                         <div className="mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                          <h4 className="font-display text-[1.2rem] font-bold tracking-[-0.01em] text-ink-900 group-hover:text-teal-700">
+                          <h4 className="font-display text-[1.2rem] font-bold tracking-[-0.01em] text-ink-900 group-hover:text-teal-800">
                             {p.name}
                           </h4>
                           <span
@@ -215,7 +215,7 @@ export default function HomePage() {
         </div>
 
         <p className="mt-8 text-[14px] text-ink-500">
-          <Link href="/products" className="font-medium text-ink-800 hover:text-teal-700">
+          <Link href="/products" className="font-medium text-ink-800 hover:text-teal-800">
             All {PRODUCTS.length} in detail →
           </Link>
         </p>

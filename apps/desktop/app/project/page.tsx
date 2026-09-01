@@ -44,7 +44,7 @@ function ProjectDetail() {
   if (error) {
     return (
       <div className="mx-auto max-w-3xl p-8">
-        <div className="rounded-md border border-danger bg-danger px-4 py-3 text-sm text-danger">
+        <div className="rounded-md border border-danger bg-danger-bg px-4 py-3 text-sm text-danger">
           {error}
         </div>
       </div>
@@ -61,7 +61,7 @@ function ProjectDetail() {
     return (
       <div className="mx-auto max-w-3xl p-8">
         <p className="text-ink-500">Project not found.</p>
-        <Link href="/" className="text-sm text-teal-500">
+        <Link href="/" className="text-sm text-teal-700">
           ← Back
         </Link>
       </div>
