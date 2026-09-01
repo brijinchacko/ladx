@@ -75,6 +75,10 @@ export type { Sense } from "./generated/ir/Sense";
 export type { Condition } from "./generated/ir/Condition";
 export type { Step as TraceStep } from "./generated/ir/Step";
 export type { Trace } from "./generated/ir/Trace";
+// The slice of a project a question is about. A whole project never goes
+// to a model; only the rungs that touch what was asked.
+export type { RungExcerpt } from "./generated/ir/RungExcerpt";
+export type { Context } from "./generated/ir/Context";
 export type { FieldDevice } from "./generated/ir/FieldDevice";
 export type { IoDirection } from "./generated/ir/IoDirection";
 // `Tag` and `DataType` exist in both crates with different shapes; the IR ones
