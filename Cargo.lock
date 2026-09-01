@@ -2302,8 +2302,10 @@ dependencies = [
 name = "ladx-vendor-siemens"
 version = "0.0.0"
 dependencies = [
+ "ladx-ir",
  "ladx-types",
  "serde",
+ "serde_json",
  "thiserror 1.0.69",
  "tracing",
 ]
