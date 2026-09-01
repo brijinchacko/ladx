@@ -2,7 +2,7 @@
 
 import { generateLadderViaApi } from "@/components/studio/generate-ladder";
 import LadderHome, { type LadderProgramRow } from "@/components/studio/ladder-home";
-import { LadderAi, LadxStudio, httpStorage } from "@ladx/studio";
+import { LadderAi, LadxStudio, httpStorage, ladxProgramToIr } from "@ladx/studio";
 import { ChevronLeft, FolderKanban, Maximize2, Minimize2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -126,6 +126,89 @@ export default function LadderClient({
               hint: "Build the operator screens for this program. They bind to the tag table you are editing here, so this saves first.",
             },
           ]}
+          /*
+           * Looking the open program over, and asking why a coil will not come
+           * on. Both run in Rust, reached the way the web reaches Rust: an API
+           * route that runs the parser binary as a subprocess.
+           *
+           * The program is sent as IR built from what is on screen rather than
+           * re-read from storage, so the analysis is of what the person is
+           * looking at.
+           */
+          analyse={{
+            label: "Look this program over",
+            run: async (program) => {
+              const res = await fetch("/api/ladder/analyse", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ project: ladxProgramToIr(program) }),
+              });
+              const body = await res.json();
+              if (!res.ok) throw new Error(body.error ?? "The analysis did not run.");
+              return {
+                findings: (body.findings ?? []).map(
+                  (f: {
+                    severity: string;
+                    title: string;
+                    detail: string;
+                    locations: { pou: string | null; rung: string | null; tag: string | null }[];
+                  }) => ({
+                    severity: f.severity as "critical" | "warning" | "suggestion" | "information",
+                    title: f.title,
+                    detail: f.detail,
+                    at: f.locations
+                      .map((l) => (l.rung && l.pou ? `${l.pou}/${l.rung}` : (l.pou ?? l.tag ?? "")))
+                      .filter(Boolean),
+                  }),
+                ),
+                notChecked: body.not_checked ?? [],
+              };
+            },
+            why: async (program, tag) => {
+              const res = await fetch("/api/ladder/analyse", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ project: ladxProgramToIr(program), tag }),
+              });
+              const body = await res.json();
+              if (!res.ok) throw new Error(body.error ?? "The trace did not run.");
+              if (body.note) return { note: body.note, lines: [] };
+              return {
+                lines: (body.steps ?? []).map(
+                  (s: {
+                    tag: string;
+                    pou: string;
+                    rung: string;
+                    via: string;
+                    depth: number;
+                    already_seen: boolean;
+                    conditions: { tag: string; sense: string; one_of_several: boolean }[];
+                  }) => {
+                    const indent = "  ".repeat(s.depth);
+                    if (s.already_seen) {
+                      return `${indent}${s.tag} holds itself in, via ${s.via} on ${s.pou}/${s.rung}`;
+                    }
+                    const conds = s.conditions
+                      .map((c) => {
+                        const want =
+                          c.sense === "mustBeOn"
+                            ? "on"
+                            : c.sense === "mustBeOff"
+                              ? "off"
+                              : "compared";
+                        return c.one_of_several
+                          ? `${c.tag} ${want} (or another)`
+                          : `${c.tag} ${want}`;
+                      })
+                      .join(", ");
+                    return `${indent}${s.tag} is driven by ${s.via} on ${s.pou}/${s.rung}${
+                      conds ? ` when ${conds}` : ""
+                    }`;
+                  },
+                ),
+              };
+            },
+          }}
           bottomDock={({ program, load }) => (
             <LadderAi
               memoryKey={`ladder:${open}`}

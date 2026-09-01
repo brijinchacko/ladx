@@ -7,7 +7,7 @@ import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { ConversionReport, IrProject, ParseResult } from "@ladx/types";
+import type { ConversionReport, HealthReport, IrProject, ParseResult, Trace } from "@ladx/types";
 
 const exec = promisify(execFile);
 
@@ -37,6 +37,24 @@ export function ladxParserBinary(): string {
   if (existsSync(debug)) return debug;
   throw new Error(
     `ladx-parser binary not found. Run: cargo build --release --bin ladx-parser. (looked in ${release} and ${debug})`,
+  );
+}
+
+/**
+ * The Siemens half of the bridge.
+ *
+ * A second binary rather than another mode on the first, because the SCL
+ * generator lives in the crate that depends on the parser crate and putting it
+ * there would be a dependency cycle. Both are built and deployed together.
+ */
+export function ladxSiemensBinary(): string {
+  const root = findWorkspaceRoot();
+  const release = path.join(root, "target", "release", "ladx-siemens");
+  const debug = path.join(root, "target", "debug", "ladx-siemens");
+  if (existsSync(release)) return release;
+  if (existsSync(debug)) return debug;
+  throw new Error(
+    `ladx-siemens binary not found. Run: cargo build --release --bin ladx-siemens. (looked in ${release} and ${debug})`,
   );
 }
 
@@ -77,4 +95,48 @@ export interface IrImport {
   report: ConversionReport;
   /** One line, for showing without making somebody read the whole report. */
   summary: string;
+}
+
+/**
+ * Analysis over an IR document.
+ *
+ * The project is written to a temporary file rather than piped, because the
+ * binary takes a path and a large project on stdin is a second thing to get
+ * right for no benefit. The file is removed whether or not the call succeeds.
+ */
+async function withIrFile<T>(project: unknown, run: (path: string) => Promise<T>): Promise<T> {
+  const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+  const os = await import("node:os");
+  const dir = await mkdtemp(path.join(os.tmpdir(), "ladx-ir-"));
+  const file = path.join(dir, "project.ir.json");
+  try {
+    await writeFile(file, JSON.stringify(project));
+    return await run(file);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
+/** What is worth telling somebody about this project. */
+export async function analyseIr(project: unknown): Promise<HealthReport> {
+  const bin = ladxParserBinary();
+  return withIrFile(project, async (file) => {
+    const { stdout } = await exec(bin, ["--health", file], {
+      timeout: 30_000,
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    return JSON.parse(stdout) as HealthReport;
+  });
+}
+
+/** What would have to be true for a tag to come on. */
+export async function whyNotIr(project: unknown, tag: string): Promise<Trace> {
+  const bin = ladxParserBinary();
+  return withIrFile(project, async (file) => {
+    const { stdout } = await exec(bin, ["--why", file, tag], {
+      timeout: 30_000,
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    return JSON.parse(stdout) as Trace;
+  });
 }

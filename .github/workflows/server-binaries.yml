@@ -37,7 +37,7 @@ jobs:
       # Only the binaries the web app actually runs. The desktop crate is not
       # built here: it needs GTK and WebKit and is not served from Linux.
       - name: Build
-        run: cargo build --release --bin ladx-parser --bin ladx-validate
+        run: cargo build --release --bin ladx-parser --bin ladx-validate --bin ladx-siemens
 
       - name: Check they run
         run: |
@@ -51,4 +51,5 @@ jobs:
           path: |
             target/release/ladx-parser
             target/release/ladx-validate
+            target/release/ladx-siemens
           retention-days: 30

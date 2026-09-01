@@ -10,9 +10,15 @@ ladx-types = { workspace = true }
 ladx-ir = { workspace = true }
 ladx-vendor = { workspace = true }
 ladx-parsers = { workspace = true }
+anyhow = { workspace = true }
+serde_json = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }
+
+[[bin]]
+name = "ladx-siemens"
+path = "src/bin/ladx_siemens.rs"

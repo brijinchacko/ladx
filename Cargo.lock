@@ -2303,6 +2303,7 @@ dependencies = [
 name = "ladx-vendor-siemens"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "ladx-ir",
  "ladx-parsers",
  "ladx-types",

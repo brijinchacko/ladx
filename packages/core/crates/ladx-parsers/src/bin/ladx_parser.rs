@@ -16,15 +16,49 @@
 use anyhow::Context;
 use std::process::ExitCode;
 
+/// What the caller asked for.
+///
+/// Separate modes on one binary rather than three binaries, because every one
+/// of them has to be built for the server and deployed with it, and one
+/// artefact is one thing to forget rather than three.
+enum Mode {
+    /// Names only. What the project list has always used.
+    Manifest,
+    /// The logic, as a LADX IR document.
+    Ir,
+    /// What is worth telling somebody about an IR document.
+    Health,
+    /// Working backwards from one tag.
+    Why,
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
-    let ir = args.iter().any(|a| a == "--ir");
-    let Some(path) = args.iter().skip(1).find(|a| !a.starts_with("--")) else {
-        eprintln!("usage: ladx-parser [--ir] <path>");
+    let mode = if args.iter().any(|a| a == "--ir") {
+        Mode::Ir
+    } else if args.iter().any(|a| a == "--health") {
+        Mode::Health
+    } else if args.iter().any(|a| a == "--why") {
+        Mode::Why
+    } else {
+        Mode::Manifest
+    };
+
+    let positional: Vec<&String> = args.iter().skip(1).filter(|a| !a.starts_with("--")).collect();
+    let Some(path) = positional.first() else {
+        eprintln!("usage: ladx-parser [--ir | --health | --why <tag>] <path>");
         return ExitCode::from(2);
     };
 
-    let result = if ir { run_ir(path) } else { run(path) };
+    let result = match mode {
+        Mode::Manifest => run(path),
+        Mode::Ir => run_ir(path),
+        Mode::Health => run_health(path),
+        Mode::Why => match positional.get(1) {
+            Some(tag) => run_why(path, tag),
+            None => Err(anyhow::anyhow!("--why needs a tag: ladx-parser --why <file> <tag>")),
+        },
+    };
 
     match result {
         Ok(json) => {
@@ -73,4 +107,24 @@ fn run_ir(path: &str) -> anyhow::Result<String> {
         "report": import.report,
         "summary": import.report.summary(),
     }))?)
+}
+
+/// An IR document from disk.
+///
+/// Read as IR rather than parsed from a vendor file: the caller already has
+/// the project, and re-reading it would mean the analysis could disagree with
+/// what is on screen.
+fn read_ir(path: &str) -> anyhow::Result<ladx_ir::IrProject> {
+    let raw = std::fs::read_to_string(path).with_context(|| format!("reading {path}"))?;
+    serde_json::from_str(&raw).with_context(|| format!("{path} is not a LADX IR document"))
+}
+
+fn run_health(path: &str) -> anyhow::Result<String> {
+    let project = read_ir(path)?;
+    Ok(serde_json::to_string(&ladx_ir::health::analyse(&project))?)
+}
+
+fn run_why(path: &str, tag: &str) -> anyhow::Result<String> {
+    let project = read_ir(path)?;
+    Ok(serde_json::to_string(&ladx_ir::trace::why(&project, tag))?)
 }
