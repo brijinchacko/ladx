@@ -176,7 +176,7 @@ export interface AssistantProps {
 
 /** A header control: white on the solid header, lit when it is the current one. */
 const ctl =
-  "flex h-5 w-5 items-center justify-center rounded text-white/80 transition-colors hover:bg-white/20 hover:text-white";
+  "flex h-5 w-5 items-center justify-center rounded text-white transition-colors hover:bg-white/20 hover:text-white";
 
 export default function Assistant({
   toolId,
@@ -370,7 +370,7 @@ export default function Assistant({
 
   if (frame.mode === "minimised") {
     return (
-      <div className="flex shrink-0 items-center gap-2 bg-teal-600 px-3 py-1 text-white">
+      <div className="flex shrink-0 items-center gap-2 bg-teal-700 px-3 py-1 text-white">
         <button
           type="button"
           onClick={() => setMode("floating")}
@@ -381,7 +381,7 @@ export default function Assistant({
           <ChevronUp className="h-3 w-3 opacity-70" />
         </button>
         {turns.length > 0 && (
-          <span className="font-mono text-[10.5px] text-white/70">
+          <span className="font-mono text-[10.5px] text-white">
             {turns.filter((t) => t.role === "you").length} asked
           </span>
         )}
@@ -472,7 +472,9 @@ export default function Assistant({
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
-        className={`flex shrink-0 items-center gap-1.5 bg-teal-600 px-1.5 py-1 text-white ${
+        // teal-700 rather than 600: white on 600 measured 4.44 to 1, which is
+        // under AA by a hair and had been since this bar was drawn.
+        className={`flex shrink-0 items-center gap-1.5 bg-teal-700 px-1.5 py-1 text-white ${
           floating ? "cursor-grab active:cursor-grabbing" : "cursor-grab"
         }`}
       >
@@ -486,7 +488,7 @@ export default function Assistant({
               type="button"
               onClick={() => setModelsOpen((v) => !v)}
               title={`${models.source}. Click to change the model.`}
-              className="flex max-w-[150px] items-center gap-1 rounded-sm bg-white/15 px-1.5 py-0.5 text-white/90 transition-colors hover:bg-white/25 hover:text-white"
+              className="flex max-w-[150px] items-center gap-1 rounded-sm bg-white/15 px-1.5 py-0.5 text-white transition-colors hover:bg-white/25 hover:text-white"
             >
               <Cpu className="h-2.5 w-2.5 shrink-0" />
               <span className="truncate font-mono text-[10px]">
@@ -556,7 +558,7 @@ export default function Assistant({
               onPointerDown={(e) => e.stopPropagation()}
               onClick={onUndo}
               title="Take back the last thing it produced."
-              className="flex items-center gap-1 px-1 text-[11px] text-white/80 transition-colors hover:text-white"
+              className="flex items-center gap-1 px-1 text-[11px] text-white transition-colors hover:text-white"
             >
               <Undo2 className="h-3 w-3" />
               Undo
@@ -638,9 +640,9 @@ export default function Assistant({
               </div>
             )}
             {t.problems && t.problems.length > 0 && (
-              <ul className="mt-1.5 space-y-1 rounded-md border border-[#E4C9A8] bg-[#FDF6EC] p-2">
+              <ul className="mt-1.5 space-y-1 rounded-md border border-warning-border bg-warning-bg p-2">
                 {t.problems.map((p) => (
-                  <li key={p} className="text-[11.5px] text-[#7A4A12] leading-snug">
+                  <li key={p} className="text-[11.5px] text-warning leading-snug">
                     {p}
                   </li>
                 ))}
@@ -683,7 +685,7 @@ export default function Assistant({
         )}
 
         {error && (
-          <p className="rounded-md border border-[#E4B4A8] bg-[#FDEFEC] px-2.5 py-1.5 text-[12px] text-[#7A2E12] leading-snug">
+          <p className="rounded-md border border-danger-border bg-danger-bg px-2.5 py-1.5 text-[12px] text-danger leading-snug">
             {error}
           </p>
         )}
@@ -766,7 +768,7 @@ export default function Assistant({
                 type="button"
                 onClick={send}
                 disabled={!input.trim() || busy || Boolean(disabledReason)}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-teal-600 text-white transition-opacity hover:opacity-90 disabled:opacity-25"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-teal-700 text-white transition-opacity hover:opacity-90 disabled:opacity-25"
                 title={question ? "Answer" : "Send"}
               >
                 <Sparkles className="h-3 w-3" />
@@ -796,7 +798,7 @@ export default function Assistant({
                   title={m.hint}
                   className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10.5px] transition-colors ${
                     runMode.value === m.id
-                      ? "bg-teal-600 font-medium text-white"
+                      ? "bg-teal-700 font-medium text-white"
                       : "text-ink-500 hover:bg-ink-100"
                   }`}
                 >
@@ -827,7 +829,7 @@ export default function Assistant({
           title={`Resize. Smallest is ${MIN_W} by ${MIN_H}.`}
           className="absolute right-0 bottom-0 h-4 w-4 cursor-nwse-resize"
         >
-          <svg viewBox="0 0 16 16" className="h-4 w-4 text-ink-300" aria-hidden="true">
+          <svg viewBox="0 0 16 16" className="h-4 w-4 text-ink-400" aria-hidden="true">
             <path
               d="M15 6 6 15M15 11l-4 4"
               stroke="currentColor"

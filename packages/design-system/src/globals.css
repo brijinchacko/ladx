@@ -38,11 +38,36 @@
      * the one element most people were going to press.
      */
     --on-accent: 15 26 36;
+    /*
+     * ink-200 and ink-300 are borders and decoration, not text.
+     *
+     * They were being used for small labels and counts, where they measured
+     * 2.5 to 1 on white and 2.0 to 1 on the dark panel. Both fail, and the
+     * second is close enough to invisible that the count beside a project name
+     * simply was not there. Every text use moved to ink-400, which is the
+     * faintest step that passes in both themes.
+     */
+    /*
+     * Status, as surfaces rather than only as text.
+     *
+     * There was a parallel palette of about two hundred and fifty arbitrary hex
+     * classes doing this job, a slate ramp and a set of oranges that had grown
+     * up beside the tokens rather than from them. None of it could follow a
+     * theme, and several of the greys were already failing contrast on white
+     * before there was a dark theme to worry about.
+     */
+    --action: 27 111 209;
+    --danger-bg: 253 239 236;
+    --danger-border: 228 180 168;
+    --warning-bg: 253 246 236;
+    --warning-border: 228 201 168;
+    --success-bg: 236 250 240;
+    --success-border: 168 220 184;
     --ink-50: 244 246 248;
     --ink-100: 228 232 236;
     --ink-200: 197 205 212;
     --ink-300: 154 166 176;
-    --ink-400: 94 109 122;
+    --ink-400: 89 104 117;
     --ink-500: 71 88 102;
     --ink-600: 51 66 78;
     --ink-700: 34 46 55;
@@ -69,9 +94,9 @@
      * read. It works as a fill and had never been checked as text, which is
      * how it survived: nothing looks wrong about it until you measure it.
      */
-    --warning: 154 108 21;
+    --warning: 143 100 18;
     /* A hair darker, to clear AA rather than sit just under it at 4.44. */
-    --danger: 203 66 66;
+    --danger: 190 59 59;
     color-scheme: light;
   }
 
@@ -103,6 +128,13 @@
       --page: 11 17 22;
       --success: 74 201 106;
       --warning: 240 190 100;
+      --action: 109 167 236;
+      --danger-bg: 58 21 18;
+      --danger-border: 107 42 34;
+      --warning-bg: 46 33 9;
+      --warning-border: 90 67 26;
+      --success-bg: 14 38 20;
+      --success-border: 30 74 42;
       --danger: 235 116 116;
       color-scheme: dark;
     }
@@ -134,6 +166,13 @@
     --page: 11 17 22;
     --success: 74 201 106;
     --warning: 240 190 100;
+    --action: 109 167 236;
+    --danger-bg: 58 21 18;
+    --danger-border: 107 42 34;
+    --warning-bg: 46 33 9;
+    --warning-border: 90 67 26;
+    --success-bg: 14 38 20;
+    --success-border: 30 74 42;
     --danger: 235 116 116;
     color-scheme: dark;
   }
@@ -164,6 +203,40 @@
   *::before,
   *::after {
     border-color: rgb(var(--ink-100));
+  }
+
+  /*
+   * The wordmark, on whichever ground it is standing on.
+   *
+   * Artwork rather than type, so it cannot be recoloured with a token: both
+   * files ship and one is hidden. The cascade is the same three states as the
+   * colours, for the same reason. A <picture> media query would answer what the
+   * operating system prefers, and the question is what the app is set to.
+   */
+  .ladx-mark-on-dark {
+    display: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .ladx-mark-on-light {
+      display: none;
+    }
+    :root:not([data-theme="light"]) .ladx-mark-on-dark {
+      display: inline;
+    }
+  }
+
+  :root[data-theme="dark"] .ladx-mark-on-light {
+    display: none;
+  }
+  :root[data-theme="dark"] .ladx-mark-on-dark {
+    display: inline;
+  }
+  :root[data-theme="light"] .ladx-mark-on-light {
+    display: inline;
+  }
+  :root[data-theme="light"] .ladx-mark-on-dark {
+    display: none;
   }
 
   /*

@@ -69,7 +69,7 @@ export default function DownloadForm({ slug, files }: { slug: string; files: Tem
                 onChange={(e) => set(field, e.target.value)}
                 maxLength={120}
                 placeholder={placeholderFor(field)}
-                className="w-full rounded-sm border border-ink-200 px-2.5 py-1.5 text-[14px] text-ink-900 outline-none transition-colors placeholder:text-ink-300 focus:border-ink-500"
+                className="w-full rounded-sm border border-ink-200 px-2.5 py-1.5 text-[14px] text-ink-900 outline-none transition-colors placeholder:text-ink-400 focus:border-ink-500"
               />
             </label>
           ))}

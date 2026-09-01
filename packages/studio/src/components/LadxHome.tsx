@@ -159,42 +159,42 @@ export default function LadxHome() {
           }}
         />
       ) : loading ? (
-        <p className="flex items-center gap-2 p-10 text-sm text-[#64748B]">
+        <p className="flex items-center gap-2 p-10 text-sm text-ink-500">
           <Loader2 size={14} className="animate-spin" /> Loading…
         </p>
       ) : (
         <div className="space-y-6 p-4">
           {exercises.length > 0 && (
             <section>
-              <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#0F172A] mb-1">
+              <h2 className="flex items-center gap-1.5 text-sm font-bold text-ink-900 mb-1">
                 <ClipboardList size={14} style={{ color: LIVE }} /> Set by your trainer
               </h2>
-              <p className="text-[12px] text-[#64748B] mb-2.5 max-w-[68ch]">
+              <p className="text-[12px] text-ink-500 mb-2.5 max-w-[68ch]">
                 Build the answer in a project, then submit it from inside the editor. Your trainer
                 marks it by hand.
               </p>
               <div className="space-y-2">
                 {exercises.map((e) => (
-                  <div key={e.id} className="rounded-xl border border-[#EEF2F6] bg-white p-3.5">
+                  <div key={e.id} className="rounded-xl border border-ink-100 bg-white p-3.5">
                     <div className="flex items-start gap-3 flex-wrap">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13.5px] font-semibold text-[#0F172A]">{e.title}</p>
-                        <p className="text-[11px] text-[#64748B] mt-0.5">
+                        <p className="text-[13.5px] font-semibold text-ink-900">{e.title}</p>
+                        <p className="text-[11px] text-ink-500 mt-0.5">
                           {e.marks} marks · pass {e.passPercent}%
                           {e.phaseNumber != null && ` · Phase ${e.phaseNumber}`}
                           {e.platformLabel && ` · ${e.platformLabel}`}
                         </p>
-                        <p className="text-[12px] text-[#334155] mt-1.5 leading-relaxed max-w-[70ch] whitespace-pre-wrap">
+                        <p className="text-[12px] text-ink-700 mt-1.5 leading-relaxed max-w-[70ch] whitespace-pre-wrap">
                           {e.brief}
                         </p>
                         {e.feedback && (
                           <p
-                            className="mt-2 text-[12px] text-[#334155] border-l-2 pl-2.5"
+                            className="mt-2 text-[12px] text-ink-700 border-l-2 pl-2.5"
                             style={{ borderColor: LIVE }}
                           >
                             {e.feedback}
                             {e.markedBy && (
-                              <span className="block text-[10.5px] text-[#64748B] mt-0.5">
+                              <span className="block text-[10.5px] text-ink-500 mt-0.5">
                                 , {e.markedBy}
                               </span>
                             )}
@@ -203,19 +203,19 @@ export default function LadxHome() {
                       </div>
                       <span className="shrink-0">
                         {e.passed ? (
-                          <span className="text-[11.5px] font-bold px-2.5 py-1 rounded-full bg-[#16A34A]/12 text-[#15803D]">
+                          <span className="text-[11.5px] font-bold px-2.5 py-1 rounded-full bg-success/12 text-success">
                             Passed {e.marksAwarded}/{e.marks}
                           </span>
                         ) : e.awaitingMarking ? (
-                          <span className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-700">
+                          <span className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-warning/15 text-warning">
                             Being marked
                           </span>
                         ) : e.marksAwarded != null ? (
-                          <span className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-red-500/12 text-red-600">
+                          <span className="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-danger/12 text-danger">
                             {e.marksAwarded}/{e.marks}, try again
                           </span>
                         ) : (
-                          <span className="text-[11.5px] text-[#64748B]">Not attempted</span>
+                          <span className="text-[11.5px] text-ink-500">Not attempted</span>
                         )}
                       </span>
                     </div>
@@ -227,13 +227,13 @@ export default function LadxHome() {
 
           <section>
             <div className="flex items-center justify-between mb-2.5">
-              <h2 className="text-sm font-bold text-[#0F172A]">Recent</h2>
+              <h2 className="text-sm font-bold text-ink-900">Recent</h2>
               <div className="flex items-center gap-2">
                 {projects.length > RECENT && (
                   <button
                     type="button"
                     onClick={() => setShowAll((v) => !v)}
-                    className="text-[11.5px] text-[#64748B] hover:text-[#0F172A]"
+                    className="text-[11.5px] text-ink-500 hover:text-ink-900"
                   >
                     {showAll ? "Show recent" : `All ${projects.length}`}
                   </button>
@@ -242,7 +242,7 @@ export default function LadxHome() {
                   type="button"
                   onClick={() => create()}
                   disabled={busy !== null}
-                  className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-[12.5px] font-bold text-[#08201f] disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-[12.5px] font-bold text-on-accent disabled:opacity-50"
                   style={{ background: LIVE }}
                 >
                   {busy === "blank" ? (
@@ -256,10 +256,10 @@ export default function LadxHome() {
             </div>
 
             {projects.length === 0 ? (
-              <div className="rounded-xl border border-[#EEF2F6] bg-white px-5 py-8 text-center">
-                <FileCode2 size={22} className="mx-auto mb-2 text-[#64748B]/50" />
-                <p className="text-[13px] text-[#334155]">Nothing saved yet.</p>
-                <p className="text-[11.5px] text-[#64748B] mt-1">
+              <div className="rounded-xl border border-ink-100 bg-white px-5 py-8 text-center">
+                <FileCode2 size={22} className="mx-auto mb-2 text-ink-500/50" />
+                <p className="text-[13px] text-ink-700">Nothing saved yet.</p>
+                <p className="text-[11.5px] text-ink-500 mt-1">
                   Start from a worked example below, it is quicker than an empty grid.
                 </p>
               </div>
@@ -271,7 +271,7 @@ export default function LadxHome() {
                 {(showAll ? projects : projects.slice(0, RECENT)).map((p) => (
                   <div
                     key={p.id}
-                    className="group relative rounded-lg border border-[#EEF2F6] bg-white hover:border-[#35B6BB]/50 transition-colors"
+                    className="group relative rounded-lg border border-ink-100 bg-white hover:border-teal-500/50 transition-colors"
                   >
                     <button
                       type="button"
@@ -281,10 +281,10 @@ export default function LadxHome() {
                       <span className="flex items-center gap-2 min-w-0">
                         <LadxMark size={22} />
                         <span className="min-w-0">
-                          <span className="block text-[12.5px] font-semibold text-[#0F172A] truncate">
+                          <span className="block text-[12.5px] font-semibold text-ink-900 truncate">
                             {p.name || "Untitled"}
                           </span>
-                          <span className="block text-[10.5px] text-[#64748B]">
+                          <span className="block text-[10.5px] text-ink-500">
                             {/*
                           What is in it, then when it was touched. Thirty tiles
                           reading "Untitled" and a date are thirty tiles you
@@ -294,7 +294,7 @@ export default function LadxHome() {
                               ? `${p.networks} network${p.networks === 1 ? "" : "s"} · ${p.tags ?? 0} tag${p.tags === 1 ? "" : "s"}`
                               : "-"}
                           </span>
-                          <span className="block text-[10px] text-[#94A3B8]">
+                          <span className="block text-[10px] text-ink-400">
                             {new Date(p.updatedAt).toLocaleDateString(undefined, {
                               day: "numeric",
                               month: "short",
@@ -308,7 +308,7 @@ export default function LadxHome() {
                     <button
                       type="button"
                       onClick={() => remove(p.id)}
-                      className="absolute top-1 right-1 hidden group-hover:block text-[#64748B] hover:text-red-500 p-1"
+                      className="absolute top-1 right-1 hidden group-hover:block text-ink-500 hover:text-danger p-1"
                       aria-label={`Delete ${p.name || "Untitled"}`}
                     >
                       <Trash2 size={12} />
@@ -320,10 +320,10 @@ export default function LadxHome() {
           </section>
 
           <section>
-            <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#0F172A] mb-1">
+            <h2 className="flex items-center gap-1.5 text-sm font-bold text-ink-900 mb-1">
               <Sparkles size={14} style={{ color: LIVE }} /> Worked examples
             </h2>
-            <p className="text-[12px] text-[#64748B] mb-2.5 max-w-[68ch]">
+            <p className="text-[12px] text-ink-500 mb-2.5 max-w-[68ch]">
               Complete, running programs from the course. Open one, press Run, then take it apart,
               you get your own copy, so nothing you do here affects the original.
             </p>
@@ -334,13 +334,13 @@ export default function LadxHome() {
                   key={s.key}
                   onClick={() => create(s.key)}
                   disabled={busy !== null}
-                  className="text-left rounded-xl border border-[#EEF2F6] bg-white p-3.5 hover:border-[#35B6BB]/40 transition-colors disabled:opacity-50"
+                  className="text-left rounded-xl border border-ink-100 bg-white p-3.5 hover:border-teal-500/40 transition-colors disabled:opacity-50"
                 >
                   <span className="flex items-center gap-1.5">
                     {busy === s.key && <Loader2 size={11} className="animate-spin" />}
-                    <span className="text-[13px] font-semibold text-[#0F172A]">{s.name}</span>
+                    <span className="text-[13px] font-semibold text-ink-900">{s.name}</span>
                   </span>
-                  <span className="block text-[11.5px] text-[#64748B] mt-1 leading-relaxed">
+                  <span className="block text-[11.5px] text-ink-500 mt-1 leading-relaxed">
                     {s.description}
                   </span>
                 </button>
@@ -352,14 +352,14 @@ export default function LadxHome() {
 
       {pendingDelete && (
         <div className="fixed inset-0 z-[60] grid place-items-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-[#EEF2F6] bg-white p-4">
-            <p className="text-[14px] font-bold text-[#0F172A]">Delete this project?</p>
-            <p className="text-[12.5px] text-[#334155] mt-1">This cannot be undone.</p>
+          <div className="w-full max-w-sm rounded-xl border border-ink-100 bg-white p-4">
+            <p className="text-[14px] font-bold text-ink-900">Delete this project?</p>
+            <p className="text-[12.5px] text-ink-700 mt-1">This cannot be undone.</p>
             <div className="flex justify-end gap-2 mt-4">
               <button
                 type="button"
                 onClick={() => setPendingDelete(null)}
-                className="px-3 h-9 rounded-lg border border-[#EEF2F6] text-[12.5px] font-semibold text-[#334155]"
+                className="px-3 h-9 rounded-lg border border-ink-100 text-[12.5px] font-semibold text-ink-700"
               >
                 Cancel
               </button>

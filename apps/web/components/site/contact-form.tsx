@@ -56,7 +56,7 @@ function Form() {
   }
 
   const field =
-    "w-full rounded-sm border border-ink-200 bg-white px-3 py-2.5 text-[15px] text-ink-900 placeholder:text-ink-300 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500";
+    "w-full rounded-sm border border-ink-200 bg-white px-3 py-2.5 text-[15px] text-ink-900 placeholder:text-ink-400 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500";
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">

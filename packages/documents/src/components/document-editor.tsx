@@ -225,7 +225,7 @@ export default function DocumentEditor({
         <div className="ml-auto flex items-center gap-2">
           {status && <span className="font-mono text-[11.5px] text-ink-500">{status}</span>}
           {dirty && !status && (
-            <span className="font-mono text-[11.5px] text-amber-700">Unsaved</span>
+            <span className="font-mono text-[11.5px] text-warning">Unsaved</span>
           )}
           <button
             type="button"

@@ -37,7 +37,11 @@ export default function LadxLogo({
   suffix?: string;
   className?: string;
 }) {
-  const ink = tone === "light" ? "#F8FAFC" : "#0F172A";
+  // `light` means light lettering, for the places that keep a dark ground in
+  // both themes: the square icon tile and the dark ribbon. Everything else
+  // takes the ink from the theme, because the bar it sits on now changes with
+  // it and a fixed near-black wordmark disappeared into the dark editor.
+  const ink = tone === "light" ? "#F8FAFC" : "rgb(var(--ink-900))";
 
   return (
     <span
@@ -58,7 +62,7 @@ export default function LadxLogo({
       {suffix && (
         <span
           style={{
-            color: tone === "light" ? "#94A3B8" : "#64748B",
+            color: tone === "light" ? "#94A3B8" : "rgb(var(--ink-500))",
             fontSize: size * 0.55,
             fontWeight: 600,
             letterSpacing: size * 0.05,

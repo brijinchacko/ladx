@@ -294,7 +294,7 @@ export default function ProjectSummary({
 }
 
 const input =
-  "w-full rounded-md border border-ink-200 px-2.5 py-1.5 text-[13.5px] outline-none placeholder:text-ink-300 focus:border-ink-500";
+  "w-full rounded-md border border-ink-200 px-2.5 py-1.5 text-[13.5px] outline-none placeholder:text-ink-400 focus:border-ink-500";
 
 function Field({
   label,
@@ -314,7 +314,7 @@ function Field({
     <div>
       <span className="block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-500">
         {label}
-        {required && <span className="ml-1 text-red-600">*</span>}
+        {required && <span className="ml-1 text-danger">*</span>}
       </span>
       {hint && <span className="mb-1 block text-[11.5px] leading-snug text-ink-400">{hint}</span>}
       <span className={hint ? "" : "mt-1 block"}>{children}</span>
@@ -338,7 +338,7 @@ function Stat({
       href={href}
       className="flex items-center gap-2.5 bg-white px-4 py-2.5 transition-colors hover:bg-ink-50"
     >
-      <Icon className="h-3.5 w-3.5 shrink-0 text-ink-300" />
+      <Icon className="h-3.5 w-3.5 shrink-0 text-ink-400" />
       <span className="min-w-0">
         <span className="block font-mono text-[13px] tabular-nums text-ink-900">{value}</span>
         <span className="block truncate text-[11px] text-ink-400">{label}</span>

@@ -189,7 +189,7 @@ export default function CadHome({
         </div>
 
         {error && (
-          <p className="mb-5 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-800">
+          <p className="mb-5 rounded-md border border-danger-border bg-danger-bg px-3 py-2 text-[13px] text-danger">
             {error}
           </p>
         )}
@@ -295,7 +295,7 @@ export default function CadHome({
                       router.refresh();
                     }}
                     aria-label={`Delete ${d.name}`}
-                    className="shrink-0 text-ink-300 transition-colors hover:text-red-700"
+                    className="shrink-0 text-ink-400 transition-colors hover:text-danger"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>

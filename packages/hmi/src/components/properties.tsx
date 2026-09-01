@@ -136,7 +136,7 @@ export default function Properties({
           type="button"
           onClick={onDelete}
           title="Delete"
-          className="text-ink-300 hover:text-red-700"
+          className="text-ink-400 hover:text-danger"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -377,7 +377,7 @@ export default function Properties({
               <button
                 type="button"
                 onClick={() => onChange({ image: undefined })}
-                className="mt-1 flex items-center gap-1 text-[11.5px] text-ink-500 hover:text-red-700"
+                className="mt-1 flex items-center gap-1 text-[11.5px] text-ink-500 hover:text-danger"
               >
                 <X className="h-3 w-3" />
                 Back to the drawing

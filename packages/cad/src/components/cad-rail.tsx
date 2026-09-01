@@ -149,7 +149,7 @@ export default function CadRail({
                   onClick={() => onLayerFlag(l.name, "locked", !l.locked)}
                   aria-label={l.locked ? `Unlock ${l.name}` : `Lock ${l.name}`}
                   className={`flex h-5 w-5 items-center justify-center rounded hover:bg-ink-100 ${
-                    l.locked ? "text-[#B4531A]" : "text-ink-400 hover:text-ink-900"
+                    l.locked ? "text-danger" : "text-ink-400 hover:text-ink-900"
                   }`}
                 >
                   {l.locked ? <Lock className="h-3 w-3" /> : <LockOpen className="h-3 w-3" />}

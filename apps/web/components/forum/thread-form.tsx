@@ -95,7 +95,7 @@ export default function ThreadForm({ defaultCategory }: { defaultCategory?: stri
           onChange={(e) => setTitle(e.target.value)}
           maxLength={160}
           placeholder="Ask the specific question, e.g. Why does my TON reset when the rung goes false?"
-          className="w-full rounded-sm border border-ink-200 px-3 py-2 text-[15px] text-ink-900 outline-none transition-colors placeholder:text-ink-300 focus:border-ink-500"
+          className="w-full rounded-sm border border-ink-200 px-3 py-2 text-[15px] text-ink-900 outline-none transition-colors placeholder:text-ink-400 focus:border-ink-500"
         />
         <p className="mt-1.5 font-mono text-[11.5px] text-ink-400">
           {titleShort
@@ -120,7 +120,7 @@ export default function ThreadForm({ defaultCategory }: { defaultCategory?: stri
           placeholder={
             "Include the platform and version, what you expected, and what actually happens.\n\nIf it is a logic problem, the rung matters more than the description of the rung."
           }
-          className="w-full rounded-sm border border-ink-200 px-3 py-2.5 font-mono text-[13.5px] leading-relaxed text-ink-900 outline-none transition-colors placeholder:text-ink-300 focus:border-ink-500"
+          className="w-full rounded-sm border border-ink-200 px-3 py-2.5 font-mono text-[13.5px] leading-relaxed text-ink-900 outline-none transition-colors placeholder:text-ink-400 focus:border-ink-500"
         />
         <p className="mt-1.5 font-mono text-[11.5px] text-ink-400">
           {bodyShort
@@ -130,7 +130,7 @@ export default function ThreadForm({ defaultCategory }: { defaultCategory?: stri
       </div>
 
       {error && (
-        <p className="border-l-2 border-red-500 bg-red-50 py-2 pl-3 text-[13.5px] text-red-800">
+        <p className="border-l-2 border-danger bg-danger-bg py-2 pl-3 text-[13.5px] text-danger">
           {error}
         </p>
       )}

@@ -27,33 +27,33 @@
    carrying a state comes from here. */
 export const ink = {
   /** Headings, tag names, anything that must be read first. */
-  strong: "#0F172A",
+  strong: "rgb(var(--ink-900))",
   /** Body text. */
-  base: "#334155",
+  base: "rgb(var(--ink-700))",
   /** Labels and secondary text. */
-  muted: "#64748B",
+  muted: "rgb(var(--ink-500))",
   /** Hints, placeholders, disabled. The lightest text that still passes. */
-  faint: "#94A3B8",
+  faint: "rgb(var(--ink-400))",
 } as const;
 
 export const surface = {
   /** Panels, cards, the ladder itself. */
-  raised: "#FFFFFF",
+  raised: "rgb(var(--raised))",
   /** Panel title bars and toolbars: a half-step down from white. */
-  subtle: "#F7F9FB",
+  subtle: "rgb(var(--ink-50))",
   /** Grouped toolbar clusters and inactive tabs. */
-  sunken: "#EEF2F6",
+  sunken: "rgb(var(--ink-100))",
   /** The workspace behind the panels. */
-  ground: "#E9EDF2",
+  ground: "rgb(var(--ink-100))",
 } as const;
 
 export const line = {
   /** The standard border. Panels, buttons, inputs. */
-  base: "#C9D2DC",
+  base: "rgb(var(--ink-200))",
   /** Rules inside a panel, between rows, under a header. */
-  soft: "#E2E8F0",
+  soft: "rgb(var(--ink-100))",
   /** The faintest divider, for dense lists. */
-  hairline: "#F1F5F9",
+  hairline: "rgb(var(--ink-50))",
 } as const;
 
 /* ── Brand ───────────────────────────────────────────────────────────
@@ -62,17 +62,17 @@ export const line = {
    colour and marks what the software will do for you. */
 export const brand = {
   /** The X in the wordmark. Selection, focus, confirmation. */
-  teal: "#35B6BB",
+  teal: "rgb(var(--teal-500))",
   /** Teal text on a light background, dark enough to read. */
-  tealInk: "#1B7F84",
+  tealInk: "rgb(var(--teal-700))",
   /** Teal fills, selected rows, focus rings, gentle highlights. */
-  tealWash: "#E8F6F7",
+  tealWash: "rgb(var(--teal-50))",
   /** Primary actions. Download, Next, anything that commits. */
-  blue: "#2891FF",
+  blue: "rgb(var(--action))",
   /** Blue text and pressed states. */
-  blueInk: "#1D4ED8",
+  blueInk: "rgb(var(--action))",
   /** Blue fills, the insertion caret, hovered drop targets. */
-  blueWash: "#E8F2FE",
+  blueWash: "rgb(var(--action))",
 } as const;
 
 /* ── State ───────────────────────────────────────────────────────────
@@ -80,25 +80,25 @@ export const brand = {
 export const state = {
   /** POWER. A conducting rung, a closed contact, an energised coil, a lit
       lamp, the controller in RUN. Nothing else. */
-  live: "#16A34A",
-  liveWash: "#DCFCE7",
+  live: "rgb(var(--success))",
+  liveWash: "rgb(var(--success-bg))",
   /** A lamp or an LED that is drawing the eye, brighter than `live`, for
       small glowing objects rather than text. */
-  liveGlow: "#22C55E",
+  liveGlow: "rgb(var(--success))",
 
   /** Something will run but probably not as meant. */
-  warn: "#B45309",
-  warnEdge: "#F0C36D",
-  warnWash: "#FFFBEB",
+  warn: "rgb(var(--warning))",
+  warnEdge: "rgb(var(--warning-border))",
+  warnWash: "rgb(var(--warning-bg))",
 
   /** Something is wrong and will not work. */
-  fault: "#B3382C",
-  faultEdge: "#E9A69E",
-  faultWash: "#FBEAE8",
+  fault: "rgb(var(--danger))",
+  faultEdge: "rgb(var(--danger-border))",
+  faultWash: "rgb(var(--danger-bg))",
 
   /** De-energised. A dark lamp, an open contact, a stopped controller. */
-  idle: "#94A3B8",
-  idleWash: "#F1F5F9",
+  idle: "rgb(var(--ink-400))",
+  idleWash: "rgb(var(--ink-50))",
 } as const;
 
 /* ── Motion ──────────────────────────────────────────────────────────

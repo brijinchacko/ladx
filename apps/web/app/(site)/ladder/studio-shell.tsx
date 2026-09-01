@@ -186,7 +186,7 @@ function StudioBar({
         <button
           type="button"
           onClick={() => window.dispatchEvent(new Event("ladx:open-consent"))}
-          className="hidden font-mono text-[11px] text-amber-700 underline-offset-2 hover:underline sm:inline"
+          className="hidden font-mono text-[11px] text-warning underline-offset-2 hover:underline sm:inline"
           title="Ladder is not saving your work because functional storage is turned off"
         >
           not saving, click to allow

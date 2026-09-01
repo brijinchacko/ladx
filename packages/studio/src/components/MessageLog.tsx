@@ -110,7 +110,7 @@ export default function MessageLog({
         style={{ fontSize: 10.5 }}
       >
         {rows.length === 0 ? (
-          <p className="px-2.5 py-2 text-[10.5px] text-[#94A3B8] font-sans italic">
+          <p className="px-2.5 py-2 text-[10.5px] text-ink-400 font-sans italic">
             {log.length === 0
               ? "Nothing yet. Compile results, warnings, errors and controller faults appear here."
               : `No ${filter} messages.`}

@@ -36,7 +36,7 @@ export interface PlannerTask {
 const STATUS: Record<TaskStatus, { label: string; icon: typeof Check; className: string }> = {
   todo: { label: "To do", icon: CircleDashed, className: "text-ink-400" },
   doing: { label: "Doing", icon: CirclePlay, className: "text-teal-600" },
-  blocked: { label: "Blocked", icon: OctagonAlert, className: "text-[#B4531A]" },
+  blocked: { label: "Blocked", icon: OctagonAlert, className: "text-danger" },
   done: { label: "Done", icon: Check, className: "text-teal-700" },
 };
 
@@ -193,7 +193,7 @@ export default function ProjectPlanner({
   if (tasks.length === 0) {
     return (
       <section className="rounded-md border border-dashed border-ink-200 px-6 py-10 text-center">
-        <CalendarDays className="mx-auto mb-3 h-6 w-6 text-ink-300" />
+        <CalendarDays className="mx-auto mb-3 h-6 w-6 text-ink-400" />
         <h2 className="font-display text-[15px] font-bold text-ink-900">No plan yet</h2>
         <p className="mx-auto mt-1.5 max-w-md text-[13.5px] leading-relaxed text-ink-500">
           The lifecycle already knows what this project has to produce. Building the plan from it
@@ -270,8 +270,8 @@ export default function ProjectPlanner({
       </header>
 
       {view === "timeline" && undatedCount > 0 && (
-        <div className="flex flex-wrap items-center gap-3 border-b border-amber-200 bg-amber-50 px-5 py-2">
-          <span className="text-[12.5px] text-amber-900">
+        <div className="flex flex-wrap items-center gap-3 border-b border-warning-border bg-warning-bg px-5 py-2">
+          <span className="text-[12.5px] text-warning">
             {undatedCount} task{undatedCount === 1 ? " has" : "s have"} no dates, so{" "}
             {undatedCount === 1 ? "it is" : "they are"} not on the timeline.
           </span>
@@ -283,7 +283,7 @@ export default function ProjectPlanner({
           >
             {scheduling ? "Scheduling…" : "Lay them out on working days"}
           </button>
-          <span className="text-[11.5px] text-amber-800/70">
+          <span className="text-[11.5px] text-warning/70">
             A draft to drag into shape. Anything already dated is left alone.
           </span>
         </div>
@@ -313,7 +313,7 @@ export default function ProjectPlanner({
           if (items.length === 0 && adding !== phase.id) {
             return (
               <div key={phase.id} className="flex items-center gap-2 px-5 py-2">
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-300">
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
                   {phase.name}
                 </span>
                 <button
@@ -336,7 +336,7 @@ export default function ProjectPlanner({
                 <h3 className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
                   {phase.name}
                 </h3>
-                <span className="font-mono text-[9.5px] tabular-nums text-ink-300">
+                <span className="font-mono text-[9.5px] tabular-nums text-ink-400">
                   {items.filter((t) => t.status === "done").length}/{items.length}
                 </span>
                 <button
@@ -346,7 +346,7 @@ export default function ProjectPlanner({
                     setDraft("");
                   }}
                   aria-label={`Add a task to ${phase.name}`}
-                  className="ml-auto flex h-5 w-5 items-center justify-center rounded text-ink-300 transition-colors hover:bg-ink-100 hover:text-ink-900"
+                  className="ml-auto flex h-5 w-5 items-center justify-center rounded text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-900"
                 >
                   <Plus className="h-3 w-3" />
                 </button>
@@ -380,7 +380,7 @@ export default function ProjectPlanner({
                     }}
                     onBlur={() => void add(phase.id)}
                     placeholder="Order the panel, book the FAT witness, chase the P&ID…"
-                    className="flex-1 rounded-md border border-ink-300 px-2.5 py-1.5 text-[13px] outline-none placeholder:text-ink-300 focus:border-ink-500"
+                    className="flex-1 rounded-md border border-ink-300 px-2.5 py-1.5 text-[13px] outline-none placeholder:text-ink-400 focus:border-ink-500"
                   />
                 </div>
               )}
@@ -453,7 +453,7 @@ function TaskRow({
           className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-wide transition-colors ${
             hasDocument
               ? "bg-teal-50 text-teal-700 hover:bg-teal-100"
-              : "text-ink-300 hover:text-ink-700"
+              : "text-ink-400 hover:text-ink-700"
           }`}
         >
           {hasDocument ? "written" : "not started"}
@@ -465,7 +465,7 @@ function TaskRow({
         onChange={(e) => setOwner(e.target.value)}
         onBlur={() => owner !== (task.owner ?? "") && onOwner(owner)}
         placeholder="owner"
-        className="w-24 shrink-0 rounded border border-transparent bg-transparent px-1.5 py-0.5 text-[11.5px] text-ink-600 outline-none placeholder:text-ink-300 hover:border-ink-200 focus:border-ink-400 focus:bg-white"
+        className="w-24 shrink-0 rounded border border-transparent bg-transparent px-1.5 py-0.5 text-[11.5px] text-ink-600 outline-none placeholder:text-ink-400 hover:border-ink-200 focus:border-ink-400 focus:bg-white"
       />
 
       <input
@@ -475,7 +475,7 @@ function TaskRow({
           onDue(e.target.value ? new Date(`${e.target.value}T12:00:00Z`).toISOString() : null)
         }
         className={`w-[7.5rem] shrink-0 rounded border border-transparent bg-transparent px-1 py-0.5 font-mono text-[11px] outline-none hover:border-ink-200 focus:border-ink-400 focus:bg-white ${
-          overdue ? "text-[#B4531A]" : "text-ink-500"
+          overdue ? "text-danger" : "text-ink-500"
         }`}
       />
 
@@ -483,9 +483,9 @@ function TaskRow({
         type="button"
         onClick={onRemove}
         aria-label={`Remove ${task.title}`}
-        className="shrink-0 opacity-0 transition-opacity hover:text-red-700 group-hover:opacity-100"
+        className="shrink-0 opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
       >
-        <Trash2 className="h-3 w-3 text-ink-300" />
+        <Trash2 className="h-3 w-3 text-ink-400" />
       </button>
     </li>
   );

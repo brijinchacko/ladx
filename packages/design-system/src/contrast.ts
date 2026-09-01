@@ -7,11 +7,14 @@
 export type ThemeName = "light" | "dark";
 
 export const LIGHT: Record<string, string> = {
-  danger: "203 66 66",
+  action: "27 111 209",
+  danger: "190 59 59",
+  "danger-bg": "253 239 236",
+  "danger-border": "228 180 168",
   "ink-100": "228 232 236",
   "ink-200": "197 205 212",
   "ink-300": "154 166 176",
-  "ink-400": "94 109 122",
+  "ink-400": "89 104 117",
   "ink-50": "244 246 248",
   "ink-500": "71 88 102",
   "ink-600": "51 66 78",
@@ -22,6 +25,8 @@ export const LIGHT: Record<string, string> = {
   page: "255 255 255",
   raised: "255 255 255",
   success: "31 128 56",
+  "success-bg": "236 250 240",
+  "success-border": "168 220 184",
   "teal-100": "205 239 236",
   "teal-200": "156 223 217",
   "teal-300": "107 207 198",
@@ -32,11 +37,16 @@ export const LIGHT: Record<string, string> = {
   "teal-700": "27 104 98",
   "teal-800": "17 74 70",
   "teal-900": "10 48 45",
-  warning: "154 108 21",
+  warning: "143 100 18",
+  "warning-bg": "253 246 236",
+  "warning-border": "228 201 168",
 };
 
 export const DARK: Record<string, string> = {
+  action: "109 167 236",
   danger: "235 116 116",
+  "danger-bg": "58 21 18",
+  "danger-border": "107 42 34",
   "ink-100": "27 36 44",
   "ink-200": "42 54 64",
   "ink-300": "61 76 87",
@@ -51,6 +61,8 @@ export const DARK: Record<string, string> = {
   page: "11 17 22",
   raised: "15 23 30",
   success: "74 201 106",
+  "success-bg": "14 38 20",
+  "success-border": "30 74 42",
   "teal-100": "17 74 70",
   "teal-200": "27 104 98",
   "teal-300": "35 133 126",
@@ -62,6 +74,8 @@ export const DARK: Record<string, string> = {
   "teal-800": "205 239 236",
   "teal-900": "234 248 247",
   warning: "240 190 100",
+  "warning-bg": "46 33 9",
+  "warning-border": "90 67 26",
 };
 
 /** One token as an RGB triple, failing loudly rather than defaulting to black. */

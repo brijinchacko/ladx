@@ -48,21 +48,21 @@ function Group({
 }) {
   return (
     <div>
-      <div className="flex items-center gap-1 px-1.5 h-7 hover:bg-[#E9EDF2] rounded">
+      <div className="flex items-center gap-1 px-1.5 h-7 hover:bg-ink-100 rounded">
         <button
           type="button"
           onClick={onToggle}
           className="flex items-center gap-1 flex-1 min-w-0 text-left"
         >
-          <span className="text-[#64748B] shrink-0">
+          <span className="text-ink-500 shrink-0">
             {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
           </span>
-          <span className="text-[#334155] shrink-0">{icon}</span>
-          <span className="text-[11.5px] font-semibold text-[#334155] truncate">{label}</span>
+          <span className="text-ink-700 shrink-0">{icon}</span>
+          <span className="text-[11.5px] font-semibold text-ink-700 truncate">{label}</span>
         </button>
         {action}
       </div>
-      {open && <div className="ml-4 border-l border-[#EEF2F6] pl-1">{children}</div>}
+      {open && <div className="ml-4 border-l border-ink-100 pl-1">{children}</div>}
     </div>
   );
 }
@@ -93,20 +93,20 @@ function Leaf({
   return (
     <div
       className={`group flex items-center gap-1 px-1.5 h-6 rounded cursor-pointer ${
-        active ? "bg-[#2891FF]/12" : "hover:bg-[#E9EDF2]"
+        active ? "bg-action/12" : "hover:bg-ink-100"
       }`}
       onClick={onClick}
       onContextMenu={onContextMenu}
     >
-      {icon && <span className="text-[#64748B] shrink-0">{icon}</span>}
+      {icon && <span className="text-ink-500 shrink-0">{icon}</span>}
       <span
         className={`text-[11.5px] truncate flex-1 min-w-0 ${
-          active ? "text-[#1d4ed8] font-semibold" : "text-[#334155]"
+          active ? "text-action font-semibold" : "text-ink-700"
         }`}
       >
         {label}
       </span>
-      {badge && <span className="text-[9.5px] text-[#94A3B8] shrink-0">{badge}</span>}
+      {badge && <span className="text-[9.5px] text-ink-400 shrink-0">{badge}</span>}
       <span className="hidden group-hover:flex items-center gap-0.5 shrink-0">
         {onRename && (
           <button
@@ -116,7 +116,7 @@ function Leaf({
               onRename();
             }}
             title="Rename"
-            className="text-[#94A3B8] hover:text-[#2891FF]"
+            className="text-ink-400 hover:text-action"
           >
             <Pencil size={10} />
           </button>
@@ -129,7 +129,7 @@ function Leaf({
               onPop();
             }}
             title={popTitle ?? "Open in its own window"}
-            className="text-[#94A3B8] hover:text-[#2891FF]"
+            className="text-ink-400 hover:text-action"
           >
             <ExternalLink size={10} />
           </button>
@@ -142,7 +142,7 @@ function Leaf({
               onDelete();
             }}
             title="Delete"
-            className="text-[#94A3B8] hover:text-red-500"
+            className="text-ink-400 hover:text-danger"
           >
             <Trash2 size={10} />
           </button>
@@ -190,10 +190,10 @@ export default function ProjectTree({
 
   return (
     <div
-      className="h-full overflow-y-auto bg-[#F7F9FB] border-r border-[#C9D2DC] p-1.5"
+      className="h-full overflow-y-auto bg-ink-50 border-r border-ink-200 p-1.5"
       onContextMenu={onTreeMenu}
     >
-      <p className="px-1.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] truncate">
+      <p className="px-1.5 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-400 truncate">
         {projectName || "Untitled project"}
       </p>
 
@@ -210,7 +210,7 @@ export default function ProjectTree({
               onAddRoutine();
             }}
             title="Add a routine: a new page of logic, called with JSR"
-            className="text-[#94A3B8] hover:text-[#2891FF]"
+            className="text-ink-400 hover:text-action"
           >
             <Plus size={12} />
           </button>

@@ -107,7 +107,7 @@ export default function AttachProject({
             onChange={(e) => setName(e.target.value)}
             maxLength={200}
             placeholder="New project name"
-            className="w-full rounded-md border border-ink-200 px-2.5 py-1.5 text-[13.5px] outline-none placeholder:text-ink-300 focus:border-ink-500"
+            className="w-full rounded-md border border-ink-200 px-2.5 py-1.5 text-[13.5px] outline-none placeholder:text-ink-400 focus:border-ink-500"
           />
         ) : (
           <select
@@ -134,7 +134,7 @@ export default function AttachProject({
           </button>
         )}
 
-        {error && <p className="mt-2 text-[12.5px] text-red-700">{error}</p>}
+        {error && <p className="mt-2 text-[12.5px] text-danger">{error}</p>}
 
         <div className="mt-3 flex gap-2">
           <button

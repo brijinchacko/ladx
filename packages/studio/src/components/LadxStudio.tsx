@@ -2542,6 +2542,22 @@ export default function LadxStudio({
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  /**
+   * Whether an analysis is running.
+   *
+   * Declared here rather than beside the function that uses it, which is where
+   * it was: below the two early returns underneath this. React counts hooks by
+   * call order, so on the first render, before a program has loaded, the
+   * component returned early and called ninety eight of them, and on the next
+   * render it got past the return and called ninety nine. That is "Rendered
+   * more hooks than during the previous render", and it took the whole editor
+   * down with a client side exception rather than degrading.
+   *
+   * It is why /ladder, the free editor the site leads with, showed nothing but
+   * an error page.
+   */
+  const [analysing, setAnalysing] = useState(false);
+
   if (loading) {
     return (
       <p className="flex items-center gap-2 py-10 text-sm text-text-muted">
@@ -2550,7 +2566,7 @@ export default function LadxStudio({
     );
   }
   if (!program) {
-    return <p className="py-10 text-sm text-red-300">{error ?? "Project not found."}</p>;
+    return <p className="py-10 text-sm text-danger">{error ?? "Project not found."}</p>;
   }
 
   const inputs = tags.filter((t) => t.isInput);
@@ -2585,7 +2601,6 @@ export default function LadxStudio({
    * indistinguishable from one that did not run, and the difference matters:
    * "I checked and it is fine" is a result.
    */
-  const [analysing, setAnalysing] = useState(false);
   const runAnalysis = async () => {
     if (!analyse || !program) return;
     setAnalysing(true);
@@ -2834,13 +2849,13 @@ export default function LadxStudio({
         {rungs.length === 0 ? (
           <div
             onContextMenu={(e) => openMenu(e, canvasMenuItems())}
-            className="rounded border border-dashed border-[#94A3B8] bg-white px-5 py-10 text-center"
+            className="rounded border border-dashed border-ink-400 bg-white px-5 py-10 text-center"
           >
-            <p className="text-[13px] text-[#334155]">No networks yet.</p>
+            <p className="text-[13px] text-ink-700">No networks yet.</p>
             <button
               type="button"
               onClick={() => addRung()}
-              className="mt-2 px-3 h-8 rounded-lg text-[12.5px] font-bold text-[#08201f]"
+              className="mt-2 px-3 h-8 rounded-lg text-[12.5px] font-bold text-on-accent"
               style={{ background: LIVE }}
             >
               Add the first network
@@ -3014,7 +3029,7 @@ export default function LadxStudio({
           <button
             type="button"
             onClick={() => addRung(routineId)}
-            className="w-full h-9 rounded border border-dashed border-[#94A3B8] bg-white text-[12.5px] font-semibold text-[#334155] hover:border-[#35B6BB] hover:text-[#35B6BB]"
+            className="w-full h-9 rounded border border-dashed border-ink-400 bg-white text-[12.5px] font-semibold text-ink-700 hover:border-teal-500 hover:text-teal-500"
           >
             + Add network
           </button>
@@ -3027,7 +3042,7 @@ export default function LadxStudio({
     <div className={`space-y-3 p-3 ${css.root}`}>
       {/* ── Menu bar, then toolbar, then palette ─────────────────────
           The order every PLC IDE uses, top to bottom. */}
-      <div className="rounded-lg border border-[#C9D2DC] bg-white relative" style={{ zIndex: 30 }}>
+      <div className="rounded-lg border border-ink-200 bg-white relative" style={{ zIndex: 30 }}>
         <MenuBar
           menus={menus}
           title={
@@ -3355,7 +3370,7 @@ export default function LadxStudio({
         </div>
 
         {error && (
-          <p className="flex items-center gap-1.5 text-[12.5px] text-red-300">
+          <p className="flex items-center gap-1.5 text-[12.5px] text-danger">
             <AlertTriangle size={13} /> {error}
           </p>
         )}
@@ -3365,7 +3380,7 @@ export default function LadxStudio({
           </p>
         )}
         {runtimeErrors.map((e) => (
-          <p key={e} className="flex items-center gap-1.5 text-[12.5px] text-red-300">
+          <p key={e} className="flex items-center gap-1.5 text-[12.5px] text-danger">
             <AlertTriangle size={13} /> {e}
           </p>
         ))}
@@ -3390,7 +3405,7 @@ export default function LadxStudio({
           <button
             type="button"
             onClick={() => setFlash(null)}
-            className="text-[#64748B] hover:text-[#0f172a]"
+            className="text-ink-500 hover:text-ink-900"
           >
             ×
           </button>
@@ -3404,7 +3419,7 @@ export default function LadxStudio({
           middle and is never closable, there would be nothing left. */}
       <div
         ref={workspaceRef}
-        className="flex flex-col gap-1 rounded-lg bg-[#E9EDF2] p-2"
+        className="flex flex-col gap-1 rounded-lg bg-ink-100 p-2"
         style={{ height: workspaceH ?? "80vh", minHeight: 460 }}
       >
         {/* Instructions run the full width above the work area, which is
@@ -3507,7 +3522,7 @@ export default function LadxStudio({
                 controller keeps it and where every IDE shows it. */}
                   {treeSel === "tags" && !tagsFloating && (
                     <div
-                      className="border-t border-[#C9D2DC] flex-1 min-h-0 flex flex-col"
+                      className="border-t border-ink-200 flex-1 min-h-0 flex flex-col"
                       style={{ minHeight: "16rem" }}
                     >
                       <button
@@ -3705,12 +3720,12 @@ export default function LadxStudio({
                   bodyClass="flex-1 min-h-0 overflow-auto p-2 space-y-2.5"
                   style={{ flex: 1 }}
                 >
-                  <div className="rounded border border-[#C9D2DC] bg-white p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2">
+                  <div className="rounded border border-ink-200 bg-white p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-2">
                       Inputs
                     </p>
                     {inputs.length === 0 ? (
-                      <p className="text-[11.5px] text-[#64748B]">
+                      <p className="text-[11.5px] text-ink-500">
                         Tick &ldquo;input&rdquo; on a tag to get a switch here.
                       </p>
                     ) : (
@@ -3719,7 +3734,7 @@ export default function LadxStudio({
                           t.type === "INT" ? (
                             <div key={t.name}>
                               <span className="flex justify-between text-[11.5px]">
-                                <span className="font-medium text-[#0F172A]">
+                                <span className="font-medium text-ink-900">
                                   {t.name}
                                   {t.address && (
                                     <span
@@ -3740,7 +3755,7 @@ export default function LadxStudio({
                                 max={100}
                                 value={t.value}
                                 onChange={(e) => setAnalog(t.name, Number(e.target.value))}
-                                className="w-full accent-[#35B6BB]"
+                                className="w-full accent-teal-500"
                               />
                             </div>
                           ) : (
@@ -3748,7 +3763,7 @@ export default function LadxStudio({
                               type="button"
                               key={t.name}
                               onClick={() => toggleInput(t.name)}
-                              className="w-full flex items-center gap-2 px-2 h-9 rounded border bg-white hover:bg-[#F4F6F9] transition-colors"
+                              className="w-full flex items-center gap-2 px-2 h-9 rounded border bg-white hover:bg-ink-50 transition-colors"
                               style={{ borderColor: t.value ? "#16A34A" : "#C9D2DC" }}
                               title={`${t.name}, click to toggle`}
                             >
@@ -3767,7 +3782,7 @@ export default function LadxStudio({
                                 />
                               </span>
                               <span className="flex-1 min-w-0 text-left">
-                                <span className="block text-[11.5px] font-medium text-[#0F172A] truncate">
+                                <span className="block text-[11.5px] font-medium text-ink-900 truncate">
                                   {t.name}
                                 </span>
                                 {/* The terminal. A student who only ever sees the name
@@ -3794,12 +3809,12 @@ export default function LadxStudio({
                     )}
                   </div>
 
-                  <div className="rounded border border-[#C9D2DC] bg-white p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2">
+                  <div className="rounded border border-ink-200 bg-white p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-2">
                       Outputs
                     </p>
                     {outputs.length === 0 ? (
-                      <p className="text-[11.5px] text-[#64748B]">
+                      <p className="text-[11.5px] text-ink-500">
                         Tick &ldquo;output&rdquo; on a tag to get a lamp here.
                       </p>
                     ) : (
@@ -3819,7 +3834,7 @@ export default function LadxStudio({
                               }}
                             />
                             <span className="flex-1 min-w-0">
-                              <span className="block text-[11.5px] font-medium text-[#0F172A] truncate">
+                              <span className="block text-[11.5px] font-medium text-ink-900 truncate">
                                 {t.name}
                               </span>
                               {t.address && (
@@ -3843,16 +3858,18 @@ export default function LadxStudio({
                     )}
                   </div>
 
-                  <div className="rounded border border-[#C9D2DC] bg-white p-3">
+                  <div className="rounded border border-ink-200 bg-white p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
                         Tags
                       </p>
                       <button
                         type="button"
                         onClick={addTag}
-                        className="text-[11px] font-semibold"
-                        style={{ color: LIVE }}
+                        // The text-safe teal, not the fill teal: at 11px the
+                        // brighter one measured 2.45 to 1 on white, and this
+                        // is a control somebody is meant to find and press.
+                        className="text-[11px] font-semibold text-teal-700"
                       >
                         + Add
                       </button>
@@ -3861,20 +3878,20 @@ export default function LadxStudio({
                       {program.tags.map((t, i) => (
                         <div
                           key={i}
-                          className="rounded border border-[#E2E8F0] bg-[#F7F9FB] p-1.5 space-y-1"
+                          className="rounded border border-ink-100 bg-ink-50 p-1.5 space-y-1"
                         >
                           <div className="flex items-center gap-1">
                             <input
                               value={t.name}
                               onChange={(e) => updateTag(i, { name: e.target.value })}
-                              className="flex-1 min-w-0 bg-transparent text-[11.5px] font-mono text-[#0F172A] outline-none"
+                              className="flex-1 min-w-0 bg-transparent text-[11.5px] font-mono text-ink-900 outline-none"
                             />
                             <select
                               value={t.type}
                               onChange={(e) =>
                                 updateTag(i, { type: e.target.value as Tag["type"] })
                               }
-                              className="bg-white border border-[#C9D2DC] rounded text-[10px] text-[#334155] px-0.5"
+                              className="bg-white border border-ink-200 rounded text-[10px] text-ink-700 px-0.5"
                             >
                               <option value="BOOL">BOOL</option>
                               <option value="INT">INT</option>
@@ -3884,18 +3901,18 @@ export default function LadxStudio({
                             <button
                               type="button"
                               onClick={() => removeTag(i)}
-                              className="text-[#94A3B8] hover:text-red-500"
+                              className="text-ink-400 hover:text-danger"
                             >
                               <Trash2 size={11} />
                             </button>
                           </div>
-                          <div className="flex items-center gap-2 text-[10px] text-[#334155]">
+                          <div className="flex items-center gap-2 text-[10px] text-ink-700">
                             <label className="flex items-center gap-1 cursor-pointer">
                               <input
                                 type="checkbox"
                                 checked={!!t.isInput}
                                 onChange={(e) => updateTag(i, { isInput: e.target.checked })}
-                                className="accent-[#35B6BB]"
+                                className="accent-teal-500"
                               />
                               input
                             </label>
@@ -3904,7 +3921,7 @@ export default function LadxStudio({
                                 type="checkbox"
                                 checked={!!t.isOutput}
                                 onChange={(e) => updateTag(i, { isOutput: e.target.checked })}
-                                className="accent-[#35B6BB]"
+                                className="accent-teal-500"
                               />
                               output
                             </label>
@@ -3915,7 +3932,7 @@ export default function LadxStudio({
                                   updateTag(i, { device: e.target.value as Tag["device"] })
                                 }
                                 title="What this tag is wired to. It decides how the simulator control behaves."
-                                className="bg-white border border-[#C9D2DC] rounded text-[10px] text-[#334155] px-0.5 max-w-[8.5rem]"
+                                className="bg-white border border-ink-200 rounded text-[10px] text-ink-700 px-0.5 max-w-[8.5rem]"
                               >
                                 {(t.isOutput ? OUTPUT_DEVICES : INPUT_DEVICES).map((d) => (
                                   <option key={d} value={d}>
@@ -3932,7 +3949,7 @@ export default function LadxStudio({
                                 title={
                                   t.type === "TIMER" ? "Preset in milliseconds" : "Preset count"
                                 }
-                                className="ml-auto w-16 bg-white border border-[#C9D2DC] rounded px-1 text-[10px] text-[#0F172A]"
+                                className="ml-auto w-16 bg-white border border-ink-200 rounded px-1 text-[10px] text-ink-900"
                               />
                             )}
                           </div>
@@ -4064,7 +4081,7 @@ export default function LadxStudio({
           <button
             type="button"
             onClick={() => setBranchHint(null)}
-            className="text-[#64748B] hover:text-[#0f172a]"
+            className="text-ink-500 hover:text-ink-900"
           >
             ×
           </button>
@@ -4217,7 +4234,7 @@ export default function LadxStudio({
               type="button"
               onClick={() => submitExercise(submitTo)}
               disabled={submitting || totalRungs === 0}
-              className="flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-bold text-[#08201f] disabled:opacity-40"
+              className="flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-bold text-on-accent disabled:opacity-40"
               style={{ background: LIVE }}
             >
               {submitting && <Loader2 size={13} className="animate-spin" />}
@@ -4290,7 +4307,7 @@ export default function LadxStudio({
                         else insertInstruction(picker.rungId, [], 999, i.type);
                         setPicker(null);
                       }}
-                      className="text-left px-2.5 py-1.5 rounded-lg border border-white/[0.1] hover:border-[#35B6BB]/50 hover:bg-[#35B6BB]/[0.06]"
+                      className="text-left px-2.5 py-1.5 rounded-lg border border-white/[0.1] hover:border-teal-500/50 hover:bg-teal-500/[0.06]"
                     >
                       <span className="block text-[12px] font-bold text-text-primary">
                         {i.type}
@@ -4342,7 +4359,7 @@ export default function LadxStudio({
                   ))}
               </select>
               {routines.length < 2 && (
-                <span className="block text-[11.5px] text-amber-300 mt-1">
+                <span className="block text-[11.5px] text-warning mt-1">
                   There are no other routines yet. Add one with + in the project tree.
                 </span>
               )}
@@ -4378,7 +4395,7 @@ export default function LadxStudio({
                 // before the tree is rewritten underneath it.
                 setTimeout(() => branchAroundSelection(), 0);
               }}
-              className="w-full mb-3 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-[#35B6BB]/40 bg-[#35B6BB]/[0.08] text-[12.5px] font-bold text-[#35B6BB]"
+              className="w-full mb-3 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-teal-500/40 bg-teal-500/[0.08] text-[12.5px] font-bold text-teal-500"
             >
               <GitBranch size={13} /> Branch around this contact
             </button>
@@ -4402,7 +4419,7 @@ export default function LadxStudio({
               const devices = isOutputSide ? OUTPUT_DEVICES : INPUT_DEVICES;
 
               return (
-                <div className="rounded-lg border border-[#35B6BB]/40 bg-[#35B6BB]/[0.06] p-3 mb-3">
+                <div className="rounded-lg border border-teal-500/40 bg-teal-500/[0.06] p-3 mb-3">
                   <p className="text-[12px] font-bold text-text-primary">
                     &ldquo;{editing.tag.includes(".") ? editing.tag.split(".")[0] : editing.tag}
                     &rdquo; is not declared yet.
@@ -4426,7 +4443,7 @@ export default function LadxStudio({
                               ...(isOutputSide ? { isOutput: true } : { isInput: true }),
                             })
                           }
-                          className="px-2.5 h-8 rounded-lg border border-white/[0.12] bg-white/[0.04] text-[12px] font-semibold text-text-secondary hover:border-[#35B6BB] hover:text-text-primary"
+                          className="px-2.5 h-8 rounded-lg border border-white/[0.12] bg-white/[0.04] text-[12px] font-semibold text-text-secondary hover:border-teal-500 hover:text-text-primary"
                         >
                           {DEVICE_LABEL[d]}
                         </button>
@@ -4441,7 +4458,7 @@ export default function LadxStudio({
                           preset: editing.preset ?? (dataType === "TIMER" ? 5000 : 10),
                         })
                       }
-                      className="px-3 h-8 rounded-lg text-[12px] font-bold text-[#08201f]"
+                      className="px-3 h-8 rounded-lg text-[12px] font-bold text-on-accent"
                       style={{ background: LIVE }}
                     >
                       Add {dataType.toLowerCase()} to the tag table
@@ -4545,7 +4562,7 @@ export default function LadxStudio({
           <button
             type="button"
             onClick={() => setEditing(null)}
-            className="w-full h-9 rounded-lg text-[13px] font-bold text-[#08201f]"
+            className="w-full h-9 rounded-lg text-[13px] font-bold text-on-accent"
             style={{ background: LIVE }}
           >
             Done

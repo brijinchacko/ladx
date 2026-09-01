@@ -183,7 +183,7 @@ export default function LadxExercises({
   return (
     <div className="space-y-4">
       {error && (
-        <p className="flex items-center gap-1.5 text-[12.5px] text-red-300">
+        <p className="flex items-center gap-1.5 text-[12.5px] text-danger">
           <AlertTriangle size={13} /> {error}
         </p>
       )}
@@ -197,7 +197,7 @@ export default function LadxExercises({
         <button
           type="button"
           onClick={() => setDraft({ ...BLANK })}
-          className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-[12.5px] font-bold text-[#08201f]"
+          className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-[12.5px] font-bold text-on-accent"
           style={{ background: LIVE }}
         >
           <Plus size={12} /> New exercise
@@ -205,7 +205,7 @@ export default function LadxExercises({
         {waiting > 0 && (
           <a
             href={markingHref}
-            className="text-[12.5px] font-semibold text-amber-300 hover:underline"
+            className="text-[12.5px] font-semibold text-warning hover:underline"
           >
             {waiting} answer{waiting === 1 ? "" : "s"} waiting to be marked →
           </a>
@@ -266,7 +266,7 @@ export default function LadxExercises({
                 type="button"
                 onClick={() => remove(r)}
                 disabled={busy !== null}
-                className="text-text-muted hover:text-red-400 shrink-0"
+                className="text-text-muted hover:text-danger shrink-0"
                 aria-label="Delete"
               >
                 <Trash2 size={13} />
@@ -393,7 +393,7 @@ export default function LadxExercises({
                 type="button"
                 onClick={() => save(true)}
                 disabled={busy !== null}
-                className="flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-bold text-[#08201f] disabled:opacity-50"
+                className="flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-bold text-on-accent disabled:opacity-50"
                 style={{ background: LIVE }}
               >
                 {busy === "save" && <Loader2 size={13} className="animate-spin" />}

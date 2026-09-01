@@ -202,7 +202,7 @@ export default function HomePage() {
                       </div>
                       <span
                         aria-hidden="true"
-                        className="hidden text-[14px] text-ink-300 transition-transform group-hover:translate-x-0.5 group-hover:text-ink-600 sm:block"
+                        className="hidden text-[14px] text-ink-400 transition-transform group-hover:translate-x-0.5 group-hover:text-ink-600 sm:block"
                       >
                         →
                       </span>
@@ -302,7 +302,11 @@ export default function HomePage() {
           <h2 className="font-display text-[1.9rem] font-extrabold tracking-[-0.02em] text-white">
             Open it and draw a rung.
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-[15.5px] leading-relaxed text-ink-200">
+          {/* On a band that is deliberately inverted, the text has to invert
+              with it. A step from the ink ramp does not: ink-900 becomes light
+              in the dark theme while a mid grey stays mid, and the sentence
+              faded to 2.7 to 1. */}
+          <p className="mx-auto mt-3 max-w-md text-[15.5px] leading-relaxed text-white/80">
             The editor and the simulator are free and always will be. No sign-up, no card, nothing
             to install.
           </p>

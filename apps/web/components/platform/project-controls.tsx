@@ -230,7 +230,7 @@ export function NewProjectForm({
         <div className="shrink-0 border-t border-ink-100 px-6 py-4">
           {/* The error sits with the button that produced it, where somebody
               who just clicked is already looking. */}
-          {error && <p className="mb-2 text-[13px] text-red-700">{error}</p>}
+          {error && <p className="mb-2 text-[13px] text-danger">{error}</p>}
           <div className="flex items-center gap-3">
             <button
               type="submit"

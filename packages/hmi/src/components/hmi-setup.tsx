@@ -289,7 +289,7 @@ function ScreenTab({
           onClick={() =>
             onChange((d) => ({ ...d, screens: d.screens.filter((s) => s.id !== screen.id) }))
           }
-          className="flex items-center gap-1.5 text-[12.5px] text-red-700 hover:underline"
+          className="flex items-center gap-1.5 text-[12.5px] text-danger hover:underline"
         >
           <Trash2 className="h-3.5 w-3.5" />
           Delete this screen and its {screen.widgets.length} objects
@@ -407,7 +407,7 @@ function TagsTab({
                     onClick={() =>
                       onChange((d) => ({ ...d, tags: d.tags.filter((_, j) => j !== i) }))
                     }
-                    className="text-ink-300 hover:text-red-700"
+                    className="text-ink-400 hover:text-danger"
                     aria-label={`Delete ${t.name}`}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -491,7 +491,7 @@ function AlarmsTab({
                   onClick={() =>
                     onChange((d) => ({ ...d, alarms: d.alarms.filter((_, j) => j !== i) }))
                   }
-                  className="text-ink-300 hover:text-red-700"
+                  className="text-ink-400 hover:text-danger"
                   aria-label="Delete alarm"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -662,7 +662,7 @@ function TrendsTab({
                 onClick={() =>
                   onChange((d) => ({ ...d, trends: d.trends.filter((_, j) => j !== i) }))
                 }
-                className="text-ink-300 hover:text-red-700"
+                className="text-ink-400 hover:text-danger"
                 aria-label="Delete trend"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -737,7 +737,7 @@ function TrendsTab({
                         return d;
                       })
                     }
-                    className="text-ink-300 hover:text-red-700"
+                    className="text-ink-400 hover:text-danger"
                     aria-label="Remove pen"
                   >
                     <Trash2 className="h-3 w-3" />
@@ -1381,7 +1381,7 @@ function RecipesTab({
                     r.note = e.target.value;
                   })
                 }
-                className="w-full rounded-sm border border-ink-200 px-2 py-1 text-[12.5px] outline-none focus:border-ink-500 placeholder:text-ink-300"
+                className="w-full rounded-sm border border-ink-200 px-2 py-1 text-[12.5px] outline-none focus:border-ink-500 placeholder:text-ink-400"
               />
             </label>
             <button
@@ -1394,7 +1394,7 @@ function RecipesTab({
                 });
                 setOpenId(remaining[0]?.id ?? null);
               }}
-              className="rounded-sm border border-ink-200 px-2 py-1 text-[12px] text-[#B4531A] hover:border-[#B4531A]"
+              className="rounded-sm border border-ink-200 px-2 py-1 text-[12px] text-danger hover:border-danger"
             >
               Delete
             </button>
@@ -1455,7 +1455,7 @@ function RecipesTab({
                         r.values = r.values.filter((_, j) => j !== i);
                       })
                     }
-                    className="text-[11.5px] text-ink-400 hover:text-[#B4531A]"
+                    className="text-[11.5px] text-ink-400 hover:text-danger"
                   >
                     Remove
                   </button>
@@ -1594,7 +1594,7 @@ function FaceplatesTab({
                       return d;
                     })
                   }
-                  className="ml-auto text-[11.5px] text-ink-400 hover:text-[#B4531A]"
+                  className="ml-auto text-[11.5px] text-ink-400 hover:text-danger"
                 >
                   Delete
                 </button>
@@ -1679,7 +1679,7 @@ function SecurityTab({
         </div>
       </div>
 
-      <p className="rounded-sm border border-[#E4C9A8] bg-[#FDF6EC] p-3 text-[12px] leading-relaxed text-[#7A4A12]">
+      <p className="rounded-sm border border-warning-border bg-warning-bg p-3 text-[12px] leading-relaxed text-warning">
         This is a design and demonstration setting, not a credential. Nothing here authenticates
         anybody, and switching role needs no password. It exists so a screen can be built and
         reviewed against what each role may touch, and so the requirement can be handed over.

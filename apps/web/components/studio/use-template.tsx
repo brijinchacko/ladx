@@ -157,7 +157,7 @@ export default function UseTemplate({
                 onChange={(e) => setNewName(e.target.value)}
                 maxLength={200}
                 placeholder="Line 4 filler upgrade"
-                className="w-full rounded-md border border-ink-200 px-2.5 py-2 text-[14px] outline-none placeholder:text-ink-300 focus:border-ink-500"
+                className="w-full rounded-md border border-ink-200 px-2.5 py-2 text-[14px] outline-none placeholder:text-ink-400 focus:border-ink-500"
               />
             </label>
             <label className="block">
@@ -169,7 +169,7 @@ export default function UseTemplate({
                 onChange={(e) => setNewCode(e.target.value)}
                 maxLength={40}
                 placeholder="LX-2601"
-                className="w-full rounded-md border border-ink-200 px-2.5 py-2 text-[14px] outline-none placeholder:text-ink-300 focus:border-ink-500"
+                className="w-full rounded-md border border-ink-200 px-2.5 py-2 text-[14px] outline-none placeholder:text-ink-400 focus:border-ink-500"
               />
             </label>
             <p className="text-[12px] leading-relaxed text-ink-400">
@@ -178,7 +178,7 @@ export default function UseTemplate({
           </div>
         )}
 
-        {error && <p className="text-[13px] text-red-700">{error}</p>}
+        {error && <p className="text-[13px] text-danger">{error}</p>}
 
         <button
           type="button"

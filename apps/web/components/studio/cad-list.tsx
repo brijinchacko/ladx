@@ -143,7 +143,7 @@ export default function CadList({
           )}
         </div>
 
-        {error && <p className="mt-2 text-[13px] text-red-700">{error}</p>}
+        {error && <p className="mt-2 text-[13px] text-danger">{error}</p>}
       </section>
 
       {drawings.length === 0 ? (
@@ -168,7 +168,7 @@ export default function CadList({
                 type="button"
                 onClick={() => remove(d.id, d.name)}
                 aria-label={`Delete ${d.name}`}
-                className="shrink-0 text-ink-300 transition-colors hover:text-red-700"
+                className="shrink-0 text-ink-400 transition-colors hover:text-danger"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>

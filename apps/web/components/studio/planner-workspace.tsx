@@ -716,13 +716,13 @@ export default function PlannerWorkspace({
             {
               id: "late",
               label: `${state.late.length} late`,
-              tone: "text-[#B4531A]",
+              tone: "text-danger",
               n: state.late.length,
             },
             {
               id: "soon",
               label: `${state.soon.length} due this week`,
-              tone: "text-[#8A6A1F]",
+              tone: "text-warning",
               n: state.soon.length,
             },
             {
@@ -840,7 +840,7 @@ export default function PlannerWorkspace({
                 return;
               bulk((id) => ({ kind: "delete", taskId: id }));
             }}
-            className="flex items-center gap-1 rounded-md border border-[#E4B4A8] bg-white px-2 py-0.5 text-[12px] text-[#7A2E12] transition-colors hover:border-[#B4531A]"
+            className="flex items-center gap-1 rounded-md border border-danger-border bg-white px-2 py-0.5 text-[12px] text-danger transition-colors hover:border-danger"
           >
             <Trash2 className="h-3 w-3" />
             Delete
@@ -939,7 +939,7 @@ export default function PlannerWorkspace({
         {groups.length === 0 ? (
           <div className="flex h-full items-center justify-center p-8">
             <div className="max-w-sm text-center">
-              <CalendarRange className="mx-auto mb-3 h-6 w-6 text-ink-300" />
+              <CalendarRange className="mx-auto mb-3 h-6 w-6 text-ink-400" />
               <h2 className="font-display text-[15px] font-bold text-ink-900">
                 Nothing to plan yet
               </h2>

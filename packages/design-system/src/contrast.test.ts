@@ -31,6 +31,17 @@ const PAIRS: { fg: string; bg: string; what: string; large?: boolean }[] = [
   { fg: "teal-700", bg: "raised", what: "a teal link on a panel" },
   { fg: "teal-800", bg: "teal-50", what: "teal text on a teal chip" },
   { fg: "danger", bg: "raised", what: "an error message" },
+  // On its own tint, which is where these actually appear. Checking only
+  // against white passed a warning that measured 4.32 in the box it lives in.
+  { fg: "danger", bg: "danger-bg", what: "an error message in its box" },
+  { fg: "warning", bg: "warning-bg", what: "a warning in its box" },
+  { fg: "success", bg: "success-bg", what: "a success note in its box" },
+  { fg: "ink-900", bg: "danger-bg", what: "body text in an error box" },
+  { fg: "ink-900", bg: "warning-bg", what: "body text in a warning box" },
+  { fg: "action", bg: "raised", what: "a link" },
+  { fg: "action", bg: "page", what: "a link on the page" },
+  { fg: "ink-400", bg: "ink-100", what: "muted text on a hover fill" },
+  { fg: "ink-600", bg: "ink-50", what: "a sidebar row" },
   { fg: "success", bg: "raised", what: "a success message" },
   { fg: "warning", bg: "raised", what: "a warning" },
 ];

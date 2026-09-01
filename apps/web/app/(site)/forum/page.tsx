@@ -110,7 +110,7 @@ export default async function ForumPage() {
                   "No safety bypasses. Ask how to do it properly instead.",
                 ].map((rule) => (
                   <li key={rule} className="flex items-start gap-2">
-                    <Sq size={5} className="mt-[6px] shrink-0 text-ink-300" />
+                    <Sq size={5} className="mt-[6px] shrink-0 text-ink-400" />
                     {rule}
                   </li>
                 ))}
@@ -148,7 +148,7 @@ function EmptyState() {
                     href={`/forum/new?category=${c.slug}`}
                     className="flex items-start gap-2 text-[13.5px] leading-relaxed text-ink-600 transition-colors hover:text-teal-700"
                   >
-                    <Sq size={5} className="mt-[7px] shrink-0 text-ink-300" />
+                    <Sq size={5} className="mt-[7px] shrink-0 text-ink-400" />
                     {p}
                   </Link>
                 </li>

@@ -147,7 +147,7 @@ export function DayBars({
           );
         })}
       </div>
-      <div className="mt-1 flex justify-between font-mono text-[10px] text-ink-300">
+      <div className="mt-1 flex justify-between font-mono text-[10px] text-ink-400">
         <span>{data[0]?.day}</span>
         <span>{data[data.length - 1]?.day}</span>
       </div>

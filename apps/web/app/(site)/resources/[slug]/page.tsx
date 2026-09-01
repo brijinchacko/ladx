@@ -199,9 +199,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
         <div className="mb-4 flex flex-wrap items-center gap-3 font-mono text-[11.5px] uppercase tracking-[0.12em]">
           <span className="text-teal-700">{post.topic}</span>
-          <span className="text-ink-300">·</span>
+          <span className="text-ink-400">·</span>
           <span className="text-ink-400">{post.minutes} min read</span>
-          <span className="text-ink-300">·</span>
+          <span className="text-ink-400">·</span>
           <time className="text-ink-400" dateTime={post.published}>
             {date}
           </time>

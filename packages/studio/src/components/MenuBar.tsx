@@ -66,7 +66,7 @@ export default function MenuBar({
   return (
     <div
       ref={ref}
-      className="flex items-center gap-0.5 px-1 h-7 bg-[#EEF2F6] border-b border-[#C9D2DC] rounded-t relative"
+      className="flex items-center gap-0.5 px-1 h-7 bg-ink-100 border-b border-ink-200 rounded-t relative"
     >
       {menus.map((m) => (
         <div key={m.label} className="relative" data-tour={`${m.label.toLowerCase()}-menu`}>
@@ -75,7 +75,7 @@ export default function MenuBar({
             onClick={() => setOpen((cur) => (cur === m.label ? null : m.label))}
             onMouseEnter={() => setOpen((cur) => (cur ? m.label : cur))}
             className={`px-2.5 h-6 rounded text-[11.5px] font-medium transition-colors ${
-              open === m.label ? "bg-[#2891FF] text-white" : "text-[#334155] hover:bg-[#EEF2F6]"
+              open === m.label ? "bg-action text-white" : "text-ink-700 hover:bg-ink-100"
             }`}
           >
             {m.label}
@@ -83,13 +83,13 @@ export default function MenuBar({
 
           {open === m.label && (
             <div
-              className="absolute left-0 top-full mt-0.5 min-w-[15rem] rounded border border-[#C9D2DC] bg-white py-1"
+              className="absolute left-0 top-full mt-0.5 min-w-[15rem] rounded border border-ink-200 bg-white py-1"
               style={{ zIndex: 60, boxShadow: "0 8px 24px rgba(15,23,42,0.18)" }}
               role="menu"
             >
               {m.items.map((it, i) => (
                 <div key={`${it.label}-${i}`}>
-                  {it.separator && <div className="my-1 border-t border-[#E2E8F0]" />}
+                  {it.separator && <div className="my-1 border-t border-ink-100" />}
                   <button
                     type="button"
                     role="menuitem"
@@ -98,11 +98,11 @@ export default function MenuBar({
                       setOpen(null);
                       it.onSelect?.();
                     }}
-                    className="w-full flex items-center gap-4 px-3 h-7 text-left text-[12px] text-[#334155] hover:bg-[#EEF2F6] disabled:text-[#B6BFC9] disabled:hover:bg-transparent"
+                    className="w-full flex items-center gap-4 px-3 h-7 text-left text-[12px] text-ink-700 hover:bg-ink-100 disabled:text-ink-400 disabled:hover:bg-transparent"
                   >
                     <span className="flex-1 truncate">{it.label}</span>
                     {it.shortcut && (
-                      <span className="text-[10.5px] text-[#94A3B8] font-mono shrink-0">
+                      <span className="text-[10.5px] text-ink-400 font-mono shrink-0">
                         {it.shortcut}
                       </span>
                     )}

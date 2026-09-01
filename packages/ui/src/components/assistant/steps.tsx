@@ -37,7 +37,7 @@ export function Steps({ steps }: { steps: AssistStep[] }) {
           <span className="mt-[3px] flex h-3.5 w-3.5 shrink-0 items-center justify-center">
             {s.state === "doing" && <ThinkingMark size={14} className="text-teal-600" />}
             {s.state === "done" && <Check className="h-3.5 w-3.5 text-teal-600" />}
-            {s.state === "failed" && <AlertCircle className="h-3.5 w-3.5 text-[#B4531A]" />}
+            {s.state === "failed" && <AlertCircle className="h-3.5 w-3.5 text-danger" />}
             {s.state === "skipped" && (
               <span className="h-1 w-1 rounded-full bg-ink-300" aria-hidden="true" />
             )}
@@ -48,7 +48,7 @@ export function Steps({ steps }: { steps: AssistStep[] }) {
                 s.state === "doing"
                   ? "text-ink-900"
                   : s.state === "failed"
-                    ? "text-[#7A4A12]"
+                    ? "text-warning"
                     : s.state === "skipped"
                       ? "text-ink-400"
                       : "text-ink-600"

@@ -51,8 +51,8 @@ export interface ConvertSource {
 const SEVERITY_ICON = { info: Info, warning: AlertTriangle, manual: Wrench } as const;
 const SEVERITY_STYLE = {
   info: "border-ink-200 bg-ink-50 text-ink-600",
-  warning: "border-amber-300 bg-amber-50 text-amber-900",
-  manual: "border-red-300 bg-red-50 text-red-800",
+  warning: "border-warning-border bg-warning-bg text-warning",
+  manual: "border-danger-border bg-danger-bg text-danger",
 } as const;
 const SEVERITY_LABEL = { info: "Note", warning: "Check", manual: "By hand" } as const;
 
@@ -473,7 +473,7 @@ export default function ConvertWorkbench({
         )}
       </button>
       {unreadable.length > 0 && (
-        <p className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900">
+        <p className="shrink-0 border-b border-warning-border bg-warning-bg px-3 py-1.5 text-[12px] text-warning">
           {unreadable.length} saved program{unreadable.length === 1 ? "" : "s"} could not be read
           and {unreadable.length === 1 ? "is" : "are"} not listed: {unreadable.join(", ")}. Open{" "}
           {unreadable.length === 1 ? "it" : "them"} in Ladder and save again to repair the file.
@@ -599,12 +599,12 @@ export default function ConvertWorkbench({
       )}
 
       {error && (
-        <div className="shrink-0 border-red-200 border-b bg-red-50 px-3 py-2">
-          <p className="text-[12.5px] text-red-800">{error}</p>
+        <div className="shrink-0 border-danger-border border-b bg-danger-bg px-3 py-2">
+          <p className="text-[12.5px] text-danger">{error}</p>
           {/* The remedy is the point of refusing a project file at all: the
               person is holding what their tool saved, and what they need is the
               two clicks that produce something readable. */}
-          {remedy && <p className="mt-1 text-[12.5px] text-red-900">{remedy}</p>}
+          {remedy && <p className="mt-1 text-[12.5px] text-danger">{remedy}</p>}
         </div>
       )}
 
@@ -625,9 +625,9 @@ export default function ConvertWorkbench({
                 <span
                   className={`mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full ${
                     n.severity === "manual"
-                      ? "bg-[#B4531A]"
+                      ? "bg-danger"
                       : n.severity === "warning"
-                        ? "bg-[#C08A2E]"
+                        ? "bg-warning"
                         : "bg-ink-300"
                   }`}
                   aria-hidden="true"
@@ -666,8 +666,8 @@ export default function ConvertWorkbench({
                   <span className="text-[13px] font-medium">{t.name}</span>
                   <span className="flex items-center gap-1.5 font-mono text-[10px]">
                     <span className="text-ink-400">{t.ext}</span>
-                    {manual > 0 && <span className="text-red-700">{manual} by hand</span>}
-                    {warning > 0 && <span className="text-amber-700">{warning} check</span>}
+                    {manual > 0 && <span className="text-danger">{manual} by hand</span>}
+                    {warning > 0 && <span className="text-warning">{warning} check</span>}
                     {manual === 0 && warning === 0 && <span className="text-teal-700">clean</span>}
                   </span>
                 </button>
@@ -683,7 +683,7 @@ export default function ConvertWorkbench({
                 <span className="font-mono text-[11.5px] text-ink-600">
                   {current.result.filename}
                 </span>
-                <span className="font-mono text-[10.5px] text-ink-300">
+                <span className="font-mono text-[10.5px] text-ink-400">
                   {current.result.text.split("\n").length} lines
                 </span>
                 <div className="ml-auto flex items-center gap-1.5">
@@ -802,14 +802,14 @@ function Empty({ unreadable = [], ladderHref }: { unreadable?: string[]; ladderH
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center p-8">
       <div className="max-w-sm text-center">
-        <FileCode2 className="mx-auto mb-3 h-6 w-6 text-ink-300" />
+        <FileCode2 className="mx-auto mb-3 h-6 w-6 text-ink-400" />
         <h2 className="font-display text-[15px] font-bold text-ink-900">Nothing to convert yet</h2>
         <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-500">
           Write a program in Ladder and save it against a project, open an exported project file, or
           load the example to see what conversion produces.
         </p>
         {unreadable.length > 0 && (
-          <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-left text-[12.5px] leading-relaxed text-amber-900">
+          <p className="mt-4 rounded-md border border-warning-border bg-warning-bg px-3 py-2 text-left text-[12.5px] leading-relaxed text-warning">
             {unreadable.length === 1
               ? `"${unreadable[0]}" is saved against a project but could not be read, so it is not listed here.`
               : `${unreadable.length} saved programs could not be read, so they are not listed here: ${unreadable.join(", ")}.`}{" "}

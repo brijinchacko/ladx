@@ -116,7 +116,7 @@ export default function ResourcesPage() {
             <div>
               <div className="mb-3 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.12em]">
                 <span className="text-teal-700">{lead.topic}</span>
-                <span className="text-ink-300">/</span>
+                <span className="text-ink-400">/</span>
                 <span className="text-ink-400">{lead.minutes} min</span>
               </div>
               <h2 className="font-display text-[1.8rem] font-bold leading-[1.15] tracking-[-0.015em] text-ink-900 group-hover:text-teal-700">
@@ -183,7 +183,7 @@ export default function ResourcesPage() {
                     <p className="mt-2.5 hidden font-mono text-[11px] text-ink-400 leading-snug sm:block">
                       {post.intent}
                     </p>
-                    <p className="mt-1.5 font-mono text-[10.5px] text-ink-300 uppercase tracking-[0.1em] sm:mt-2">
+                    <p className="mt-1.5 font-mono text-[10.5px] text-ink-400 uppercase tracking-[0.1em] sm:mt-2">
                       {post.minutes} min read
                     </p>
                   </Link>

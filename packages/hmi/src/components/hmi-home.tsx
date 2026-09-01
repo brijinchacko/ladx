@@ -90,7 +90,7 @@ export default function HmiHome({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Name it, or leave blank"
-            className="w-52 rounded-md border border-ink-200 bg-white px-2 py-1 text-[13px] outline-none placeholder:text-ink-300 focus:border-ink-500"
+            className="w-52 rounded-md border border-ink-200 bg-white px-2 py-1 text-[13px] outline-none placeholder:text-ink-400 focus:border-ink-500"
           />
           <span className="text-[12.5px] text-ink-400">
             {projectId

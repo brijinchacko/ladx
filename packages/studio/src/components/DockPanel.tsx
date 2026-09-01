@@ -118,7 +118,7 @@ export function DockPanel<Id extends string>({
               type="button"
               onClick={() => onMove?.(moveTo)}
               title={`Move ${def.title} to the ${moveTo}.`}
-              className="text-ink-300 transition-colors hover:text-ink-900"
+              className="text-ink-400 transition-colors hover:text-ink-900"
             >
               <MoveIcon className="h-3 w-3" />
             </button>
@@ -127,7 +127,7 @@ export function DockPanel<Id extends string>({
             type="button"
             onClick={onClose}
             title={`Close ${def.title}. It goes to the strip along the bottom.`}
-            className="text-ink-300 transition-colors hover:text-ink-900"
+            className="text-ink-400 transition-colors hover:text-ink-900"
           >
             <X className="h-3 w-3" />
           </button>
@@ -177,7 +177,7 @@ export function DockStrip<Id extends string>({
   const closed = dock.panels.filter((p) => !layout[p.id]?.open);
   return (
     <div className="flex shrink-0 items-center gap-2 border-ink-100 border-t bg-ink-50/60 px-2 py-1">
-      <LayoutGrid className="h-3 w-3 shrink-0 text-ink-300" />
+      <LayoutGrid className="h-3 w-3 shrink-0 text-ink-400" />
       {closed.length === 0 ? (
         <span className="text-[11px] text-ink-400">
           Closed panels come back here. Nothing is closed.

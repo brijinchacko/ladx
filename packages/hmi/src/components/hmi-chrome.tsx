@@ -168,7 +168,7 @@ export function ProjectTree({
             type="button"
             onClick={onAdd}
             title={`Edit ${label.toLowerCase()}`}
-            className="shrink-0 text-ink-300 hover:text-teal-700"
+            className="shrink-0 text-ink-400 hover:text-teal-700"
           >
             +
           </button>

@@ -75,7 +75,7 @@ export default function ProductsPage() {
               {GROUP_META[g].title}
             </h2>
             <p className="text-[13.5px] text-ink-500">{GROUP_META[g].blurb}</p>
-            <span className="ml-auto font-mono text-[11px] tabular-nums text-ink-300">
+            <span className="ml-auto font-mono text-[11px] tabular-nums text-ink-400">
               {productsIn(g).length}
             </span>
           </div>
@@ -103,7 +103,7 @@ export default function ProductsPage() {
                   </div>
                   <span
                     aria-hidden="true"
-                    className="hidden self-center text-[14px] text-ink-300 transition-transform group-hover:translate-x-0.5 group-hover:text-ink-600 sm:block"
+                    className="hidden self-center text-[14px] text-ink-400 transition-transform group-hover:translate-x-0.5 group-hover:text-ink-600 sm:block"
                   >
                     →
                   </span>

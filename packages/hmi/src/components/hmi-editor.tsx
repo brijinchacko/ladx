@@ -1175,7 +1175,7 @@ export default function HmiEditor({
           disabled={!program}
           title={program ? undefined : "This project has no ladder program to run against."}
           className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-[12.5px] font-medium transition-colors disabled:opacity-40 ${
-            running ? "bg-[#B4531A] text-white" : "bg-ink-900 text-white"
+            running ? "bg-danger text-white" : "bg-ink-900 text-white"
           }`}
         >
           {running ? <Square className="h-3 w-3" /> : <Play className="h-3 w-3" />}
@@ -1184,7 +1184,7 @@ export default function HmiEditor({
 
         {running && (
           <span className="flex items-center gap-1.5 font-mono text-[11px] text-ink-500">
-            <Bell className={`h-3 w-3 ${unacked > 0 ? "text-[#B4531A]" : "text-ink-300"}`} />
+            <Bell className={`h-3 w-3 ${unacked > 0 ? "text-danger" : "text-ink-400"}`} />
             {outstanding.length} alarm{outstanding.length === 1 ? "" : "s"}
             {unacked > 0 ? `, ${unacked} unacknowledged` : ""}
           </span>
@@ -1770,7 +1770,7 @@ function Tools({
                 <li
                   key={r.def.id}
                   className={`truncate rounded-sm px-1 py-0.5 text-[11px] ${
-                    needsAck(r.runtime.state) ? "bg-[#B4531A]/12 text-ink-900" : "text-ink-500"
+                    needsAck(r.runtime.state) ? "bg-danger/12 text-ink-900" : "text-ink-500"
                   }`}
                 >
                   {r.def.message}
@@ -1785,7 +1785,7 @@ function Tools({
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search symbols"
-        className="w-full rounded-sm border border-ink-200 px-2 py-1 text-[12px] outline-none placeholder:text-ink-300 focus:border-ink-500"
+        className="w-full rounded-sm border border-ink-200 px-2 py-1 text-[12px] outline-none placeholder:text-ink-400 focus:border-ink-500"
       />
 
       <div className="flex items-center gap-2 text-[11px]">
@@ -1902,7 +1902,7 @@ function Category({
         <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
           {name}
         </span>
-        <span className="ml-auto font-mono text-[9.5px] tabular-nums text-ink-300">{count}</span>
+        <span className="ml-auto font-mono text-[9.5px] tabular-nums text-ink-400">{count}</span>
       </button>
       {open && <div className="mb-1 grid grid-cols-2 gap-1">{children}</div>}
     </div>
@@ -2047,7 +2047,7 @@ function AlarmList({
               key={r.def.id}
               className={`rounded-sm border px-1.5 py-1 text-[11.5px] ${
                 needsAck(r.runtime.state)
-                  ? "border-[#B4531A] bg-[#B4531A]/10 text-ink-900"
+                  ? "border-danger bg-danger/10 text-ink-900"
                   : "border-ink-200 text-ink-600"
               }`}
             >

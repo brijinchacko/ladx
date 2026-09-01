@@ -90,7 +90,7 @@ export default function LadderClient({
           <ChevronLeft className="h-3.5 w-3.5" />
           Programs
         </button>
-        <span className="text-ink-200">|</span>
+        <span className="text-ink-400">|</span>
         <FolderKanban className="h-3.5 w-3.5 shrink-0 text-ink-400" />
         <span className="text-[12.5px] text-ink-700">{projectName ?? "No project (scratch)"}</span>
         <span className="text-[11.5px] text-ink-400">Save from the File menu.</span>

@@ -189,7 +189,7 @@ function Bubble({
       {text && (
         // pre-line, so a hover card can carry a "watch out" paragraph on its
         // own line instead of running it into the description.
-        <div className="mt-0.5 text-[10.5px] text-[#C9D2DC]" style={{ whiteSpace: "pre-line" }}>
+        <div className="mt-0.5 text-[10.5px] text-ink-400" style={{ whiteSpace: "pre-line" }}>
           {text}
         </div>
       )}

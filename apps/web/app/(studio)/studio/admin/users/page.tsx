@@ -116,7 +116,7 @@ export default async function AdminUsersPage({
                         ? "A provider key is on file. It is encrypted and this page cannot read it."
                         : "No provider connected, so nothing AI works for this account."
                     }
-                    className={u.hasProvider ? "text-teal-600" : "text-ink-300"}
+                    className={u.hasProvider ? "text-teal-600" : "text-ink-400"}
                   >
                     {u.hasProvider ? "yes" : "no"}
                   </span>
@@ -164,7 +164,7 @@ export default async function AdminUsersPage({
 
 function Num({ n }: { n: number }) {
   return (
-    <td className={`px-3 py-2 text-center tabular-nums ${n > 0 ? "text-ink-800" : "text-ink-300"}`}>
+    <td className={`px-3 py-2 text-center tabular-nums ${n > 0 ? "text-ink-800" : "text-ink-400"}`}>
       {n}
     </td>
   );

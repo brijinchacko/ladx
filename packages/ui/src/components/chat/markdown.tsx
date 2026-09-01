@@ -171,7 +171,7 @@ export function Markdown({ text }: { text: string }) {
         i++;
       }
       out.push(
-        <ul key={`k${key++}`} className="my-2 list-disc space-y-1 pl-5 marker:text-ink-300">
+        <ul key={`k${key++}`} className="my-2 list-disc space-y-1 pl-5 marker:text-ink-400">
           {items.map((item, n) => (
             <li key={`li${n}-${item.slice(0, 12)}`}>
               {renderInline(parseInline(item), `ul${key}-${n}`)}

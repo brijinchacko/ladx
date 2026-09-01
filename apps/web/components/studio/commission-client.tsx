@@ -286,7 +286,7 @@ export function CommissionClient({
   if (programs.length === 0) {
     return (
       <div className="mx-auto w-full max-w-3xl px-6 py-10 text-center">
-        <ClipboardCheck className="mx-auto mb-3 h-5 w-5 text-ink-300" />
+        <ClipboardCheck className="mx-auto mb-3 h-5 w-5 text-ink-400" />
         <p className="text-[13.5px] text-ink-600">No programs yet.</p>
         <p className="mt-1 text-[12.5px] text-ink-500">
           Write one in Ladder, or open an L5X in Convert, and it can be commissioned here.
@@ -403,7 +403,7 @@ export function CommissionClient({
       )}
 
       {error && (
-        <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-800">
+        <p className="mb-4 rounded-md border border-danger-border bg-danger-bg px-3 py-2 text-[13px] text-danger">
           {error}
         </p>
       )}
@@ -500,7 +500,7 @@ function NarrativeView({
           {s.needs_engineer.length > 0 && (
             <ul className="mt-2 space-y-1 border-t border-ink-100 pt-2">
               {s.needs_engineer.map((q) => (
-                <li key={q} className="text-[12.5px] leading-relaxed text-amber-800">
+                <li key={q} className="text-[12.5px] leading-relaxed text-warning">
                   Needs an engineer: {q}
                 </li>
               ))}
@@ -587,7 +587,7 @@ function TestsView({
             {g.steps.map((s) => (
               <li key={`${s.action}-${s.expect}`} className="text-[13px] text-ink-700">
                 {s.kind === "safety" && (
-                  <span className="mr-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-900">
+                  <span className="mr-1.5 rounded bg-warning-bg px-1.5 py-0.5 text-[11px] font-medium text-warning">
                     SAFETY
                   </span>
                 )}
@@ -617,7 +617,7 @@ function DeviationsView({ out }: { out: DeviationsOut }) {
             className="mb-3 rounded-md border border-ink-200 bg-white p-4"
           >
             <div className="mb-1 flex items-center gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+              <AlertTriangle className="h-3.5 w-3.5 text-warning" />
               <span className="font-mono text-[12px] text-ink-900">
                 {d.pou}/{d.rung}
               </span>
@@ -723,7 +723,7 @@ function HardwareView({ out }: { out: HardwareOut }) {
                   <td className="px-3 py-1.5 text-ink-900">
                     {m.name}
                     {m.inhibited && (
-                      <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-900">
+                      <span className="ml-1.5 rounded bg-warning-bg px-1.5 py-0.5 text-[11px] text-warning">
                         inhibited
                       </span>
                     )}
@@ -742,7 +742,9 @@ function HardwareView({ out }: { out: HardwareOut }) {
         <div
           key={f.detail}
           className={`mb-2 rounded-md border px-3 py-2 ${
-            f.issue === "moduleUnused" ? "border-ink-200 bg-white" : "border-amber-200 bg-amber-50"
+            f.issue === "moduleUnused"
+              ? "border-ink-200 bg-white"
+              : "border-warning-border bg-warning-bg"
           }`}
         >
           <p className="text-[13px] leading-relaxed text-ink-800">{f.detail}</p>
@@ -777,15 +779,15 @@ function CompareView({ out }: { out: CompareOut }) {
           key={c.summary}
           className={`mb-2 rounded-md border px-3 py-2 ${
             c.risk === "safety"
-              ? "border-red-200 bg-red-50"
+              ? "border-danger-border bg-danger-bg"
               : c.risk === "high"
-                ? "border-amber-200 bg-amber-50"
+                ? "border-warning-border bg-warning-bg"
                 : "border-ink-200 bg-white"
           }`}
         >
           <span
             className={`mr-2 rounded px-1.5 py-0.5 text-[11px] font-medium ${
-              c.risk === "safety" ? "bg-red-200 text-red-900" : "bg-ink-100 text-ink-700"
+              c.risk === "safety" ? "bg-danger text-danger" : "bg-ink-100 text-ink-700"
             }`}
           >
             {c.risk}
@@ -837,11 +839,11 @@ function PackView({
   return (
     <div>
       {out.concerns.length > 0 && (
-        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3">
-          <p className="mb-1.5 text-[12.5px] font-medium text-amber-900">Before this is sent</p>
+        <div className="mb-4 rounded-md border border-warning-border bg-warning-bg p-3">
+          <p className="mb-1.5 text-[12.5px] font-medium text-warning">Before this is sent</p>
           <ul className="space-y-1">
             {out.concerns.map((c) => (
-              <li key={c} className="text-[12.5px] leading-relaxed text-amber-900">
+              <li key={c} className="text-[12.5px] leading-relaxed text-warning">
                 {c}
               </li>
             ))}

@@ -292,7 +292,7 @@ function ImportStep({
             if (e.dataTransfer.files.length) void take(e.dataTransfer.files);
           }}
         >
-          <FileUp className="mb-2 h-6 w-6 text-ink-300" />
+          <FileUp className="mb-2 h-6 w-6 text-ink-400" />
           <span className="text-[14px] font-medium text-ink-900">
             Drop the client's documents here
           </span>
@@ -326,7 +326,7 @@ function ImportStep({
                   type="button"
                   onClick={() => setDocs((cur) => cur.filter((c) => c.id !== d.id))}
                   aria-label={`Remove ${d.name}`}
-                  className="shrink-0 text-ink-300 transition-colors hover:text-red-700"
+                  className="shrink-0 text-ink-400 transition-colors hover:text-danger"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -348,7 +348,7 @@ function ImportStep({
             moment on the free tier.
           </p>
         )}
-        {error && <p className="mt-3 text-[13px] text-red-700">{error}</p>}
+        {error && <p className="mt-3 text-[13px] text-danger">{error}</p>}
       </div>
 
       <footer className="flex flex-wrap items-center gap-3 border-t border-ink-100 px-5 py-3.5">
@@ -401,7 +401,7 @@ function Field({
 }) {
   const id = `${useId()}${field.key}`;
   const shared =
-    "w-full rounded-md border px-2.5 py-2 text-[13.5px] leading-relaxed outline-none placeholder:text-ink-300 focus:border-ink-500";
+    "w-full rounded-md border px-2.5 py-2 text-[13.5px] leading-relaxed outline-none placeholder:text-ink-400 focus:border-ink-500";
   // A field that came from a document is marked, so it is obvious which values
   // were read rather than typed and therefore which ones want a second look.
   const border = source ? "border-teal-400 bg-teal-50/40" : "border-ink-200";

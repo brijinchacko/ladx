@@ -13,8 +13,9 @@ import { cn } from "../../lib/cn";
  * that font and silently wrong everywhere else; an image is the same everywhere.
  *
  * Two files, not one recoloured: `wordmark.png` for light grounds and
- * `wordmark-dark.png` for dark, swapped with a CSS media query so the logo does
- * not disappear into the background when someone's OS is in dark mode.
+ * `wordmark-dark.png` for dark. Which one shows is decided in CSS, by the same
+ * three-state cascade the rest of the theme uses, so the mark follows the
+ * surface it is sitting on rather than the operating system.
  *
  * @example
  * <Logo />                       // wordmark, header size
@@ -26,25 +27,27 @@ export interface LogoProps {
   size?: number;
   variant?: "wordmark" | "icon";
   /**
-   * Which ground the mark is sitting on, not which theme the viewer prefers.
+   * Which ground the mark is sitting on.
    *
-   * `light` (the default) draws the dark-ink mark for a light surface; `dark`
-   * draws the white one. `auto` follows `prefers-color-scheme`, and is correct
-   * ONLY on a surface that also follows it.
+   * `surface`, the default, follows the theme: the dark-ink mark on a light
+   * surface and the white one on a dark surface, decided in CSS so there is no
+   * flash and no JavaScript involved.
    *
-   * This defaults to `light` because it used to default to `auto`, and every
-   * LADX surface is currently light regardless of the OS setting. On a machine
-   * set to dark mode the browser dutifully served the white wordmark onto a
-   * white page, and the mark vanished, leaving a lone teal X floating above
-   * the sign-in form. Follow the surface, not the operating system.
+   * `light` and `dark` pin it, and are for the places that keep their ground in
+   * both themes, a dark hero band or a printed sheet.
+   *
+   * There used to be an `auto` that followed `prefers-color-scheme`. That is
+   * the wrong question now: somebody on a dark machine who has chosen the light
+   * theme would get the white wordmark on a white page, which is exactly the
+   * bug `auto` was introduced to fix, arriving from the other direction.
    */
-  tone?: "auto" | "light" | "dark";
+  tone?: "surface" | "light" | "dark";
 }
 
 /** Source aspect ratio of the wordmark artwork: 3860 × 900. */
 const WORDMARK_ASPECT = 3860 / 900;
 
-export function Logo({ className, size, variant = "wordmark", tone = "light" }: LogoProps) {
+export function Logo({ className, size, variant = "wordmark", tone = "surface" }: LogoProps) {
   if (variant === "icon") {
     const px = size ?? 32;
     return (
@@ -62,9 +65,8 @@ export function Logo({ className, size, variant = "wordmark", tone = "light" }: 
   const height = size ?? 28;
   const width = Math.round(height * WORDMARK_ASPECT);
 
-  // `tone` picks a single file; `auto` ships both and lets the browser choose,
-  // which keeps it correct without JavaScript and without a hydration flash.
-  if (tone !== "auto") {
+  // A pinned tone picks one file.
+  if (tone !== "surface") {
     return (
       <img
         src={tone === "dark" ? "/brand/wordmark-dark.png" : "/brand/wordmark.png"}
@@ -77,16 +79,29 @@ export function Logo({ className, size, variant = "wordmark", tone = "light" }: 
     );
   }
 
+  // Both files ship, and the stylesheet hides one. A <picture> with a media
+  // query cannot do this: it can ask what the operating system prefers, and the
+  // question here is what the app is currently set to, which is an attribute on
+  // the root that only CSS can see.
   return (
-    <picture className={cn("shrink-0 inline-flex", className)}>
-      <source srcSet="/brand/wordmark-dark.png" media="(prefers-color-scheme: dark)" />
+    <span className={cn("shrink-0 inline-flex", className)}>
       <img
         src="/brand/wordmark.png"
         alt="LADX"
         width={width}
         height={height}
+        className="ladx-mark-on-light"
         style={{ height, width: "auto" }}
       />
-    </picture>
+      <img
+        src="/brand/wordmark-dark.png"
+        alt=""
+        aria-hidden="true"
+        width={width}
+        height={height}
+        className="ladx-mark-on-dark"
+        style={{ height, width: "auto" }}
+      />
+    </span>
   );
 }

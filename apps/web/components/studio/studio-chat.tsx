@@ -44,12 +44,12 @@ export default function StudioChat({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {notice && !dismissed && (
-        <div className="flex items-start gap-2.5 border-b border-amber-200 bg-amber-50 px-5 py-2.5">
-          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
-          <p className="flex-1 text-[12.5px] leading-relaxed text-amber-900">
+        <div className="flex items-start gap-2.5 border-b border-warning-border bg-warning-bg px-5 py-2.5">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+          <p className="flex-1 text-[12.5px] leading-relaxed text-warning">
             {notice.message}
             {notice.model && (
-              <span className="ml-1.5 font-mono text-[11px] text-amber-700">({notice.model})</span>
+              <span className="ml-1.5 font-mono text-[11px] text-warning">({notice.model})</span>
             )}{" "}
             <Link href="/studio/settings" className="font-medium underline underline-offset-2">
               Open Settings
@@ -59,7 +59,7 @@ export default function StudioChat({
             type="button"
             onClick={() => setDismissed(true)}
             aria-label="Dismiss"
-            className="shrink-0 text-amber-500 transition-colors hover:text-amber-900"
+            className="shrink-0 text-warning transition-colors hover:text-warning"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -67,15 +67,13 @@ export default function StudioChat({
       )}
 
       {composer.attachError && (
-        <div className="flex items-start gap-2.5 border-b border-red-200 bg-red-50 px-5 py-2.5">
-          <p className="flex-1 text-[12.5px] leading-relaxed text-red-800">
-            {composer.attachError}
-          </p>
+        <div className="flex items-start gap-2.5 border-b border-danger-border bg-danger-bg px-5 py-2.5">
+          <p className="flex-1 text-[12.5px] leading-relaxed text-danger">{composer.attachError}</p>
           <button
             type="button"
             onClick={composer.dismissAttachError}
             aria-label="Dismiss"
-            className="shrink-0 text-red-400 transition-colors hover:text-red-900"
+            className="shrink-0 text-danger transition-colors hover:text-danger"
           >
             <X className="h-3.5 w-3.5" />
           </button>

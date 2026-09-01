@@ -21,7 +21,7 @@ export default function LadxWindow({ onClose }: { onClose: () => void }) {
       defaultWidth={900}
       defaultHeight={620}
     >
-      <div className="flex-1 min-h-0 overflow-auto p-3 bg-[#E9EDF2]">
+      <div className="flex-1 min-h-0 overflow-auto p-3 bg-ink-100">
         <LadxHome />
       </div>
     </FloatingWindow>

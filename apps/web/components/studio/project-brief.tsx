@@ -27,7 +27,7 @@ function Field({
 }) {
   const id = `${useId()}${field.key}`;
   const shared =
-    "w-full rounded-md border border-ink-200 px-2.5 py-2 text-[13.5px] leading-relaxed outline-none placeholder:text-ink-300 focus:border-ink-500";
+    "w-full rounded-md border border-ink-200 px-2.5 py-2 text-[13.5px] leading-relaxed outline-none placeholder:text-ink-400 focus:border-ink-500";
   return (
     <div>
       <label
@@ -189,7 +189,7 @@ export default function ProjectBriefPanel({
                   className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                 >
                   <ChevronDown
-                    className={`h-3.5 w-3.5 shrink-0 text-ink-300 transition-transform ${
+                    className={`h-3.5 w-3.5 shrink-0 text-ink-400 transition-transform ${
                       isOpen ? "" : "-rotate-90"
                     }`}
                   />
@@ -203,7 +203,7 @@ export default function ProjectBriefPanel({
 
                 <span
                   className={`shrink-0 font-mono text-[10.5px] tabular-nums ${
-                    answered === group.fields.length ? "text-teal-700" : "text-ink-300"
+                    answered === group.fields.length ? "text-teal-700" : "text-ink-400"
                   }`}
                 >
                   {answered === group.fields.length ? (
@@ -218,7 +218,7 @@ export default function ProjectBriefPanel({
                     type="button"
                     onClick={() => startEdit(group.id)}
                     aria-label={`Edit ${group.title}`}
-                    className="shrink-0 rounded p-1 text-ink-300 transition-colors hover:bg-ink-100 hover:text-ink-900"
+                    className="shrink-0 rounded p-1 text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-900"
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
@@ -268,7 +268,7 @@ export default function ProjectBriefPanel({
                             </dt>
                             <dd
                               className={`mt-0.5 whitespace-pre-wrap text-[13.5px] leading-relaxed ${
-                                value ? "text-ink-800" : "text-ink-300"
+                                value ? "text-ink-800" : "text-ink-400"
                               }`}
                             >
                               {value ?? f.hint}

@@ -79,7 +79,7 @@ export default function ScopePicker({
           <div className="space-y-2">
             {PHASES.filter((p) => p.deliverables.length > 0).map((phase) => (
               <div key={phase.id}>
-                <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-300">
+                <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-400">
                   {phase.name}
                 </p>
                 <div className="flex flex-wrap gap-1">

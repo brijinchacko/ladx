@@ -172,7 +172,7 @@ function ProviderRow({
   }
 
   const field =
-    "w-full rounded-sm border border-ink-200 bg-white px-3 py-2 text-[14px] text-ink-900 placeholder:text-ink-300 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500";
+    "w-full rounded-sm border border-ink-200 bg-white px-3 py-2 text-[14px] text-ink-900 placeholder:text-ink-400 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500";
 
   return (
     <div className="rounded-sm border border-ink-100">

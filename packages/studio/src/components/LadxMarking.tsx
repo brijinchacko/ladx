@@ -212,7 +212,7 @@ export default function LadxMarking() {
 
         <div className="rounded-xl border border-white/[0.08] bg-surface p-4 space-y-3">
           {error && (
-            <p className="flex items-center gap-1.5 text-[12.5px] text-red-300">
+            <p className="flex items-center gap-1.5 text-[12.5px] text-danger">
               <AlertTriangle size={13} /> {error}
             </p>
           )}
@@ -234,7 +234,7 @@ export default function LadxMarking() {
             {pct != null && (
               <span
                 className={`text-[12.5px] font-semibold pb-2 ${
-                  wouldPass ? "text-neon-green" : "text-amber-300"
+                  wouldPass ? "text-neon-green" : "text-warning"
                 }`}
               >
                 {pct}%, {wouldPass ? "pass" : `below the ${answer.exercise.passPercent}% pass mark`}
@@ -259,7 +259,7 @@ export default function LadxMarking() {
             type="button"
             onClick={submitMark}
             disabled={busy !== null || marks === "" || !feedback.trim()}
-            className="flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-bold text-[#08201f] disabled:opacity-40"
+            className="flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-bold text-on-accent disabled:opacity-40"
             style={{ background: LIVE }}
           >
             {busy === "mark" && <Loader2 size={13} className="animate-spin" />}
@@ -292,7 +292,7 @@ export default function LadxMarking() {
           <div
             key={r.id}
             className={`rounded-xl border bg-surface p-4 ${
-              r.waitingDays >= 3 ? "border-amber-500/30" : "border-white/[0.08]"
+              r.waitingDays >= 3 ? "border-warning/30" : "border-white/[0.08]"
             }`}
           >
             <div className="flex items-start gap-3 flex-wrap">
@@ -308,7 +308,7 @@ export default function LadxMarking() {
                     </span>
                   )}
                   {r.unclaimed && (
-                    <span className="ml-2 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300">
+                    <span className="ml-2 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-warning/15 text-warning">
                       Unclaimed
                     </span>
                   )}
@@ -319,7 +319,7 @@ export default function LadxMarking() {
                 </p>
                 <p
                   className={`mt-1 flex items-center gap-1 text-[11.5px] ${
-                    r.waitingDays >= 3 ? "text-amber-300" : "text-text-muted"
+                    r.waitingDays >= 3 ? "text-warning" : "text-text-muted"
                   }`}
                 >
                   <Clock size={11} />
@@ -344,7 +344,7 @@ export default function LadxMarking() {
                 <button
                   type="button"
                   onClick={() => open(r.id)}
-                  className="px-3.5 h-8 rounded-lg text-[12.5px] font-bold text-[#08201f]"
+                  className="px-3.5 h-8 rounded-lg text-[12.5px] font-bold text-on-accent"
                   style={{ background: LIVE }}
                 >
                   Mark it

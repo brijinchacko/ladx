@@ -76,13 +76,13 @@ export default function RoleControl({
           disabled={!armed || busy}
           onClick={() => void apply()}
           className={`rounded-md px-3 py-1 text-[12.5px] font-medium text-white transition-opacity disabled:opacity-40 ${
-            next === "admin" ? "bg-ink-900" : "bg-[#B4531A]"
+            next === "admin" ? "bg-ink-900" : "bg-danger"
           }`}
         >
           {busy ? "Saving" : next === "admin" ? "Make administrator" : "Remove administrator"}
         </button>
       </div>
-      {error && <p className="mt-2 text-[12px] text-[#7A2E12]">{error}</p>}
+      {error && <p className="mt-2 text-[12px] text-danger">{error}</p>}
     </div>
   );
 }

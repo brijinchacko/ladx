@@ -408,14 +408,14 @@ export default function Monitor({
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center p-8">
         <div className="max-w-sm text-center">
-          <Activity className="mx-auto mb-3 h-6 w-6 text-ink-300" />
+          <Activity className="mx-auto mb-3 h-6 w-6 text-ink-400" />
           <h2 className="font-display text-[15px] font-bold text-ink-900">Nothing to run yet</h2>
           <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-500">
             Write a program in the Ladder tool and save it. Anything saved against a project shows
             up here, ready to run.
           </p>
           {unreadable.length > 0 && (
-            <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-left text-[12.5px] leading-relaxed text-amber-900">
+            <p className="mt-4 rounded-md border border-warning-border bg-warning-bg px-3 py-2 text-left text-[12.5px] leading-relaxed text-warning">
               {unreadable.length === 1
                 ? `"${unreadable[0]}" is saved against a project but could not be read, so it is not listed here.`
                 : `${unreadable.length} saved programs could not be read, so they are not listed here: ${unreadable.join(", ")}.`}{" "}
@@ -525,7 +525,7 @@ export default function Monitor({
         )}
       </button>
       {unreadable.length > 0 && (
-        <p className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900">
+        <p className="shrink-0 border-b border-warning-border bg-warning-bg px-3 py-1.5 text-[12px] text-warning">
           {unreadable.length} saved program{unreadable.length === 1 ? "" : "s"} could not be read
           and {unreadable.length === 1 ? "is" : "are"} not listed: {unreadable.join(", ")}. Open{" "}
           {unreadable.length === 1 ? "it" : "them"} in Ladder and save again to repair the file.
@@ -563,7 +563,7 @@ export default function Monitor({
           type="button"
           onClick={() => setRunning((r) => !r)}
           className={`flex h-7 items-center gap-1.5 rounded-md px-3 text-[12.5px] font-medium transition-opacity hover:opacity-90 ${
-            running ? "bg-[#B4531A] text-white" : "bg-ink-900 text-white"
+            running ? "bg-danger text-white" : "bg-ink-900 text-white"
           }`}
         >
           {running ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
@@ -609,12 +609,12 @@ export default function Monitor({
 
         <span className="flex items-center gap-1.5 font-mono text-[11.5px] text-ink-500">
           <CircleDot
-            className={`h-3 w-3 ${running ? "animate-pulse text-teal-600" : "text-ink-300"}`}
+            className={`h-3 w-3 ${running ? "animate-pulse text-teal-600" : "text-ink-400"}`}
           />
           {scans} scans
           {observedScanMs !== null && observedScanMs > rate * 1.5 && (
             <span
-              className="text-[#B4531A]"
+              className="text-danger"
               title="This tab is in the background, so the browser is throttling the scan. Timers still keep real time."
             >
               {observedScanMs} ms actual
@@ -648,8 +648,8 @@ export default function Monitor({
       </div>
 
       {problems.length > 0 && (
-        <div className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-1.5">
-          <p className="text-[11.5px] leading-snug text-amber-900">
+        <div className="shrink-0 border-b border-warning-border bg-warning-bg px-3 py-1.5">
+          <p className="text-[11.5px] leading-snug text-warning">
             {problems.length === 1
               ? problems[0]
               : `${problems.length} problems in this program: ${problems[0]}`}
@@ -657,8 +657,8 @@ export default function Monitor({
         </div>
       )}
       {result && result.errors.length > 0 && (
-        <div className="shrink-0 border-b border-red-200 bg-red-50 px-3 py-1.5">
-          <p className="text-[11.5px] leading-snug text-red-800">{result.errors[0]}</p>
+        <div className="shrink-0 border-b border-danger-border bg-danger-bg px-3 py-1.5">
+          <p className="text-[11.5px] leading-snug text-danger">{result.errors[0]}</p>
         </div>
       )}
 
@@ -792,7 +792,7 @@ export default function Monitor({
               ) : (
                 <ol className="space-y-px font-mono text-[10.5px] leading-relaxed text-ink-600">
                   {events.slice(0, 60).map((e) => (
-                    <li key={e} className={e.includes("FORCE") ? "text-[#B4531A]" : undefined}>
+                    <li key={e} className={e.includes("FORCE") ? "text-danger" : undefined}>
                       {e}
                     </li>
                   ))}

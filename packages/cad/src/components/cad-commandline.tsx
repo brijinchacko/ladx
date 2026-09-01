@@ -109,7 +109,7 @@ export default function CadCommandLine({
       {(suggestions.length > 0 || error) && (
         <div className="border-b border-ink-100 px-3 py-1.5">
           {error ? (
-            <p className="text-[11.5px] text-red-700">{error}</p>
+            <p className="text-[11.5px] text-danger">{error}</p>
           ) : (
             <ul className="flex flex-wrap gap-x-4 gap-y-1">
               {suggestions.map((c) => (
@@ -144,7 +144,7 @@ export default function CadCommandLine({
       <div className="flex items-center gap-2 px-3 py-1.5">
         <Terminal className="h-3.5 w-3.5 shrink-0 text-ink-400" />
         <span className="shrink-0 font-mono text-[11.5px] text-ink-500">{prompt}</span>
-        <ChevronRight className="h-3 w-3 shrink-0 text-ink-300" />
+        <ChevronRight className="h-3 w-3 shrink-0 text-ink-400" />
         <input
           ref={inputRef}
           id={id}
@@ -180,7 +180,7 @@ export default function CadCommandLine({
           placeholder="A command, or a coordinate: 40,25 or @30,0 or 50<45"
           spellCheck={false}
           autoComplete="off"
-          className="min-w-0 flex-1 border-0 bg-transparent font-mono text-[12px] text-ink-900 outline-none placeholder:text-ink-300"
+          className="min-w-0 flex-1 border-0 bg-transparent font-mono text-[12px] text-ink-900 outline-none placeholder:text-ink-400"
         />
         {history.length > 0 && (
           <span className="hidden shrink-0 truncate font-mono text-[10.5px] text-ink-400 sm:block">

@@ -191,7 +191,7 @@
    cannot express :focus-visible, and it leaves the control stuck in its
    hover colour if the pointer leaves during a re-render. */
 .iconBtn {
-  color: #94a3b8;
+  color: rgb(var(--ink-400));
   border-radius: 3px;
   padding: 1px;
   display: grid;
@@ -200,7 +200,7 @@
     cubic-bezier(0.2, 0, 0, 1);
 }
 .iconBtn:hover {
-  color: #0f172a;
+  color: rgb(var(--ink-900));
   background: rgba(15, 23, 42, 0.06);
 }
 .iconBtn:focus-visible {
@@ -209,19 +209,19 @@
 }
 /* The help icon leans brand rather than ink, it is an offer, not a command. */
 .iconBtnHelp:hover {
-  color: #1b7f84;
+  color: rgb(var(--teal-700));
   background: rgba(53, 182, 187, 0.12);
 }
 
 .seamGrip {
-  background: #c9d2dc;
+  background: rgb(var(--ink-200));
   border-radius: 999px;
   transition: background-color 160ms cubic-bezier(0.2, 0, 0, 1), transform 160ms
     cubic-bezier(0.2, 0, 0, 1);
 }
 .seam:hover .seamGrip,
 .seam:focus-visible .seamGrip {
-  background: #35b6bb;
+  background: rgb(var(--teal-500));
   transform: scale(1.12);
 }
 .seam:focus-visible {
@@ -238,10 +238,10 @@
   gap: 4px;
   height: 20px;
   padding: 0 8px;
-  border: 1px solid #c9d2dc;
+  border: 1px solid rgb(var(--ink-200));
   border-radius: 3px;
-  background: #ffffff;
-  color: #475569;
+  background: rgb(var(--raised));
+  color: rgb(var(--ink-600));
   font-size: 10px;
   font-weight: 500;
   white-space: nowrap;
@@ -249,8 +249,8 @@
     box-shadow 160ms cubic-bezier(0.2, 0, 0, 1), transform 90ms cubic-bezier(0.2, 0, 0, 1);
 }
 .dockChip:hover {
-  border-color: #35b6bb;
-  color: #1b7f84;
+  border-color: rgb(var(--teal-500));
+  color: rgb(var(--teal-700));
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);
 }
@@ -271,12 +271,12 @@
   padding: 0 6px;
   border-radius: 3px;
   font-size: 10px;
-  color: #64748b;
+  color: rgb(var(--ink-500));
   transition: color 90ms cubic-bezier(0.2, 0, 0, 1), background-color 90ms
     cubic-bezier(0.2, 0, 0, 1);
 }
 .dockReset:hover {
-  color: #1b7f84;
+  color: rgb(var(--teal-700));
   background: rgba(53, 182, 187, 0.1);
 }
 .dockReset:focus-visible {
@@ -289,21 +289,21 @@
   height: 24px;
   width: 224px;
   padding: 0 8px 0 24px;
-  border: 1px solid #c9d2dc;
+  border: 1px solid rgb(var(--ink-200));
   border-radius: 4px;
   font-size: 11px;
-  color: #334155;
-  background: #ffffff;
+  color: rgb(var(--ink-700));
+  background: rgb(var(--raised));
   transition: border-color 90ms cubic-bezier(0.2, 0, 0, 1), box-shadow 90ms
     cubic-bezier(0.2, 0, 0, 1);
 }
 .searchBox:focus {
   outline: none;
-  border-color: #35b6bb;
+  border-color: rgb(var(--teal-500));
   box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.25);
 }
 .searchBox::placeholder {
-  color: #94a3b8;
+  color: rgb(var(--ink-400));
 }
 
 .tocItem {
@@ -332,7 +332,7 @@
   transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1);
 }
 .logRow:hover {
-  background: #f8fafc;
+  background: rgb(var(--ink-50));
 }
 
 .logChip {
@@ -356,18 +356,18 @@
   border-radius: 3px 3px 0 0;
   font-size: 10.5px;
   font-weight: 600;
-  color: #64748b;
+  color: rgb(var(--ink-500));
   border-bottom: 2px solid transparent;
   transition: color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 160ms cubic-bezier(0.2, 0, 0, 1),
     background-color 90ms cubic-bezier(0.2, 0, 0, 1);
 }
 .groupTab:hover {
-  color: #0f172a;
+  color: rgb(var(--ink-900));
   background: rgba(53, 182, 187, 0.08);
 }
 .groupTab[data-active="true"] {
-  color: #0f172a;
-  border-bottom-color: #35b6bb;
+  color: rgb(var(--ink-900));
+  border-bottom-color: rgb(var(--teal-500));
 }
 .groupTab:focus-visible {
   outline: none;
@@ -380,18 +380,18 @@
   gap: 4px;
   height: 21px;
   padding: 0 7px;
-  border: 1px solid #c9d2dc;
+  border: 1px solid rgb(var(--ink-200));
   border-radius: 3px;
-  background: #ffffff;
-  color: #334155;
+  background: rgb(var(--raised));
+  color: rgb(var(--ink-700));
   font-size: 10px;
   font-weight: 600;
   transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
     cubic-bezier(0.2, 0, 0, 1), color 90ms cubic-bezier(0.2, 0, 0, 1);
 }
 .barBtn:hover:not(:disabled) {
-  border-color: #35b6bb;
-  color: #1b7f84;
+  border-color: rgb(var(--teal-500));
+  color: rgb(var(--teal-700));
   background: rgba(53, 182, 187, 0.07);
 }
 .barBtn:disabled {
@@ -402,24 +402,24 @@
   box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.35);
 }
 .barBtnDanger {
-  color: #b3382c;
+  color: rgb(var(--danger));
 }
 .barBtnDanger:hover:not(:disabled) {
-  border-color: #e9a69e;
-  color: #b3382c;
-  background: #fbeae8;
+  border-color: rgb(var(--danger-border));
+  color: rgb(var(--danger));
+  background: rgb(var(--danger-bg));
 }
 
 .paletteBtn {
   min-width: 38px;
   height: 30px;
   padding: 0 9px;
-  border: 1px solid #c9d2dc;
+  border: 1px solid rgb(var(--ink-200));
   border-radius: 4px;
-  background: #ffffff;
+  background: rgb(var(--raised));
 }
 .paletteBtn:hover:not(:disabled) {
-  border-color: #35b6bb;
+  border-color: rgb(var(--teal-500));
   background: rgba(53, 182, 187, 0.06);
 }
 .paletteBtn:disabled {
@@ -436,28 +436,28 @@
 .toolBtn {
   height: 32px;
   border-radius: 4px;
-  border: 1px solid #c9d2dc;
-  background: #ffffff;
-  color: #334155;
+  border: 1px solid rgb(var(--ink-200));
+  background: rgb(var(--raised));
+  color: rgb(var(--ink-700));
 }
 .toolBtn:hover:not(:disabled) {
-  border-color: #35b6bb;
+  border-color: rgb(var(--teal-500));
   background: rgba(53, 182, 187, 0.07);
-  color: #0f172a;
+  color: rgb(var(--ink-900));
 }
 .toolBtn:disabled {
   opacity: 0.4;
 }
 .toolBtn[data-primary="true"] {
-  border-color: #2891ff;
-  background: #2891ff;
-  color: #ffffff;
+  border-color: rgb(var(--action));
+  background: rgb(var(--action));
+  color: rgb(var(--raised));
   box-shadow: 0 1px 2px rgba(40, 145, 255, 0.3);
 }
 .toolBtn[data-primary="true"]:hover:not(:disabled) {
-  border-color: #1d4ed8;
-  background: #1d4ed8;
-  color: #ffffff;
+  border-color: rgb(var(--action));
+  background: rgb(var(--action));
+  color: rgb(var(--raised));
   box-shadow: 0 2px 6px rgba(29, 78, 216, 0.34);
 }
 .toolBtn[data-primary="true"]:focus-visible {
@@ -487,22 +487,22 @@
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.35);
 }
 .runStart {
-  background: #16a34a;
-  color: #ffffff;
+  background: rgb(var(--success));
+  color: rgb(var(--raised));
   box-shadow: 0 1px 2px rgba(22, 163, 74, 0.32);
 }
 .runStart:hover {
-  background: #15803d;
+  background: rgb(var(--success));
   box-shadow: 0 2px 6px rgba(21, 128, 61, 0.34);
 }
 .runStop {
-  background: #fbeae8;
-  border-color: #e9a69e;
-  color: #b3382c;
+  background: rgb(var(--danger-bg));
+  border-color: rgb(var(--danger-border));
+  color: rgb(var(--danger));
 }
 .runStop:hover {
-  background: #f7dbd7;
-  border-color: #b3382c;
+  background: rgb(var(--danger-border));
+  border-color: rgb(var(--danger));
 }
 .runStop:focus-visible {
   box-shadow: 0 0 0 3px rgba(179, 56, 44, 0.3);
@@ -515,18 +515,18 @@
   gap: 5px;
   height: 28px;
   padding: 0 9px;
-  border: 1px solid #c9d2dc;
+  border: 1px solid rgb(var(--ink-200));
   border-radius: 4px;
-  background: #ffffff;
-  color: #475569;
+  background: rgb(var(--raised));
+  color: rgb(var(--ink-600));
   font-size: 11px;
   font-weight: 600;
   transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
     cubic-bezier(0.2, 0, 0, 1), color 90ms cubic-bezier(0.2, 0, 0, 1);
 }
 .chipBtn:hover:not(:disabled) {
-  border-color: #35b6bb;
-  color: #1b7f84;
+  border-color: rgb(var(--teal-500));
+  color: rgb(var(--teal-700));
   background: rgba(53, 182, 187, 0.07);
 }
 .chipBtn:focus-visible {
@@ -541,7 +541,7 @@
   gap: 6px;
   padding: 4px 6px;
   border-radius: 6px;
-  background: #eef2f6;
+  background: rgb(var(--ink-100));
 }
 
 /* ══ Toolbar ═══════════════════════════════════════════════════════
@@ -554,8 +554,8 @@
   gap: 6px;
   height: 44px;
   padding: 0 10px;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  background: rgb(var(--raised));
+  border-bottom: 1px solid rgb(var(--ink-100));
 }
 
 .backBtn {
@@ -564,13 +564,13 @@
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  color: #64748b;
+  color: rgb(var(--ink-500));
   transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), color 90ms
     cubic-bezier(0.2, 0, 0, 1);
 }
 .backBtn:hover {
-  background: #eef2f6;
-  color: #0f172a;
+  background: rgb(var(--ink-100));
+  color: rgb(var(--ink-900));
 }
 .backBtn:focus-visible {
   outline: none;
@@ -583,19 +583,19 @@
   padding: 3px 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #0f172a;
+  color: rgb(var(--ink-900));
   background: transparent;
   min-width: 60px;
   transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
     cubic-bezier(0.2, 0, 0, 1);
 }
 .projectName:hover {
-  background: #f7f9fb;
+  background: rgb(var(--ink-50));
 }
 .projectName:focus {
   outline: none;
-  background: #ffffff;
-  border-color: #35b6bb;
+  background: rgb(var(--raised));
+  border-color: rgb(var(--teal-500));
   box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.2);
 }
 
@@ -603,7 +603,7 @@
 .sep {
   width: 1px;
   height: 20px;
-  background: #e2e8f0;
+  background: rgb(var(--ink-100));
   margin: 0 3px;
   flex: none;
 }
@@ -631,20 +631,20 @@
     cubic-bezier(0.2, 0, 0, 1);
 }
 .saveState[data-state="saved"] {
-  color: #64748b;
+  color: rgb(var(--ink-500));
 }
 .saveState[data-state="dirty"] {
-  color: #b45309;
-  background: #fffbeb;
+  color: rgb(var(--warning));
+  background: rgb(var(--warning-bg));
 }
 .saveState[data-state="saving"] {
-  color: #64748b;
+  color: rgb(var(--ink-500));
 }
 .saveState:hover {
-  background: #eef2f6;
+  background: rgb(var(--ink-100));
 }
 .saveState[data-state="dirty"]:hover {
-  background: #fdf3df;
+  background: rgb(var(--warning-bg));
 }
 .saveState:focus-visible {
   outline: none;
@@ -658,7 +658,7 @@
   opacity: 0.75;
 }
 .saveState[data-state="saved"] .saveDot {
-  background: #16a34a;
+  background: rgb(var(--success));
   opacity: 1;
 }
 
@@ -672,7 +672,7 @@
   border-radius: 5px;
   border: 1px solid transparent;
   background: transparent;
-  color: #334155;
+  color: rgb(var(--ink-700));
   font-size: 12.5px;
   font-weight: 600;
   white-space: nowrap;
@@ -681,11 +681,11 @@
     cubic-bezier(0.2, 0, 0, 1);
 }
 .tbtn:hover:not(:disabled) {
-  background: #eef2f6;
-  color: #0f172a;
+  background: rgb(var(--ink-100));
+  color: rgb(var(--ink-900));
 }
 .tbtn:active:not(:disabled) {
-  background: #e4eaf1;
+  background: rgb(var(--ink-100));
 }
 .tbtn:disabled {
   opacity: 0.35;
@@ -696,12 +696,12 @@
 }
 
 .tbtn[data-primary="true"] {
-  background: #2891ff;
-  color: #ffffff;
+  background: rgb(var(--action));
+  color: rgb(var(--raised));
   box-shadow: 0 1px 2px rgba(40, 145, 255, 0.28);
 }
 .tbtn[data-primary="true"]:hover {
-  background: #1d4ed8;
+  background: rgb(var(--action));
   box-shadow: 0 2px 7px rgba(29, 78, 216, 0.3);
 }
 .tbtn[data-primary="true"]:focus-visible {
@@ -709,24 +709,24 @@
 }
 
 .startBtn {
-  background: #16a34a;
-  color: #ffffff;
+  background: rgb(var(--success));
+  color: rgb(var(--raised));
   box-shadow: 0 1px 2px rgba(22, 163, 74, 0.28);
 }
 .startBtn:hover:not(:disabled) {
-  background: #15803d;
-  color: #ffffff;
+  background: rgb(var(--success));
+  color: rgb(var(--raised));
   box-shadow: 0 2px 7px rgba(21, 128, 61, 0.3);
 }
 .stopBtn {
-  background: #fbeae8;
-  color: #b3382c;
-  border-color: #e9a69e;
+  background: rgb(var(--danger-bg));
+  color: rgb(var(--danger));
+  border-color: rgb(var(--danger-border));
 }
 .stopBtn:hover:not(:disabled) {
-  background: #f6dcd8;
-  color: #b3382c;
-  border-color: #b3382c;
+  background: rgb(var(--danger-border));
+  color: rgb(var(--danger));
+  border-color: rgb(var(--danger));
 }
 
 .iconOnly {
@@ -736,13 +736,13 @@
   width: 28px;
   height: 28px;
   border-radius: 5px;
-  color: #64748b;
+  color: rgb(var(--ink-500));
   transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), color 90ms
     cubic-bezier(0.2, 0, 0, 1);
 }
 .iconOnly:hover {
-  background: #eef2f6;
-  color: #0f172a;
+  background: rgb(var(--ink-100));
+  color: rgb(var(--ink-900));
 }
 .iconOnly:focus-visible {
   outline: none;
@@ -750,7 +750,7 @@
 }
 /* Never taken the tour? One dot, no banner. */
 .iconOnly[data-flag="true"] {
-  color: #1b7f84;
+  color: rgb(var(--teal-700));
 }
 .iconOnly[data-flag="true"]::after {
   content: "";
@@ -760,7 +760,7 @@
   width: 5px;
   height: 5px;
   border-radius: 999px;
-  background: #35b6bb;
+  background: rgb(var(--teal-500));
 }
 
 /* The controller lamp. A dot and three letters; the tooltip says the rest. */
@@ -774,41 +774,41 @@
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  background: #f1f5f9;
-  color: #64748b;
+  background: rgb(var(--ink-50));
+  color: rgb(var(--ink-500));
   cursor: default;
 }
 .plcLamp[data-loaded="true"] {
-  background: #dcfce7;
-  color: #15803d;
+  background: rgb(var(--success-bg));
+  color: rgb(var(--success));
 }
 .plcDot {
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #94a3b8;
+  background: rgb(var(--ink-400));
 }
 .plcLamp[data-loaded="true"] .plcDot {
-  background: #16a34a;
+  background: rgb(var(--success));
 }
 
 .scanSelect {
   height: 26px;
   padding: 0 5px;
-  border: 1px solid #c9d2dc;
+  border: 1px solid rgb(var(--ink-200));
   border-radius: 4px;
-  background: #ffffff;
-  color: #334155;
+  background: rgb(var(--raised));
+  color: rgb(var(--ink-700));
   font-size: 11px;
   transition: border-color 90ms cubic-bezier(0.2, 0, 0, 1), box-shadow 90ms
     cubic-bezier(0.2, 0, 0, 1);
 }
 .scanSelect:hover {
-  border-color: #94a3b8;
+  border-color: rgb(var(--ink-400));
 }
 .scanSelect:focus {
   outline: none;
-  border-color: #35b6bb;
+  border-color: rgb(var(--teal-500));
   box-shadow: 0 0 0 3px rgba(53, 182, 187, 0.2);
 }
 
@@ -819,8 +819,8 @@
   height: 22px;
   padding: 0 8px;
   border-radius: 999px;
-  background: #dcfce7;
-  color: #15803d;
+  background: rgb(var(--success-bg));
+  color: rgb(var(--success));
   font-size: 10px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -845,21 +845,21 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: #94a3b8;
-  background: #f7f9fb;
-  border-bottom: 1px solid #c9d2dc;
+  color: rgb(var(--ink-400));
+  background: rgb(var(--ink-50));
+  border-bottom: 1px solid rgb(var(--ink-200));
   cursor: help;
 }
 .tagTable td {
   padding: 1px 3px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid rgb(var(--ink-50));
   vertical-align: middle;
 }
 .tagRow {
   transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1);
 }
 .tagRow:hover {
-  background: #f7f9fb;
+  background: rgb(var(--ink-50));
 }
 
 .cellInput {
@@ -869,31 +869,31 @@
   border: 1px solid transparent;
   border-radius: 3px;
   background: transparent;
-  color: #0f172a;
+  color: rgb(var(--ink-900));
   font-size: 11px;
   transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
     cubic-bezier(0.2, 0, 0, 1);
 }
 .cellInput:hover:not(:disabled) {
-  background: #ffffff;
-  border-color: #e2e8f0;
+  background: rgb(var(--raised));
+  border-color: rgb(var(--ink-100));
 }
 .cellInput:focus {
   outline: none;
-  background: #ffffff;
-  border-color: #35b6bb;
+  background: rgb(var(--raised));
+  border-color: rgb(var(--teal-500));
   box-shadow: 0 0 0 2px rgba(53, 182, 187, 0.22);
 }
 .cellInput[data-invalid="true"] {
-  border-color: #e9a69e;
-  background: #fbeae8;
+  border-color: rgb(var(--danger-border));
+  background: rgb(var(--danger-bg));
 }
 .cellInput[data-invalid="true"]:focus {
-  border-color: #b3382c;
+  border-color: rgb(var(--danger));
   box-shadow: 0 0 0 2px rgba(179, 56, 44, 0.22);
 }
 .cellInput::placeholder {
-  color: #cbd5e1;
+  color: rgb(var(--ink-200));
   font-weight: 400;
 }
 
@@ -904,19 +904,19 @@
   border: 1px solid transparent;
   border-radius: 3px;
   background: transparent;
-  color: #334155;
+  color: rgb(var(--ink-700));
   font-size: 10.5px;
   transition: background-color 90ms cubic-bezier(0.2, 0, 0, 1), border-color 90ms
     cubic-bezier(0.2, 0, 0, 1);
 }
 .cellSelect:hover:not(:disabled) {
-  background: #ffffff;
-  border-color: #e2e8f0;
+  background: rgb(var(--raised));
+  border-color: rgb(var(--ink-100));
 }
 .cellSelect:focus {
   outline: none;
-  background: #ffffff;
-  border-color: #35b6bb;
+  background: rgb(var(--raised));
+  border-color: rgb(var(--teal-500));
   box-shadow: 0 0 0 2px rgba(53, 182, 187, 0.22);
 }
 .cellSelect:disabled {
@@ -929,13 +929,13 @@
   width: 20px;
   height: 20px;
   border-radius: 3px;
-  color: #cbd5e1;
+  color: rgb(var(--ink-200));
   transition: color 90ms cubic-bezier(0.2, 0, 0, 1), background-color 90ms
     cubic-bezier(0.2, 0, 0, 1);
 }
 .rowDelete:hover:not(:disabled) {
-  color: #b3382c;
-  background: #fbeae8;
+  color: rgb(var(--danger));
+  background: rgb(var(--danger-bg));
 }
 .rowDelete:focus-visible {
   outline: none;
@@ -953,8 +953,8 @@
   height: 15px;
   padding: 0 6px;
   border-radius: 999px;
-  background: #16a34a;
-  color: #ffffff;
+  background: rgb(var(--success));
+  color: rgb(var(--raised));
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.09em;
@@ -964,7 +964,7 @@
   width: 5px;
   height: 5px;
   border-radius: 999px;
-  background: #ffffff;
+  background: rgb(var(--raised));
 }
 
 /* A contact that can be operated right now. */
@@ -981,8 +981,8 @@
   gap: 2px;
   padding: 3px 4px 0;
   flex: none;
-  background: #eef2f6;
-  border-bottom: 1px solid #c9d2dc;
+  background: rgb(var(--ink-100));
+  border-bottom: 1px solid rgb(var(--ink-200));
   overflow-x: auto;
 }
 .tab {
@@ -999,8 +999,8 @@
   background: rgba(255, 255, 255, 0.7);
 }
 .tab[data-active="true"] {
-  background: #ffffff;
-  border-color: #c9d2dc;
+  background: rgb(var(--raised));
+  border-color: rgb(var(--ink-200));
   /* Lifted a pixel over the strip's border, so the open tab joins the page
      below it rather than sitting on a line. */
   margin-bottom: -1px;
@@ -1014,11 +1014,11 @@
   padding: 0 8px;
   font-size: 10.5px;
   font-weight: 600;
-  color: #64748b;
+  color: rgb(var(--ink-500));
   white-space: nowrap;
 }
 .tab[data-active="true"] .tabLabel {
-  color: #0f172a;
+  color: rgb(var(--ink-900));
 }
 .tabLabel:focus-visible {
   outline: none;
@@ -1027,16 +1027,16 @@
 .tabCount {
   font-size: 8.5px;
   font-weight: 700;
-  color: #94a3b8;
-  background: #eef2f6;
+  color: rgb(var(--ink-400));
+  background: rgb(var(--ink-100));
   border-radius: 999px;
   padding: 0 4px;
   min-width: 13px;
   text-align: center;
 }
 .tab[data-active="true"] .tabCount {
-  background: #e8f6f7;
-  color: #1b7f84;
+  background: rgb(var(--teal-50));
+  color: rgb(var(--teal-700));
 }
 .tabClose {
   display: grid;
@@ -1045,13 +1045,13 @@
   height: 15px;
   margin-right: 4px;
   border-radius: 3px;
-  color: #cbd5e1;
+  color: rgb(var(--ink-200));
   transition: color 90ms cubic-bezier(0.2, 0, 0, 1), background-color 90ms
     cubic-bezier(0.2, 0, 0, 1);
 }
 .tabClose:hover {
-  color: #b3382c;
-  background: #fbeae8;
+  color: rgb(var(--danger));
+  background: rgb(var(--danger-bg));
 }
 .tabClose:focus-visible {
   outline: none;

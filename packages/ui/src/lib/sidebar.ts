@@ -34,7 +34,7 @@ export const SIDEBAR_BRAND_LINK = "flex flex-col items-start gap-0.5";
 export const SIDEBAR_BRAND_SUB =
   "pl-[1px] font-mono text-[9.5px] uppercase leading-none tracking-[0.34em] text-ink-400";
 export const SIDEBAR_COLLAPSE_BUTTON =
-  "flex h-7 w-7 items-center justify-center rounded-md text-ink-300 transition-colors hover:bg-ink-100 hover:text-ink-700";
+  "flex h-7 w-7 items-center justify-center rounded-md text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-700";
 export const SIDEBAR_EXPAND_BUTTON =
   "mb-3 flex h-9 w-9 items-center justify-center rounded-md text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-900";
 

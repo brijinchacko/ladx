@@ -114,7 +114,7 @@ export default function CompanyForm({ initial }: { initial: CompanyProfile | nul
             <button
               type="button"
               onClick={() => setLogo(null)}
-              className="mt-1.5 font-mono text-[11px] text-ink-400 transition-colors hover:text-red-700"
+              className="mt-1.5 font-mono text-[11px] text-ink-400 transition-colors hover:text-danger"
             >
               Remove logo
             </button>
@@ -130,7 +130,7 @@ export default function CompanyForm({ initial }: { initial: CompanyProfile | nul
             onChange={(e) => setName(e.target.value)}
             maxLength={200}
             placeholder="Your company"
-            className="w-full rounded-sm border border-ink-200 px-3 py-2 text-[15px] text-ink-900 outline-none transition-colors placeholder:text-ink-300 focus:border-ink-500"
+            className="w-full rounded-sm border border-ink-200 px-3 py-2 text-[15px] text-ink-900 outline-none transition-colors placeholder:text-ink-400 focus:border-ink-500"
           />
           <span className="mt-2 block text-[12.5px] leading-relaxed text-ink-400">
             The name and logo print at the top of every document. The details below fill the
@@ -163,7 +163,7 @@ export default function CompanyForm({ initial }: { initial: CompanyProfile | nul
           {saving ? "Saving…" : "Save company profile"}
         </button>
         {status && (
-          <p className={`text-[13.5px] ${status.kind === "ok" ? "text-teal-700" : "text-red-700"}`}>
+          <p className={`text-[13.5px] ${status.kind === "ok" ? "text-teal-700" : "text-danger"}`}>
             {status.text}
           </p>
         )}

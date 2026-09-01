@@ -122,7 +122,7 @@ export default function AccountMenu({
               <span className="block truncate text-[11px] text-ink-400">Account</span>
             </span>
             <ChevronUp
-              className={`h-3.5 w-3.5 shrink-0 text-ink-300 transition-transform ${open ? "" : "rotate-180"}`}
+              className={`h-3.5 w-3.5 shrink-0 text-ink-400 transition-transform ${open ? "" : "rotate-180"}`}
             />
           </>
         )}

@@ -193,17 +193,17 @@ export default function Tour({
       >
         <div className="px-4 pt-3.5 pb-3">
           <div className="flex items-start gap-2">
-            <h3 className="text-[13.5px] font-bold text-[#0f172a] flex-1">{step.title}</h3>
+            <h3 className="text-[13.5px] font-bold text-ink-900 flex-1">{step.title}</h3>
             <button
               type="button"
               onClick={finish}
               aria-label="Skip the tour"
-              className="text-[#94A3B8] hover:text-[#334155] -mt-0.5"
+              className="text-ink-400 hover:text-ink-700 -mt-0.5"
             >
               <X size={14} />
             </button>
           </div>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-[#334155]">{step.text}</p>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-ink-700">{step.text}</p>
           {step.topic && topicTitle && (
             <button
               type="button"
@@ -211,14 +211,14 @@ export default function Tour({
                 finish();
                 onHelp(step.topic!);
               }}
-              className="mt-2 text-[11px] text-[#2891FF] hover:underline"
+              className="mt-2 text-[11px] text-action hover:underline"
             >
               Read more: {topicTitle} →
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-2 px-3 h-9 border-t border-[#E2E8F0] bg-[#F8FAFC]">
+        <div className="flex items-center gap-2 px-3 h-9 border-t border-ink-100 bg-ink-50">
           <div className="flex gap-1" aria-hidden>
             {TOUR.map((s, n) => (
               <span
@@ -236,7 +236,7 @@ export default function Tour({
           <button
             type="button"
             onClick={finish}
-            className="text-[11px] text-[#64748B] hover:text-[#334155] px-1.5"
+            className="text-[11px] text-ink-500 hover:text-ink-700 px-1.5"
           >
             Skip
           </button>
@@ -244,7 +244,7 @@ export default function Tour({
             <button
               type="button"
               onClick={back}
-              className="flex items-center gap-1 text-[11px] text-[#334155] hover:text-[#0f172a] px-1.5"
+              className="flex items-center gap-1 text-[11px] text-ink-700 hover:text-ink-900 px-1.5"
             >
               <ArrowLeft size={11} /> Back
             </button>

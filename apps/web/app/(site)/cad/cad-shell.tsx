@@ -93,7 +93,7 @@ export default function CadShell() {
   return (
     <>
       {!allowed && (
-        <p className="mx-auto mb-3 max-w-6xl rounded-sm border border-[#E4C9A8] bg-[#FDF6EC] px-4 py-2.5 text-[12.5px] leading-relaxed text-[#7A4A12]">
+        <p className="mx-auto mb-3 max-w-6xl rounded-sm border border-warning-border bg-warning-bg px-4 py-2.5 text-[12.5px] leading-relaxed text-warning">
           Optional storage is switched off, so this drawing cannot be kept between visits. Export it
           as DXF or SVG before you close the tab, or allow functional storage on the cookies page.
         </p>

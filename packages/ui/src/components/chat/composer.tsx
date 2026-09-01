@@ -351,7 +351,7 @@ function ModelMenu({ picker }: { picker: ModelPicker }) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Filter models"
-                className="w-full rounded-md border border-ink-200 px-2 py-1 text-[12.5px] outline-none placeholder:text-ink-300 focus:border-ink-500"
+                className="w-full rounded-md border border-ink-200 px-2 py-1 text-[12.5px] outline-none placeholder:text-ink-400 focus:border-ink-500"
               />
             </div>
           )}
@@ -386,7 +386,7 @@ function ModelMenu({ picker }: { picker: ModelPicker }) {
                       </span>
                     )}
                     {m.contextTokens ? (
-                      <span className="shrink-0 font-mono text-[9.5px] tabular-nums text-ink-300">
+                      <span className="shrink-0 font-mono text-[9.5px] tabular-nums text-ink-400">
                         {Math.round(m.contextTokens / 1000)}k
                       </span>
                     ) : null}

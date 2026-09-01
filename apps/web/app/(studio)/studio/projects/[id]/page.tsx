@@ -192,7 +192,7 @@ export default async function ProjectWorkspace({
                 {client.name}
               </Link>
             ) : (
-              <span className="text-ink-300">No client assigned</span>
+              <span className="text-ink-400">No client assigned</span>
             )}
           </nav>
 
@@ -306,7 +306,7 @@ export default async function ProjectWorkspace({
 
                 <div className="p-5">
                   {!companyReady && (
-                    <p className="mb-5 rounded-sm border-l-2 border-amber-500 bg-amber-50 py-2 pl-3 text-[13px] text-amber-800">
+                    <p className="mb-5 rounded-sm border-l-2 border-warning bg-warning-bg py-2 pl-3 text-[13px] text-warning">
                       Add your company profile in{" "}
                       <Link href="/studio/settings" className="underline">
                         Settings

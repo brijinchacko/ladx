@@ -76,7 +76,7 @@ export default function LadderPreview({ program }: { program: LadxProgram }) {
   return (
     <div className="space-y-2">
       {program.rungs.map((r, i) => (
-        <div key={r.id ?? i} className="rounded-lg border border-white/[0.07] bg-[#0f1512] p-2.5">
+        <div key={r.id ?? i} className="rounded-lg border border-white/[0.07] bg-on-accent p-2.5">
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/[0.05] text-text-muted">
               {String(i + 1).padStart(3, "0")}
@@ -116,7 +116,7 @@ export default function LadderPreview({ program }: { program: LadxProgram }) {
                 </span>
               ))}
               {r.outputs.length === 0 && (
-                <span className="text-[10px] text-amber-300 mt-4">no output</span>
+                <span className="text-[10px] text-warning mt-4">no output</span>
               )}
             </div>
             <span
@@ -127,7 +127,7 @@ export default function LadderPreview({ program }: { program: LadxProgram }) {
         </div>
       ))}
 
-      <div className="rounded-lg border border-white/[0.07] bg-[#0f1512] p-2.5">
+      <div className="rounded-lg border border-white/[0.07] bg-on-accent p-2.5">
         <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-1.5">
           Tags declared
         </p>

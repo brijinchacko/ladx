@@ -82,7 +82,7 @@ export default function AdminLicences({ rows, open }: { rows: LicenceRow[]; open
   return (
     <div>
       {open && (
-        <p className="mb-4 rounded-md border border-[#E4C9A8] bg-[#FDF6EC] p-3 text-[12.5px] leading-relaxed text-[#7A4A12]">
+        <p className="mb-4 rounded-md border border-warning-border bg-warning-bg p-3 text-[12.5px] leading-relaxed text-warning">
           <strong className="font-semibold">Open activation is on.</strong> With{" "}
           <code className="font-mono">LADX_ACTIVATION_OPEN=1</code> set, any key a desktop sends is
           accepted whether it was issued or not. That is for the period before the first key exists.
@@ -149,7 +149,7 @@ export default function AdminLicences({ rows, open }: { rows: LicenceRow[]; open
             {busy ? "Working" : "Issue"}
           </button>
         </div>
-        {error && <p className="mt-2 text-[12px] text-[#7A2E12]">{error}</p>}
+        {error && <p className="mt-2 text-[12px] text-danger">{error}</p>}
       </div>
 
       <div className="overflow-x-auto rounded-md border border-ink-200 bg-white">
@@ -192,9 +192,7 @@ export default function AdminLicences({ rows, open }: { rows: LicenceRow[]; open
                     <td className="px-3 py-2">
                       <span
                         className={`rounded-sm px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] ${
-                          state === "live"
-                            ? "bg-teal-50 text-teal-800"
-                            : "bg-[#FDF0EC] text-[#7A2E12]"
+                          state === "live" ? "bg-teal-50 text-teal-800" : "bg-danger-bg text-danger"
                         }`}
                       >
                         {state}
@@ -237,7 +235,7 @@ export default function AdminLicences({ rows, open }: { rows: LicenceRow[]; open
                             })
                           }
                           className={`text-[11.5px] underline ${
-                            l.revokedAt ? "text-teal-700" : "text-[#B4531A]"
+                            l.revokedAt ? "text-teal-700" : "text-danger"
                           }`}
                         >
                           {l.revokedAt ? "Restore" : "Withdraw"}

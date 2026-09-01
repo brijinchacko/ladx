@@ -224,7 +224,7 @@ export function Contacts({
                   type="button"
                   onClick={() => void remove(c)}
                   title={`Remove ${c.name}`}
-                  className="text-ink-300 hover:text-[#B4531A]"
+                  className="text-ink-400 hover:text-danger"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -374,7 +374,7 @@ export function Sites({ clientId, sites }: { clientId: string; sites: ClientSite
                   <span className="font-mono text-[11px] text-ink-400">{s.supplyVoltage}</span>
                 )}
                 {s.inductionRequired && (
-                  <span className="rounded-sm bg-[#FDF6EC] px-1.5 py-0.5 font-mono text-[10px] text-[#7A4A12] uppercase tracking-[0.08em]">
+                  <span className="rounded-sm bg-warning-bg px-1.5 py-0.5 font-mono text-[10px] text-warning uppercase tracking-[0.08em]">
                     Induction needed
                   </span>
                 )}
@@ -382,7 +382,7 @@ export function Sites({ clientId, sites }: { clientId: string; sites: ClientSite
                   type="button"
                   onClick={() => void remove(s)}
                   title={`Remove ${s.name}`}
-                  className="ml-auto text-ink-300 hover:text-[#B4531A]"
+                  className="ml-auto text-ink-400 hover:text-danger"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

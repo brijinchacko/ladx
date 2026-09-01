@@ -48,7 +48,7 @@ export default async function AdminTrafficPage({
   return (
     <div className="mx-auto max-w-5xl px-5 py-6">
       {!enabled && (
-        <p className="mb-5 rounded-md border border-[#E4C9A8] bg-[#FDF6EC] p-3 text-[12.5px] leading-relaxed text-[#7A4A12]">
+        <p className="mb-5 rounded-md border border-warning-border bg-warning-bg p-3 text-[12.5px] leading-relaxed text-warning">
           Counting is off. The middleware signs its batches with a token derived from{" "}
           <code className="font-mono">LADX_SECRETS_KEY</code>, and that variable is not set on this
           server, so nothing is being recorded. Set it and the figures start from the next page

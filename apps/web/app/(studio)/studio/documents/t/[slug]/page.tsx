@@ -76,7 +76,7 @@ export default async function StudioTemplatePage({
                     key={section}
                     className="flex items-baseline gap-2.5 text-[13.5px] text-ink-700"
                   >
-                    <span className="font-mono text-[10.5px] tabular-nums text-ink-300">
+                    <span className="font-mono text-[10.5px] tabular-nums text-ink-400">
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     {section}

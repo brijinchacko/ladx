@@ -301,7 +301,7 @@ export default function ProjectChatDock({
         style={{ touchAction: "none", cursor: dragging ? "grabbing" : "grab" }}
         className="flex shrink-0 items-center gap-2 border-b border-ink-100 bg-ink-50/70 px-2.5 py-2"
       >
-        <GripVertical className="h-3.5 w-3.5 shrink-0 text-ink-300" />
+        <GripVertical className="h-3.5 w-3.5 shrink-0 text-ink-400" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[12.5px] font-semibold text-ink-900">Project assistant</p>
           <p className="truncate font-mono text-[10.5px] text-ink-400">{projectName}</p>
@@ -344,7 +344,7 @@ export default function ProjectChatDock({
       </div>
 
       {notice && (
-        <p className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-1.5 text-[11px] leading-snug text-amber-900">
+        <p className="shrink-0 border-b border-warning-border bg-warning-bg px-3 py-1.5 text-[11px] leading-snug text-warning">
           {notice}
         </p>
       )}

@@ -89,7 +89,7 @@ export default function PhaseNav({
               ) : (
                 <span
                   className={`font-mono text-[9.5px] tabular-nums ${
-                    done ? "text-ink-400" : "text-ink-300"
+                    done ? "text-ink-400" : "text-ink-400"
                   }`}
                 >
                   {p.step === 0 ? "·" : p.step}
@@ -97,7 +97,7 @@ export default function PhaseNav({
               )}
               <span className={isViewing || isCurrent ? "font-medium" : ""}>{p.name}</span>
               {p.deliverableCount > 0 && (
-                <span className="font-mono text-[9.5px] tabular-nums text-ink-300">
+                <span className="font-mono text-[9.5px] tabular-nums text-ink-400">
                   {p.startedCount}/{p.deliverableCount}
                 </span>
               )}

@@ -93,7 +93,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
                     key={section}
                     className="flex items-baseline gap-3 text-[14.5px] text-ink-700"
                   >
-                    <span className="font-mono text-[11px] tabular-nums text-ink-300">
+                    <span className="font-mono text-[11px] tabular-nums text-ink-400">
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     {section}

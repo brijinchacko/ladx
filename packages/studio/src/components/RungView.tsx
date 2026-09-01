@@ -1106,7 +1106,7 @@ export default function RungView({
         }}
         onContextMenu={onRungMenu}
         title="Drag to reorder this network. Right-click for more."
-        className="flex items-center gap-1.5 px-2 py-1 border-b border-[#E2E8F0] bg-[#F7F9FB] cursor-pointer"
+        className="flex items-center gap-1.5 px-2 py-1 border-b border-ink-100 bg-ink-50 cursor-pointer"
       >
         <button
           type="button"
@@ -1115,12 +1115,12 @@ export default function RungView({
             onToggleCollapse();
           }}
           title={collapsed ? "Expand this network" : "Collapse this network"}
-          className="text-[#64748B] hover:text-[#0f172a] shrink-0"
+          className="text-ink-500 hover:text-ink-900 shrink-0"
         >
           {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
         </button>
 
-        <span className="text-[10.5px] font-bold text-[#334155] shrink-0">Network {index + 1}</span>
+        <span className="text-[10.5px] font-bold text-ink-700 shrink-0">Network {index + 1}</span>
 
         {renaming ? (
           <input
@@ -1141,7 +1141,7 @@ export default function RungView({
               if (e.key === "Escape") setRenaming(false);
             }}
             placeholder="Describe what this network does"
-            className="flex-1 min-w-0 bg-white border border-[#2891FF] rounded px-1 text-[10.5px] text-[#0f172a] outline-none"
+            className="flex-1 min-w-0 bg-white border border-action rounded px-1 text-[10.5px] text-ink-900 outline-none"
           />
         ) : (
           <span
@@ -1150,10 +1150,10 @@ export default function RungView({
               setDraft(rung.comment ?? "");
               setRenaming(true);
             }}
-            className="flex-1 min-w-0 truncate text-[10.5px] font-normal text-[#64748B]"
+            className="flex-1 min-w-0 truncate text-[10.5px] font-normal text-ink-500"
             title="Double-click to rename"
           >
-            {rung.comment || <span className="italic text-[#94A3B8]">untitled</span>}
+            {rung.comment || <span className="italic text-ink-400">untitled</span>}
           </span>
         )}
 
@@ -1177,7 +1177,7 @@ export default function RungView({
             setRenaming(true);
           }}
           title="Rename this network"
-          className="text-[#94A3B8] hover:text-[#2891FF] shrink-0"
+          className="text-ink-400 hover:text-action shrink-0"
         >
           <Pencil size={11} />
         </button>
@@ -1188,7 +1188,7 @@ export default function RungView({
             onDeleteRung();
           }}
           title="Delete this network"
-          className="text-[#94A3B8] hover:text-red-500 shrink-0"
+          className="text-ink-400 hover:text-danger shrink-0"
         >
           <Trash2 size={11} />
         </button>
@@ -1306,7 +1306,7 @@ export default function RungView({
                   ? "Add an output to this rung"
                   : "Add another coil in parallel, this rung will drive both"
               }
-              className="text-[10px] text-[#94A3B8] hover:text-[#2891FF] px-3 whitespace-nowrap text-left"
+              className="text-[10px] text-ink-400 hover:text-action px-3 whitespace-nowrap text-left"
               style={{ height: rung.outputs.length === 0 ? ROW_H : 18 }}
             >
               + {rung.outputs.length === 0 ? "output" : "parallel coil"}

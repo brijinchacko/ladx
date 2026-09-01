@@ -84,7 +84,7 @@ export default function HmiShell() {
   return (
     <div className="flex min-h-[70vh] flex-col">
       {!allowed && (
-        <p className="mb-2 rounded-sm border border-[#E4C9A8] bg-[#FDF6EC] px-4 py-2.5 text-[12.5px] leading-relaxed text-[#7A4A12]">
+        <p className="mb-2 rounded-sm border border-warning-border bg-warning-bg px-4 py-2.5 text-[12.5px] leading-relaxed text-warning">
           Optional storage is switched off, so this application cannot be kept between visits.
           Export it as JSON before you close the tab, or allow functional storage on the cookies
           page.

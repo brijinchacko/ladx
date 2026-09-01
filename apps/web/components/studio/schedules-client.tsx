@@ -76,7 +76,7 @@ export function SchedulesClient({
   if (programs.length === 0) {
     return (
       <div className="mx-auto w-full max-w-3xl px-6 py-10 text-center">
-        <Cable className="mx-auto mb-3 h-5 w-5 text-ink-300" />
+        <Cable className="mx-auto mb-3 h-5 w-5 text-ink-400" />
         <p className="text-[13.5px] text-ink-600">No programs yet.</p>
         <p className="mt-1 text-[12.5px] text-ink-500">
           Write one in Ladder, or open an L5X in Convert, and its schedules appear here.
@@ -103,7 +103,7 @@ export function SchedulesClient({
       </div>
 
       {error && (
-        <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-800">
+        <p className="mb-4 rounded-md border border-danger-border bg-danger-bg px-3 py-2 text-[13px] text-danger">
           {error}
         </p>
       )}
@@ -201,7 +201,7 @@ function Section({
               {/* Nothing here is an error. Each one is something worth a look,
                   and several are normal on a working machine: a spare input is
                   not a fault. */}
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-300" />
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-400" />
               <span className="text-ink-600">
                 {i.tag && <span className="font-mono text-[11.5px] text-ink-500">{i.tag}</span>}{" "}
                 {i.detail}
@@ -234,7 +234,7 @@ function Table({ head, rows }: { head: string[]; rows: string[][] }) {
                 key={`${head[i]}-${cell}`}
                 className={`px-3 py-1.5 ${i === 0 ? "font-mono text-ink-900" : "text-ink-600"}`}
               >
-                {cell || <span className="text-ink-300">-</span>}
+                {cell || <span className="text-ink-400">-</span>}
               </td>
             ))}
           </tr>

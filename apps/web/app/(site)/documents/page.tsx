@@ -149,7 +149,7 @@ export default function DocumentsPage() {
                       key={item}
                       className="flex items-start gap-2 text-[13.5px] leading-relaxed text-ink-600"
                     >
-                      <Sq size={5} className="mt-[7px] text-ink-300" />
+                      <Sq size={5} className="mt-[7px] text-ink-400" />
                       {item}
                     </li>
                   ))}

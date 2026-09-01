@@ -183,7 +183,7 @@ export default function KnowledgeClient() {
               onChange={(e) => setTitle(e.target.value)}
               maxLength={200}
               placeholder="Drive manual, SEW MOVITRAC B"
-              className="w-full rounded-sm border border-ink-200 px-2.5 py-1.5 text-[14px] outline-none transition-colors placeholder:text-ink-300 focus:border-ink-500"
+              className="w-full rounded-sm border border-ink-200 px-2.5 py-1.5 text-[14px] outline-none transition-colors placeholder:text-ink-400 focus:border-ink-500"
             />
             <button
               type="button"
@@ -207,7 +207,7 @@ export default function KnowledgeClient() {
               onChange={(e) => setText(e.target.value)}
               rows={5}
               placeholder="Or paste the text here"
-              className="w-full rounded-sm border border-ink-200 px-2.5 py-2 font-mono text-[12.5px] leading-relaxed outline-none transition-colors placeholder:text-ink-300 focus:border-ink-500"
+              className="w-full rounded-sm border border-ink-200 px-2.5 py-2 font-mono text-[12.5px] leading-relaxed outline-none transition-colors placeholder:text-ink-400 focus:border-ink-500"
             />
             <button
               type="submit"
@@ -249,7 +249,7 @@ export default function KnowledgeClient() {
                     <button
                       type="button"
                       onClick={() => void remove(d.id, d.title)}
-                      className="shrink-0 font-mono text-[10.5px] text-ink-400 transition-colors hover:text-red-700"
+                      className="shrink-0 font-mono text-[10.5px] text-ink-400 transition-colors hover:text-danger"
                     >
                       Remove
                     </button>
@@ -274,7 +274,7 @@ export default function KnowledgeClient() {
               rows={3}
               maxLength={2000}
               placeholder="What is the maximum braking resistor duty cycle?"
-              className="w-full rounded-sm border border-ink-200 px-3 py-2.5 text-[14.5px] leading-relaxed outline-none transition-colors placeholder:text-ink-300 focus:border-ink-500"
+              className="w-full rounded-sm border border-ink-200 px-3 py-2.5 text-[14.5px] leading-relaxed outline-none transition-colors placeholder:text-ink-400 focus:border-ink-500"
             />
             <div className="flex flex-wrap items-center gap-3">
               <select
@@ -307,7 +307,7 @@ export default function KnowledgeClient() {
           <p
             className={`mb-6 border-l-2 py-2 pl-3 text-[13.5px] ${
               notice.kind === "error"
-                ? "border-red-500 bg-red-50 text-red-800"
+                ? "border-danger bg-danger-bg text-danger"
                 : "border-teal-600 bg-teal-50/50 text-teal-900"
             }`}
           >

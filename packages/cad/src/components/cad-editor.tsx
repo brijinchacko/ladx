@@ -2122,7 +2122,7 @@ export default function CadEditor({
             </span>
             {dirty && (
               <span
-                className="h-1.5 w-1.5 rounded-full bg-[#B4531A]"
+                className="h-1.5 w-1.5 rounded-full bg-danger"
                 title="Unsaved changes"
                 aria-label="Unsaved changes"
               />
@@ -2287,7 +2287,7 @@ export default function CadEditor({
             <span>
               {stats.entities} entities · {stats.layers} layers
             </span>
-            {snapHit && <span className="text-[#B4531A]">{snapHit.kind}</span>}
+            {snapHit && <span className="text-danger">{snapHit.kind}</span>}
             {measuring && <span className="text-teal-700">{measuring} mm</span>}
             {measured && <span className="text-teal-700">{measured}</span>}
             {tool === "fillet" && (

@@ -167,7 +167,7 @@ export default function ChatHistory({ items }: { items: HistoryItem[] }) {
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
-      <p className="mb-1 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-300">
+      <p className="mb-1 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
         {label}
       </p>
       <div className="space-y-px">{children}</div>
@@ -225,23 +225,23 @@ function Row({
       <Link
         href={`/studio/c/${item.id}`}
         className={`flex items-center gap-2 rounded-md py-1.5 pl-2 pr-7 text-[13px] transition-colors ${
-          active ? "bg-ink-900 text-white" : "text-ink-700 hover:bg-ink-100"
+          active
+            ? "bg-white font-medium text-ink-900 shadow-[0_1px_2px_rgb(var(--ink-900)/0.06)]"
+            : "text-ink-600 hover:bg-ink-100/70 hover:text-ink-900"
         }`}
       >
         {item.pinned ? (
           <Pin
-            className={`h-3 w-3 shrink-0 ${active ? "text-white" : "text-teal-600"}`}
+            className={`h-3 w-3 shrink-0 ${active ? "text-teal-700" : "text-teal-600"}`}
             fill="currentColor"
           />
         ) : (
           <MessageSquare
-            className={`h-3.5 w-3.5 shrink-0 ${active ? "text-white" : "text-ink-400"}`}
+            className={`h-3.5 w-3.5 shrink-0 ${active ? "text-ink-900" : "text-ink-400"}`}
           />
         )}
         <span className="min-w-0 flex-1 truncate">{item.title?.trim() || "Untitled chat"}</span>
-        {item.shareToken && (
-          <Share2 className={`h-3 w-3 shrink-0 ${active ? "text-white/70" : "text-ink-300"}`} />
-        )}
+        {item.shareToken && <Share2 className="h-3 w-3 shrink-0 text-ink-400" />}
       </Link>
 
       <button
@@ -250,7 +250,7 @@ function Row({
         aria-label={`Options for ${item.title ?? "chat"}`}
         className={`absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded transition-opacity ${
           menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus:opacity-100"
-        } ${active ? "text-white hover:bg-white/15" : "text-ink-400 hover:bg-ink-200"}`}
+        } ${active ? "text-ink-500 hover:bg-ink-100" : "text-ink-400 hover:bg-ink-200"}`}
       >
         <MoreHorizontal className="h-3.5 w-3.5" />
       </button>
@@ -291,7 +291,7 @@ function MenuItem({
       type="button"
       onClick={onClick}
       className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[12.5px] transition-colors hover:bg-ink-50 ${
-        danger ? "text-red-700" : "text-ink-700"
+        danger ? "text-danger" : "text-ink-700"
       }`}
     >
       <Icon className="h-3 w-3 shrink-0 opacity-60" />

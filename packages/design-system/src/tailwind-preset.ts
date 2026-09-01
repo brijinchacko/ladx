@@ -39,6 +39,15 @@ export const ladxPreset: Partial<Config> = {
         white: v("raised"),
         /** Text on a teal fill. Fixed in both themes; see globals.css. */
         "on-accent": v("on-accent"),
+        /** A link or a bullet that is not the brand accent. */
+        action: v("action"),
+        /** Status surfaces, so a warning box follows the theme like everything else. */
+        "danger-bg": v("danger-bg"),
+        "danger-border": v("danger-border"),
+        "warning-bg": v("warning-bg"),
+        "warning-border": v("warning-border"),
+        "success-bg": v("success-bg"),
+        "success-border": v("success-border"),
         page: v("page"),
         success: v("success"),
         warning: v("warning"),

@@ -419,15 +419,15 @@ function OutputRow({ tag, on }: { tag: Tag; on: boolean }) {
     return (
       <div className="py-1.5">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-[12.5px] font-medium text-[#0f172a] truncate">{tag.name}</span>
+          <span className="text-[12.5px] font-medium text-ink-900 truncate">{tag.name}</span>
           <span className="text-[13px] font-mono font-bold" style={{ color: "#15803d" }}>
             {tag.value}
           </span>
         </div>
-        <div className="h-1.5 rounded bg-[#e2e8f0] overflow-hidden mt-1">
+        <div className="h-1.5 rounded bg-ink-100 overflow-hidden mt-1">
           <div className="h-full rounded" style={{ width: `${pct}%`, background: "#2891FF" }} />
         </div>
-        <span className="text-[10px] text-[#64748b]">{sub} · read-only</span>
+        <span className="text-[10px] text-ink-500">{sub} · read-only</span>
       </div>
     );
   }
@@ -436,8 +436,8 @@ function OutputRow({ tag, on }: { tag: Tag; on: boolean }) {
     <div className="flex items-center gap-2.5 py-1.5">
       {kind === "MOTOR" ? <MotorSymbol on={on} /> : <LampSymbol on={on} />}
       <span className="min-w-0">
-        <span className="block text-[12.5px] font-medium text-[#0f172a] truncate">{tag.name}</span>
-        <span className="block text-[10px] text-[#64748b]">{sub}</span>
+        <span className="block text-[12.5px] font-medium text-ink-900 truncate">{tag.name}</span>
+        <span className="block text-[10px] text-ink-500">{sub}</span>
       </span>
       <span
         className="ml-auto text-[11px] font-mono font-bold"
@@ -457,8 +457,8 @@ function InputControl({ tag, on, h }: { tag: Tag; on: boolean; h: SimHandlers })
     return (
       <div className="py-1.5">
         <div className="flex items-baseline justify-between">
-          <span className="text-[12.5px] font-medium text-[#0f172a]">{tag.name}</span>
-          <span className="text-[11px] font-mono font-bold text-[#15803d]">{tag.value}</span>
+          <span className="text-[12.5px] font-medium text-ink-900">{tag.name}</span>
+          <span className="text-[11px] font-mono font-bold text-success">{tag.value}</span>
         </div>
         <div className="flex items-center gap-2 mt-1">
           <input
@@ -477,10 +477,10 @@ function InputControl({ tag, on, h }: { tag: Tag; on: boolean; h: SimHandlers })
             max={100}
             value={tag.value}
             onChange={(e) => h.setValue(tag.name, Number(e.target.value))}
-            className="w-14 h-6 px-1 rounded border border-[#C9D2DC] bg-white text-[11.5px] font-mono text-[#0f172a] text-right"
+            className="w-14 h-6 px-1 rounded border border-ink-200 bg-white text-[11.5px] font-mono text-ink-900 text-right"
           />
         </div>
-        <span className="text-[10px] text-[#64748b]">{sub}</span>
+        <span className="text-[10px] text-ink-500">{sub}</span>
       </div>
     );
   }
@@ -543,10 +543,10 @@ function InputControl({ tag, on, h }: { tag: Tag; on: boolean; h: SimHandlers })
       )}
 
       <span className="min-w-0">
-        <span className="block text-[12.5px] font-medium text-[#0f172a] truncate">{tag.name}</span>
-        <span className="block text-[10px] text-[#64748b]">
+        <span className="block text-[12.5px] font-medium text-ink-900 truncate">{tag.name}</span>
+        <span className="block text-[10px] text-ink-500">
           {sub}
-          {nc && <span className="text-[#0ea5e9]"> · 1 at rest</span>}
+          {nc && <span className="text-action"> · 1 at rest</span>}
         </span>
       </span>
 
@@ -620,9 +620,9 @@ export default function SimPanel({
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F7F9FB] text-[#0f172a] min-w-0">
+    <div className="h-full flex flex-col bg-ink-50 text-ink-900 min-w-0">
       {/* View switch */}
-      <div className="flex items-center gap-1 px-2 py-1.5 border-b border-[#C9D2DC] bg-white">
+      <div className="flex items-center gap-1 px-2 py-1.5 border-b border-ink-200 bg-white">
         {(
           [
             ["panel", "Panel", "Controls as they sit on the enclosure"],
@@ -682,7 +682,7 @@ export default function SimPanel({
           landing on its terminals, and two controllers on one screen is one
           controller too many. */}
       {view === "panel" && (
-        <div className="p-2 border-b border-[#C9D2DC] bg-white overflow-auto">
+        <div className="p-2 border-b border-ink-200 bg-white overflow-auto">
           <div
             style={{
               width: `${100 / zoom}%`,
@@ -703,7 +703,7 @@ export default function SimPanel({
           Wraps, because it did not: in a narrow panel the Reset button ran
           off the right edge and was simply unreachable, the panel can be
           dragged down to 240px and the strip has to survive that. */}
-      <div className="flex items-center flex-wrap gap-x-2 gap-y-1.5 px-3 py-2 border-b border-[#C9D2DC] bg-white">
+      <div className="flex items-center flex-wrap gap-x-2 gap-y-1.5 px-3 py-2 border-b border-ink-200 bg-white">
         <span
           className="inline-flex items-center gap-1.5 px-2 h-6 rounded text-[11px] font-bold"
           style={{
@@ -713,14 +713,14 @@ export default function SimPanel({
         >
           <Zap size={11} /> {running ? "RUN" : "STOP"}
         </span>
-        <span className="text-[11px] text-[#64748b] font-mono">{scanCount} scans</span>
+        <span className="text-[11px] text-ink-500 font-mono">{scanCount} scans</span>
 
         <span className="ml-auto flex items-center gap-1.5 shrink-0">
           {running ? (
             <button
               type="button"
               onClick={onStop}
-              className="inline-flex items-center gap-1 px-2.5 h-7 rounded border border-[#C2CCD6] bg-white text-[11.5px] font-bold text-[#b91c1c]"
+              className="inline-flex items-center gap-1 px-2.5 h-7 rounded border border-ink-300 bg-white text-[11.5px] font-bold text-danger"
             >
               <Square size={11} /> Stop
             </button>
@@ -742,7 +742,7 @@ export default function SimPanel({
             type="button"
             onClick={onReset}
             title="Reset every tag, timer and counter"
-            className="inline-flex items-center gap-1 px-2.5 h-7 rounded border border-[#C2CCD6] bg-white text-[11.5px] font-semibold text-[#334155]"
+            className="inline-flex items-center gap-1 px-2.5 h-7 rounded border border-ink-300 bg-white text-[11.5px] font-semibold text-ink-700"
           >
             <RotateCcw size={11} /> Reset
           </button>
@@ -751,16 +751,16 @@ export default function SimPanel({
 
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3">
         {!plc.downloaded && (
-          <p className="rounded border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-[11.5px] text-amber-800">
+          <p className="rounded border border-warning-border bg-warning-bg px-2.5 py-1.5 text-[11.5px] text-warning">
             The controller is empty. Press Download on the toolbar to transfer your program into it,
             then Run.
           </p>
         )}
 
         {errors.length > 0 && (
-          <ul className="rounded border border-amber-300 bg-amber-50 px-2.5 py-1.5 space-y-0.5">
+          <ul className="rounded border border-warning-border bg-warning-bg px-2.5 py-1.5 space-y-0.5">
             {errors.slice(0, 4).map((e) => (
-              <li key={e} className="text-[11px] text-amber-800">
+              <li key={e} className="text-[11px] text-warning">
                 {e}
               </li>
             ))}
@@ -781,15 +781,15 @@ export default function SimPanel({
         ) : (
           <>
             <section>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748b] mb-0.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-0.5">
                 Inputs
               </p>
               {inputs.length === 0 ? (
-                <p className="text-[11.5px] text-[#64748b] py-1">
+                <p className="text-[11.5px] text-ink-500 py-1">
                   Tick &ldquo;input&rdquo; on a tag, then choose what it is wired to.
                 </p>
               ) : (
-                <div className="divide-y divide-[#E2E8F0]">
+                <div className="divide-y divide-ink-100">
                   {inputs.map((t) => (
                     <InputControl key={t.name} tag={t} on={t.value !== 0} h={handlers} />
                   ))}
@@ -798,13 +798,13 @@ export default function SimPanel({
             </section>
 
             <section>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748b] mb-0.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-0.5">
                 Outputs
               </p>
               {outputs.length === 0 ? (
-                <p className="text-[11.5px] text-[#64748b] py-1">No outputs yet.</p>
+                <p className="text-[11.5px] text-ink-500 py-1">No outputs yet.</p>
               ) : (
-                <div className="divide-y divide-[#E2E8F0]">
+                <div className="divide-y divide-ink-100">
                   {outputs.map((t) => (
                     <OutputRow key={t.name} tag={t} on={t.value !== 0} />
                   ))}
@@ -814,10 +814,10 @@ export default function SimPanel({
 
             {timers.length > 0 && (
               <section>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748b] mb-0.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-0.5">
                   Timers &amp; counters
                 </p>
-                <div className="divide-y divide-[#E2E8F0]">
+                <div className="divide-y divide-ink-100">
                   {timers.map((t) => {
                     const preset = t.preset ?? 0;
                     const acc = t.acc ?? 0;
@@ -827,13 +827,13 @@ export default function SimPanel({
                       <div key={t.name} className="py-1.5">
                         <div className="flex items-baseline justify-between">
                           <span className="text-[12.5px] font-medium truncate">{t.name}</span>
-                          <span className="text-[10.5px] font-mono text-[#64748b]">
+                          <span className="text-[10.5px] font-mono text-ink-500">
                             {t.type === "TIMER"
                               ? `${(acc / 1000).toFixed(1)} / ${(preset / 1000).toFixed(1)} s`
                               : `${acc} / ${preset}`}
                           </span>
                         </div>
-                        <div className="h-1.5 rounded bg-[#e2e8f0] overflow-hidden mt-1">
+                        <div className="h-1.5 rounded bg-ink-100 overflow-hidden mt-1">
                           <div
                             className="h-full rounded"
                             style={{ width: `${pct}%`, background: t.dn ? ON : "#2891FF" }}

@@ -91,7 +91,7 @@ export default async function AdminStatusPage() {
               <span
                 aria-hidden="true"
                 className={`mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full ${
-                  s.ok ? "bg-teal-500" : "bg-[#B4531A]"
+                  s.ok ? "bg-teal-500" : "bg-danger"
                 }`}
               />
               <span className="min-w-0">

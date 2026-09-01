@@ -109,7 +109,7 @@ export default function HelpDialog({
           <div className="relative">
             <Search
               size={11}
-              className="absolute left-2 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none"
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none"
             />
             <input
               ref={searchRef}
@@ -173,7 +173,7 @@ export default function HelpDialog({
               </button>
             ))}
             {results?.length === 0 && (
-              <p className="px-3 py-3 text-[11px] text-[#64748B]">
+              <p className="px-3 py-3 text-[11px] text-ink-500">
                 Nothing matched “{query}”. Try a word from the thing you are stuck on, “timer”,
                 “branch”, “download”.
               </p>
@@ -202,12 +202,12 @@ export default function HelpDialog({
 
 function Block({ b }: { b: HelpBlock }) {
   if (b.kind === "p") {
-    return <p className="text-[12.5px] leading-relaxed text-[#334155]">{b.text}</p>;
+    return <p className="text-[12.5px] leading-relaxed text-ink-700">{b.text}</p>;
   }
   if (b.kind === "note") {
     return (
       <p
-        className="text-[12px] leading-relaxed text-[#1E3A5F] rounded px-3 py-2"
+        className="text-[12px] leading-relaxed text-ink-800 rounded px-3 py-2"
         style={{ background: "#EFF6FF", borderLeft: "3px solid #2891FF" }}
       >
         {b.text}
@@ -218,7 +218,7 @@ function Block({ b }: { b: HelpBlock }) {
     return (
       <ol className="space-y-1.5">
         {b.items.map((t, i) => (
-          <li key={i} className="flex gap-2.5 text-[12.5px] leading-relaxed text-[#334155]">
+          <li key={i} className="flex gap-2.5 text-[12.5px] leading-relaxed text-ink-700">
             <span
               className="shrink-0 grid place-items-center rounded-full text-[10px] font-bold text-white mt-0.5"
               style={{ width: 17, height: 17, background: "#2891FF" }}
@@ -235,8 +235,8 @@ function Block({ b }: { b: HelpBlock }) {
     return (
       <ul className="space-y-1">
         {b.items.map((t, i) => (
-          <li key={i} className="flex gap-2 text-[12.5px] leading-relaxed text-[#334155]">
-            <span className="text-[#2891FF] shrink-0">•</span>
+          <li key={i} className="flex gap-2 text-[12.5px] leading-relaxed text-ink-700">
+            <span className="text-action shrink-0">•</span>
             <span>{t}</span>
           </li>
         ))}
@@ -250,11 +250,11 @@ function Block({ b }: { b: HelpBlock }) {
           {b.items.map(([k, v], i) => (
             <tr key={i}>
               <td className="pr-4 py-0.5 align-top whitespace-nowrap">
-                <kbd className="px-1.5 py-0.5 rounded text-[10.5px] font-mono border border-[#C9D2DC] bg-[#F1F5F9] text-[#334155]">
+                <kbd className="px-1.5 py-0.5 rounded text-[10.5px] font-mono border border-ink-200 bg-ink-50 text-ink-700">
                   {k}
                 </kbd>
               </td>
-              <td className="py-0.5 text-[#334155]">{v}</td>
+              <td className="py-0.5 text-ink-700">{v}</td>
             </tr>
           ))}
         </tbody>

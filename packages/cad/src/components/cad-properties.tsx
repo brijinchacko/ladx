@@ -180,7 +180,7 @@ export default function CadProperties({
             value={e.label ?? ""}
             placeholder={formatLength(Math.hypot(e.b.x - e.a.x, e.b.y - e.a.y))}
             onChange={(ev) => set({ label: ev.target.value || undefined })}
-            className="w-full rounded-md border border-ink-200 px-2 py-1 text-[12.5px] outline-none placeholder:text-ink-300 focus:border-ink-500"
+            className="w-full rounded-md border border-ink-200 px-2 py-1 text-[12.5px] outline-none placeholder:text-ink-400 focus:border-ink-500"
           />
           <p className="text-[10.5px] leading-snug text-ink-400">
             Empty measures the geometry. Fill it only for a dimension that is deliberately not its

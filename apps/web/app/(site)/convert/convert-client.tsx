@@ -15,8 +15,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const SEVERITY_STYLE: Record<string, string> = {
   info: "border-ink-300 text-ink-600",
-  warning: "border-amber-500 text-amber-800",
-  manual: "border-red-500 text-red-800",
+  warning: "border-warning text-warning",
+  manual: "border-danger text-danger",
 };
 
 const SEVERITY_LABEL: Record<string, string> = {
@@ -148,11 +148,11 @@ export default function ConvertClient() {
             </button>
 
             {error && (
-              <div className="border-red-500 border-l-2 bg-red-50 py-2 pl-3">
-                <p className="text-[13px] text-red-800">{error}</p>
+              <div className="border-danger border-l-2 bg-danger-bg py-2 pl-3">
+                <p className="text-[13px] text-danger">{error}</p>
                 {/* The whole point of recognising a project file is being able
                     to name the export that works instead. */}
-                {remedy && <p className="mt-1 text-[12.5px] text-red-900">{remedy}</p>}
+                {remedy && <p className="mt-1 text-[12.5px] text-danger">{remedy}</p>}
               </div>
             )}
 
@@ -172,9 +172,9 @@ export default function ConvertClient() {
                       <span
                         className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${
                           n.severity === "manual"
-                            ? "bg-[#B4531A]"
+                            ? "bg-danger"
                             : n.severity === "warning"
-                              ? "bg-[#C08A2E]"
+                              ? "bg-warning"
                               : "bg-ink-300"
                         }`}
                         aria-hidden="true"
@@ -260,10 +260,10 @@ export default function ConvertClient() {
                   <h2 className="font-display text-[15px] font-bold text-ink-900">What to check</h2>
                   <p className="font-mono text-[11.5px] text-ink-400">
                     {counts.manual > 0 && (
-                      <span className="text-red-700">{counts.manual} by hand · </span>
+                      <span className="text-danger">{counts.manual} by hand · </span>
                     )}
                     {counts.warning > 0 && (
-                      <span className="text-amber-700">{counts.warning} to check · </span>
+                      <span className="text-warning">{counts.warning} to check · </span>
                     )}
                     {counts.info} notes
                   </p>

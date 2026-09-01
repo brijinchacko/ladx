@@ -170,7 +170,9 @@ export default function CadSheets({
                 type="button"
                 onClick={() => go(s.id)}
                 className={`flex w-full items-center rounded-md py-1.5 pl-2 pr-6 text-left text-[12.5px] transition-colors ${
-                  active ? "bg-ink-900 text-white" : "text-ink-700 hover:bg-ink-100"
+                  active
+                    ? "bg-white font-medium text-ink-900 shadow-[0_1px_2px_rgb(var(--ink-900)/0.06)]"
+                    : "text-ink-600 hover:bg-ink-100/70 hover:text-ink-900"
                 }`}
               >
                 <span className="min-w-0 flex-1 truncate">{s.name}</span>
@@ -181,7 +183,7 @@ export default function CadSheets({
                 aria-label={`Options for ${s.name}`}
                 className={`absolute right-0.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded transition-opacity ${
                   menuFor === s.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                } ${active ? "text-white hover:bg-white/15" : "text-ink-400 hover:bg-ink-200"}`}
+                } ${active ? "text-ink-500 hover:bg-ink-100" : "text-ink-400 hover:bg-ink-200"}`}
               >
                 <MoreHorizontal className="h-3 w-3" />
               </button>
@@ -202,7 +204,7 @@ export default function CadSheets({
                   <button
                     type="button"
                     onClick={() => remove(s.id, s.name)}
-                    className="flex w-full items-center gap-2 border-t border-ink-100 px-2.5 py-1.5 text-left text-[12px] text-red-700 hover:bg-ink-50"
+                    className="flex w-full items-center gap-2 border-t border-ink-100 px-2.5 py-1.5 text-left text-[12px] text-danger hover:bg-ink-50"
                   >
                     <Trash2 className="h-3 w-3 opacity-60" />
                     Delete sheet

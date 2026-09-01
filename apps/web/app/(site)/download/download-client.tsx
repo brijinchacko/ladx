@@ -297,7 +297,7 @@ function WebAppNotice({ onClose }: { onClose: () => void }) {
         type="button"
         onClick={onClose}
         aria-label="Close"
-        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-md text-ink-300 hover:bg-ink-50 hover:text-ink-700"
+        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-md text-ink-400 hover:bg-ink-50 hover:text-ink-700"
       >
         <X className="h-4 w-4" />
       </button>

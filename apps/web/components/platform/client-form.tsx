@@ -71,7 +71,7 @@ export default function ClientForm({ initial }: { initial?: Client }) {
           onChange={(e) => setName(e.target.value)}
           maxLength={200}
           placeholder="Acme Foods Ltd"
-          className="w-full rounded-sm border border-ink-200 px-3 py-2 text-[15px] text-ink-900 outline-none transition-colors placeholder:text-ink-300 focus:border-ink-500"
+          className="w-full rounded-sm border border-ink-200 px-3 py-2 text-[15px] text-ink-900 outline-none transition-colors placeholder:text-ink-400 focus:border-ink-500"
         />
       </label>
 
@@ -100,7 +100,7 @@ export default function ClientForm({ initial }: { initial?: Client }) {
         ))}
       </div>
 
-      {error && <p className="text-[13.5px] text-red-700">{error}</p>}
+      {error && <p className="text-[13.5px] text-danger">{error}</p>}
 
       <div className="flex items-center gap-3">
         <button
@@ -142,7 +142,7 @@ export function DeleteClientButton({ id, name }: { id: string; name: string }) {
       type="button"
       onClick={remove}
       disabled={busy}
-      className="font-mono text-[12px] text-ink-400 transition-colors hover:text-red-700 disabled:opacity-50"
+      className="font-mono text-[12px] text-ink-400 transition-colors hover:text-danger disabled:opacity-50"
     >
       {busy ? "Deleting…" : "Delete client"}
     </button>

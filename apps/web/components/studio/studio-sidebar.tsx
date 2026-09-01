@@ -501,7 +501,9 @@ function ProjectRow({
       <Link
         href={`/studio/projects/${project.id}`}
         className={`flex items-center rounded-md py-1.5 pl-8 pr-7 text-[13px] transition-colors ${
-          active ? "bg-ink-900 text-white" : "text-ink-700 hover:bg-ink-100"
+          active
+            ? "bg-white font-medium text-ink-900 shadow-[0_1px_2px_rgb(var(--ink-900)/0.06)]"
+            : "text-ink-600 hover:bg-ink-100/70 hover:text-ink-900"
         } ${busy ? "opacity-50" : ""}`}
       >
         <span className="min-w-0 flex-1 truncate">{project.name}</span>
@@ -513,7 +515,7 @@ function ProjectRow({
         aria-label={`Options for ${project.name}`}
         className={`absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded transition-opacity ${
           menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus:opacity-100"
-        } ${active ? "text-white hover:bg-white/15" : "text-ink-400 hover:bg-ink-200"}`}
+        } ${active ? "text-ink-500 hover:bg-ink-100" : "text-ink-400 hover:bg-ink-200"}`}
       >
         <MoreHorizontal className="h-3.5 w-3.5" />
       </button>
@@ -523,7 +525,7 @@ function ProjectRow({
           <button
             type="button"
             onClick={remove}
-            className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[12.5px] text-red-700 transition-colors hover:bg-ink-50"
+            className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[12.5px] text-danger transition-colors hover:bg-ink-50"
           >
             <Trash2 className="h-3 w-3 shrink-0 opacity-60" />
             Delete project

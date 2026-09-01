@@ -42,7 +42,7 @@ const SCOPES: { id: Scope; label: string; help: string }[] = [
 ];
 
 const KIND_STYLE: Record<Kind, string> = {
-  forbidden: "border-red-300 bg-red-50 text-red-800",
+  forbidden: "border-danger-border bg-danger-bg text-danger",
   approved: "border-teal-300 bg-teal-50 text-teal-800",
   convention: "border-ink-200 bg-ink-50 text-ink-600",
   note: "border-ink-200 bg-white text-ink-500",
@@ -96,7 +96,7 @@ export function StandardsClient({ projects }: { projects: { id: string; name: st
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-6">
       {error && (
-        <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-800">
+        <p className="mb-4 rounded-md border border-danger-border bg-danger-bg px-3 py-2 text-[13px] text-danger">
           {error}
         </p>
       )}
@@ -140,7 +140,7 @@ export function StandardsClient({ projects }: { projects: { id: string; name: st
 
       {rows !== null && rows.length === 0 && !adding && (
         <div className="rounded-lg border border-dashed border-ink-200 px-6 py-10 text-center">
-          <Ruler className="mx-auto mb-3 h-5 w-5 text-ink-300" />
+          <Ruler className="mx-auto mb-3 h-5 w-5 text-ink-400" />
           <p className="text-[13.5px] text-ink-600">
             Tell LADX how work is done here and it will follow it.
           </p>
@@ -184,7 +184,7 @@ export function StandardsClient({ projects }: { projects: { id: string; name: st
                   type="button"
                   onClick={() => void remove(r.id)}
                   aria-label="Remove this"
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-ink-400 hover:bg-red-50 hover:text-red-700"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-ink-400 hover:bg-danger-bg hover:text-danger"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -193,7 +193,7 @@ export function StandardsClient({ projects }: { projects: { id: string; name: st
             <p className="text-[13.5px] leading-relaxed text-ink-900">{r.content}</p>
             {r.reason && (
               <p className="mt-1 flex gap-1.5 text-[12.5px] leading-relaxed text-ink-500">
-                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-300" />
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-400" />
                 {r.reason}
               </p>
             )}
@@ -352,11 +352,11 @@ function Editor({
       )}
 
       {noProjects && (
-        <p className="mt-2 text-[12px] text-amber-700">
+        <p className="mt-2 text-[12px] text-warning">
           You have no projects yet, so there is nothing to attach this to.
         </p>
       )}
-      {problem && <p className="mt-2 text-[12.5px] text-red-700">{problem}</p>}
+      {problem && <p className="mt-2 text-[12.5px] text-danger">{problem}</p>}
 
       <div className="mt-3 flex items-center gap-2">
         <button
@@ -377,7 +377,7 @@ function Editor({
           Cancel
         </button>
         {kind === "forbidden" && (
-          <span className="ml-auto flex items-center gap-1.5 text-[11.5px] text-red-700">
+          <span className="ml-auto flex items-center gap-1.5 text-[11.5px] text-danger">
             <AlertTriangle className="h-3.5 w-3.5" />A veto. Never weighed against anything.
           </span>
         )}

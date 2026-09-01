@@ -243,7 +243,7 @@ export function LiveRung() {
         <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-500">
           Live
         </span>
-        <span className="font-mono text-[11px] text-ink-300">|</span>
+        <span className="font-mono text-[11px] text-ink-400">|</span>
         <span className="font-mono text-[11px] text-ink-400">conveyor start/stop</span>
         <span className="ml-auto font-mono text-[11px] tabular-nums text-ink-400">
           {scans} scans

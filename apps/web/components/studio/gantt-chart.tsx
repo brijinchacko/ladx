@@ -30,7 +30,7 @@ const NAME_W = 260;
 const STATUS_FILL: Record<GanttTask["status"], string> = {
   todo: "bg-ink-300",
   doing: "bg-teal-500",
-  blocked: "bg-[#B4531A]",
+  blocked: "bg-danger",
   done: "bg-ink-500",
 };
 
@@ -197,7 +197,7 @@ export default function GanttChart({
     return (
       <div className="flex items-center justify-center p-10">
         <div className="max-w-md text-center">
-          <CalendarPlus className="mx-auto mb-3 h-6 w-6 text-ink-300" />
+          <CalendarPlus className="mx-auto mb-3 h-6 w-6 text-ink-400" />
           <h3 className="font-display text-[15px] font-bold text-ink-900">
             {all.length === 0 ? "Nothing to schedule yet" : "This plan has no dates yet"}
           </h3>
@@ -238,7 +238,7 @@ export default function GanttChart({
       )}
 
       {(problems.cycles.length > 0 || problems.backwards.length > 0) && (
-        <p className="flex items-start gap-1.5 border-b border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900">
+        <p className="flex items-start gap-1.5 border-b border-warning-border bg-warning-bg px-3 py-1.5 text-[12px] text-warning">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             {problems.cycles.length > 0 &&
@@ -316,7 +316,7 @@ export default function GanttChart({
                       if (r.task.dependsOn) onLink(r.task.id, null);
                       else setLinking(r.task.id);
                     }}
-                    className="shrink-0 text-ink-300 transition-colors hover:text-teal-700"
+                    className="shrink-0 text-ink-400 transition-colors hover:text-teal-700"
                   >
                     {r.task.dependsOn ? (
                       <Link2Off className="h-3 w-3" />
@@ -441,7 +441,7 @@ export default function GanttChart({
                         <span
                           title={`${t.title}, a single date, so it is drawn as a milestone`}
                           className={`absolute top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 ${
-                            inCycle ? "bg-[#B4531A]" : STATUS_FILL[t.status]
+                            inCycle ? "bg-danger" : STATUS_FILL[t.status]
                           }`}
                           style={{ left: bar.offset * dayPx + dayPx / 2 - 5 }}
                         />
@@ -455,7 +455,7 @@ export default function GanttChart({
                           onClick={() => onSelect?.(t.id)}
                           title={`${t.title}${t.owner ? ` · ${t.owner}` : ""}`}
                           className={`group absolute top-1/2 flex h-[15px] -translate-y-1/2 items-center rounded-[2px] ${
-                            inCycle ? "bg-[#B4531A]" : STATUS_FILL[t.status]
+                            inCycle ? "bg-danger" : STATUS_FILL[t.status]
                           } ${onReschedule ? "cursor-grab active:cursor-grabbing" : ""} ${
                             selectedId === t.id ? "ring-2 ring-teal-600 ring-offset-1" : ""
                           } ${t.status === "done" ? "opacity-55" : ""}`}
@@ -486,7 +486,7 @@ export default function GanttChart({
                       )
                     ) : (
                       <span
-                        className="absolute top-1/2 -translate-y-1/2 font-mono text-[10px] text-ink-300"
+                        className="absolute top-1/2 -translate-y-1/2 font-mono text-[10px] text-ink-400"
                         style={{ left: Math.max(0, todayOffset * dayPx) }}
                       >
                         no dates

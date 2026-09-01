@@ -115,7 +115,7 @@ export default function DocumentList({
         />
       </div>
 
-      {error && <p className="mb-3 text-[13px] text-red-700">{error}</p>}
+      {error && <p className="mb-3 text-[13px] text-danger">{error}</p>}
 
       {documents.length === 0 ? (
         <p className="rounded-md border border-dashed border-ink-200 px-4 py-6 text-center text-[13.5px] text-ink-500">
@@ -144,7 +144,7 @@ export default function DocumentList({
                 type="button"
                 onClick={() => remove(d.id, d.title)}
                 aria-label={`Delete ${d.title}`}
-                className="shrink-0 text-ink-300 transition-colors hover:text-red-700"
+                className="shrink-0 text-ink-400 transition-colors hover:text-danger"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
