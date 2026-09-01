@@ -142,20 +142,67 @@ export function ladderSystemPrompt(): string {
 }
 
 /** What already exists, so the model extends it rather than duplicating it. */
+/**
+ * How many existing tags are worth naming before the prompt stops helping.
+ *
+ * The point of listing them is so the model reuses `Motor_101` instead of
+ * inventing `Motor101`. A few dozen does that. A few thousand does not: it
+ * pushes the actual request to the far end of the window, costs real money per
+ * call, and on a plant project of ten thousand tags it is most of the prompt.
+ */
+const MAX_TAGS_IN_PROMPT = 60;
+
+/**
+ * The tags most likely to matter to this request, first.
+ *
+ * Anything the request names by hand is certainly relevant. After that,
+ * whatever fits. It is a budget rather than a judgement: nothing is hidden,
+ * the count of what was left out is stated, and the model is told it has not
+ * been shown everything so it asks rather than assuming a name is free.
+ */
+function tagsForPrompt(
+  tags: { name: string; type: string }[],
+  prompt: string,
+): { listed: { name: string; type: string }[]; omitted: number } {
+  const lower = prompt.toLowerCase();
+  const mentioned = tags.filter((t) => lower.includes(t.name.toLowerCase()));
+  const rest = tags.filter((t) => !mentioned.includes(t));
+  const listed = [...mentioned, ...rest].slice(0, MAX_TAGS_IN_PROMPT);
+  return { listed, omitted: Math.max(0, tags.length - listed.length) };
+}
+
 export function ladderContext(
   existing: LadxProgram | null | undefined,
   mode: "extend" | "replace",
+  prompt = "",
 ): string {
   if (mode !== "extend" || !existing?.rungs?.length) {
     return "The program is empty. Return the whole thing.";
   }
-  return [
-    "The program already contains these tags:",
-    (existing.tags ?? []).map((t) => `  ${t.name} (${t.type})`).join("\n"),
+
+  const { listed, omitted } = tagsForPrompt(existing.tags ?? [], prompt);
+
+  const lines = [
+    omitted > 0
+      ? `The program contains ${(existing.tags ?? []).length} tags. These are the ones most likely to matter here:`
+      : "The program already contains these tags:",
+    listed.map((t) => `  ${t.name} (${t.type})`).join("\n"),
+  ];
+
+  if (omitted > 0) {
+    lines.push(
+      "",
+      `${omitted} further tags are not listed. Do not assume a name is unused: if you need`,
+      "one that is not shown, say so rather than inventing it.",
+    );
+  }
+
+  lines.push(
     "",
     `And ${existing.rungs.length} rungs. Reuse the existing tag names rather than`,
     "inventing parallel ones, and return only the NEW rungs to add.",
-  ].join("\n");
+  );
+  return lines.join("\n");
 }
 
 export interface GeneratedLadder {

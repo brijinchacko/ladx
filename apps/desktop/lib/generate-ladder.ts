@@ -68,7 +68,7 @@ export async function generateLadderLocally(req: LadderGenerateRequest): Promise
     undefined;
 
   const system = ladderSystemPrompt();
-  const context = ladderContext(req.current, req.mode);
+  const context = ladderContext(req.current, req.mode, req.prompt);
 
   /*
    * Two attempts, the second saying what was wrong with the first.

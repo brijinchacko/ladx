@@ -51,7 +51,9 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: "invalid request" }, { status: 400 });
 
   const existing = parsed.data.current as LadxProgram | undefined;
-  const context = ladderContext(existing, parsed.data.mode);
+  // The prompt goes in too, so the tag list is the ones this request is about
+  // rather than the first sixty in the table.
+  const context = ladderContext(existing, parsed.data.mode, parsed.data.prompt);
 
   const system = ladderSystemPrompt();
 
