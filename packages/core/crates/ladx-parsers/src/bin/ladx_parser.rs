@@ -6,6 +6,9 @@
 //! Usage:
 //!     ladx-parser /path/to/project.l5x
 //!     ladx-parser --ir /path/to/project.L5X
+//!     ladx-parser --health /path/to/project.ir.json
+//!     ladx-parser --why /path/to/project.ir.json <tag>
+//!     ladx-parser --standards /path/to/request.json
 //!
 //! `--ir` reads the logic rather than the names and prints
 //! `{ project, report, summary }`, where `project` is a LADX IR document. It is
@@ -50,7 +53,9 @@ fn main() -> ExitCode {
 
     let positional: Vec<&String> = args.iter().skip(1).filter(|a| !a.starts_with("--")).collect();
     let Some(path) = positional.first() else {
-        eprintln!("usage: ladx-parser [--ir | --health | --why <tag>] <path>");
+        eprintln!(
+            "usage: ladx-parser [--ir | --health | --why <tag> | --standards] <path>"
+        );
         return ExitCode::from(2);
     };
 
