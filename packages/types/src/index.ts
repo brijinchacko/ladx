@@ -7,6 +7,10 @@ export type { HmiPlatform } from "./generated/HmiPlatform";
 export type { HmiScreen } from "./generated/HmiScreen";
 export type { MemoryCollection } from "./generated/MemoryCollection";
 export type { MemoryEntry } from "./generated/MemoryEntry";
+// Engineering knowledge: how work is done here, who said so, and when.
+export type { MemoryScope } from "./generated/MemoryScope";
+export type { MemoryKind } from "./generated/MemoryKind";
+export type { Memory } from "./generated/Memory";
 export type { ParseResult } from "./generated/ParseResult";
 export type { PlcLanguage } from "./generated/PlcLanguage";
 export type { PlcRoutine } from "./generated/PlcRoutine";
