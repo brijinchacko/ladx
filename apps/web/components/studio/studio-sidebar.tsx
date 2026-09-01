@@ -38,6 +38,7 @@ import {
   PanelLeft,
   PencilRuler,
   Plus,
+  Ruler,
   Settings,
   ShieldCheck,
   Trash2,
@@ -63,6 +64,7 @@ const TOOLS = [
   { href: "/studio/convert", label: "Convert", icon: GitCompareArrows },
   { href: "/studio/documents", label: "Documents", icon: Library },
   { href: "/studio/knowledge", label: "Knowledge", icon: FileText },
+  { href: "/studio/standards", label: "Standards", icon: Ruler },
 ];
 
 const COLLAPSE_KEY = "ladx.studio.sidebar";
