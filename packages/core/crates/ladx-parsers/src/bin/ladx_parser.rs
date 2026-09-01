@@ -39,6 +39,12 @@ enum Mode {
     Io,
     /// The alarms a program already has.
     Alarms,
+    /// A control narrative written from the logic.
+    Narrative,
+    /// What changed between two versions.
+    Diff,
+    /// Screens proposed from the program.
+    Screens,
 }
 
 fn main() -> ExitCode {
@@ -55,6 +61,12 @@ fn main() -> ExitCode {
         Mode::Io
     } else if args.iter().any(|a| a == "--alarms") {
         Mode::Alarms
+    } else if args.iter().any(|a| a == "--narrative") {
+        Mode::Narrative
+    } else if args.iter().any(|a| a == "--diff") {
+        Mode::Diff
+    } else if args.iter().any(|a| a == "--screens") {
+        Mode::Screens
     } else {
         Mode::Manifest
     };
@@ -62,7 +74,7 @@ fn main() -> ExitCode {
     let positional: Vec<&String> = args.iter().skip(1).filter(|a| !a.starts_with("--")).collect();
     let Some(path) = positional.first() else {
         eprintln!(
-            "usage: ladx-parser [--ir | --health | --why <tag> | --standards | --io | --alarms] <path>"
+            "usage: ladx-parser [--ir | --health | --why <tag> | --standards | --io | --alarms | --narrative | --diff <after>] <path>"
         );
         return ExitCode::from(2);
     };
@@ -78,6 +90,14 @@ fn main() -> ExitCode {
         Mode::Standards => run_standards(path),
         Mode::Io => run_io(path),
         Mode::Alarms => run_alarms(path),
+        Mode::Narrative => run_narrative(path),
+        Mode::Screens => run_screens(path),
+        Mode::Diff => match positional.get(1) {
+            Some(after) => run_diff(path, after),
+            None => Err(anyhow::anyhow!(
+                "--diff needs two files: ladx-parser --diff <before.ir.json> <after.ir.json>"
+            )),
+        },
     };
 
     match result {
@@ -200,4 +220,31 @@ fn run_alarms(path: &str) -> anyhow::Result<String> {
         "issues": list.issues,
         "csv": ladx_ir::alarms::to_csv(&list),
     }))?)
+}
+
+fn run_narrative(path: &str) -> anyhow::Result<String> {
+    let project = read_ir(path)?;
+    let doc = ladx_ir::docs::control_narrative(&project);
+    Ok(serde_json::to_string(&serde_json::json!({
+        "title": doc.title,
+        "sections": doc.sections,
+        "gaps": doc.gaps(),
+        "markdown": doc.to_markdown(),
+    }))?)
+}
+
+fn run_diff(before: &str, after: &str) -> anyhow::Result<String> {
+    let a = read_ir(before)?;
+    let b = read_ir(after)?;
+    let d = ladx_ir::diff::diff(&a, &b);
+    Ok(serde_json::to_string(&serde_json::json!({
+        "changes": d.changes,
+        "notCompared": d.not_compared,
+        "worst": d.worst(),
+    }))?)
+}
+
+fn run_screens(path: &str) -> anyhow::Result<String> {
+    let project = read_ir(path)?;
+    Ok(serde_json::to_string(&ladx_hmi::propose::propose(&project))?)
 }
