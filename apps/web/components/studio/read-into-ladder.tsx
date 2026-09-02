@@ -16,8 +16,13 @@ export function ReadIntoLadder({ projectId }: { projectId: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
 
   async function read() {
+    if (done) {
+      router.push(`/studio/ladder?project=${projectId}`);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -32,9 +37,13 @@ export function ReadIntoLadder({ projectId }: { projectId: string }) {
         // Say what did not make it before leaving the page that can say it.
         // The editor has no floating point and no structured text; a routine
         // in either is still in the file, just not on the screen it opens on.
+        // The next click opens the editor.
         setNote(
           `Read ${rungs} rung${rungs === 1 ? "" : "s"}. ${dropped} thing${dropped === 1 ? "" : "s"} the ladder editor cannot show ${dropped === 1 ? "is" : "are"} still in the file.`,
         );
+        setDone(true);
+        router.refresh();
+        return;
       }
       router.push(`/studio/ladder?project=${projectId}`);
       router.refresh();
@@ -54,7 +63,7 @@ export function ReadIntoLadder({ projectId }: { projectId: string }) {
         className="flex items-center gap-1.5 rounded-sm bg-ink-900 px-3 py-1.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         <Grid2x2Check className="h-3.5 w-3.5" />
-        {busy ? "Reading…" : "Open in Ladder"}
+        {busy ? "Reading…" : done ? "Open" : "Open in Ladder"}
       </button>
       {error && <p className="text-[12px] text-danger">{error}</p>}
       {note && <p className="max-w-xs text-right text-[12px] text-ink-500">{note}</p>}
