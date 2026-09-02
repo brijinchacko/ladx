@@ -291,7 +291,16 @@ function WebAppNotice({ onClose }: { onClose: () => void }) {
       onClose={onClose}
       onCancel={onClose}
       aria-labelledby="webapp-notice-title"
-      className="w-full max-w-lg rounded-xl border border-ink-100 bg-white p-6 text-ink-900 shadow-xl backdrop:bg-ink-900"
+      /*
+        The backdrop is black rather than an ink token.
+
+        It was painted with the darkest ink, which is exactly that in the
+        light theme. The ink scale reverses in the dark theme, where the top of
+        it is 237 241 244: on a dark page this notice arrived over a sheet of
+        near white with the whole page hidden behind it. Black at 60% is the
+        same scrim in both, and dims rather than hides.
+      */
+      className="w-full max-w-lg rounded-xl border border-ink-100 bg-white p-6 text-ink-900 shadow-xl backdrop:bg-black/60"
     >
       <button
         type="button"

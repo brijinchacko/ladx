@@ -83,14 +83,14 @@ export function viewportKnown(vw: number, vh: number): boolean {
 
 export function defaultFrame(vw: number, vh: number): Frame {
   /*
-   * Small, and floating.
+   * Minimised, until asked for.
    *
-   * It started docked, on the reasoning that a floating panel is a surprise on
-   * first use. That was the wrong trade: docked means it takes a strip off the
-   * bottom of every tool whether or not it is being used, and the strip is
-   * exactly where the work usually is. Floating, small, and out of the way in
-   * the corner costs nothing until somebody wants it, and it can be dragged
-   * anywhere from there.
+   * It started docked, which took a strip off the bottom of every tool whether
+   * or not it was being used. Then it floated, small, in the corner. That was
+   * still wrong: on Ladder the corner is the I/O panel and on the Planner it is
+   * the plan, so the first thing anyone saw on opening a tool was a panel over
+   * their work. A one line bar with the name on it costs nothing and is one
+   * click from the floating panel, which then opens where it always did.
    */
   const w = Math.min(340, Math.max(MIN_W, vw - 64));
   const h = Math.min(400, Math.max(MIN_H, vh - 140));
@@ -101,7 +101,7 @@ export function defaultFrame(vw: number, vh: number): Frame {
     y: Math.max(12, vh - h - 56),
     w,
     h,
-    mode: "floating",
+    mode: "minimised",
   };
 }
 

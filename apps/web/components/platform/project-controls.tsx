@@ -27,6 +27,7 @@ export function NewProjectForm({
   const params = useSearchParams();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [touched, setTouched] = useState(false);
   const [code, setCode] = useState("");
   const [clientId, setClientId] = useState(defaultClientId ?? "");
   const [site, setSite] = useState("");
@@ -140,7 +141,7 @@ export function NewProjectForm({
       chrome hidden, which is not the space actually available, and the footer
       ends up under the toolbar.
     */
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900 p-4 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:items-center">
       <form
         onSubmit={create}
         className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col rounded-sm border border-ink-200 bg-white"
@@ -165,6 +166,7 @@ export function NewProjectForm({
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onBlur={() => setTouched(true)}
               maxLength={200}
               placeholder="Line 4 filler upgrade"
               className="w-full rounded-sm border border-ink-200 px-3 py-2 text-[15px] outline-none focus:border-ink-500"
@@ -275,9 +277,12 @@ export function NewProjectForm({
             >
               Cancel
             </button>
-            {!name.trim() && (
+            {!name.trim() && touched && (
               // The button is disabled until there is a name, and a disabled
-              // button with no explanation reads as a broken one.
+              // button with no explanation reads as a broken one. Only once
+              // they have been in the field, though: telling somebody the
+              // name is missing before they have had a chance to type it is
+              // nagging, not help.
               <span className="text-[12.5px] text-ink-400">A project name is needed.</span>
             )}
           </div>

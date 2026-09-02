@@ -47,7 +47,7 @@ export default async function StudioConvertPage({
     <>
       <WorkspaceHeader
         title="Convert"
-        subtitle="Ladder into Structured Text, SCL, neutral text or PLCopen XML, in your browser. Opening an L5X sends it to the server to be read, because that reader is not something a browser can run."
+        subtitle="Ladder into Structured Text, SCL, neutral text or PLCopen XML."
       />
       <ConvertWorkbench
         ladderHref="/studio/ladder"

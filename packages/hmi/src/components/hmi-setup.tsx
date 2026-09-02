@@ -114,7 +114,7 @@ export default function HmiSetup({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-ink-900"
+      className="fixed inset-0 z-50 flex justify-end bg-black/60"
       onClick={onClose}
       onKeyDown={undefined}
     >

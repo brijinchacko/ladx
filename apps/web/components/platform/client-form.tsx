@@ -142,7 +142,7 @@ export function DeleteClientButton({ id, name }: { id: string; name: string }) {
       type="button"
       onClick={remove}
       disabled={busy}
-      className="font-mono text-[12px] text-ink-400 transition-colors hover:text-danger disabled:opacity-50"
+      className="rounded-md px-2.5 py-1.5 text-[13px] text-ink-500 transition-colors hover:bg-danger-bg hover:text-danger disabled:opacity-50"
     >
       {busy ? "Deleting…" : "Delete client"}
     </button>

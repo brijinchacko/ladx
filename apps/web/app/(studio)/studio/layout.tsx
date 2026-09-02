@@ -1,3 +1,5 @@
+import { CommandPalette } from "@/components/studio/command-palette";
+import { StudioPane } from "@/components/studio/studio-pane";
 import StudioSidebar from "@/components/studio/studio-sidebar";
 import { isAdmin } from "@/lib/auth/admin";
 import { requireUser } from "@/lib/auth/server";
@@ -59,7 +61,16 @@ export default async function StudioLayout({ children }: { children: ReactNode }
         isAdmin={isAdmin(user)}
       />
       {/* min-h-0 so a tool that scrolls internally does not push the page. */}
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">{children}</main>
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <StudioPane>{children}</StudioPane>
+      </main>
+
+      {/* Cmd+K. Everything above, reachable from the keyboard. */}
+      <CommandPalette
+        projects={projects.map((p) => ({ id: p.id, name: p.name }))}
+        conversations={conversations.slice(0, 20).map((c) => ({ id: c.id, title: c.title }))}
+        isAdmin={isAdmin(user)}
+      />
     </div>
   );
 }

@@ -349,6 +349,58 @@
 }
 
 /*
+ * Interface motion, all of it.
+ *
+ * Three movements, each under a fifth of a second, each saying one thing: a
+ * dialog arrives (pop), a menu opens under the thing you pressed (slide), a
+ * pane you navigated to is now the pane (fade). Nothing loops, nothing moves
+ * on its own, and nothing takes long enough to be waited for. The dialog
+ * component had been asking for `animate-in` classes from a plugin that was
+ * never installed, so until now it simply appeared.
+ */
+@keyframes ladx-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ladx-pop-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes ladx-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ladx-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
  * Less motion, for somebody who asked for it.
  *
  * All three are decoration over something that is also said in words: the
@@ -359,7 +411,8 @@
 @media (prefers-reduced-motion: reduce) {
   [class*="ladx-think"],
   [class*="ladx-caret"],
-  [class*="ladx-x-spin"] {
+  [class*="ladx-x-spin"],
+  [class*="animate-"] {
     animation: none !important;
   }
 

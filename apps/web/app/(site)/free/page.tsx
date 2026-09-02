@@ -1,3 +1,4 @@
+import { AuthLink } from "@/components/auth/auth-link";
 import {
   FREE_GROUP_META,
   FREE_GROUP_ORDER,
@@ -241,9 +242,13 @@ export default function FreePage() {
           <Link href="/products" className="font-semibold text-teal-700 underline">
             Everything, including what needs an account
           </Link>
-          <Link href="/sign-up" className="font-semibold text-teal-700 underline">
+          <AuthLink
+            mode="sign-up"
+            next="/projects"
+            className="font-semibold text-teal-700 underline"
+          >
             Make one
-          </Link>
+          </AuthLink>
         </div>
       </div>
     </div>

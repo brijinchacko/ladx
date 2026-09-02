@@ -29,10 +29,10 @@ export const SIDEBAR_ASIDE = "flex w-64 shrink-0 flex-col bg-ink-50";
 export const SIDEBAR_ASIDE_COLLAPSED = "flex w-14 shrink-0 flex-col items-center bg-ink-50 py-3";
 
 /** Brand block at the top, and the control that collapses the pane. */
-export const SIDEBAR_BRAND = "flex items-center justify-between px-4 py-3.5";
+export const SIDEBAR_BRAND = "flex items-center justify-between px-4 py-3";
 export const SIDEBAR_BRAND_LINK = "flex flex-col items-start gap-0.5";
 export const SIDEBAR_BRAND_SUB =
-  "pl-[1px] font-mono text-[9.5px] uppercase leading-none tracking-[0.34em] text-ink-400";
+  "pl-[1px] font-mono text-[10px] uppercase leading-none tracking-[0.3em] text-ink-400";
 export const SIDEBAR_COLLAPSE_BUTTON =
   "flex h-7 w-7 items-center justify-center rounded-md text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-700";
 export const SIDEBAR_EXPAND_BUTTON =
@@ -53,8 +53,16 @@ export const SIDEBAR_FOOT = "p-3";
  * as a row of its own competing with the rows under it, which is the opposite
  * of what a group label is for.
  */
-export const SIDEBAR_SECTION = "mb-5";
-export const SIDEBAR_SECTION_LABEL = "mb-1 px-2 text-[11.5px] font-medium text-ink-400";
+/*
+ * Tighter than it was.
+ *
+ * At 1280 by 720, which is most laptops, five rows of the previous pane sat
+ * below the fold with nothing to say so: Schedules, Commissioning, Standards,
+ * Documents and Knowledge were simply not there. Four pixels off every row and
+ * a smaller gap between groups is what it takes for the whole pane to fit.
+ */
+export const SIDEBAR_SECTION = "mb-3.5";
+export const SIDEBAR_SECTION_LABEL = "mb-0.5 px-2 text-[11px] font-medium text-ink-400";
 export const SIDEBAR_SECTION_ROWS = "space-y-px";
 
 /**
@@ -66,7 +74,7 @@ export const SIDEBAR_SECTION_ROWS = "space-y-px";
  * loudest object on screen. A raised fill says "here" quite well enough.
  */
 export function sidebarRowClass(opts: { active: boolean; indent?: boolean }): string {
-  return `flex items-center gap-2.5 rounded-md py-1.5 text-[13px] transition-colors ${
+  return `flex items-center gap-2.5 rounded-md py-1 text-[13px] transition-colors ${
     opts.indent ? "pl-8 pr-2" : "px-2"
   } ${
     opts.active

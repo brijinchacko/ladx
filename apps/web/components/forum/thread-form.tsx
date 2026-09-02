@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuthModal } from "@/components/auth/auth-modal";
 import { CATEGORIES } from "@/lib/forum/categories";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -16,6 +17,7 @@ const MIN_BODY = 30;
  */
 export default function ThreadForm({ defaultCategory }: { defaultCategory?: string }) {
   const router = useRouter();
+  const auth = useAuthModal();
   const [category, setCategory] = useState(defaultCategory ?? CATEGORIES[0]?.slug ?? "");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -38,8 +40,14 @@ export default function ThreadForm({ defaultCategory }: { defaultCategory?: stri
         body: JSON.stringify({ title: title.trim(), body: body.trim(), category }),
       });
       if (res.status === 401) {
-        // Come back here afterwards rather than dumping them on the home page.
-        router.push(`/sign-in?next=${encodeURIComponent("/forum/new")}`);
+        /*
+          Over the top of the draft, rather than instead of it.
+
+          They came back here afterwards even before, but by way of /sign-in,
+          which meant retyping a title and thirty words of body from memory.
+        */
+        if (auth) auth.open({ mode: "sign-in", next: "/forum/new" });
+        else router.push(`/sign-in?next=${encodeURIComponent("/forum/new")}`);
         return;
       }
       if (!res.ok) {

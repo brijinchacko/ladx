@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuthModal } from "@/components/auth/auth-modal";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -23,6 +24,7 @@ export default function ReplyBox({
   locked: boolean;
 }) {
   const router = useRouter();
+  const auth = useAuthModal();
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,12 +37,25 @@ export default function ReplyBox({
     );
   }
 
+  /*
+    The reply they have already typed survives this.
+
+    Signing in used to mean leaving the page for /sign-in and coming back to an
+    empty box, which is a good way to lose a considered answer. The dialog
+    opens over the thread and the textarea is still holding what they wrote.
+  */
+  function askToSignIn() {
+    const back = `/forum/t/${threadSlug}`;
+    if (auth) auth.open({ mode: "sign-in", next: back });
+    else router.push(`/sign-in?next=${encodeURIComponent(back)}`);
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (body.trim().length < 2 || busy) return;
 
     if (!signedIn) {
-      router.push(`/sign-in?next=${encodeURIComponent(`/forum/t/${threadSlug}`)}`);
+      askToSignIn();
       return;
     }
 
@@ -53,7 +68,7 @@ export default function ReplyBox({
         body: JSON.stringify({ threadId, body: body.trim() }),
       });
       if (res.status === 401) {
-        router.push(`/sign-in?next=${encodeURIComponent(`/forum/t/${threadSlug}`)}`);
+        askToSignIn();
         return;
       }
       if (!res.ok) {

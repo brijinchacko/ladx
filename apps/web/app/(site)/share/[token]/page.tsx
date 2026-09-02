@@ -1,9 +1,9 @@
+import { AuthLink } from "@/components/auth/auth-link";
 import { db } from "@/lib/db/client";
 import { conversations, messages, users } from "@/lib/db/schema";
 import { SITE } from "@/lib/seo/schema";
 import { ChatMessage } from "@ladx/ui";
 import { asc, eq } from "drizzle-orm";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -96,12 +96,13 @@ export default async function SharedConversationPage({
         <p className="text-[14px] text-ink-600">
           This was written in LADX Studio, the AI workbench for automation engineers.
         </p>
-        <Link
-          href="/sign-up"
+        <AuthLink
+          mode="sign-up"
+          next="/projects"
           className="mt-3 inline-block rounded-sm bg-ink-900 px-4 py-2 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
         >
           Try it free
-        </Link>
+        </AuthLink>
       </footer>
     </div>
   );

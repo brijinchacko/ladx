@@ -186,7 +186,7 @@ function PreferencesDialog({
     });
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-ink-900 p-0 sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-6">
       <div
         ref={panelRef}
         // biome-ignore lint/a11y/useSemanticElements: <dialog> manages its own

@@ -163,7 +163,7 @@ describe("what comes back from storage", () => {
   });
 
   it("floats by default, rather than taking a strip off every tool", () => {
-    expect(defaultFrame(1440, 900).mode).toBe("floating");
+    expect(defaultFrame(1440, 900).mode).toBe("minimised");
   });
 
   it("ignores a NaN that JSON let through", () => {

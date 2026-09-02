@@ -8,16 +8,25 @@ const DialogTrigger = DialogPrimitive.Trigger;
 const DialogPortal = DialogPrimitive.Portal;
 const DialogClose = DialogPrimitive.Close;
 
+/*
+ * The scrim.
+ *
+ * The one place the house rule against translucency does not apply, and the
+ * check script exempts it by name: a solid cover would hide the page the
+ * dialog is about instead of dimming it, which for a sign-in opened over an
+ * article is exactly the context somebody needs to stay oriented.
+ *
+ * Above 80 rather than 50, because the cookie banner is fixed at 60 and its
+ * settings sheet at 70. At 50 the sign-in dialog opened underneath the banner,
+ * which on a phone covers the password field and the button below it.
+ */
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn(
-      "fixed inset-0 z-50 bg-ink-900 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className,
-    )}
+    className={cn("fixed inset-0 z-[80] bg-black/60 animate-fade-in", className)}
     {...props}
   />
 ));
@@ -32,7 +41,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-ink-200 bg-white p-6 shadow-lg",
+        "fixed left-[50%] top-[50%] z-[80] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-ink-200 bg-white p-6 shadow-lg animate-pop-in",
         className,
       )}
       {...props}

@@ -479,8 +479,9 @@ export default function ConvertWorkbench({
           {unreadable.length === 1 ? "it" : "them"} in Ladder and save again to repair the file.
         </p>
       )}
-      {/* source bar */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50 px-3 py-2">
+      {/* source bar. Padded on the right for the focus toggle above, which
+          is absolutely placed and was sitting on top of the last button. */}
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50 py-2 pl-3 pr-14">
         <FolderKanban className="h-3.5 w-3.5 shrink-0 text-ink-400" />
         {uploaded ? (
           <span className="flex items-center gap-2 rounded-md border border-ink-200 bg-white px-2 py-1 text-[12.5px] text-ink-700">

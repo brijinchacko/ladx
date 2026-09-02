@@ -65,6 +65,17 @@ export const ladxPreset: Partial<Config> = {
         lg: radii.lg,
         xl: radii.xl,
       },
+      /**
+       * The interface's motion vocabulary, named for what is happening rather
+       * than for the transform. Keyframes live in globals.css so the desktop
+       * gets them too.
+       */
+      animation: {
+        "fade-in": "ladx-fade-in 150ms ease-out both",
+        "pop-in": "ladx-pop-in 160ms cubic-bezier(0.2, 0, 0, 1) both",
+        "slide-down": "ladx-slide-down 120ms ease-out both",
+        rise: "ladx-rise 180ms cubic-bezier(0.2, 0, 0, 1) both",
+      },
     },
   },
 };

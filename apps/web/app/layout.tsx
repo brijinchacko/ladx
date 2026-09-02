@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Public_Sans, Saira } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
+import { AuthModalProvider } from "@/components/auth/auth-modal";
 import ConsentBanner from "@/components/consent/consent-banner";
 import { THEME_SCRIPT } from "@/lib/theme/theme";
 
@@ -109,7 +110,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body>
-        {children}
+        {/*
+          Wraps everything so any page can offer to sign somebody in without
+          sending them away from it. The provider renders nothing until it is
+          asked to.
+        */}
+        <AuthModalProvider>{children}</AuthModalProvider>
         <ConsentBanner />
       </body>
     </html>

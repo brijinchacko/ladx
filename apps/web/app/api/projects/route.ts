@@ -5,6 +5,7 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { projects } from "@/lib/db/schema";
+import { programFromUpload } from "@/lib/ladder/from-upload";
 import { parseProjectFile } from "@/lib/parsers/spawn";
 import { deliverablesFor } from "@/lib/platform/scope";
 import { getStorage } from "@/lib/storage";
@@ -134,5 +135,28 @@ export async function POST(req: Request) {
     return Response.json({ error: "project insert returned no row" }, { status: 500 });
   }
 
-  return Response.json({ project: row, parseError }, { status: 201 });
+  /*
+    And a ladder program to go with it.
+
+    Uploading a file used to produce a project the tools could not see. Ladder,
+    Convert, Monitor, Schedules and Commissioning all read the saved ladder
+    program, and an upload only ever produced the manifest, so every one of
+    them opened on "No programs yet" for a project with a parsed L5X sitting in
+    it. Reading the same file into the editor's model here is what makes the
+    upload the start of the work rather than a dead end.
+
+    Best effort: a file the IR reader cannot open (anything but an L5X today)
+    still uploads, and says so.
+  */
+  let ladder: { rungs: number; dropped: number } | null = null;
+  let ladderError: string | null = null;
+  if (parsed) {
+    try {
+      ladder = await programFromUpload(authResult.user.id, row.id, row.name, localPath);
+    } catch (err) {
+      ladderError = err instanceof Error ? err.message : "could not read the file into Ladder";
+    }
+  }
+
+  return Response.json({ project: row, parseError, ladder, ladderError }, { status: 201 });
 }

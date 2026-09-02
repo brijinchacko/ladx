@@ -85,7 +85,7 @@ export default function ProjectOnboarding({
   const total = BRIEF_GROUPS.length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900 p-4 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:items-center">
       <div className="w-full max-w-2xl rounded-lg border border-ink-200 bg-white shadow-2xl">
         <header className="flex items-start gap-4 border-b border-ink-100 bg-ink-50 px-5 py-3.5">
           <div className="min-w-0 flex-1">

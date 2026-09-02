@@ -10,6 +10,7 @@ import ProjectDrawings from "@/components/studio/project-drawings";
 import ProjectPlanner, { type PlannerTask } from "@/components/studio/project-planner";
 import ProjectSummary from "@/components/studio/project-summary";
 import { ProjectTools } from "@/components/studio/project-tools";
+import { ReadIntoLadder } from "@/components/studio/read-into-ladder";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { UploadButton } from "@/components/upload-button";
 import { requireUser } from "@/lib/auth/server";
@@ -180,7 +181,7 @@ export default async function ProjectWorkspace({
           slid up out of view. */}
       <div className="relative min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-5xl px-8 py-7">
-          <nav className="mb-5 font-mono text-[11.5px] text-ink-400">
+          <nav className="mb-5 text-[12.5px] text-ink-400">
             <Link href="/studio/projects" className="hover:text-ink-700">
               Projects
             </Link>
@@ -462,6 +463,11 @@ export default async function ProjectWorkspace({
                     </p>
                   </div>
                   {!project.r2Key && <UploadButton />}
+                  {/* A file that predates uploads producing a program. One read
+                      and every tool sees it. */}
+                  {project.r2Key && programs.length === 0 && (
+                    <ReadIntoLadder projectId={project.id} />
+                  )}
                 </div>
               </section>
             </div>

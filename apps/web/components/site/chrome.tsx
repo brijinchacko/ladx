@@ -1,5 +1,7 @@
 "use client";
 
+import { AuthLink } from "@/components/auth/auth-link";
+import { AUTH_CHANGED } from "@/components/auth/auth-panel";
 import FreeMenu, { FreeMenuMobile } from "@/components/site/free-menu";
 import HeaderAccount, { type HeaderUser } from "@/components/site/header-account";
 import ProductsMenu, { ProductsMenuMobile } from "@/components/site/products-menu";
@@ -49,16 +51,32 @@ export function SiteHeader() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/auth/me")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!cancelled && d?.user) setUser(d.user as HeaderUser);
-      })
-      .catch(() => {
-        // Not signed in, or offline. The default is already correct.
-      });
+
+    function load() {
+      fetch("/api/auth/me")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!cancelled) setUser((d?.user as HeaderUser) ?? null);
+        })
+        .catch(() => {
+          // Not signed in, or offline. The default is already correct.
+        });
+    }
+
+    load();
+
+    /*
+      Asked again when the session changes under us.
+
+      Signing in now happens in a dialog over this page rather than on a page
+      of its own, so there is no navigation to remount the header. Without
+      this it would go on offering "Start free" to somebody who had just made
+      an account two inches below it.
+    */
+    window.addEventListener(AUTH_CHANGED, load);
     return () => {
       cancelled = true;
+      window.removeEventListener(AUTH_CHANGED, load);
     };
   }, []);
 
@@ -107,12 +125,13 @@ export function SiteHeader() {
               >
                 Try the editor
               </Link>
-              <Link
-                href="/sign-up"
+              <AuthLink
+                mode="sign-up"
+                next="/projects"
                 className="rounded-sm bg-ink-900 px-3.5 py-1.5 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
               >
                 Start free
-              </Link>
+              </AuthLink>
             </>
           )}
           <button

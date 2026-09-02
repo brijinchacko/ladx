@@ -320,7 +320,7 @@ export function BriefPrompt({
   const [draft, setDraft] = useState<ProjectBrief>({});
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900 p-4 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:items-center">
       <div className="w-full max-w-lg rounded-md border border-ink-200 bg-white">
         <header className="border-b border-ink-100 bg-ink-50 px-5 py-3.5">
           <h2 className="font-display text-[15px] font-bold text-ink-900">
