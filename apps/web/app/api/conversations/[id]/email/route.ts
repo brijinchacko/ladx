@@ -7,7 +7,8 @@ import { conversations, messages, projects } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/client";
 import { transcriptEmail } from "@/lib/email/templates";
 import { env } from "@/lib/env";
-import { and, asc, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const authResult = await getApiUser();
@@ -18,7 +19,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const convoRows = await db()
     .select()
     .from(conversations)
-    .where(and(eq(conversations.id, id), eq(conversations.userId, user.id)))
+    .where(and(eq(conversations.id, id), inArray(conversations.userId, await accessIds(user.id))))
     .limit(1);
   const convo = convoRows[0];
   if (!convo) return Response.json({ error: "not found" }, { status: 404 });

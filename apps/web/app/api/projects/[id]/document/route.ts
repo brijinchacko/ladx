@@ -8,6 +8,7 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents } from "@/lib/db/schema";
 import { getClient, getCompany, getProject } from "@/lib/platform/queries";
+import { accessIds } from "@/lib/teams/access";
 import {
   autoFillValues,
   fillTemplate,
@@ -19,7 +20,7 @@ import {
 // barrel does not carry them into anything that only wanted a template.
 import { renderDocx } from "@ladx/documents/lib/render-docx";
 import { renderPdf } from "@ladx/documents/lib/render-pdf";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 
 /** Strip anything that has no business in a Content-Disposition filename. */
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         templateSlug: documents.templateSlug,
       })
       .from(documents)
-      .where(and(eq(documents.id, docId), eq(documents.userId, auth.user.id)))
+      .where(and(eq(documents.id, docId), inArray(documents.userId, await accessIds(auth.user.id))))
       .limit(1);
     saved = row ?? null;
   }

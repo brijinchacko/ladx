@@ -7,7 +7,8 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { generatedCode, projects } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 const schema = z.object({
@@ -34,7 +35,12 @@ export async function POST(req: Request) {
   const owns = await db()
     .select({ id: projects.id })
     .from(projects)
-    .where(and(eq(projects.id, parsed.data.projectId), eq(projects.userId, authResult.user.id)))
+    .where(
+      and(
+        eq(projects.id, parsed.data.projectId),
+        inArray(projects.userId, await accessIds(authResult.user.id)),
+      ),
+    )
     .limit(1);
   if (!owns[0]) return Response.json({ error: "project not found" }, { status: 404 });
 

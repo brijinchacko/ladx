@@ -4,7 +4,8 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { cadDrawings } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -42,7 +43,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const updated = await db()
     .update(cadDrawings)
     .set(patch)
-    .where(and(eq(cadDrawings.id, id), eq(cadDrawings.userId, auth.user.id)))
+    .where(and(eq(cadDrawings.id, id), inArray(cadDrawings.userId, await accessIds(auth.user.id))))
     .returning({ id: cadDrawings.id });
 
   if (updated.length === 0) return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -56,7 +57,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
   const deleted = await db()
     .delete(cadDrawings)
-    .where(and(eq(cadDrawings.id, id), eq(cadDrawings.userId, auth.user.id)))
+    .where(and(eq(cadDrawings.id, id), inArray(cadDrawings.userId, await accessIds(auth.user.id))))
     .returning({ id: cadDrawings.id });
 
   if (deleted.length === 0) return NextResponse.json({ error: "not found" }, { status: 404 });

@@ -5,9 +5,10 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { hmiProjects } from "@/lib/db/schema";
 import { getProject } from "@/lib/platform/queries";
+import { accessIds } from "@/lib/teams/access";
 import { sanitiseSize } from "@ladx/hmi";
 import { emptyDoc } from "@ladx/hmi";
-import { desc, eq } from "drizzle-orm";
+import { desc, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -29,7 +30,7 @@ export async function GET() {
       updatedAt: hmiProjects.updatedAt,
     })
     .from(hmiProjects)
-    .where(eq(hmiProjects.userId, auth.user.id))
+    .where(inArray(hmiProjects.userId, await accessIds(auth.user.id)))
     .orderBy(desc(hmiProjects.updatedAt));
   return NextResponse.json({ applications: rows });
 }

@@ -5,9 +5,10 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents } from "@/lib/db/schema";
 import { getClient, getCompany, getProject } from "@/lib/platform/queries";
+import { accessIds } from "@/lib/teams/access";
 import { fillTemplate, getTemplate } from "@ladx/documents";
 import { autoFillValues, withDesignBasis } from "@ladx/documents";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -36,10 +37,16 @@ export async function GET(req: NextRequest) {
   const clientId = req.nextUrl.searchParams.get("clientId");
 
   const where = projectId
-    ? and(eq(documents.userId, auth.user.id), eq(documents.projectId, projectId))
+    ? and(
+        inArray(documents.userId, await accessIds(auth.user.id)),
+        eq(documents.projectId, projectId),
+      )
     : clientId
-      ? and(eq(documents.userId, auth.user.id), eq(documents.clientId, clientId))
-      : eq(documents.userId, auth.user.id);
+      ? and(
+          inArray(documents.userId, await accessIds(auth.user.id)),
+          eq(documents.clientId, clientId),
+        )
+      : inArray(documents.userId, await accessIds(auth.user.id));
 
   // fileData is deliberately not selected: a listing must not carry megabytes
   // of base64 for every row.

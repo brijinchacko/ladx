@@ -6,7 +6,8 @@ import { listMessages } from "@/lib/db/conversations";
 import { preferredProvider } from "@/lib/db/provider-keys";
 import { conversations } from "@/lib/db/schema";
 import { platformKey } from "@/lib/providers/free-tier";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export default async function ConversationPage({
   const [convo] = await db()
     .select()
     .from(conversations)
-    .where(and(eq(conversations.id, id), eq(conversations.userId, user.id)))
+    .where(and(eq(conversations.id, id), inArray(conversations.userId, await accessIds(user.id))))
     .limit(1);
   if (!convo) notFound();
 

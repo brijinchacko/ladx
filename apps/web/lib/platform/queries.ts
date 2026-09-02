@@ -8,8 +8,9 @@ import {
   companyProfiles,
   projects,
 } from "@/lib/db/schema";
+import { accessIds } from "@/lib/teams/access";
 import type { ProjectBrief } from "@ladx/documents";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { PhaseId } from "./lifecycle";
 
 /**
@@ -26,7 +27,7 @@ export async function getCompany(userId: string): Promise<CompanyProfile | null>
   const [row] = await db()
     .select()
     .from(companyProfiles)
-    .where(eq(companyProfiles.userId, userId))
+    .where(inArray(companyProfiles.userId, await accessIds(userId)))
     .limit(1);
   return row ?? null;
 }
@@ -56,7 +57,7 @@ export async function listClients(userId: string): Promise<(Client & { projectCo
     })
     .from(clients)
     .leftJoin(projects, eq(projects.clientId, clients.id))
-    .where(eq(clients.userId, userId))
+    .where(inArray(clients.userId, await accessIds(userId)))
     .groupBy(clients.id)
     .orderBy(desc(clients.createdAt));
   return rows.map((r) => ({ ...r.client, projectCount: r.projectCount }));
@@ -66,7 +67,7 @@ export async function getClient(userId: string, id: string): Promise<Client | nu
   const [row] = await db()
     .select()
     .from(clients)
-    .where(and(eq(clients.id, id), eq(clients.userId, userId)))
+    .where(and(eq(clients.id, id), inArray(clients.userId, await accessIds(userId))))
     .limit(1);
   return row ?? null;
 }
@@ -92,7 +93,7 @@ export async function updateClient(
   const updated = await db()
     .update(clients)
     .set({ ...input, updatedAt: new Date() })
-    .where(and(eq(clients.id, id), eq(clients.userId, userId)))
+    .where(and(eq(clients.id, id), inArray(clients.userId, await accessIds(userId))))
     .returning({ id: clients.id });
   return updated.length > 0;
 }
@@ -103,7 +104,7 @@ export async function deleteClient(userId: string, id: string): Promise<boolean>
   // the work does not vanish because the client record was tidied up.
   const deleted = await db()
     .delete(clients)
-    .where(and(eq(clients.id, id), eq(clients.userId, userId)))
+    .where(and(eq(clients.id, id), inArray(clients.userId, await accessIds(userId))))
     .returning({ id: clients.id });
   return deleted.length > 0;
 }
@@ -119,7 +120,7 @@ export async function listProjects(userId: string): Promise<ProjectWithClient[]>
     .select({ project: projects, clientName: clients.name })
     .from(projects)
     .leftJoin(clients, eq(clients.id, projects.clientId))
-    .where(eq(projects.userId, userId))
+    .where(inArray(projects.userId, await accessIds(userId)))
     .orderBy(desc(projects.updatedAt));
   return rows.map((r) => ({ ...r.project, clientName: r.clientName }));
 }
@@ -129,7 +130,7 @@ export async function getProject(userId: string, id: string): Promise<ProjectWit
     .select({ project: projects, clientName: clients.name })
     .from(projects)
     .leftJoin(clients, eq(clients.id, projects.clientId))
-    .where(and(eq(projects.id, id), eq(projects.userId, userId)))
+    .where(and(eq(projects.id, id), inArray(projects.userId, await accessIds(userId))))
     .limit(1);
   return row ? { ...row.project, clientName: row.clientName } : null;
 }
@@ -216,7 +217,7 @@ export async function updateProject(
   const updated = await db()
     .update(projects)
     .set(patch)
-    .where(and(eq(projects.id, id), eq(projects.userId, userId)))
+    .where(and(eq(projects.id, id), inArray(projects.userId, await accessIds(userId))))
     .returning({ id: projects.id });
   return updated.length > 0;
 }
@@ -224,7 +225,7 @@ export async function updateProject(
 export async function deleteProject(userId: string, id: string): Promise<boolean> {
   const deleted = await db()
     .delete(projects)
-    .where(and(eq(projects.id, id), eq(projects.userId, userId)))
+    .where(and(eq(projects.id, id), inArray(projects.userId, await accessIds(userId))))
     .returning({ id: projects.id });
   // Recorded because a deletion is the event most worth being able to explain
   // later, and the row it refers to is gone by the time anybody asks.

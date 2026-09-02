@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { db } from "@/lib/db/client";
 import { ladderSnapshots } from "@/lib/db/schema";
 import { ladxParserBinary } from "@/lib/parsers/spawn";
+import { accessIds } from "@/lib/teams/access";
 import { type LadxProgram, ladxProgramToIr, programRoutines } from "@ladx/studio";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 
@@ -44,8 +45,14 @@ export async function snapshotProgram(
 
   const where =
     projectId === null
-      ? and(eq(ladderSnapshots.userId, userId), isNull(ladderSnapshots.projectId))
-      : and(eq(ladderSnapshots.userId, userId), eq(ladderSnapshots.projectId, projectId));
+      ? and(
+          inArray(ladderSnapshots.userId, await accessIds(userId)),
+          isNull(ladderSnapshots.projectId),
+        )
+      : and(
+          inArray(ladderSnapshots.userId, await accessIds(userId)),
+          eq(ladderSnapshots.projectId, projectId),
+        );
   const old = await db()
     .select({ id: ladderSnapshots.id })
     .from(ladderSnapshots)

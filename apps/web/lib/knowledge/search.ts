@@ -1,6 +1,7 @@
 import { db } from "@/lib/db/client";
 import { knowledgeChunks, knowledgeDocs } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 
 /**
  * Retrieval over a user's indexed documents.
@@ -69,8 +70,11 @@ export async function searchChunks(input: {
     .innerJoin(knowledgeDocs, eq(knowledgeDocs.id, knowledgeChunks.docId))
     .where(
       input.docId
-        ? and(eq(knowledgeChunks.userId, input.userId), eq(knowledgeChunks.docId, input.docId))
-        : eq(knowledgeChunks.userId, input.userId),
+        ? and(
+            inArray(knowledgeChunks.userId, await accessIds(input.userId)),
+            eq(knowledgeChunks.docId, input.docId),
+          )
+        : inArray(knowledgeChunks.userId, await accessIds(input.userId)),
     );
 
   return (

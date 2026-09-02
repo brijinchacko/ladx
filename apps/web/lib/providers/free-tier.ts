@@ -1,3 +1,4 @@
+import { EmptyStreamError } from "./openai-compatible";
 import { ProviderError } from "./types";
 import type { ChatMessage, Credentials, ModelInfo, Provider } from "./types";
 
@@ -125,8 +126,16 @@ export interface FreeTierStream {
   stream: AsyncIterable<string>;
 }
 
-/** Errors worth moving to the next model for. A bad request is not one. */
+/**
+ * Errors worth moving to the next model for. A bad request is not one.
+ *
+ * An empty answer is. A hybrid model given a long prompt can spend its whole
+ * budget reasoning and produce nothing, and the right response to that is the
+ * next model in the list, not an error to the person who asked: the request
+ * was fine, that model was the wrong one for it.
+ */
 function isWorthRetrying(err: unknown): boolean {
+  if (err instanceof EmptyStreamError) return true;
   if (!(err instanceof ProviderError)) return true;
   return err.kind === "rate_limited" || err.kind === "model_unavailable" || err.kind === "network";
 }

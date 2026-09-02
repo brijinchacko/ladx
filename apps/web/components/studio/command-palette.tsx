@@ -27,6 +27,7 @@ import {
   ShieldCheck,
   Sun,
   Users,
+  Workflow,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -54,6 +55,7 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   Ruler,
   Library,
   FileText,
+  Workflow,
 };
 
 /**

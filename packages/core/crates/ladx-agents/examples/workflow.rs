@@ -15,6 +15,8 @@ fn main() {
             tag_lists: &[],
             ask: &ask,
             answers: &[],
+            model_answers: &[],
+            wait_for_model: false,
         };
         print!("{}", run(&wf, "Add a jam alarm to the conveyor", &ctx).to_text());
         println!("────");

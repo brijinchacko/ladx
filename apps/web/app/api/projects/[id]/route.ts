@@ -7,14 +7,15 @@ import { db } from "@/lib/db/client";
 import { projects } from "@/lib/db/schema";
 import { deliverablesFor } from "@/lib/platform/scope";
 import { getStorage } from "@/lib/storage";
+import { accessIds } from "@/lib/teams/access";
 import { mergeBrief } from "@ladx/documents";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 async function findOwnedProject(userId: string, id: string) {
   const rows = await db()
     .select()
     .from(projects)
-    .where(and(eq(projects.id, id), eq(projects.userId, userId)))
+    .where(and(eq(projects.id, id), inArray(projects.userId, await accessIds(userId))))
     .limit(1);
   return rows[0] ?? null;
 }

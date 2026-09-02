@@ -4,9 +4,10 @@ import { db } from "@/lib/db/client";
 import { SCRATCH, loadProgram } from "@/lib/db/ladder";
 import { hmiProjects } from "@/lib/db/schema";
 import { getProject } from "@/lib/platform/queries";
+import { accessIds } from "@/lib/teams/access";
 import { type HmiDoc, readDoc } from "@ladx/hmi";
 import type { LadxProgram } from "@ladx/studio";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export default async function HmiEditorPage({ params }: { params: Promise<{ id: 
   const [row] = await db()
     .select()
     .from(hmiProjects)
-    .where(and(eq(hmiProjects.id, id), eq(hmiProjects.userId, user.id)))
+    .where(and(eq(hmiProjects.id, id), inArray(hmiProjects.userId, await accessIds(user.id))))
     .limit(1);
   if (!row) notFound();
 

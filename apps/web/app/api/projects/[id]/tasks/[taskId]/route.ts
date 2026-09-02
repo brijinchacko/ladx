@@ -5,7 +5,8 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { projectTasks } from "@/lib/db/schema";
 import { toISODate } from "@/lib/platform/gantt";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -85,7 +86,7 @@ export async function PATCH(
       and(
         eq(projectTasks.id, taskId),
         eq(projectTasks.projectId, id),
-        eq(projectTasks.userId, auth.user.id),
+        inArray(projectTasks.userId, await accessIds(auth.user.id)),
       ),
     )
     .returning();
@@ -108,7 +109,7 @@ export async function DELETE(
       and(
         eq(projectTasks.id, taskId),
         eq(projectTasks.projectId, id),
-        eq(projectTasks.userId, auth.user.id),
+        inArray(projectTasks.userId, await accessIds(auth.user.id)),
       ),
     )
     .returning({ id: projectTasks.id });

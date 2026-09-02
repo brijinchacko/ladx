@@ -19,8 +19,9 @@ import { cadDrawings, documents, ladderPrograms, projectTasks } from "@/lib/db/s
 import { getStandards } from "@/lib/platform/client-records";
 import { ACTIVE_PHASES, PHASES, deliverablesFor, getPhase } from "@/lib/platform/lifecycle";
 import { getClient, getCompany, getProject, listClients } from "@/lib/platform/queries";
+import { accessIds } from "@/lib/teams/access";
 import { missingFor } from "@ladx/documents";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -105,7 +106,9 @@ export default async function ProjectWorkspace({
           updatedAt: documents.updatedAt,
         })
         .from(documents)
-        .where(and(eq(documents.userId, user.id), eq(documents.projectId, id)))
+        .where(
+          and(inArray(documents.userId, await accessIds(user.id)), eq(documents.projectId, id)),
+        )
         .orderBy(desc(documents.updatedAt)),
       db()
         .select({
@@ -114,12 +117,19 @@ export default async function ProjectWorkspace({
           updatedAt: cadDrawings.updatedAt,
         })
         .from(cadDrawings)
-        .where(and(eq(cadDrawings.userId, user.id), eq(cadDrawings.projectId, id)))
+        .where(
+          and(inArray(cadDrawings.userId, await accessIds(user.id)), eq(cadDrawings.projectId, id)),
+        )
         .orderBy(desc(cadDrawings.updatedAt)),
       db()
         .select()
         .from(projectTasks)
-        .where(and(eq(projectTasks.userId, user.id), eq(projectTasks.projectId, id)))
+        .where(
+          and(
+            inArray(projectTasks.userId, await accessIds(user.id)),
+            eq(projectTasks.projectId, id),
+          ),
+        )
         .orderBy(asc(projectTasks.position), asc(projectTasks.createdAt)),
       listClients(user.id),
       db()
@@ -130,7 +140,12 @@ export default async function ProjectWorkspace({
           updatedAt: ladderPrograms.updatedAt,
         })
         .from(ladderPrograms)
-        .where(and(eq(ladderPrograms.userId, user.id), eq(ladderPrograms.projectId, id))),
+        .where(
+          and(
+            inArray(ladderPrograms.userId, await accessIds(user.id)),
+            eq(ladderPrograms.projectId, id),
+          ),
+        ),
       project.clientId ? getStandards(user.id, project.clientId) : Promise.resolve(null),
     ]);
 

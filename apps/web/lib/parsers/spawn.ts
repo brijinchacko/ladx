@@ -5,6 +5,7 @@
 
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import type {
@@ -414,4 +415,96 @@ export async function proposedScreensFor(project: unknown): Promise<{
     });
     return JSON.parse(stdout);
   });
+}
+
+/**
+ * The workflow engine, as a process.
+ *
+ * Found the same way as the parser. A missing binary is an error with the
+ * build command in it, not a page that quietly lists no workflows.
+ */
+export function ladxAgentsBinary(): string {
+  const root = findWorkspaceRoot();
+  const release = path.join(root, "target", "release", "ladx-agents");
+  const debug = path.join(root, "target", "debug", "ladx-agents");
+  if (existsSync(release)) return release;
+  if (existsSync(debug)) return debug;
+  throw new Error(
+    `ladx-agents binary not found. Run: cargo build --release --bin ladx-agents. (looked in ${release} and ${debug})`,
+  );
+}
+
+export interface WorkflowStep {
+  id: string;
+  kind:
+    | { kind: "model"; role: string }
+    | { kind: "check"; check: string }
+    | { kind: "person"; asking: string };
+  about: string;
+  blocking: boolean;
+}
+export interface WorkflowDef {
+  name: string;
+  about: string;
+  steps: WorkflowStep[];
+}
+export interface WorkflowStepRecord {
+  id: string;
+  outcome: "passed" | "noted" | "stopped" | "waiting" | "notReached";
+  input: string;
+  output: string;
+  findings: string[];
+}
+export interface WorkflowRun {
+  workflow: string;
+  request: string;
+  steps: WorkflowStepRecord[];
+  finished: boolean;
+  stoppedBecause: string | null;
+}
+
+export async function listWorkflows(): Promise<WorkflowDef[]> {
+  const { stdout } = await exec(ladxAgentsBinary(), ["--list"], { timeout: 15_000 });
+  return (JSON.parse(stdout) as { workflows: WorkflowDef[] }).workflows;
+}
+
+/**
+ * Where a run stands, given everything said so far.
+ *
+ * The engine owns the order and the gates; this hands it the program, the
+ * answers a person has given and the answers a model has given, and reads
+ * back the run. A step that is waiting carries its prompt or question.
+ */
+export async function advanceWorkflow(input: {
+  workflow: string;
+  request: string;
+  project: unknown;
+  answers: [string, string][];
+  modelAnswers: [string, string][];
+}): Promise<WorkflowRun> {
+  const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+  const dir = await mkdtemp(path.join(os.tmpdir(), "ladx-workflow-"));
+  const file = path.join(dir, "run.json");
+  try {
+    await writeFile(
+      file,
+      JSON.stringify({
+        workflow: input.workflow,
+        request: input.request,
+        project: input.project,
+        hardware: null,
+        tag_lists: [],
+        answers: input.answers,
+        model_answers: input.modelAnswers,
+      }),
+      "utf8",
+    );
+    const { stdout } = await exec(ladxAgentsBinary(), ["--advance", file], {
+      timeout: 60_000,
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return JSON.parse(stdout) as WorkflowRun;
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 }

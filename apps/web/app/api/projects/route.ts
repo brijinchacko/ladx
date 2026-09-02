@@ -9,7 +9,8 @@ import { programFromUpload } from "@/lib/ladder/from-upload";
 import { parseProjectFile } from "@/lib/parsers/spawn";
 import { deliverablesFor } from "@/lib/platform/scope";
 import { getStorage } from "@/lib/storage";
-import { eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { inArray } from "drizzle-orm";
 
 const ACCEPTED_EXT = new Set(["xml", "l5x"]);
 const MAX_BYTES = 50 * 1024 * 1024; // 50 MB, bigger projects are rare.
@@ -28,7 +29,7 @@ export async function GET() {
   const rows = await db()
     .select()
     .from(projects)
-    .where(eq(projects.userId, authResult.user.id))
+    .where(inArray(projects.userId, await accessIds(authResult.user.id)))
     .orderBy(projects.createdAt);
 
   return Response.json({ projects: rows });

@@ -176,6 +176,27 @@
       "when": 1788339794741,
       "tag": "0024_modern_mongoose",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1788342311677,
+      "tag": "0025_clever_natasha_romanoff",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1788342617023,
+      "tag": "0026_petite_karma",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1788343165646,
+      "tag": "0027_fancy_king_bedlam",
+      "breakpoints": true
     }
   ]
 }

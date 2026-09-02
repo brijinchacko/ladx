@@ -9,6 +9,7 @@ import {
   type LucideIcon,
   MonitorCog,
   PencilRuler,
+  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -21,6 +22,7 @@ const ICONS: Record<string, LucideIcon> = {
   Cable,
   ClipboardCheck,
   Library,
+  Workflow,
 };
 
 /**

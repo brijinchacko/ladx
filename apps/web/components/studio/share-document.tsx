@@ -53,7 +53,18 @@ export function ShareDocument({
     };
   }, [open]);
 
-  const url = shareToken ? `${window.location.origin}/share/d/${shareToken}` : null;
+  /*
+    The origin comes from the browser, after the first paint.
+
+    Read straight off `window` this crashed the whole document page on the
+    server for any document that had a link, because a server has no window.
+    It is only needed once somebody opens the panel, so it is read then.
+  */
+  const [origin, setOrigin] = useState("");
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+  const url = shareToken && origin ? `${origin}/share/d/${shareToken}` : null;
   const expired = expiresAt ? new Date(expiresAt) < new Date() : false;
 
   async function create() {

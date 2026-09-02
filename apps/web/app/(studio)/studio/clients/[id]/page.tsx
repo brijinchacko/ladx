@@ -9,7 +9,8 @@ import { documents } from "@/lib/db/schema";
 import { getStandards, listContacts, listSites } from "@/lib/platform/client-records";
 import { getPhase } from "@/lib/platform/lifecycle";
 import { getClient, listProjects } from "@/lib/platform/queries";
-import { and, desc, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -45,7 +46,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
         updatedAt: documents.updatedAt,
       })
       .from(documents)
-      .where(and(eq(documents.userId, user.id), eq(documents.clientId, id)))
+      .where(and(inArray(documents.userId, await accessIds(user.id)), eq(documents.clientId, id)))
       .orderBy(desc(documents.updatedAt)),
     listContacts(user.id, id),
     listSites(user.id, id),

@@ -9,7 +9,8 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { memories } from "@/lib/db/schema";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, desc, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 
 const create = z.object({
@@ -31,8 +32,8 @@ export async function GET(req: Request) {
   const includeHistory = url.searchParams.get("history") === "1";
 
   const where = includeHistory
-    ? eq(memories.userId, auth.user.id)
-    : and(eq(memories.userId, auth.user.id), isNull(memories.supersededBy));
+    ? inArray(memories.userId, await accessIds(auth.user.id))
+    : and(inArray(memories.userId, await accessIds(auth.user.id)), isNull(memories.supersededBy));
 
   const rows = await db().select().from(memories).where(where).orderBy(desc(memories.createdAt));
 

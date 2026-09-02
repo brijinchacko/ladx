@@ -20,7 +20,8 @@ import {
 } from "@/lib/providers/free-tier";
 import type { Credentials } from "@/lib/providers/types";
 import type { ChatMessage } from "@/lib/providers/types";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 /**
@@ -271,7 +272,7 @@ async function loadProject(userId: string, projectId: string) {
   const rows = await db()
     .select()
     .from(projects)
-    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    .where(and(eq(projects.id, projectId), inArray(projects.userId, await accessIds(userId))))
     .limit(1);
   return rows[0] ?? null;
 }
@@ -296,11 +297,21 @@ async function loadProjectContext(
         templateSlug: documents.templateSlug,
       })
       .from(documents)
-      .where(and(eq(documents.userId, userId), eq(documents.projectId, project.id))),
+      .where(
+        and(
+          inArray(documents.userId, await accessIds(userId)),
+          eq(documents.projectId, project.id),
+        ),
+      ),
     db()
       .select({ name: cadDrawings.name })
       .from(cadDrawings)
-      .where(and(eq(cadDrawings.userId, userId), eq(cadDrawings.projectId, project.id))),
+      .where(
+        and(
+          inArray(cadDrawings.userId, await accessIds(userId)),
+          eq(cadDrawings.projectId, project.id),
+        ),
+      ),
   ]);
 
   return {

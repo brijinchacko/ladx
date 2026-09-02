@@ -10,7 +10,8 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { cadDrawings as drawings, projects } from "@/lib/db/schema";
 import { createProject, getProject } from "@/lib/platform/queries";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -41,7 +42,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const sheets = await db()
     .select()
     .from(drawings)
-    .where(and(eq(drawings.userId, auth.user.id), eq(drawings.projectId, id)));
+    .where(
+      and(inArray(drawings.userId, await accessIds(auth.user.id)), eq(drawings.projectId, id)),
+    );
   let copied = 0;
   for (const sheet of sheets) {
     const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = sheet;

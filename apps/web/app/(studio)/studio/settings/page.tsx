@@ -1,5 +1,6 @@
 import CompanyForm from "@/components/platform/company-form";
 import { ProvidersPanel } from "@/components/providers-panel";
+import { TeamPanel } from "@/components/studio/team-panel";
 import { ThemeToggle } from "@/components/studio/theme-toggle";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
@@ -61,6 +62,14 @@ export default async function SettingsPage() {
               </p>
             </div>
             <ProvidersPanel />
+          </section>
+
+          <section className="rounded-md border border-ink-100 p-6">
+            <h2 className="text-lg font-semibold text-ink-900">Team</h2>
+            <p className="mt-1 mb-4 text-[13.5px] text-ink-500">
+              The people who share this work. Everything any member makes is visible to all of them.
+            </p>
+            <TeamPanel userId={user.id} />
           </section>
 
           <section className="rounded-sm border border-ink-100 p-6">

@@ -11,7 +11,8 @@ import { credentialsFor, preferredProvider } from "@/lib/db/provider-keys";
 import { knowledgeChunks, knowledgeDocs } from "@/lib/db/schema";
 import { chunkText, normalise } from "@/lib/knowledge/chunk";
 import { ProviderError, getProvider } from "@/lib/providers";
-import { and, desc, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -40,7 +41,7 @@ export async function GET() {
       createdAt: knowledgeDocs.createdAt,
     })
     .from(knowledgeDocs)
-    .where(eq(knowledgeDocs.userId, auth.user.id))
+    .where(inArray(knowledgeDocs.userId, await accessIds(auth.user.id)))
     .orderBy(desc(knowledgeDocs.createdAt));
 
   return NextResponse.json({ documents: rows });
@@ -149,7 +150,9 @@ export async function DELETE(req: Request) {
   // Scoped to the owner, so an id from someone else's library deletes nothing.
   const deleted = await db()
     .delete(knowledgeDocs)
-    .where(and(eq(knowledgeDocs.id, id), eq(knowledgeDocs.userId, auth.user.id)))
+    .where(
+      and(eq(knowledgeDocs.id, id), inArray(knowledgeDocs.userId, await accessIds(auth.user.id))),
+    )
     .returning({ id: knowledgeDocs.id });
 
   if (deleted.length === 0) {

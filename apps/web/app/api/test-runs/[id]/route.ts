@@ -6,7 +6,8 @@ import { getApiUser } from "@/lib/auth/server";
 import { auditInBackground } from "@/lib/db/audit";
 import { db } from "@/lib/db/client";
 import { testRuns } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -31,7 +32,7 @@ async function owned(userId: string, id: string) {
   const [row] = await db()
     .select()
     .from(testRuns)
-    .where(and(eq(testRuns.id, id), eq(testRuns.userId, userId)))
+    .where(and(eq(testRuns.id, id), inArray(testRuns.userId, await accessIds(userId))))
     .limit(1);
   return row ?? null;
 }
@@ -92,7 +93,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   await db()
     .update(testRuns)
     .set(patch)
-    .where(and(eq(testRuns.id, id), eq(testRuns.userId, auth.user.id)));
+    .where(and(eq(testRuns.id, id), inArray(testRuns.userId, await accessIds(auth.user.id))));
 
   if (parsed.data.signedBy || parsed.data.reopen) {
     // Facts, not content: who signed and when is the record; the notes are not.
@@ -116,7 +117,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const deleted = await db()
     .delete(testRuns)
-    .where(and(eq(testRuns.id, id), eq(testRuns.userId, auth.user.id)))
+    .where(and(eq(testRuns.id, id), inArray(testRuns.userId, await accessIds(auth.user.id))))
     .returning({ id: testRuns.id });
   if (deleted.length === 0) return NextResponse.json({ error: "not found" }, { status: 404 });
   return NextResponse.json({ ok: true });

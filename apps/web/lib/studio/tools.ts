@@ -100,10 +100,20 @@ export const TOOLS: Tool[] = [
     scoped: true,
   },
   {
+    href: "/studio/workflows",
+    label: "Workflows",
+    about: "Several specialists on one job, with the checks as gates between them",
+    group: "check",
+    icon: "Workflow",
+    scoped: true,
+  },
+  {
     href: "/studio/standards",
     label: "Standards",
     about: "Your company's rules, and which apply",
-    group: "check",
+    // Library, not Check: the rules are something written down, and the
+    // checking against them happens in Commissioning and on every save.
+    group: "library",
     icon: "Ruler",
     scoped: false,
   },

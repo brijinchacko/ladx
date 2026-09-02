@@ -5,7 +5,8 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { hmiProjects } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -28,7 +29,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const [row] = await db()
     .select()
     .from(hmiProjects)
-    .where(and(eq(hmiProjects.id, id), eq(hmiProjects.userId, auth.user.id)))
+    .where(and(eq(hmiProjects.id, id), inArray(hmiProjects.userId, await accessIds(auth.user.id))))
     .limit(1);
   if (!row) return NextResponse.json({ error: "not found" }, { status: 404 });
   return NextResponse.json({ application: row });
@@ -52,7 +53,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       doc: parsed.data.doc,
       updatedAt: new Date(),
     })
-    .where(and(eq(hmiProjects.id, id), eq(hmiProjects.userId, auth.user.id)))
+    .where(and(eq(hmiProjects.id, id), inArray(hmiProjects.userId, await accessIds(auth.user.id))))
     .returning({ id: hmiProjects.id });
 
   if (updated.length === 0) return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -65,6 +66,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   await db()
     .delete(hmiProjects)
-    .where(and(eq(hmiProjects.id, id), eq(hmiProjects.userId, auth.user.id)));
+    .where(and(eq(hmiProjects.id, id), inArray(hmiProjects.userId, await accessIds(auth.user.id))));
   return NextResponse.json({ ok: true });
 }

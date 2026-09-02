@@ -3,10 +3,11 @@ import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { cadDrawings, clients, projects } from "@/lib/db/schema";
 import { getCompany, listProjects } from "@/lib/platform/queries";
+import { accessIds } from "@/lib/teams/access";
 import { CadEditor } from "@ladx/cad";
 import type { Drawing } from "@ladx/cad";
 import { emptyDrawing } from "@ladx/cad";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export default async function CadPage({ params }: { params: Promise<{ id: string
     .from(cadDrawings)
     .leftJoin(projects, eq(projects.id, cadDrawings.projectId))
     .leftJoin(clients, eq(clients.id, projects.clientId))
-    .where(and(eq(cadDrawings.id, id), eq(cadDrawings.userId, user.id)))
+    .where(and(eq(cadDrawings.id, id), inArray(cadDrawings.userId, await accessIds(user.id))))
     .limit(1);
   if (!row) notFound();
 
@@ -47,8 +48,14 @@ export default async function CadPage({ params }: { params: Promise<{ id: string
       .from(cadDrawings)
       .where(
         row.drawing.projectId
-          ? and(eq(cadDrawings.userId, user.id), eq(cadDrawings.projectId, row.drawing.projectId))
-          : and(eq(cadDrawings.userId, user.id), isNull(cadDrawings.projectId)),
+          ? and(
+              inArray(cadDrawings.userId, await accessIds(user.id)),
+              eq(cadDrawings.projectId, row.drawing.projectId),
+            )
+          : and(
+              inArray(cadDrawings.userId, await accessIds(user.id)),
+              isNull(cadDrawings.projectId),
+            ),
       )
       .orderBy(cadDrawings.name),
     listProjects(user.id),

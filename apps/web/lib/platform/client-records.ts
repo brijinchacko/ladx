@@ -8,7 +8,8 @@ import {
   clientStandards,
   clients,
 } from "@/lib/db/schema";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 
 /**
  * Everything a client is, beyond its name and address.
@@ -33,7 +34,12 @@ export async function listContacts(userId: string, clientId: string): Promise<Cl
     db()
       .select()
       .from(clientContacts)
-      .where(and(eq(clientContacts.userId, userId), eq(clientContacts.clientId, clientId)))
+      .where(
+        and(
+          inArray(clientContacts.userId, await accessIds(userId)),
+          eq(clientContacts.clientId, clientId),
+        ),
+      )
       // The one that goes on documents first, then by name, so the list reads the
       // same way every time rather than by whenever somebody happened to add them.
       .orderBy(desc(clientContacts.isPrimary), asc(clientContacts.name))
@@ -61,7 +67,7 @@ async function ownsClient(userId: string, clientId: string): Promise<boolean> {
   const [row] = await db()
     .select({ id: clients.id })
     .from(clients)
-    .where(and(eq(clients.id, clientId), eq(clients.userId, userId)))
+    .where(and(eq(clients.id, clientId), inArray(clients.userId, await accessIds(userId))))
     .limit(1);
   return Boolean(row);
 }
@@ -88,7 +94,7 @@ export async function updateContact(
   const [existing] = await db()
     .select({ clientId: clientContacts.clientId })
     .from(clientContacts)
-    .where(and(eq(clientContacts.id, id), eq(clientContacts.userId, userId)))
+    .where(and(eq(clientContacts.id, id), inArray(clientContacts.userId, await accessIds(userId))))
     .limit(1);
   if (!existing) return false;
   // Only one contact goes on documents, so promoting one demotes the rest.
@@ -96,7 +102,7 @@ export async function updateContact(
   const result = await db()
     .update(clientContacts)
     .set({ ...input, updatedAt: new Date() })
-    .where(and(eq(clientContacts.id, id), eq(clientContacts.userId, userId)))
+    .where(and(eq(clientContacts.id, id), inArray(clientContacts.userId, await accessIds(userId))))
     .returning({ id: clientContacts.id });
   return result.length > 0;
 }
@@ -105,13 +111,18 @@ async function clearPrimary(userId: string, clientId: string): Promise<void> {
   await db()
     .update(clientContacts)
     .set({ isPrimary: false })
-    .where(and(eq(clientContacts.userId, userId), eq(clientContacts.clientId, clientId)));
+    .where(
+      and(
+        inArray(clientContacts.userId, await accessIds(userId)),
+        eq(clientContacts.clientId, clientId),
+      ),
+    );
 }
 
 export async function deleteContact(userId: string, id: string): Promise<boolean> {
   const result = await db()
     .delete(clientContacts)
-    .where(and(eq(clientContacts.id, id), eq(clientContacts.userId, userId)))
+    .where(and(eq(clientContacts.id, id), inArray(clientContacts.userId, await accessIds(userId))))
     .returning({ id: clientContacts.id });
   return result.length > 0;
 }
@@ -122,7 +133,9 @@ export async function listSites(userId: string, clientId: string): Promise<Clien
   return db()
     .select()
     .from(clientSites)
-    .where(and(eq(clientSites.userId, userId), eq(clientSites.clientId, clientId)))
+    .where(
+      and(inArray(clientSites.userId, await accessIds(userId)), eq(clientSites.clientId, clientId)),
+    )
     .orderBy(asc(clientSites.name));
 }
 
@@ -161,7 +174,7 @@ export async function updateSite(
   const result = await db()
     .update(clientSites)
     .set({ ...input, updatedAt: new Date() })
-    .where(and(eq(clientSites.id, id), eq(clientSites.userId, userId)))
+    .where(and(eq(clientSites.id, id), inArray(clientSites.userId, await accessIds(userId))))
     .returning({ id: clientSites.id });
   return result.length > 0;
 }
@@ -169,7 +182,7 @@ export async function updateSite(
 export async function deleteSite(userId: string, id: string): Promise<boolean> {
   const result = await db()
     .delete(clientSites)
-    .where(and(eq(clientSites.id, id), eq(clientSites.userId, userId)))
+    .where(and(eq(clientSites.id, id), inArray(clientSites.userId, await accessIds(userId))))
     .returning({ id: clientSites.id });
   return result.length > 0;
 }
@@ -183,7 +196,12 @@ export async function getStandards(
   const [row] = await db()
     .select()
     .from(clientStandards)
-    .where(and(eq(clientStandards.clientId, clientId), eq(clientStandards.userId, userId)))
+    .where(
+      and(
+        eq(clientStandards.clientId, clientId),
+        inArray(clientStandards.userId, await accessIds(userId)),
+      ),
+    )
     .limit(1);
   return row ?? null;
 }

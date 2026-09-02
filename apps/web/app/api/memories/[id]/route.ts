@@ -8,7 +8,8 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { memories } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 const edit = z.object({
@@ -21,7 +22,7 @@ async function owned(userId: string, id: string) {
   const rows = await db()
     .select()
     .from(memories)
-    .where(and(eq(memories.id, id), eq(memories.userId, userId)))
+    .where(and(eq(memories.id, id), inArray(memories.userId, await accessIds(userId))))
     .limit(1);
   return rows[0] ?? null;
 }

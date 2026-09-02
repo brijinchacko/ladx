@@ -30,8 +30,8 @@ gh run download "$RUN" -n server-binaries -D "$TMP"
 
 echo "uploading"
 ssh -i "$KEY" "$HOST" "mkdir -p $REMOTE"
-scp -i "$KEY" "$TMP"/ladx-parser "$TMP"/ladx-siemens "$TMP"/ladx-validate "$HOST:$REMOTE/"
-ssh -i "$KEY" "$HOST" "chmod +x $REMOTE/ladx-parser $REMOTE/ladx-siemens $REMOTE/ladx-validate"
+scp -i "$KEY" "$TMP"/ladx-parser "$TMP"/ladx-siemens "$TMP"/ladx-validate "$TMP"/ladx-agents "$HOST:$REMOTE/"
+ssh -i "$KEY" "$HOST" "chmod +x $REMOTE/ladx-parser $REMOTE/ladx-siemens $REMOTE/ladx-validate $REMOTE/ladx-agents"
 
 # Not "did it copy" but "does it answer": a binary that lands and will not run,
 # or one that runs and does not know the flag the app is about to pass it, is
@@ -64,5 +64,11 @@ ssh -i "$KEY" "$HOST" "
   ./target/release/ladx-siemens 2>&1 | grep -q -- '--read' \\
     || { echo '  ladx-siemens cannot read SCL: the binary predates Siemens import'; exit 1; }
   echo '  ladx-siemens reads SCL as well as writing it'
+
+  # The workflow engine: it has to list the three shipped workflows, because
+  # the Workflows page is empty without it and says nothing about why.
+  ./target/release/ladx-agents --list | grep -q 'modify-program' \\
+    || { echo '  ladx-agents cannot list workflows'; exit 1; }
+  echo '  ladx-agents lists the workflows'
 "
 echo "done"

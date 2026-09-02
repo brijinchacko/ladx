@@ -5,7 +5,8 @@
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const [row] = await db()
     .select()
     .from(documents)
-    .where(and(eq(documents.id, id), eq(documents.userId, auth.user.id)))
+    .where(and(eq(documents.id, id), inArray(documents.userId, await accessIds(auth.user.id))))
     .limit(1);
   if (!row) return NextResponse.json({ error: "not found" }, { status: 404 });
 
@@ -73,7 +74,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const [current] = await db()
       .select({ status: documents.status })
       .from(documents)
-      .where(and(eq(documents.id, id), eq(documents.userId, auth.user.id)))
+      .where(and(eq(documents.id, id), inArray(documents.userId, await accessIds(auth.user.id))))
       .limit(1);
     if (!current) return NextResponse.json({ error: "not found" }, { status: 404 });
     const locked = current.status === "approved" || current.status === "superseded";
@@ -88,7 +89,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const updated = await db()
     .update(documents)
     .set(patch)
-    .where(and(eq(documents.id, id), eq(documents.userId, auth.user.id)))
+    .where(and(eq(documents.id, id), inArray(documents.userId, await accessIds(auth.user.id))))
     .returning({ id: documents.id });
 
   if (updated.length === 0) return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -102,7 +103,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
   const deleted = await db()
     .delete(documents)
-    .where(and(eq(documents.id, id), eq(documents.userId, auth.user.id)))
+    .where(and(eq(documents.id, id), inArray(documents.userId, await accessIds(auth.user.id))))
     .returning({ id: documents.id });
 
   if (deleted.length === 0) return NextResponse.json({ error: "not found" }, { status: 404 });

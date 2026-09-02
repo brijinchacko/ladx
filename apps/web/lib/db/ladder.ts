@@ -1,6 +1,7 @@
 import { db } from "@/lib/db/client";
 import { ladderPrograms } from "@/lib/db/schema";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 
 /**
  * Ladder programs, per project.
@@ -23,10 +24,13 @@ export interface StoredProgram {
   updatedAt: Date;
 }
 
-function where(userId: string, projectId: string | null) {
+async function where(userId: string, projectId: string | null) {
   return projectId === null
-    ? and(eq(ladderPrograms.userId, userId), isNull(ladderPrograms.projectId))
-    : and(eq(ladderPrograms.userId, userId), eq(ladderPrograms.projectId, projectId));
+    ? and(inArray(ladderPrograms.userId, await accessIds(userId)), isNull(ladderPrograms.projectId))
+    : and(
+        inArray(ladderPrograms.userId, await accessIds(userId)),
+        eq(ladderPrograms.projectId, projectId),
+      );
 }
 
 export async function loadProgram(
@@ -36,7 +40,7 @@ export async function loadProgram(
   const rows = await db()
     .select()
     .from(ladderPrograms)
-    .where(where(userId, projectId))
+    .where(await where(userId, projectId))
     // The scratch row is not constrained unique by the database, so if a race
     // ever produced two, the most recent one is the answer rather than an error.
     .orderBy(desc(ladderPrograms.updatedAt))
@@ -75,7 +79,7 @@ export async function listPrograms(userId: string): Promise<StoredProgram[]> {
   const rows = await db()
     .select()
     .from(ladderPrograms)
-    .where(eq(ladderPrograms.userId, userId))
+    .where(inArray(ladderPrograms.userId, await accessIds(userId)))
     .orderBy(desc(ladderPrograms.updatedAt));
   return rows.map((r) => ({
     id: r.id,

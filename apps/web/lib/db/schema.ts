@@ -1103,6 +1103,99 @@ export const ladderSnapshots = pgTable(
   }),
 );
 
+// ----- Workflow runs -----
+//
+// Several specialists on one job, with the checks as the gates between them.
+// The engine (ladx-agents) owns the order and the gates; this row is what it
+// has been told so far and what it said back. Every model prompt and answer
+// and every person's answer is kept, because "why does the machine do that"
+// six months later is answered from here.
+export const workflowRuns = pgTable(
+  "workflow_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    workflow: text("workflow").notNull(),
+    request: text("request").notNull(),
+    /** [stepId, answer] from people. */
+    answers: jsonb("answers").notNull().default([]),
+    /** [stepId, answer] from models, with the model that answered. */
+    modelAnswers: jsonb("model_answers").notNull().default([]),
+    /** The Run the engine last returned. */
+    run: jsonb("run"),
+    /** running, waiting_person, finished, stopped, failed */
+    status: text("status").notNull().default("running"),
+    /** Why the last drive failed, in words, when it did. Cleared on the next. */
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    byUser: index("workflow_runs_user_idx").on(t.userId, t.updatedAt),
+    byProject: index("workflow_runs_project_idx").on(t.projectId),
+  }),
+);
+
+// ----- Teams -----
+//
+// A workspace is the people who share one company's work. Every row in the
+// product is still owned by the user who made it, and the audit log still
+// names that user; what a workspace adds is that the other members can see
+// and work on it. Membership is the whole model: no per project sharing, no
+// role finer than owner and member, because a control company with four
+// engineers does not want a permissions matrix, it wants the same projects.
+export const workspaces = pgTable("workspaces", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  ownerId: uuid("owner_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const workspaceMembers = pgTable(
+  "workspace_members",
+  {
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** owner or member. */
+    role: text("role").notNull().default("member"),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.workspaceId, t.userId] }),
+    byUser: index("workspace_members_user_idx").on(t.userId),
+  }),
+);
+
+export const workspaceInvites = pgTable(
+  "workspace_invites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    /** The credential in the link. Cleared when accepted or revoked. */
+    token: text("token"),
+    invitedBy: uuid("invited_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  },
+  (t) => ({
+    tokenIdx: uniqueIndex("workspace_invites_token_idx").on(t.token),
+    byWorkspace: index("workspace_invites_workspace_idx").on(t.workspaceId),
+  }),
+);
+
 // ----- CAD drawings -----
 //
 // Vector drawings for a project: panel layouts, wiring schematics, GA drawings.

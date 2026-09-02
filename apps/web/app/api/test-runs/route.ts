@@ -9,7 +9,8 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { testRuns } from "@/lib/db/schema";
 import { getProject } from "@/lib/platform/queries";
-import { and, desc, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -38,8 +39,11 @@ export async function GET(req: NextRequest) {
   const projectId = req.nextUrl.searchParams.get("projectId");
 
   const where = projectId
-    ? and(eq(testRuns.userId, auth.user.id), eq(testRuns.projectId, projectId))
-    : eq(testRuns.userId, auth.user.id);
+    ? and(
+        inArray(testRuns.userId, await accessIds(auth.user.id)),
+        eq(testRuns.projectId, projectId),
+      )
+    : inArray(testRuns.userId, await accessIds(auth.user.id));
 
   const rows = await db()
     .select({

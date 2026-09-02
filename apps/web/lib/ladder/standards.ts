@@ -16,7 +16,8 @@
 import { db } from "@/lib/db/client";
 import { memories } from "@/lib/db/schema";
 import { applicableStandards } from "@/lib/parsers/spawn";
-import { and, eq, isNull } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, inArray, isNull } from "drizzle-orm";
 
 export interface StandardsForPrompt {
   /** Prepended to the request. Empty when nothing applies. */
@@ -42,7 +43,7 @@ export async function standardsFor(
     const rows = await db()
       .select()
       .from(memories)
-      .where(and(eq(memories.userId, userId), isNull(memories.supersededBy)));
+      .where(and(inArray(memories.userId, await accessIds(userId)), isNull(memories.supersededBy)));
 
     if (rows.length === 0) return { prompt: "", used: { forbidden: [], guidance: [] } };
 

@@ -9,8 +9,9 @@ import { db } from "@/lib/db/client";
 import { projects } from "@/lib/db/schema";
 import { MAX_ATTEMPTS, autoFix } from "@/lib/inference/auto-fix";
 import { buildProjectSystemPrompt } from "@/lib/inference/project-prompt";
+import { accessIds } from "@/lib/teams/access";
 import { validateSt } from "@/lib/validator/spawn";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 const reportSchema = z.object({
@@ -56,7 +57,12 @@ export async function POST(req: Request) {
     const rows = await db()
       .select()
       .from(projects)
-      .where(and(eq(projects.id, parsed.data.projectId), eq(projects.userId, user.id)))
+      .where(
+        and(
+          eq(projects.id, parsed.data.projectId),
+          inArray(projects.userId, await accessIds(user.id)),
+        ),
+      )
       .limit(1);
     if (!rows[0]) {
       return Response.json({ error: "project not found" }, { status: 404 });

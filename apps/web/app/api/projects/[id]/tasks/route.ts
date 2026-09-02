@@ -8,7 +8,8 @@ import { draftSchedule, toISODate } from "@/lib/platform/gantt";
 import { ACTIVE_PHASES, deliverablesFor } from "@/lib/platform/lifecycle";
 import { getProject } from "@/lib/platform/queries";
 import { owes } from "@/lib/platform/scope";
-import { and, asc, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -81,7 +82,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const rows = await db()
     .select()
     .from(projectTasks)
-    .where(and(eq(projectTasks.userId, auth.user.id), eq(projectTasks.projectId, id)))
+    .where(
+      and(
+        inArray(projectTasks.userId, await accessIds(auth.user.id)),
+        eq(projectTasks.projectId, id),
+      ),
+    )
     .orderBy(asc(projectTasks.position), asc(projectTasks.createdAt));
 
   return NextResponse.json({ tasks: rows });
@@ -101,7 +107,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const existing = await db()
       .select({ templateSlug: projectTasks.templateSlug, position: projectTasks.position })
       .from(projectTasks)
-      .where(and(eq(projectTasks.userId, auth.user.id), eq(projectTasks.projectId, id)));
+      .where(
+        and(
+          inArray(projectTasks.userId, await accessIds(auth.user.id)),
+          eq(projectTasks.projectId, id),
+        ),
+      );
     const have = new Set(existing.map((r) => r.templateSlug).filter(Boolean));
     let next = Math.max(0, ...existing.map((r) => r.position)) + 1;
 
@@ -131,7 +142,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const rows = await db()
       .select()
       .from(projectTasks)
-      .where(and(eq(projectTasks.userId, auth.user.id), eq(projectTasks.projectId, id)))
+      .where(
+        and(
+          inArray(projectTasks.userId, await accessIds(auth.user.id)),
+          eq(projectTasks.projectId, id),
+        ),
+      )
       .orderBy(asc(projectTasks.position), asc(projectTasks.createdAt));
 
     const target = asSchedule.data.replace ? rows : rows.filter((r) => !r.startsOn && !r.dueOn);
@@ -158,13 +174,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           dueOn: toISODate(dates.dueOn),
           updatedAt: new Date(),
         })
-        .where(and(eq(projectTasks.id, t.id as string), eq(projectTasks.userId, auth.user.id)));
+        .where(
+          and(
+            eq(projectTasks.id, t.id as string),
+            inArray(projectTasks.userId, await accessIds(auth.user.id)),
+          ),
+        );
     }
 
     const after = await db()
       .select()
       .from(projectTasks)
-      .where(and(eq(projectTasks.userId, auth.user.id), eq(projectTasks.projectId, id)))
+      .where(
+        and(
+          inArray(projectTasks.userId, await accessIds(auth.user.id)),
+          eq(projectTasks.projectId, id),
+        ),
+      )
       .orderBy(asc(projectTasks.position), asc(projectTasks.createdAt));
     return NextResponse.json({ scheduled: target.length, tasks: after });
   }
@@ -176,7 +202,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const existing = await db()
       .select({ id: projectTasks.id })
       .from(projectTasks)
-      .where(and(eq(projectTasks.userId, auth.user.id), eq(projectTasks.projectId, id)))
+      .where(
+        and(
+          inArray(projectTasks.userId, await accessIds(auth.user.id)),
+          eq(projectTasks.projectId, id),
+        ),
+      )
       .limit(1);
     if (existing.length > 0) {
       return NextResponse.json({ error: "this project already has a plan" }, { status: 409 });

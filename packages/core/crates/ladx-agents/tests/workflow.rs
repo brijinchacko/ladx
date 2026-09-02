@@ -47,7 +47,7 @@ fn a_workflow_runs_its_steps_in_order() {
     let p = fixture("03-conveyor");
     let log = RefCell::new(Vec::new());
     let ask = recorder(&log);
-    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[] };
+    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[], model_answers: &[], wait_for_model: false };
     let r = run(&assess_program(), "what is this", &ctx);
     assert!(r.finished, "{}", r.to_text());
     assert_eq!(*log.borrow(), vec![Role::Surveyor, Role::Documenter]);
@@ -77,6 +77,8 @@ fn a_failing_gate_stops_the_run_and_nothing_after_it_happens() {
         tag_lists: &[],
         ask: &ask,
         answers: &[],
+        model_answers: &[],
+        wait_for_model: false,
     };
 
     let r = run(&prepare_handover(), "ship it", &ctx);
@@ -101,7 +103,7 @@ fn a_check_with_nothing_to_do_does_not_report_passed() {
     let p = fixture("03-conveyor");
     let log = RefCell::new(Vec::new());
     let ask = recorder(&log);
-    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[] };
+    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[], model_answers: &[], wait_for_model: false };
     let r = run(&prepare_handover(), "ship it", &ctx);
 
     for id in ["tag-lists", "hardware"] {
@@ -117,7 +119,7 @@ fn a_step_that_needs_a_person_waits_for_a_person() {
     let p = fixture("03-conveyor");
     let log = RefCell::new(Vec::new());
     let ask = recorder(&log);
-    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[] };
+    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[], model_answers: &[], wait_for_model: false };
 
     let r = run(&modify_program(), "add a jam alarm", &ctx);
     assert!(!r.finished);
@@ -140,6 +142,8 @@ fn once_the_person_has_answered_the_run_goes_on() {
         tag_lists: &[],
         ask: &ask,
         answers: &answers,
+        model_answers: &[],
+        wait_for_model: false,
     };
     let r = run(&modify_program(), "add an overload", &ctx);
     assert!(r.finished, "{}", r.to_text());
@@ -153,7 +157,7 @@ fn once_the_person_has_answered_the_run_goes_on() {
 fn a_model_that_cannot_be_reached_stops_the_run() {
     let p = fixture("03-conveyor");
     let ask = |_: Role, _: &str| -> Result<String, String> { Err("no model available".into()) };
-    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[] };
+    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[], model_answers: &[], wait_for_model: false };
     let r = run(&assess_program(), "what is this", &ctx);
     assert!(!r.finished);
     assert!(r.stopped_because.as_ref().unwrap().contains("no model available"));
@@ -177,6 +181,8 @@ fn a_house_standard_deviation_notes_but_does_not_block() {
         tag_lists: &[],
         ask: &ask,
         answers: &answers,
+        model_answers: &[],
+        wait_for_model: false,
     };
     let r = run(&modify_program(), "x", &ctx);
     let lib = r.steps.iter().find(|s| s.id == "library").unwrap();
@@ -191,7 +197,7 @@ fn a_house_standard_deviation_notes_but_does_not_block() {
 fn no_run_can_claim_more_than_ladx_may_award() {
     let p = fixture("03-conveyor");
     let ask = |role: Role, _: &str| Ok(format!("{role:?}"));
-    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[] };
+    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[], model_answers: &[], wait_for_model: false };
     let r = run(&prepare_handover(), "ship it", &ctx);
     let level = r.steps.iter().find(|s| s.id == "level").unwrap();
     assert!(level.findings[0].contains("IEC"));
@@ -206,7 +212,7 @@ fn no_run_can_claim_more_than_ladx_may_award() {
 fn every_step_appears_in_the_record_including_the_ones_that_did_not_run() {
     let p = fixture("03-conveyor");
     let ask = |_: Role, _: &str| -> Result<String, String> { Err("down".into()) };
-    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[] };
+    let ctx = Context { project: &p, hardware: None, tag_lists: &[], ask: &ask, answers: &[], model_answers: &[], wait_for_model: false };
     let wf = assess_program();
     let r = run(&wf, "x", &ctx);
     assert_eq!(r.steps.len(), wf.steps.len());

@@ -1,4 +1,5 @@
-import { and, desc, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "./client";
 import { conversations, messages } from "./schema";
 
@@ -11,7 +12,12 @@ export async function ensureConversation(opts: {
     const existing = await db()
       .select()
       .from(conversations)
-      .where(and(eq(conversations.id, opts.conversationId), eq(conversations.userId, opts.userId)))
+      .where(
+        and(
+          eq(conversations.id, opts.conversationId),
+          inArray(conversations.userId, await accessIds(opts.userId)),
+        ),
+      )
       .limit(1);
     if (existing[0]) return existing[0];
   }
@@ -57,7 +63,7 @@ export async function listUserConversations(userId: string, limit = 20) {
     db()
       .select()
       .from(conversations)
-      .where(eq(conversations.userId, userId))
+      .where(inArray(conversations.userId, await accessIds(userId)))
       // Pinned first, then by recency. Matches how the sidebar groups them.
       .orderBy(desc(conversations.pinned), desc(conversations.updatedAt))
       .limit(limit)

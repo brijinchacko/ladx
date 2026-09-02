@@ -5,6 +5,10 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 
+[[bin]]
+name = "ladx-agents"
+path = "src/bin/ladx_agents.rs"
+
 [dependencies]
 ladx-types = { workspace = true }
 ladx-ir = { workspace = true }
@@ -13,3 +17,4 @@ ts-rs = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+

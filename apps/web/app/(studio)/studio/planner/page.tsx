@@ -4,7 +4,8 @@ import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { projectTasks } from "@/lib/db/schema";
 import { listClients, listProjects } from "@/lib/platform/queries";
-import { asc, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { asc, inArray } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export default async function PlannerPage({
     db()
       .select()
       .from(projectTasks)
-      .where(eq(projectTasks.userId, user.id))
+      .where(inArray(projectTasks.userId, await accessIds(user.id)))
       .orderBy(asc(projectTasks.position), asc(projectTasks.createdAt)),
   ]);
 

@@ -6,8 +6,9 @@ import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents, projects } from "@/lib/db/schema";
 import { listProjects } from "@/lib/platform/queries";
+import { accessIds } from "@/lib/teams/access";
 import { getTemplate, isDocStatus } from "@ladx/documents";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -27,7 +28,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
     .select({ doc: documents, projectName: projects.name })
     .from(documents)
     .leftJoin(projects, eq(projects.id, documents.projectId))
-    .where(and(eq(documents.id, id), eq(documents.userId, user.id)))
+    .where(and(eq(documents.id, id), inArray(documents.userId, await accessIds(user.id))))
     .limit(1);
   if (!row) notFound();
 

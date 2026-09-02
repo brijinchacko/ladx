@@ -5,7 +5,8 @@ import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { cadDrawings, projects } from "@/lib/db/schema";
 import { getCompany, listProjects } from "@/lib/platform/queries";
-import { desc, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { desc, eq, inArray } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,7 @@ export default async function CadIndexPage({
       })
       .from(cadDrawings)
       .leftJoin(projects, eq(projects.id, cadDrawings.projectId))
-      .where(eq(cadDrawings.userId, user.id))
+      .where(inArray(cadDrawings.userId, await accessIds(user.id)))
       .orderBy(desc(cadDrawings.updatedAt)),
     listProjects(user.id),
     getCompany(user.id),

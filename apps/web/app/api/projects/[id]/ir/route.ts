@@ -13,7 +13,8 @@ import { projects } from "@/lib/db/schema";
 import { programFromUpload } from "@/lib/ladder/from-upload";
 import { parseProjectToIr } from "@/lib/parsers/spawn";
 import { getStorage } from "@/lib/storage";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const authResult = await getApiUser();
@@ -23,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const rows = await db()
     .select()
     .from(projects)
-    .where(and(eq(projects.id, id), eq(projects.userId, authResult.user.id)))
+    .where(and(eq(projects.id, id), inArray(projects.userId, await accessIds(authResult.user.id))))
     .limit(1);
 
   const project = rows[0];
@@ -65,7 +66,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const rows = await db()
     .select()
     .from(projects)
-    .where(and(eq(projects.id, id), eq(projects.userId, authResult.user.id)))
+    .where(and(eq(projects.id, id), inArray(projects.userId, await accessIds(authResult.user.id))))
     .limit(1);
 
   const project = rows[0];

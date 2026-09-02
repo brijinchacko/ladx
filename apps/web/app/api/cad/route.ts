@@ -5,8 +5,9 @@ import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { cadDrawings } from "@/lib/db/schema";
 import { getProject } from "@/lib/platform/queries";
+import { accessIds } from "@/lib/teams/access";
 import { emptyDrawing } from "@ladx/cad";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -32,8 +33,11 @@ export async function GET(req: NextRequest) {
     .from(cadDrawings)
     .where(
       projectId
-        ? and(eq(cadDrawings.userId, auth.user.id), eq(cadDrawings.projectId, projectId))
-        : eq(cadDrawings.userId, auth.user.id),
+        ? and(
+            inArray(cadDrawings.userId, await accessIds(auth.user.id)),
+            eq(cadDrawings.projectId, projectId),
+          )
+        : inArray(cadDrawings.userId, await accessIds(auth.user.id)),
     )
     .orderBy(desc(cadDrawings.updatedAt));
 

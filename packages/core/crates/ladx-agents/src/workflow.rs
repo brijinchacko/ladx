@@ -199,6 +199,15 @@ pub struct Context<'a> {
     /// Answers a person has already given, by step id. A step with no answer
     /// waits.
     pub answers: &'a [(String, String)],
+    /// Answers a model has already given, by step id.
+    ///
+    /// This is what lets a run be driven from outside, one step at a time:
+    /// a web route cannot hand a callback into a process, so it hands in
+    /// what the model said last time and asks again. The gates stay here.
+    pub model_answers: &'a [(String, String)],
+    /// Whether a model step with no recorded answer should wait rather than
+    /// ask. True for the driven case; false for a run with a live callback.
+    pub wait_for_model: bool,
 }
 
 fn run_check(check: Check, ctx: &Context<'_>) -> (Outcome, Vec<String>) {
@@ -279,6 +288,47 @@ fn run_check(check: Check, ctx: &Context<'_>) -> (Outcome, Vec<String>) {
     }
 }
 
+/// The program as text a model can read.
+///
+/// Every tag with its type, address and comment, then every rung of every
+/// ladder POU in the neutral text the converter writes. A model told only
+/// "6 tags and 1 POU" reports that it cannot see the tags, which is true and
+/// useless; this is what makes a surveyor's report name the actual rungs.
+/// Capped, because a two thousand rung program is not a prompt.
+pub fn describe(project: &IrProject) -> String {
+    const MAX_RUNGS: usize = 200;
+    let mut s = String::new();
+    s.push_str(&format!("Tags ({}):\n", project.tags.len()));
+    for t in project.tags.iter().take(400) {
+        s.push_str(&format!(
+            "- {} {:?}{}{}\n",
+            t.name,
+            t.data_type,
+            t.address.as_deref().map(|a| format!(" at {a}")).unwrap_or_default(),
+            t.comment.as_deref().map(|c| format!(", {c}")).unwrap_or_default(),
+        ));
+    }
+    let mut shown = 0;
+    for pou in &project.pous {
+        if let ladx_ir::PouBody::Ladder { rungs } = &pou.body {
+            s.push_str(&format!("\nRoutine {} ({} rungs):\n", pou.name, rungs.len()));
+            for r in rungs {
+                if shown >= MAX_RUNGS {
+                    s.push_str("  ... more rungs not shown\n");
+                    return s;
+                }
+                shown += 1;
+                let text = ladx_ir::neutral_text::rung_to_text(r).unwrap_or_else(|_| "(could not render)".into());
+                let comment = r.comment.as_deref().map(|c| format!("  // {c}")).unwrap_or_default();
+                s.push_str(&format!("  {}:{comment}\n    {}\n", r.id, text.trim().replace('\n', "\n    ")));
+            }
+        } else {
+            s.push_str(&format!("\nRoutine {} is not ladder and is not shown.\n", pou.name));
+        }
+    }
+    s
+}
+
 /// Run a workflow.
 pub fn run(workflow: &Workflow, request: &str, ctx: &Context<'_>) -> Run {
     let mut records: Vec<StepRecord> = Vec::new();
@@ -345,17 +395,46 @@ pub fn run(workflow: &Workflow, request: &str, ctx: &Context<'_>) -> Run {
             StepKind::Model { role } => {
                 let prompt = format!(
                     "You are the {role:?} on this job. Your part is: {}.\n\nThe request: {carried}\n\n\
-                     The program has {} POUs and {} tags.\n\nWhat has happened so far:\n{}",
+                     The program:\n{}\n\nWhat has happened so far:\n{}",
                     role.about(),
-                    ctx.project.pous.len(),
-                    ctx.project.tags.len(),
+                    describe(ctx.project),
                     records
                         .iter()
-                        .map(|r| format!("- {} {:?}", r.id, r.outcome))
+                        .map(|r| {
+                            let found = if r.findings.is_empty() {
+                                String::new()
+                            } else {
+                                format!(": {}", r.findings.join("; "))
+                            };
+                            format!("- {} {:?}{found}", r.id, r.outcome)
+                        })
                         .collect::<Vec<_>>()
                         .join("\n")
                 );
-                match (ctx.ask)(*role, &prompt) {
+                let recorded = ctx
+                    .model_answers
+                    .iter()
+                    .find(|(id, _)| id == &step.id)
+                    .map(|(_, a)| Ok(a.clone()));
+                let asked = match recorded {
+                    Some(r) => r,
+                    None if ctx.wait_for_model => {
+                        // Driven from outside: the prompt goes out as the
+                        // step's input and the run pauses until the answer
+                        // comes back in. Not an error, and not a pass.
+                        stopped = Some(format!("waiting on a model: {}", step.id));
+                        records.push(StepRecord {
+                            id: step.id.clone(),
+                            outcome: Outcome::Waiting,
+                            input: prompt,
+                            output: String::new(),
+                            findings: vec![],
+                        });
+                        continue;
+                    }
+                    None => (ctx.ask)(*role, &prompt),
+                };
+                match asked {
                     Ok(answer) => {
                         carried = format!("{carried}\n\n{:?} said:\n{answer}", role);
                         StepRecord {

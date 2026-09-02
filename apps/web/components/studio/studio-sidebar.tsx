@@ -44,6 +44,7 @@ import {
   Settings,
   ShieldCheck,
   Users,
+  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -75,6 +76,7 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   Ruler,
   Library,
   FileText,
+  Workflow,
 };
 
 const TOOLS = SHARED_TOOLS.map((t) => ({

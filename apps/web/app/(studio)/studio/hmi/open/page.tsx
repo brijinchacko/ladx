@@ -3,7 +3,8 @@ import { db } from "@/lib/db/client";
 import { SCRATCH } from "@/lib/db/ladder";
 import { hmiProjects } from "@/lib/db/schema";
 import { listProjects } from "@/lib/platform/queries";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -39,8 +40,11 @@ export default async function OpenHmiPage({
     .from(hmiProjects)
     .where(
       projectId === null
-        ? and(eq(hmiProjects.userId, user.id), isNull(hmiProjects.projectId))
-        : and(eq(hmiProjects.userId, user.id), eq(hmiProjects.projectId, projectId)),
+        ? and(inArray(hmiProjects.userId, await accessIds(user.id)), isNull(hmiProjects.projectId))
+        : and(
+            inArray(hmiProjects.userId, await accessIds(user.id)),
+            eq(hmiProjects.projectId, projectId),
+          ),
     )
     .orderBy(desc(hmiProjects.updatedAt));
 

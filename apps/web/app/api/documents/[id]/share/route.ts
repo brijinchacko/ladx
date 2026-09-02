@@ -10,7 +10,8 @@ import { randomBytes } from "node:crypto";
 import { getApiUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -34,7 +35,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const updated = await db()
     .update(documents)
     .set({ shareToken: token, sharedAt: new Date(), shareExpiresAt: expires })
-    .where(and(eq(documents.id, id), eq(documents.userId, auth.user.id)))
+    .where(and(eq(documents.id, id), inArray(documents.userId, await accessIds(auth.user.id))))
     .returning({ id: documents.id });
   if (updated.length === 0) return NextResponse.json({ error: "not found" }, { status: 404 });
 
@@ -49,7 +50,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const updated = await db()
     .update(documents)
     .set({ shareToken: null, sharedAt: null, shareExpiresAt: null })
-    .where(and(eq(documents.id, id), eq(documents.userId, auth.user.id)))
+    .where(and(eq(documents.id, id), inArray(documents.userId, await accessIds(auth.user.id))))
     .returning({ id: documents.id });
   if (updated.length === 0) return NextResponse.json({ error: "not found" }, { status: 404 });
 

@@ -4,9 +4,10 @@ import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { hmiProjects } from "@/lib/db/schema";
 import { listProjects } from "@/lib/platform/queries";
+import { accessIds } from "@/lib/teams/access";
 import type { HmiRow } from "@ladx/hmi";
 import type { HmiDoc } from "@ladx/hmi";
-import { desc, eq } from "drizzle-orm";
+import { desc, inArray } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,7 @@ export default async function HmiPage({
     db()
       .select()
       .from(hmiProjects)
-      .where(eq(hmiProjects.userId, user.id))
+      .where(inArray(hmiProjects.userId, await accessIds(user.id)))
       .orderBy(desc(hmiProjects.updatedAt)),
     listProjects(user.id),
   ]);

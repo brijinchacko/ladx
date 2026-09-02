@@ -3,7 +3,8 @@ import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { projects, testRuns } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -25,7 +26,7 @@ export default async function TestRunPage({ params }: { params: Promise<{ id: st
     .select({ run: testRuns, projectName: projects.name })
     .from(testRuns)
     .leftJoin(projects, eq(projects.id, testRuns.projectId))
-    .where(and(eq(testRuns.id, id), eq(testRuns.userId, user.id)))
+    .where(and(eq(testRuns.id, id), inArray(testRuns.userId, await accessIds(user.id))))
     .limit(1);
   if (!row) notFound();
   const { run, projectName } = row;

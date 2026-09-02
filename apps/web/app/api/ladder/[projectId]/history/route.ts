@@ -13,7 +13,8 @@ import { SCRATCH, loadProgram, saveProgram } from "@/lib/db/ladder";
 import { ladderSnapshots } from "@/lib/db/schema";
 import { diffPrograms } from "@/lib/ladder/history";
 import { getProject } from "@/lib/platform/queries";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -28,10 +29,16 @@ async function resolve(userId: string, raw: string): Promise<string | null | und
   return project ? project.id : undefined;
 }
 
-function where(userId: string, projectId: string | null) {
+async function where(userId: string, projectId: string | null) {
   return projectId === null
-    ? and(eq(ladderSnapshots.userId, userId), isNull(ladderSnapshots.projectId))
-    : and(eq(ladderSnapshots.userId, userId), eq(ladderSnapshots.projectId, projectId));
+    ? and(
+        inArray(ladderSnapshots.userId, await accessIds(userId)),
+        isNull(ladderSnapshots.projectId),
+      )
+    : and(
+        inArray(ladderSnapshots.userId, await accessIds(userId)),
+        eq(ladderSnapshots.projectId, projectId),
+      );
 }
 
 export async function GET(_req: Request, { params }: { params: Promise<{ projectId: string }> }) {
@@ -50,7 +57,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ project
       savedAt: ladderSnapshots.savedAt,
     })
     .from(ladderSnapshots)
-    .where(where(auth.user.id, target))
+    .where(await where(auth.user.id, target))
     .orderBy(desc(ladderSnapshots.savedAt))
     .limit(100);
 
@@ -76,7 +83,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ project
     const [snap] = await db()
       .select({ program: ladderSnapshots.program })
       .from(ladderSnapshots)
-      .where(and(where(auth.user.id, target), eq(ladderSnapshots.id, ref)))
+      .where(and(await where(auth.user.id, target), eq(ladderSnapshots.id, ref)))
       .limit(1);
     return snap?.program ?? null;
   };

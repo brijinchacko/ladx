@@ -10,7 +10,8 @@ import { getApiUser } from "@/lib/auth/server";
 import { type Plan, type Result, recordMarkdown } from "@/lib/commission/record";
 import { db } from "@/lib/db/client";
 import { documents, testRuns } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { accessIds } from "@/lib/teams/access";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -21,7 +22,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const [run] = await db()
     .select()
     .from(testRuns)
-    .where(and(eq(testRuns.id, id), eq(testRuns.userId, auth.user.id)))
+    .where(and(eq(testRuns.id, id), inArray(testRuns.userId, await accessIds(auth.user.id))))
     .limit(1);
   if (!run) return NextResponse.json({ error: "not found" }, { status: 404 });
   if (run.documentId) return NextResponse.json({ id: run.documentId, existing: true });
