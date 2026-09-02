@@ -47,7 +47,12 @@ export default async function SchedulesPage({
           both a round trip and the wrong key. */}
       <ProjectContext projectId={inProject?.id ?? null} projectName={inProject?.name ?? null} />
       <SchedulesClient
-        programs={runnable.map((p) => ({ id: p.id, name: p.name, program: p.program }))}
+        programs={runnable.map((p) => ({
+          id: p.id,
+          name: p.name,
+          program: p.program,
+          projectId: p.projectId,
+        }))}
         openOn={openOn}
       />
     </>

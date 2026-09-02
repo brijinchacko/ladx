@@ -1,6 +1,7 @@
 "use client";
 
 import { generateLadderViaApi } from "@/components/studio/generate-ladder";
+import { LadderHistory } from "@/components/studio/ladder-history";
 import LadderHome, { type LadderProgramRow } from "@/components/studio/ladder-home";
 import { StandardsAfterSave } from "@/components/studio/standards-after-save";
 import { LadderAi, LadxStudio, httpStorage, ladxProgramToIr } from "@ladx/studio";
@@ -96,6 +97,7 @@ export default function LadderClient({
         <span className="text-[12.5px] text-ink-700">{projectName ?? "No project (scratch)"}</span>
         <span className="text-[11.5px] text-ink-400">Save from the File menu.</span>
         <StandardsAfterSave projectId={open} />
+        <LadderHistory projectId={open} />
         <button
           type="button"
           onClick={() => setFocus((f) => !f)}

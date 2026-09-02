@@ -8,6 +8,7 @@
 
 import { getApiUser } from "@/lib/auth/server";
 import { SCRATCH, loadProgram, saveProgram } from "@/lib/db/ladder";
+import { snapshotProgram } from "@/lib/ladder/history";
 import { deviationsFor } from "@/lib/parsers/spawn";
 import { getProject } from "@/lib/platform/queries";
 import { type LadxProgram, ladxProgramToIr } from "@ladx/studio";
@@ -61,6 +62,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ projec
   }
 
   await saveProgram(auth.user.id, target, parsed.data.name, parsed.data.program ?? null);
+  // The record behind the current program. Best effort: a save whose snapshot
+  // fails is still a save.
+  snapshotProgram(
+    auth.user.id,
+    target,
+    parsed.data.name,
+    parsed.data.program ?? null,
+    auth.user.displayName ?? auth.user.email,
+  ).catch(() => {});
 
   /*
     Checked against the standards on every save, the way a linter runs on

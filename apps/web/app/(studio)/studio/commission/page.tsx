@@ -45,7 +45,12 @@ export default async function CommissionPage({
       />
       <ProjectContext projectId={inProject?.id ?? null} projectName={inProject?.name ?? null} />
       <CommissionClient
-        programs={runnable.map((p) => ({ id: p.id, name: p.name, program: p.program }))}
+        programs={runnable.map((p) => ({
+          id: p.id,
+          name: p.name,
+          program: p.program,
+          projectId: p.projectId,
+        }))}
         openOn={openOn}
       />
     </>

@@ -1041,6 +1041,68 @@ export const documents = pgTable(
   }),
 );
 
+// ----- Acceptance test runs -----
+//
+// A FAT or SAT actually carried out, as opposed to the plan for one. The plan
+// is generated from the program on demand; a run is a copy of that plan taken
+// at the moment somebody started ticking, with a result and a note per step
+// and a signature at the end. The copy is deliberate: the program can change
+// after the test, and the record has to say what was tested, not what the
+// program says now.
+export const testRuns = pgTable(
+  "test_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    /** fat or sat. Text, because a client will eventually want a third. */
+    kind: text("kind").notNull().default("fat"),
+    title: text("title").notNull(),
+    /** The TestPlan this run was started from. */
+    plan: jsonb("plan").notNull(),
+    /** Per step: { result: pass|fail|na, note, at }, keyed by group and step index. */
+    results: jsonb("results").notNull().default({}),
+    notes: text("notes"),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    signedBy: text("signed_by"),
+    signedRole: text("signed_role"),
+    signedAt: timestamp("signed_at", { withTimezone: true }),
+    /** The document written from this run, once it has been. */
+    documentId: uuid("document_id"),
+  },
+  (t) => ({
+    userIdx: index("test_runs_user_idx").on(t.userId),
+    projectIdx: index("test_runs_project_idx").on(t.projectId),
+  }),
+);
+
+// ----- Ladder program history -----
+//
+// One row per save, so any two versions can be compared and any version put
+// back. The current program stays in ladder_programs; this is the record
+// behind it, which a validated site has to keep anyway.
+export const ladderSnapshots = pgTable(
+  "ladder_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    program: jsonb("program").notNull(),
+    author: text("author"),
+    rungs: integer("rungs").notNull().default(0),
+    savedAt: timestamp("saved_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    byProject: index("ladder_snapshots_project_idx").on(t.userId, t.projectId, t.savedAt),
+  }),
+);
+
 // ----- CAD drawings -----
 //
 // Vector drawings for a project: panel layouts, wiring schematics, GA drawings.

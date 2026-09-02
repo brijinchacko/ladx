@@ -1,5 +1,6 @@
 "use client";
 
+import { ImportIoList } from "@/components/studio/import-io-list";
 import { ladxProgramToIr } from "@ladx/studio";
 import type { Alarm, AlarmIssue, IoIssue, IoPoint } from "@ladx/types";
 import { Bell, Cable, Download, Info } from "lucide-react";
@@ -14,7 +15,7 @@ export function SchedulesClient({
   programs,
   openOn,
 }: {
-  programs: { id: string; name: string; program: unknown }[];
+  programs: { id: string; name: string; program: unknown; projectId?: string | null }[];
   /**
    * The program to open on, when this was reached from a project.
    *
@@ -100,6 +101,20 @@ export function SchedulesClient({
           ))}
         </select>
         {busy && <span className="text-[12.5px] text-ink-500">Reading…</span>}
+        {(() => {
+          const current = programs.find((p) => p.id === chosen);
+          return current ? (
+            <ImportIoList
+              projectId={current.projectId ?? null}
+              program={
+                current.program as { name: string; tags?: unknown[] } & Record<string, unknown>
+              }
+              // The page refreshes with the saved program, and the schedule
+              // rebuilds from it; nothing else to do here.
+              onDone={() => {}}
+            />
+          ) : null;
+        })()}
       </div>
 
       {error && (

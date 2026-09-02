@@ -1,5 +1,6 @@
 import { askModelViaApi } from "@/components/studio/ask-model";
 import { coreImportViaApi } from "@/components/studio/core-import";
+import { OtherLanguages } from "@/components/studio/other-languages";
 import { saveRecordViaApi } from "@/components/studio/save-record";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
@@ -60,6 +61,8 @@ export default async function StudioConvertPage({
         author={user.displayName ?? user.email.split("@")[0] ?? ""}
         coreImport={coreImportViaApi}
       />
+      {/* The routines the ladder editor could not take from the uploaded file. */}
+      {wanted && nameOf.has(wanted) && <OtherLanguages projectId={wanted} />}
     </>
   );
 }

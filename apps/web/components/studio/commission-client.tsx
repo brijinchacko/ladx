@@ -1,5 +1,6 @@
 "use client";
 
+import { TestRunsPanel } from "@/components/studio/test-runs-panel";
 import { parseTagList } from "@/lib/ladder/tag-list";
 import { ladxProgramToIr } from "@ladx/studio";
 import type {
@@ -155,7 +156,7 @@ export function CommissionClient({
   programs,
   openOn,
 }: {
-  programs: { id: string; name: string; program: unknown }[];
+  programs: { id: string; name: string; program: unknown; projectId?: string | null }[];
   /**
    * The program to open on, when this was reached from a project.
    *
@@ -165,6 +166,15 @@ export function CommissionClient({
   openOn?: string | null;
 }) {
   const [chosen, setChosen] = useState<string>(openOn ?? programs[0]?.id ?? "");
+  /*
+    Which tab the data belongs to.
+
+    Switching tabs renders once before the effect that reloads runs, and that
+    one render used to hand the previous tab's output to the new tab's view:
+    a narrative handed to the tests view, which read `.groups` off it and
+    threw. The data is only shown when it was made for the tab showing it.
+  */
+  const [dataFor, setDataFor] = useState<What | null>(null);
   const [what, setWhat] = useState<What>("narrative");
   const [data, setData] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
@@ -202,6 +212,7 @@ export function CommissionClient({
         const out = await res.json();
         if (!res.ok) throw new Error(out.error ?? "That did not run.");
         setData(out);
+        setDataFor(which);
       } catch (e) {
         setError(e instanceof Error ? e.message : "That did not run.");
       } finally {
@@ -246,13 +257,14 @@ export function CommissionClient({
         const out = await res.json();
         if (!res.ok) throw new Error(out.error ?? "That file could not be compared.");
         setData(out);
+        setDataFor(what);
       } catch (e) {
         setError(e instanceof Error ? e.message : "That file could not be compared.");
       } finally {
         setBusy(false);
       }
     },
-    [programs, chosen],
+    [programs, chosen, what],
   );
 
   const uploadHardware = useCallback(async (file: File) => {
@@ -408,30 +420,52 @@ export function CommissionClient({
         </p>
       )}
 
-      {what === "narrative" && data != null && (
+      {what === "narrative" && data != null && dataFor === what && (
         <NarrativeView out={data as NarrativeOut} onDownload={download} />
       )}
-      {what === "sequence" && data != null && <SequenceView out={data as SequenceOut} />}
-      {what === "tests" && data != null && (
-        <TestsView out={data as TestsOut} onDownload={download} />
+      {what === "sequence" && data != null && dataFor === what && (
+        <SequenceView out={data as SequenceOut} />
       )}
-      {what === "deviations" && data != null && <DeviationsView out={data as DeviationsOut} />}
-      {what === "screens" && data != null && <ScreensView out={data as ScreensOut} />}
-      {what === "hardware" && data != null && <HardwareView out={data as HardwareOut} />}
-      {what === "hardware" && data == null && !busy && !error && (
+      {what === "tests" && data != null && dataFor === what && (
+        <>
+          <TestRunsPanel
+            projectId={programs.find((p) => p.id === chosen)?.projectId ?? null}
+            projectName={programs.find((p) => p.id === chosen)?.name ?? "Program"}
+            plan={{
+              groups: (data as TestsOut).groups,
+              not_covered: (data as TestsOut).notCovered,
+            }}
+          />
+          <TestsView out={data as TestsOut} onDownload={download} />
+        </>
+      )}
+      {what === "deviations" && data != null && dataFor === what && (
+        <DeviationsView out={data as DeviationsOut} />
+      )}
+      {what === "screens" && data != null && dataFor === what && (
+        <ScreensView out={data as ScreensOut} />
+      )}
+      {what === "hardware" && data != null && dataFor === what && (
+        <HardwareView out={data as HardwareOut} />
+      )}
+      {what === "hardware" && (data == null || dataFor !== what) && !busy && !error && (
         <Empty>
           Choose a controller export above and its racks are checked against the program in it.
         </Empty>
       )}
-      {what === "compare" && data != null && <CompareView out={data as CompareOut} />}
-      {what === "compare" && data == null && !busy && !error && (
+      {what === "compare" && data != null && dataFor === what && (
+        <CompareView out={data as CompareOut} />
+      )}
+      {what === "compare" && (data == null || dataFor !== what) && !busy && !error && (
         <Empty>Choose an export from the controller and it is compared against this program.</Empty>
       )}
-      {what === "drift" && data != null && <DriftView out={data as DriftOut} />}
-      {what === "drift" && data == null && !busy && !error && (
+      {what === "drift" && data != null && dataFor === what && <DriftView out={data as DriftOut} />}
+      {what === "drift" && (data == null || dataFor !== what) && !busy && !error && (
         <Empty>Paste a tag list above and it is compared against the program.</Empty>
       )}
-      {what === "handover" && data != null && <PackView out={data as Pack} onDownload={download} />}
+      {what === "handover" && data != null && dataFor === what && (
+        <PackView out={data as Pack} onDownload={download} />
+      )}
     </div>
   );
 }

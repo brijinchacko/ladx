@@ -169,6 +169,13 @@
       "when": 1788338798117,
       "tag": "0023_good_barracuda",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1788339794741,
+      "tag": "0024_modern_mongoose",
+      "breakpoints": true
     }
   ]
 }
