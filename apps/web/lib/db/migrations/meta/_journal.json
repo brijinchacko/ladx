@@ -162,6 +162,13 @@
       "when": 1788248763420,
       "tag": "0022_charming_black_bird",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1788338798117,
+      "tag": "0023_good_barracuda",
+      "breakpoints": true
     }
   ]
 }

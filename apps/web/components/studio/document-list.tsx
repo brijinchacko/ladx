@@ -1,5 +1,6 @@
 "use client";
 
+import { docStatusLabel } from "@ladx/documents";
 import { FileText, FileUp, Paperclip, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,7 @@ export interface DocRow {
   mimeType: string | null;
   byteSize: number;
   projectId: string | null;
+  status?: string;
   updatedAt: string;
 }
 
@@ -137,7 +139,7 @@ export default function DocumentList({
                 <span className="block truncate font-mono text-[11px] text-ink-400">
                   {d.kind === "uploaded"
                     ? `${d.fileName ?? "file"} · ${Math.max(1, Math.round(d.byteSize / 1400))} kB`
-                    : "Editable document"}
+                    : docStatusLabel(d.status ?? "draft")}
                 </span>
               </Link>
               <button

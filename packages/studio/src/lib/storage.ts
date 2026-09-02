@@ -97,6 +97,9 @@ export function localStorageStorage(): StudioStorage {
   };
 }
 
+/** Fired on `window` after a program is saved through httpStorage, with the server's reply. */
+export const PROGRAM_SAVED = "ladx:program-saved";
+
 /**
  * Talks to a REST backend.
  *
@@ -128,6 +131,16 @@ export function httpStorage(base: string, retentionNote?: string): StudioStorage
       if (!res.ok) {
         const j = await res.json().catch(() => ({}) as { error?: string });
         throw new Error(j.error ?? "Could not save.");
+      }
+      /*
+        Tell the page. The backend may have checked the program against the
+        company's standards on the way in, and the editor has no place for
+        that; the page that hosts it does. Whatever the response carried goes
+        out as the event detail, and a page with nothing to show ignores it.
+      */
+      if (typeof window !== "undefined") {
+        const detail = await res.json().catch(() => ({}));
+        window.dispatchEvent(new CustomEvent(PROGRAM_SAVED, { detail: { projectId, ...detail } }));
       }
     },
   };

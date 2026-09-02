@@ -1,7 +1,7 @@
 "use client";
 
 import { BriefPrompt } from "@/components/studio/project-brief";
-import type { BriefKey, ProjectBrief } from "@ladx/documents";
+import { type BriefKey, type ProjectBrief, docStatusLabel } from "@ladx/documents";
 import { FileText, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,6 +30,7 @@ export default function DeliverableRow({
   abbr,
   summary,
   existingId,
+  status,
   missing,
 }: {
   projectId: string;
@@ -38,6 +39,8 @@ export default function DeliverableRow({
   abbr: string;
   summary: string;
   existingId: string | null;
+  /** Where the started document is in its life. */
+  status?: string | null;
   missing: BriefKey[];
 }) {
   const router = useRouter();
@@ -96,9 +99,19 @@ export default function DeliverableRow({
         <p className="flex items-center gap-2 font-display text-[14px] font-bold text-ink-900">
           {title}
           {existingId && (
-            <span className="flex items-center gap-1 font-mono text-[10px] font-normal uppercase tracking-[0.08em] text-teal-700">
+            <span
+              className={`flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[10px] font-normal uppercase tracking-[0.08em] ${
+                status === "approved"
+                  ? "bg-success-bg text-success"
+                  : status === "review"
+                    ? "bg-warning-bg text-warning"
+                    : status === "superseded"
+                      ? "bg-ink-100 text-ink-500"
+                      : "text-teal-700"
+              }`}
+            >
               <FileText className="h-3 w-3" />
-              started
+              {docStatusLabel(status ?? "draft")}
             </span>
           )}
         </p>

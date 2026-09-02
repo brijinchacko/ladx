@@ -1,4 +1,5 @@
 import { NewProjectForm } from "@/components/platform/project-controls";
+import { ProjectRowMenu } from "@/components/platform/project-row-menu";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
 import { getPhase } from "@/lib/platform/lifecycle";
@@ -31,10 +32,10 @@ export default async function ProjectsPage() {
             {projects.map((p) => {
               const phase = getPhase(p.phase);
               return (
-                <li key={p.id}>
+                <li key={p.id} className="group relative">
                   <Link
                     href={`/studio/projects/${p.id}`}
-                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-ink-50"
+                    className="flex items-center justify-between gap-4 py-4 pl-5 pr-14 transition-colors hover:bg-ink-50"
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2.5">
@@ -55,6 +56,10 @@ export default async function ProjectsPage() {
                       {phase.name}
                     </span>
                   </Link>
+                  {/* Duplicate and delete live here, where projects are chosen
+                      between, rather than inside one where a slip costs the
+                      thing being worked on. */}
+                  <ProjectRowMenu id={p.id} name={p.name} />
                 </li>
               );
             })}

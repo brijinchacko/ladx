@@ -48,6 +48,7 @@ export async function GET(req: NextRequest) {
       id: documents.id,
       title: documents.title,
       kind: documents.kind,
+      status: documents.status,
       templateSlug: documents.templateSlug,
       fileName: documents.fileName,
       mimeType: documents.mimeType,

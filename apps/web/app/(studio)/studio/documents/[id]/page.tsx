@@ -1,12 +1,12 @@
 import AttachProject from "@/components/studio/attach-project";
-import { saveDocumentViaApi } from "@/components/studio/document-host";
+import { DocumentEditorHost } from "@/components/studio/document-editor-host";
+import { ShareDocument } from "@/components/studio/share-document";
 import { WorkspaceHeader } from "@/components/studio/workspace-header";
 import { requireUser } from "@/lib/auth/server";
 import { db } from "@/lib/db/client";
 import { documents, projects } from "@/lib/db/schema";
 import { listProjects } from "@/lib/platform/queries";
-import { DocumentEditor } from "@ladx/documents";
-import { getTemplate } from "@ladx/documents";
+import { getTemplate, isDocStatus } from "@ladx/documents";
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -82,12 +82,19 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
         subtitle={row.projectName ? `Project: ${row.projectName}` : "Not linked to a project yet"}
         actions={
           doc.projectId ? (
-            <Link
-              href={`/studio/projects/${doc.projectId}`}
-              className="rounded-md border border-ink-200 px-3 py-1.5 text-[13px] text-ink-700 transition-colors hover:border-ink-400"
-            >
-              Back to project
-            </Link>
+            <>
+              <ShareDocument
+                documentId={doc.id}
+                shareToken={doc.shareToken}
+                expiresAt={doc.shareExpiresAt?.toISOString() ?? null}
+              />
+              <Link
+                href={`/studio/projects/${doc.projectId}`}
+                className="rounded-md border border-ink-200 px-3 py-1.5 text-[13px] text-ink-700 transition-colors hover:border-ink-400"
+              >
+                Back to project
+              </Link>
+            </>
           ) : (
             <AttachProject
               documentId={doc.id}
@@ -96,19 +103,13 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
           )
         }
       />
-      <DocumentEditor
-        onSave={saveDocumentViaApi}
-        /* The route renders and downloads; this surface has one to link to. */
-        exportAs={{
-          kind: "link",
-          href: (format) =>
-            `/api/projects/${row.doc.projectId}/document?doc=${row.doc.id}&format=${format}`,
-        }}
+      <DocumentEditorHost
         documentId={doc.id}
         projectId={doc.projectId}
         initialTitle={doc.title}
         initialContent={doc.content}
         templateAbbr={template?.abbr ?? null}
+        status={isDocStatus(doc.status) ? doc.status : "draft"}
       />
     </>
   );

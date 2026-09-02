@@ -1011,6 +1011,25 @@ export const documents = pgTable(
     mimeType: text("mime_type"),
     fileData: text("file_data"),
     byteSize: integer("byte_size").notNull().default(0),
+    /**
+     * Where the document is in its life: draft, review, approved, superseded.
+     *
+     * Text rather than an enum, because the set will grow (issued, withdrawn)
+     * and an enum change is a migration every time. The code validates it.
+     * Approved and superseded documents are read only in the editor; revising
+     * one returns it to draft, on purpose and in the audit trail.
+     */
+    status: text("status").notNull().default("draft"),
+    statusChangedAt: timestamp("status_changed_at", { withTimezone: true }),
+    /**
+     * A read only link for somebody without an account, usually the client.
+     * Same shape as a shared conversation: the token is the credential, minted
+     * separately from the id, and clearing it revokes every copy of the link.
+     * An expiry, because a link to an FDS should not outlive the project.
+     */
+    shareToken: text("share_token"),
+    sharedAt: timestamp("shared_at", { withTimezone: true }),
+    shareExpiresAt: timestamp("share_expires_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -1018,6 +1037,7 @@ export const documents = pgTable(
     userIdx: index("documents_user_idx").on(t.userId),
     projectIdx: index("documents_project_idx").on(t.projectId),
     clientIdx: index("documents_client_idx").on(t.clientId),
+    shareIdx: uniqueIndex("documents_share_idx").on(t.shareToken),
   }),
 );
 

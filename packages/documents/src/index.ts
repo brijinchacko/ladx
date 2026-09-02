@@ -17,6 +17,7 @@
 export * from "./lib/doc-ast";
 export * from "./lib/brief";
 export * from "./lib/document";
+export * from "./lib/status";
 
 /*
  * The DOCX and PDF writers are deliberately not re-exported here.

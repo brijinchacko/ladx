@@ -2,6 +2,7 @@
 
 import { generateLadderViaApi } from "@/components/studio/generate-ladder";
 import LadderHome, { type LadderProgramRow } from "@/components/studio/ladder-home";
+import { StandardsAfterSave } from "@/components/studio/standards-after-save";
 import { LadderAi, LadxStudio, httpStorage, ladxProgramToIr } from "@ladx/studio";
 import { ChevronLeft, FolderKanban, Maximize2, Minimize2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -94,6 +95,7 @@ export default function LadderClient({
         <FolderKanban className="h-3.5 w-3.5 shrink-0 text-ink-400" />
         <span className="text-[12.5px] text-ink-700">{projectName ?? "No project (scratch)"}</span>
         <span className="text-[11.5px] text-ink-400">Save from the File menu.</span>
+        <StandardsAfterSave projectId={open} />
         <button
           type="button"
           onClick={() => setFocus((f) => !f)}

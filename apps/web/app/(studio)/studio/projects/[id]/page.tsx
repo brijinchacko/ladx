@@ -96,6 +96,7 @@ export default async function ProjectWorkspace({
           id: documents.id,
           title: documents.title,
           kind: documents.kind,
+          status: documents.status,
           templateSlug: documents.templateSlug,
           fileName: documents.fileName,
           mimeType: documents.mimeType,
@@ -136,7 +137,9 @@ export default async function ProjectWorkspace({
   // A deliverable that has already been started opens rather than regenerating,
   // so an edited document is never silently replaced by a fresh template.
   const startedByTemplate = new Map(
-    projectDocs.filter((d) => d.templateSlug).map((d) => [d.templateSlug as string, d.id]),
+    projectDocs
+      .filter((d) => d.templateSlug)
+      .map((d) => [d.templateSlug as string, { id: d.id, status: d.status }]),
   );
 
   // The phase being looked at, which is not necessarily the one the project is
@@ -330,7 +333,8 @@ export default async function ProjectWorkspace({
                             title={d.title}
                             abbr={d.abbr}
                             summary={d.summary}
-                            existingId={startedByTemplate.get(d.slug) ?? null}
+                            existingId={startedByTemplate.get(d.slug)?.id ?? null}
+                            status={startedByTemplate.get(d.slug)?.status ?? null}
                             missing={missingFor(d.slug, project.brief)}
                           />
                         ))}
@@ -425,6 +429,12 @@ export default async function ProjectWorkspace({
                     </Link>
                     {programs.length > 0 && (
                       <>
+                        <Link
+                          href={`/studio/projects/${project.id}/tags`}
+                          className="rounded-sm border border-ink-200 px-3 py-1.5 text-[13px] text-ink-700 transition-colors hover:border-ink-400"
+                        >
+                          Where used
+                        </Link>
                         <Link
                           href={`/studio/monitor?project=${project.id}`}
                           className="rounded-sm border border-ink-200 px-3 py-1.5 text-[13px] text-ink-700 transition-colors hover:border-ink-400"

@@ -13,6 +13,7 @@ const updateSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
   content: z.string().max(400_000).optional(),
   projectId: z.string().uuid().nullish(),
+  status: z.enum(["draft", "review", "approved", "superseded"]).optional(),
 });
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -61,6 +62,28 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     patch.byteSize = parsed.data.content.length;
   }
   if (parsed.data.projectId !== undefined) patch.projectId = parsed.data.projectId ?? null;
+  if (parsed.data.status !== undefined) {
+    patch.status = parsed.data.status;
+    patch.statusChangedAt = new Date();
+  }
+
+  // An approved document does not take edits. The editor is read only in that
+  // state and the API says so too, because the editor is not the only client.
+  if (parsed.data.title !== undefined || parsed.data.content !== undefined) {
+    const [current] = await db()
+      .select({ status: documents.status })
+      .from(documents)
+      .where(and(eq(documents.id, id), eq(documents.userId, auth.user.id)))
+      .limit(1);
+    if (!current) return NextResponse.json({ error: "not found" }, { status: 404 });
+    const locked = current.status === "approved" || current.status === "superseded";
+    if (locked && parsed.data.status === undefined) {
+      return NextResponse.json(
+        { error: "this document is approved; revise it to draft before editing" },
+        { status: 409 },
+      );
+    }
+  }
 
   const updated = await db()
     .update(documents)

@@ -8,7 +8,9 @@
 
 import { getApiUser } from "@/lib/auth/server";
 import { SCRATCH, loadProgram, saveProgram } from "@/lib/db/ladder";
+import { deviationsFor } from "@/lib/parsers/spawn";
 import { getProject } from "@/lib/platform/queries";
+import { type LadxProgram, ladxProgramToIr } from "@ladx/studio";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -59,5 +61,25 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ projec
   }
 
   await saveProgram(auth.user.id, target, parsed.data.name, parsed.data.program ?? null);
-  return NextResponse.json({ ok: true });
+
+  /*
+    Checked against the standards on every save, the way a linter runs on
+    every keystroke rather than when somebody remembers to ask. The check is
+    the same one Commissioning shows in its deviations tab; here it is a count
+    the page can put next to "Saved", so a rule written down last month
+    catches the rung written today. Best effort: a program the checker cannot
+    read still saves.
+  */
+  let standards: { deviations: number; items: unknown[] } | null = null;
+  if (parsed.data.program) {
+    try {
+      const ir = ladxProgramToIr(parsed.data.program as LadxProgram);
+      const { deviations } = await deviationsFor(ir);
+      standards = { deviations: deviations.length, items: deviations.slice(0, 5) };
+    } catch {
+      standards = null;
+    }
+  }
+
+  return NextResponse.json({ ok: true, standards });
 }
